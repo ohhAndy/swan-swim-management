@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Term {
+  id        BigInt   @id @default(autoincrement())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+
+  offerings ClassOffering[]
+}
+
+model ClassOffering {
+  id        BigInt  @id @default(autoincrement())
+  termId    BigInt
+  weekday   Int //Sun is 0, Sat is 6
+  startTime String
+  type      String //Preschool, Swimmer, P&T, etc
+  duration  Int
+  capacity  Int //change depending on ratio, 3:1, 2:1, 1:1
+  notes     String?
+
+  term        Term           @relation(fields: [termId], references: [id], onDelete: Cascade)
+  sessions    ClassSession[]
+  enrollments Enrollment[]
+}
+
+model ClassSession {
+  id         BigInt   @id @default(autoincrement())
+  offeringId BigInt
+  date       DateTime
+  status     String
+  notes      String?
+
+  offering   ClassOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  attendance Attendance[]
+
+  @@unique([offeringId, date])
+  @@index([date])
+}
+
+model Enrollment {
+  id         BigInt   @id @default(autoincrement())
+  studentId  BigInt
+  offeringId BigInt
+  status     String   @default("active")
+  enrollDate DateTime @default(now())
+  notes      String?
+
+  student    Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  offering   ClassOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  attendance Attendance[]
+}
+
+model Attendance {
+  id             BigInt   @id @default(autoincrement())
+  enrollmentId   BigInt
+  classSessionId BigInt
+  status         String
+  notes          String?
+  markedAt       DateTime @default(now())
+
+  enrollment   Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  classSession ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, classSessionId])
+  @@index([classSessionId])
+}
+
+model Student {
+  id         BigInt   @id @default(autoincrement())
+  shortCode  String   @unique
+  firstName  String
+  lastName   String
+  birthdate  DateTime
+  guardianId BigInt
+  status     String   @default("active")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  guardian    Guardian     @relation(fields: [guardianId], references: [id], onDelete: Restrict)
+  enrollments Enrollment[]
+
+  @@index([guardianId])
+  @@index([lastName, firstName])
+}
+
+model Guardian {
+  id        BigInt  @id @default(autoincrement())
+  shortCode String  @unique
+  fullName  String
+  email     String  @unique
+  phone     String
+  address   Json?
+  notes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  students Student[]
+  invoices Invoice[]
+}
+
+model Invoice {
+  id BigInt @id @default(autoincrement())
+  irlId String //In real life invoice number ex. N0002
+  guardianId BigInt
+
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+}
