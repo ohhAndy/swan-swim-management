@@ -1,0 +1,396 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum EnrollmentStatus {
+  active
+  inactive
+  transferred
+}
+
+enum SessionStatus {
+  scheduled
+  canceled
+  completed
+}
+
+enum AttendanceStatus {
+  present
+  absent
+  excused
+}
+
+enum InvoiceStatus {
+  draft
+  open
+  paid
+  void
+  canceled
+}
+
+enum MakeUpStatus {
+  requested
+  scheduled
+  attended
+  cancelled
+  missed
+}
+
+enum StaffRole {
+  admin
+  manager
+  supervisor
+  instructor
+  viewer
+}
+
+enum TrialStatus {
+  scheduled
+  attended
+  noshow
+  converted
+  cancelled
+}
+
+model TrialBooking {
+  id                   String      @id @default(uuid())
+  classSessionId       String
+  childName            String
+  childAge             Int
+  parentPhone          String
+  status               TrialStatus @default(scheduled)
+  notes                String?
+  createdAt            DateTime    @default(now())
+  createdBy            String?
+  updatedAt            DateTime    @updatedAt
+  updatedBy            String?
+  convertedAt          DateTime?
+  convertedBy          String?
+  convertedToStudentId String?
+
+  classSession       ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  createdByUser      StaffUser?   @relation("TrialBookingCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser      StaffUser?   @relation("TrialBookingUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  convertedByUser    StaffUser?   @relation("TrialBookingConvertedBy", fields: [convertedBy], references: [id], onDelete: SetNull)
+  convertedToStudent Student?     @relation(fields: [convertedToStudentId], references: [id], onDelete: SetNull)
+
+  @@index([classSessionId])
+  @@index([status])
+  @@map("trial_bookings")
+}
+
+model StaffUser {
+  id       String    @id @default(cuid())
+  authId   String    @unique // Supabase auth.users.id
+  email    String    @unique
+  fullName String
+  role     StaffRole
+  active   Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations for audit tracking
+  attendanceMarked             Attendance[]      @relation("AttendanceMarkedBy")
+  attendanceUpdated            Attendance[]      @relation("AttendanceUpdatedBy")
+  makeUpsCreated               MakeUpBooking[]   @relation("MakeUpCreatedBy")
+  makeUpsUpdated               MakeUpBooking[]   @relation("MakeUpUpdatedBy")
+  enrollmentsCreated           Enrollment[]      @relation("EnrollmentCreatedBy")
+  transfersInitiated           Enrollment[]      @relation("EnrollmentTransferredBy")
+  skipsCreated                 EnrollmentSkip[]  @relation("SkipCreatedBy")
+  studentsCreated              Student[]         @relation("StudentCreatedBy")
+  studentsUpdated              Student[]         @relation("StudentUpdatedBy")
+  guardiansCreated             Guardian[]        @relation("GuardianCreatedBy")
+  guardiansUpdated             Guardian[]        @relation("GuardianUpdatedBy")
+  termsCreated                 Term[]            @relation("TermCreatedBy")
+  classInstructorAssignments   ClassInstructor[] @relation("ClassInstructorToStaffUser")
+  instructorAssignmentsCreated ClassInstructor[] @relation("ClassInstructorAssignedBy")
+  instructorAssignmentsRemoved ClassInstructor[] @relation("ClassInstructorRemovedBy")
+  trialBookingsCreated         TrialBooking[]    @relation("TrialBookingCreatedBy")
+  trialBookingsUpdated         TrialBooking[]    @relation("TrialBookingUpdatedBy")
+  trialBookingsConverted       TrialBooking[]    @relation("TrialBookingConvertedBy")
+  auditLogs                    AuditLog[]
+}
+
+// Audit log for complete history
+model AuditLog {
+  id      String    @id @default(cuid())
+  staffId String
+  staff   StaffUser @relation(fields: [staffId], references: [id])
+
+  action     String // "mark_attendance", "create_enrollment", "transfer_enrollment", etc.
+  entityType String // "attendance", "enrollment", "student", etc.
+  entityId   String // ID of the affected record
+  changes    Json? // What changed (old value → new value)
+  metadata   Json? // Additional context
+
+  createdAt DateTime @default(now())
+
+  @@index([staffId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model Term {
+  id        String   @id @default(cuid())
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  name      String
+  slug      String?  @unique
+
+  offerings ClassOffering[]
+
+  createdBy      String?
+  createdByStaff StaffUser? @relation("TermCreatedBy", fields: [createdBy], references: [id])
+  createdAt      DateTime   @default(now())
+
+  updatedAt DateTime @updatedAt
+}
+
+model ClassOffering {
+  id     String @id @default(cuid())
+  termId String
+  term   Term   @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  weekday   Int
+  startTime String
+  endTime   String
+  title     String
+  duration  Int
+  capacity  Int
+  notes     String?
+
+  sessions    ClassSession[]
+  enrollments Enrollment[]
+  instructors ClassInstructor[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([termId])
+  @@index([termId, weekday, startTime])
+}
+
+model ClassSession {
+  id         String        @id @default(cuid())
+  offeringId String
+  offering   ClassOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+
+  date   DateTime      @db.Date
+  status SessionStatus @default(scheduled)
+  notes  String?
+
+  attendance      Attendance[]
+  makeUps         MakeUpBooking[]
+  enrollmentSkips EnrollmentSkip[]
+  trialBookings   TrialBooking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([offeringId, date])
+  @@index([date])
+  @@index([offeringId, date])
+  @@index([offeringId])
+}
+
+model Enrollment {
+  id         String        @id @default(cuid())
+  studentId  String
+  offeringId String
+  offering   ClassOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  student    Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  status     EnrollmentStatus @default(active)
+  enrollDate DateTime         @default(now())
+  endDate    DateTime?        @db.Date
+  notes      String?
+
+  //Transfer Info
+  transferredToId    String?     @unique
+  transferredFromId  String?     @unique
+  transferredTo      Enrollment? @relation("EnrollmentTransfer", fields: [transferredToId], references: [id], onDelete: SetNull)
+  transferredFrom    Enrollment? @relation("EnrollmentTransfer")
+  transferredAt      DateTime?
+  transferNotes      String?
+  transferredBy      String?
+  transferredByStaff StaffUser?  @relation("EnrollmentTransferredBy", fields: [transferredBy], references: [id])
+
+  createdBy      String?
+  createdByStaff StaffUser? @relation("EnrollmentCreatedBy", fields: [createdBy], references: [id])
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  attendance      Attendance[]
+  enrollmentSkips EnrollmentSkip[]
+
+  @@unique([offeringId, studentId], name: "offeringId_studentId")
+  @@index([studentId])
+  @@index([offeringId])
+  @@index([offeringId, enrollDate])
+  @@index([offeringId, endDate])
+  @@index([createdBy])
+  @@index([transferredBy])
+  @@index([offeringId, status])
+}
+
+model EnrollmentSkip {
+  id             String       @id @default(cuid())
+  enrollmentId   String
+  classSessionId String
+  enrollment     Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  classSession   ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+
+  reason String?
+
+  createdBy      String?
+  createdByStaff StaffUser? @relation("SkipCreatedBy", fields: [createdBy], references: [id])
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([enrollmentId, classSessionId])
+  @@index([classSessionId])
+  @@index([createdBy])
+  @@index([enrollmentId])
+  @@index([enrollmentId, classSessionId])
+}
+
+model Attendance {
+  id             String       @id @default(cuid())
+  classSessionId String
+  enrollmentId   String
+  classSession   ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  enrollment     Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  status AttendanceStatus
+  notes  String?
+
+  markedBy      String?
+  markedByStaff StaffUser? @relation("AttendanceMarkedBy", fields: [markedBy], references: [id])
+  markedAt      DateTime   @default(now())
+
+  updatedBy      String?
+  updatedByStaff StaffUser? @relation("AttendanceUpdatedBy", fields: [updatedBy], references: [id])
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([enrollmentId, classSessionId], name: "enrollmentId_classSessionId")
+  @@index([classSessionId])
+  @@index([markedBy])
+  @@index([enrollmentId])
+  @@index([enrollmentId, classSessionId])
+  @@index([classSessionId, status])
+}
+
+model Student {
+  id        String    @id @default(cuid())
+  shortCode String?   @unique
+  firstName String
+  lastName  String
+  birthdate DateTime?
+  level     String?
+
+  guardianId String
+  guardian   Guardian @relation(fields: [guardianId], references: [id])
+
+  enrollments        Enrollment[]
+  makeUps            MakeUpBooking[]
+  convertedFromTrial TrialBooking[]
+
+  createdBy      String?
+  createdByStaff StaffUser? @relation("StudentCreatedBy", fields: [createdBy], references: [id])
+  createdAt      DateTime   @default(now())
+
+  updatedBy      String?
+  updatedByStaff StaffUser? @relation("StudentUpdatedBy", fields: [updatedBy], references: [id])
+  updatedAt      DateTime   @updatedAt
+
+  @@index([guardianId])
+  @@index([lastName, firstName])
+  @@index([createdBy])
+  @@index([level])
+}
+
+model Guardian {
+  id        String  @id @default(cuid())
+  shortCode String  @unique
+  fullName  String
+  email     String  @unique
+  phone     String
+  address   Json?
+  notes     String?
+
+  invoices Invoice[]
+  students Student[]
+
+  createdBy      String?
+  createdByStaff StaffUser? @relation("GuardianCreatedBy", fields: [createdBy], references: [id])
+  createdAt      DateTime   @default(now())
+
+  updatedBy      String?
+  updatedByStaff StaffUser? @relation("GuardianUpdatedBy", fields: [updatedBy], references: [id])
+  updatedAt      DateTime   @updatedAt
+
+  @@index([fullName])
+  @@index([email])
+  @@index([createdBy])
+}
+
+model Invoice {
+  id         String   @id @default(cuid())
+  guardianId String
+  guardian   Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+
+  irlId String
+}
+
+model MakeUpBooking {
+  id             String       @id @default(cuid())
+  studentId      String
+  classSessionId String
+  student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classSession   ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+
+  status MakeUpStatus @default(requested)
+  notes  String?
+
+  createdBy      String?
+  createdByStaff StaffUser? @relation("MakeUpCreatedBy", fields: [createdBy], references: [id])
+  createdAt      DateTime   @default(now())
+
+  updatedBy      String?
+  updatedByStaff StaffUser? @relation("MakeUpUpdatedBy", fields: [updatedBy], references: [id])
+  updatedAt      DateTime   @updatedAt
+
+  @@unique([studentId, classSessionId])
+  @@index([classSessionId])
+  @@index([createdBy])
+  @@index([classSessionId, status]) // NEW
+  @@index([studentId])
+}
+
+model ClassInstructor {
+  id              String    @id @default(uuid())
+  classOfferingId String
+  staffUserId     String
+  assignedAt      DateTime  @default(now())
+  assignedBy      String?
+  removedAt       DateTime?
+  removedBy       String?
+
+  classOffering  ClassOffering @relation(fields: [classOfferingId], references: [id], onDelete: Cascade)
+  staffUser      StaffUser     @relation("ClassInstructorToStaffUser", fields: [staffUserId], references: [id], onDelete: Cascade)
+  assignedByUser StaffUser?    @relation("ClassInstructorAssignedBy", fields: [assignedBy], references: [id], onDelete: SetNull)
+  removedByUser  StaffUser?    @relation("ClassInstructorRemovedBy", fields: [removedBy], references: [id], onDelete: SetNull)
+
+  @@unique([classOfferingId, staffUserId, removedAt], name: "unique_active_instructor")
+  @@index([classOfferingId])
+  @@index([staffUserId])
+  @@map("class_instructors")
+}

@@ -1,0 +1,109 @@
+
+> web@0.1.0 build
+> next build --turbopack
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\andyh\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\andyh\Desktop\SchoolCRM\package-lock.json
+
+   ▲ Next.js 15.5.2 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+Error: Can't resolve 'tw-animate-css' in 'C:\Users\andyh\Desktop\SchoolCRM\apps\web\src\app'
+    [2m[at finishWithoutResolve (C:\Users\andyh\Desktop\SchoolCRM\node_modules\enhanced-resolve\lib\Resolver.js:565:18)][0m
+    [2m[at C:\Users\andyh\Desktop\SchoolCRM\node_modules\enhanced-resolve\lib\Resolver.js:657:14][0m
+    [2m[at C:\Users\andyh\Desktop\SchoolCRM\node_modules\enhanced-resolve\lib\Resolver.js:718:5][0m
+    [2m[at eval (eval at create (C:\Users\andyh\Desktop\SchoolCRM\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\andyh\Desktop\SchoolCRM\node_modules\enhanced-resolve\lib\Resolver.js:718:5][0m
+    [2m[at eval (eval at create (C:\Users\andyh\Desktop\SchoolCRM\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:27:1)][0m
+    [2m[at C:\Users\andyh\Desktop\SchoolCRM\node_modules\enhanced-resolve\lib\DescriptionFilePlugin.js:89:43][0m
+    [2m[at C:\Users\andyh\Desktop\SchoolCRM\node_modules\enhanced-resolve\lib\Resolver.js:718:5][0m
+    [2m[at eval (eval at create (C:\Users\andyh\Desktop\SchoolCRM\node_modules\tapable\lib\HookCodeFactory.js:31:10), <anonymous>:15:1)][0m
+    [2m[at C:\Users\andyh\Desktop\SchoolCRM\node_modules\enhanced-resolve\lib\Resolver.js:718:5][0m {
+  details: "resolve 'tw-animate-css' in 'C:\\Users\\andyh\\Desktop\\SchoolCRM\\apps\\web\\src\\app'\n" +
+    '  Parsed request is a module\n' +
+    '  using description file: C:\\Users\\andyh\\Desktop\\SchoolCRM\\apps\\web\\package.json (relative path: ./src/app)\n' +
+    '    resolve as module\n' +
+    "      C:\\Users\\andyh\\Desktop\\SchoolCRM\\apps\\web\\src\\app\\node_modules doesn't exist or is not a directory\n" +
+    "      C:\\Users\\andyh\\Desktop\\SchoolCRM\\apps\\web\\src\\node_modules doesn't exist or is not a directory\n" +
+    '      looking for modules in C:\\Users\\andyh\\Desktop\\SchoolCRM\\apps\\web\\node_modules\n' +
+    '        single file module\n' +
+    '          using description file: C:\\Users\\andyh\\Desktop\\SchoolCRM\\apps\\web\\package.json (relative path: ./node_modules/tw-animate-css)\n' +
+    '            no extension\n' +
+    "              C:\\Users\\andyh\\Desktop\\SchoolCRM\\apps\\web\\node_modules\\tw-animate-css doesn't exist\n" +
+    '            .css\n' +
+    "              C:\\Users\\andyh\\Desktop\\SchoolCRM\\apps\\web\\node_modules\\tw-animate-css.css doesn't exist\n" +
+    "        C:\\Users\\andyh\\Desktop\\SchoolCRM\\apps\\web\\node_modules\\tw-animate-css doesn't exist\n" +
+    "      C:\\Users\\andyh\\Desktop\\SchoolCRM\\apps\\node_modules doesn't exist or is not a directory\n" +
+    '      looking for modules in C:\\Users\\andyh\\Desktop\\SchoolCRM\\node_modules\n' +
+    '        single file module\n' +
+    '          using description file: C:\\Users\\andyh\\Desktop\\SchoolCRM\\package.json (relative path: ./node_modules/tw-animate-css)\n' +
+    '            no extension\n' +
+    "              C:\\Users\\andyh\\Desktop\\SchoolCRM\\node_modules\\tw-animate-css doesn't exist\n" +
+    '            .css\n' +
+    "              C:\\Users\\andyh\\Desktop\\SchoolCRM\\node_modules\\tw-animate-css.css doesn't exist\n" +
+    "        C:\\Users\\andyh\\Desktop\\SchoolCRM\\node_modules\\tw-animate-css doesn't exist\n" +
+    "      C:\\Users\\andyh\\Desktop\\node_modules doesn't exist or is not a directory\n" +
+    '      looking for modules in C:\\Users\\andyh\\node_modules\n' +
+    '        single file module\n' +
+    '          using description file: C:\\Users\\andyh\\package.json (relative path: ./node_modules/tw-animate-css)\n' +
+    '            no extension\n' +
+    "              C:\\Users\\andyh\\node_modules\\tw-animate-css doesn't exist\n" +
+    '            .css\n' +
+    "              C:\\Users\\andyh\\node_modules\\tw-animate-css.css doesn't exist\n" +
+    "        C:\\Users\\andyh\\node_modules\\tw-animate-css doesn't exist\n" +
+    "      C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "      C:\\node_modules doesn't exist or is not a directory"
+}
+ ✓ Finished writing to disk in 24ms
+
+> Build error occurred
+Error: Turbopack build failed with 2 errors:
+./Desktop/SchoolCRM/apps/web/components/schedule/SlotHeader.tsx:1:1
+Module not found: Can't resolve '@/components/ui/button'
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/components/ui/button"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 2 |[39m
+ [90m 3 |[39m [36mexport[39m [36mfunction[39m [33mSlotHeader[39m({
+ [90m 4 |[39m     title[33m,[39m[0m
+
+Import map: aliased to relative './src/components/ui/button' inside of [project]/Desktop/SchoolCRM/apps/web
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+./Desktop/SchoolCRM/apps/web/components/schedule/SlotHeader.tsx:1:1
+Module not found: Can't resolve '@/components/ui/button'
+[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/components/ui/button"[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 2 |[39m
+ [90m 3 |[39m [36mexport[39m [36mfunction[39m [33mSlotHeader[39m({
+ [90m 4 |[39m     title[33m,[39m[0m
+
+Import map: aliased to relative './src/components/ui/button' inside of [project]/Desktop/SchoolCRM/apps/web
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (./Desktop/SchoolCRM/apps/web/components/schedule/SlotHeader.tsx:1:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./Desktop/SchoolCRM/apps/web/components/schedule/SlotHeader.tsx:1:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path C:\Users\andyh\Desktop\SchoolCRM\apps\web
+npm error workspace web@0.1.0
+npm error location C:\Users\andyh\Desktop\SchoolCRM\apps\web
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c next build --turbopack
+npm notice
+npm notice New major version of npm available! 10.8.3 -> 11.5.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.5.2
+npm notice To update run: npm install -g npm@11.5.2
+npm notice

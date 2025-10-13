@@ -1,0 +1,235 @@
+"use client";
+
+import { enrollStudentWithSkips } from "@/lib/api/schedule-client";
+import { searchStudents, StudentLite } from "@/lib/api/students-client";
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
+
+interface EnrollStudentDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  offeringId: string;
+  isoDates: string[];
+  onSuccess: () => void;
+}
+
+function calcAge(birthdateString: string): number {
+  const birthdate = new Date(birthdateString);
+  const today = new Date();
+
+  let age = today.getFullYear() - birthdate.getFullYear();
+
+  const hadBirthdayThisYear =
+    today.getMonth() > birthdate.getMonth() ||
+    (today.getMonth() === birthdate.getMonth() &&
+      today.getDate() >= birthdate.getDate());
+
+  if (!hadBirthdayThisYear) age--;
+
+  return age;
+}
+
+export function EnrollStudentDialog({
+  open,
+  onOpenChange,
+  offeringId,
+  isoDates,
+  onSuccess,
+}: EnrollStudentDialogProps) {
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState<StudentLite[]>([]);
+  const [picked, setPicked] = useState<StudentLite | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (open) {
+      setSelectedDates(new Set(isoDates));
+      setQ("");
+      setResults([]);
+      setPicked(null);
+      setErr(null);
+    }
+  }, [open, isoDates]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+
+        if (document.activeElement?.tagName === "INPUT" && q.trim()) {
+          doSearch();
+        } else if (picked && !loading) {
+          submit();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, q, picked, loading]);
+
+  async function doSearch() {
+    try {
+      setErr(null);
+      const res = await searchStudents({ query: q, page: 1, pageSize: 20 });
+      setResults(res.items);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Search Failed");
+    }
+  }
+
+  async function submit() {
+    if (!picked) return;
+
+    try {
+      setLoading(true);
+      setErr(null);
+
+      const skippedDates = isoDates.filter((date) => !selectedDates.has(date));
+
+      await enrollStudentWithSkips({
+        studentId: picked.id,
+        offeringId,
+        skippedDates: skippedDates.map((date) => date.slice(0, 10)),
+      });
+
+      onSuccess();
+      onOpenChange(false);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Enrollment failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const toggleDate = (date: string) => {
+    const newSelected = new Set(selectedDates);
+    if (newSelected.has(date)) {
+      newSelected.delete(date);
+    } else {
+      newSelected.add(date);
+    }
+    setSelectedDates(newSelected);
+  };
+
+  const toggleAll = () => {
+    if (selectedDates.size === isoDates.length) {
+      setSelectedDates(new Set());
+    } else {
+      setSelectedDates(new Set(isoDates));
+    }
+  };
+
+  const selectedCount = selectedDates.size;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Enroll Student</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-auto space-y-4">
+          {/* Student Search */}
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Search student..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                autoFocus
+              />
+              <Button type="button" variant="outline" onClick={doSearch}>
+                Search
+              </Button>
+            </div>
+
+            <div className="max-h-32 overflow-auto rounded border">
+              {results.map((r) => (
+                <button
+                  key={r.id}
+                  className={`flex w-full items-center justify-between border-b px-3 py-2 text-left hover:bg-slate-50 ${
+                    picked?.id === r.id ? "bg-slate-100" : ""
+                  }`}
+                  onClick={() => setPicked(r)}
+                >
+                  <span className="font-medium">{`${r.firstName} ${r.lastName}`}</span>
+                  <span className="text-sm text-slate-500">{r.level ?? ""} - {r.birthdate ? calcAge(r.birthdate) : ""}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Date Selection */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium">
+                Select class dates ({selectedCount}/{isoDates.length})
+              </h4>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={toggleAll}
+              >
+                {selectedDates.size === isoDates.length
+                  ? "Unselect All"
+                  : "Select All"}
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-4 gap-2">
+              {isoDates.map((date, index) => {
+                const shortDate = date.slice(5, 10); 
+                const isSelected = selectedDates.has(date);
+
+                return (
+                  <div key={date} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`date-${index}`}
+                      checked={isSelected}
+                      onCheckedChange={() => toggleDate(date)}
+                    />
+                    <label
+                      htmlFor={`date-${index}`}
+                      className="text-sm cursor-pointer select-none"
+                    >
+                      {shortDate}
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+
+            {selectedCount < isoDates.length && (
+              <p className="text-xs text-slate-600">
+                Unchecked dates will be marked as enrollment skips
+              </p>
+            )}
+          </div>
+
+          {err && <p className="text-sm text-red-600">{err}</p>}
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={submit}
+            disabled={!picked || loading || selectedCount === 0}
+          >
+            {loading ? "Enrolling..." : `Enroll for ${selectedCount} classes`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
