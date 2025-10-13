@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    "paths": {
+      "@school/shared-types": ["../../packages/shared-types"]
+    },
     "module": "commonjs",
     "target": "es2021",
     "moduleResolution": "node",
