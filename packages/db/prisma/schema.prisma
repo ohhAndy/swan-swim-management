@@ -28,11 +28,9 @@ enum AttendanceStatus {
 }
 
 enum InvoiceStatus {
-  draft
-  open
   paid
+  partial
   void
-  canceled
 }
 
 enum MakeUpStatus {
@@ -57,6 +55,16 @@ enum TrialStatus {
   noshow
   converted
   cancelled
+}
+
+enum PaymentMethod {
+  cash
+  debit
+  visa
+  mastercard
+  etransfer
+  website
+  other
 }
 
 model TrialBooking {
@@ -116,6 +124,9 @@ model StaffUser {
   trialBookingsCreated         TrialBooking[]    @relation("TrialBookingCreatedBy")
   trialBookingsUpdated         TrialBooking[]    @relation("TrialBookingUpdatedBy")
   trialBookingsConverted       TrialBooking[]    @relation("TrialBookingConvertedBy")
+  invoicesCreated  Invoice[]  @relation("InvoiceCreatedBy")
+  invoicesUpdated  Invoice[]  @relation("InvoiceUpdatedBy")
+  paymentsCreated  Payment[]  @relation("PaymentCreatedBy")
   auditLogs                    AuditLog[]
 }
 
@@ -227,6 +238,9 @@ model Enrollment {
   createdByStaff StaffUser? @relation("EnrollmentCreatedBy", fields: [createdBy], references: [id])
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
+
+  classRatio       String  @default("3:1")
+  invoiceLineItem  InvoiceLineItem? 
 
   attendance      Attendance[]
   enrollmentSkips EnrollmentSkip[]
@@ -343,11 +357,65 @@ model Guardian {
 }
 
 model Invoice {
-  id         String   @id @default(cuid())
-  guardianId String
-  guardian   Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  id            String        @id @default(uuid())
+  invoiceNumber String?       @unique // Staff-entered, nullable for drafts
+  guardianId    String
+  totalAmount   Decimal       @db.Decimal(10, 2) // Calculated but overridable
+  status        InvoiceStatus @default(partial)
+  notes         String?       @db.Text
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  createdBy     String?
+  updatedBy     String?
+  
+  // Relations
+  guardian      Guardian      @relation(fields: [guardianId], references: [id], onDelete: Restrict)
+  lineItems     InvoiceLineItem[]
+  payments      Payment[]
+  createdByUser StaffUser?    @relation("InvoiceCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser StaffUser?    @relation("InvoiceUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  
+  @@index([guardianId])
+  @@index([invoiceNumber])
+  @@index([status])
+  @@index([createdAt])
+}
 
-  irlId String
+model Payment {
+  id            String        @id @default(uuid())
+  invoiceId     String
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentDate   DateTime    
+  paymentMethod PaymentMethod
+  notes         String?       @db.Text 
+  
+  createdAt     DateTime      @default(now())
+  createdBy     String?
+  
+  // Relations
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdByUser StaffUser?    @relation("PaymentCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  
+  @@index([invoiceId])
+  @@index([paymentDate])
+}
+
+model InvoiceLineItem {
+  id           String    @id @default(uuid())
+  invoiceId    String
+  enrollmentId String?   @unique // Nullable for custom line items, unique so enrollment can only be on one invoice
+  description  String    // Auto-generated for enrollments, manual for custom items
+  amount       Decimal   @db.Decimal(10, 2)
+  
+  createdAt    DateTime  @default(now())
+  
+  // Relations
+  invoice      Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  
+  @@index([invoiceId])
+  @@index([enrollmentId])
 }
 
 model MakeUpBooking {
