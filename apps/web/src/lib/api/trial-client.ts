@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { TrialStatus } from "@school/shared-types";
+import type { TrialStatus } from "@school/shared-types";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
 

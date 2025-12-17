@@ -9,6 +9,364 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model TrialBooking {
+  id                   String       @id @default(uuid())
+  classSessionId       String
+  childName            String
+  childAge             Int
+  parentPhone          String
+  status               TrialStatus  @default(scheduled)
+  notes                String?
+  createdAt            DateTime     @default(now())
+  createdBy            String?
+  updatedAt            DateTime     @updatedAt
+  updatedBy            String?
+  convertedAt          DateTime?
+  convertedBy          String?
+  convertedToStudentId String?
+  classSession         ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  convertedByUser      StaffUser?   @relation("TrialBookingConvertedBy", fields: [convertedBy], references: [id])
+  convertedToStudent   Student?     @relation(fields: [convertedToStudentId], references: [id])
+  createdByUser        StaffUser?   @relation("TrialBookingCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser        StaffUser?   @relation("TrialBookingUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([classSessionId])
+  @@index([status])
+  @@map("trial_bookings")
+}
+
+model StaffUser {
+  id                           String            @id @default(cuid())
+  authId                       String            @unique
+  email                        String            @unique
+  fullName                     String
+  role                         StaffRole
+  active                       Boolean           @default(true)
+  createdAt                    DateTime          @default(now())
+  updatedAt                    DateTime          @updatedAt
+  attendanceMarked             Attendance[]      @relation("AttendanceMarkedBy")
+  attendanceUpdated            Attendance[]      @relation("AttendanceUpdatedBy")
+  auditLogs                    AuditLog[]
+  enrollmentsCreated           Enrollment[]      @relation("EnrollmentCreatedBy")
+  transfersInitiated           Enrollment[]      @relation("EnrollmentTransferredBy")
+  skipsCreated                 EnrollmentSkip[]  @relation("SkipCreatedBy")
+  guardiansCreated             Guardian[]        @relation("GuardianCreatedBy")
+  guardiansUpdated             Guardian[]        @relation("GuardianUpdatedBy")
+  makeUpsCreated               MakeUpBooking[]   @relation("MakeUpCreatedBy")
+  makeUpsUpdated               MakeUpBooking[]   @relation("MakeUpUpdatedBy")
+  studentsCreated              Student[]         @relation("StudentCreatedBy")
+  studentsUpdated              Student[]         @relation("StudentUpdatedBy")
+  termsCreated                 Term[]            @relation("TermCreatedBy")
+  instructorAssignmentsCreated ClassInstructor[] @relation("ClassInstructorAssignedBy")
+  instructorAssignmentsRemoved ClassInstructor[] @relation("ClassInstructorRemovedBy")
+  classInstructorAssignments   ClassInstructor[] @relation("ClassInstructorToStaffUser")
+  trialBookingsConverted       TrialBooking[]    @relation("TrialBookingConvertedBy")
+  trialBookingsCreated         TrialBooking[]    @relation("TrialBookingCreatedBy")
+  trialBookingsUpdated         TrialBooking[]    @relation("TrialBookingUpdatedBy")
+  invoicesCreated  Invoice[]  @relation("InvoiceCreatedBy")
+  invoicesUpdated  Invoice[]  @relation("InvoiceUpdatedBy")
+  paymentsCreated  Payment[]  @relation("PaymentCreatedBy")
+}
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  staffId    String
+  action     String
+  entityType String
+  entityId   String
+  changes    Json?
+  metadata   Json?
+  createdAt  DateTime  @default(now())
+  staff      StaffUser @relation(fields: [staffId], references: [id])
+
+  @@index([staffId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model Term {
+  id             String          @id @default(cuid())
+  startDate      DateTime        @db.Date
+  endDate        DateTime        @db.Date
+  name           String
+  slug           String?         @unique
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  createdBy      String?
+  offerings      ClassOffering[]
+  createdByStaff StaffUser?      @relation("TermCreatedBy", fields: [createdBy], references: [id])
+}
+
+model ClassOffering {
+  id          String            @id @default(cuid())
+  termId      String
+  weekday     Int
+  startTime   String
+  endTime     String
+  title       String
+  duration    Int
+  capacity    Int
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  term        Term              @relation(fields: [termId], references: [id], onDelete: Cascade)
+  sessions    ClassSession[]
+  enrollments Enrollment[]
+  instructors ClassInstructor[]
+
+  @@index([termId])
+  @@index([termId, weekday, startTime])
+}
+
+model ClassSession {
+  id              String           @id @default(cuid())
+  offeringId      String
+  date            DateTime         @db.Date
+  status          SessionStatus    @default(scheduled)
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  attendance      Attendance[]
+  offering        ClassOffering    @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  enrollmentSkips EnrollmentSkip[]
+  makeUps         MakeUpBooking[]
+  trialBookings   TrialBooking[]
+
+  @@unique([offeringId, date])
+  @@index([date])
+  @@index([offeringId, date])
+  @@index([offeringId])
+}
+
+model Enrollment {
+  id                 String           @id @default(cuid())
+  studentId          String
+  offeringId         String
+  status             EnrollmentStatus @default(active)
+  enrollDate         DateTime         @default(now())
+  notes              String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  createdBy          String?
+  endDate            DateTime?        @db.Date
+  transferNotes      String?
+  transferredAt      DateTime?
+  transferredBy      String?
+  transferredFromId  String?          @unique
+  transferredToId    String?          @unique
+  attendance         Attendance[]
+  createdByStaff     StaffUser?       @relation("EnrollmentCreatedBy", fields: [createdBy], references: [id])
+  offering           ClassOffering    @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  student            Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  transferredByStaff StaffUser?       @relation("EnrollmentTransferredBy", fields: [transferredBy], references: [id])
+  transferredTo      Enrollment?      @relation("EnrollmentTransfer", fields: [transferredToId], references: [id])
+  transferredFrom    Enrollment?      @relation("EnrollmentTransfer")
+  enrollmentSkips    EnrollmentSkip[]
+  classRatio       String  @default("3:1") // "3:1", "2:1", "1:1", "Private", etc.
+  invoiceLineItem  InvoiceLineItem? // Reverse relation to check if invoiced
+
+  @@unique([offeringId, studentId], name: "offeringId_studentId")
+  @@index([studentId])
+  @@index([offeringId])
+  @@index([offeringId, enrollDate])
+  @@index([offeringId, endDate])
+  @@index([createdBy])
+  @@index([transferredBy])
+  @@index([offeringId, status])
+}
+
+model EnrollmentSkip {
+  id             String       @id @default(cuid())
+  enrollmentId   String
+  classSessionId String
+  reason         String?
+  createdBy      String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  classSession   ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  createdByStaff StaffUser?   @relation("SkipCreatedBy", fields: [createdBy], references: [id])
+  enrollment     Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, classSessionId])
+  @@index([classSessionId])
+  @@index([createdBy])
+  @@index([enrollmentId])
+  @@index([enrollmentId, classSessionId])
+}
+
+model Attendance {
+  id             String           @id @default(cuid())
+  classSessionId String
+  enrollmentId   String
+  status         AttendanceStatus
+  notes          String?
+  markedAt       DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  markedBy       String?
+  updatedBy      String?
+  classSession   ClassSession     @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  enrollment     Enrollment       @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  markedByStaff  StaffUser?       @relation("AttendanceMarkedBy", fields: [markedBy], references: [id])
+  updatedByStaff StaffUser?       @relation("AttendanceUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@unique([enrollmentId, classSessionId], name: "enrollmentId_classSessionId")
+  @@index([classSessionId])
+  @@index([markedBy])
+  @@index([enrollmentId])
+  @@index([enrollmentId, classSessionId])
+  @@index([classSessionId, status])
+}
+
+model Student {
+  id                 String          @id @default(cuid())
+  shortCode          String?         @unique
+  firstName          String
+  lastName           String
+  birthdate          DateTime?
+  guardianId         String
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  createdBy          String?
+  level              String?
+  updatedBy          String?
+  enrollments        Enrollment[]
+  makeUps            MakeUpBooking[]
+  createdByStaff     StaffUser?      @relation("StudentCreatedBy", fields: [createdBy], references: [id])
+  guardian           Guardian        @relation(fields: [guardianId], references: [id])
+  updatedByStaff     StaffUser?      @relation("StudentUpdatedBy", fields: [updatedBy], references: [id])
+  convertedFromTrial TrialBooking[]
+
+  @@index([guardianId])
+  @@index([lastName, firstName])
+  @@index([createdBy])
+  @@index([level])
+}
+
+model Guardian {
+  id             String     @id @default(cuid())
+  shortCode      String     @unique
+  fullName       String
+  email          String     @unique
+  phone          String
+  address        Json?
+  notes          String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  createdBy      String?
+  updatedBy      String?
+  createdByStaff StaffUser? @relation("GuardianCreatedBy", fields: [createdBy], references: [id])
+  updatedByStaff StaffUser? @relation("GuardianUpdatedBy", fields: [updatedBy], references: [id])
+  invoices       Invoice[]
+  students       Student[]
+
+  @@index([fullName])
+  @@index([email])
+  @@index([createdBy])
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String?       @unique // Staff-entered, nullable for drafts
+  guardianId    String
+  totalAmount   Decimal       @db.Decimal(10, 2) // Calculated but overridable
+  status        InvoiceStatus 
+  notes         String?       @db.Text
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  createdBy     String?
+  updatedBy     String?
+  
+  // Relations
+  guardian      Guardian      @relation(fields: [guardianId], references: [id], onDelete: Restrict)
+  lineItems     InvoiceLineItem[]
+  payments      Payment[]
+  createdByUser StaffUser?    @relation("InvoiceCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser StaffUser?    @relation("InvoiceUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  
+  @@index([guardianId])
+  @@index([invoiceNumber])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model InvoiceLineItem {
+  id           String    @id @default(uuid())
+  invoiceId    String
+  enrollmentId String?   @unique // Nullable for custom line items, unique so enrollment can only be on one invoice
+  description  String    // Auto-generated for enrollments, manual for custom items
+  amount       Decimal   @db.Decimal(10, 2)
+  
+  createdAt    DateTime  @default(now())
+  
+  // Relations
+  invoice      Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  
+  @@index([invoiceId])
+  @@index([enrollmentId])
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  invoiceId     String
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentDate   DateTime      // When payment was received
+  paymentMethod PaymentMethod
+  notes         String?       @db.Text // e.g., "Check #1234"
+  
+  createdAt     DateTime      @default(now())
+  createdBy     String?
+  
+  // Relations
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdByUser StaffUser?    @relation("PaymentCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  
+  @@index([invoiceId])
+  @@index([paymentDate])
+}
+
+model MakeUpBooking {
+  id             String       @id @default(cuid())
+  studentId      String
+  classSessionId String
+  status         MakeUpStatus @default(requested)
+  notes          String?
+  createdBy      String?
+  createdAt      DateTime     @default(now())
+  updatedBy      String?
+  updatedAt      DateTime     @updatedAt
+  classSession   ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  createdByStaff StaffUser?   @relation("MakeUpCreatedBy", fields: [createdBy], references: [id])
+  student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  updatedByStaff StaffUser?   @relation("MakeUpUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@unique([studentId, classSessionId])
+  @@index([classSessionId])
+  @@index([createdBy])
+  @@index([classSessionId, status])
+  @@index([studentId])
+}
+
+model ClassInstructor {
+  id              String        @id @default(uuid())
+  classOfferingId String
+  staffUserId     String
+  assignedAt      DateTime      @default(now())
+  assignedBy      String?
+  removedAt       DateTime?
+  removedBy       String?
+  assignedByUser  StaffUser?    @relation("ClassInstructorAssignedBy", fields: [assignedBy], references: [id])
+  classOffering   ClassOffering @relation(fields: [classOfferingId], references: [id], onDelete: Cascade)
+  removedByUser   StaffUser?    @relation("ClassInstructorRemovedBy", fields: [removedBy], references: [id])
+  staffUser       StaffUser     @relation("ClassInstructorToStaffUser", fields: [staffUserId], references: [id], onDelete: Cascade)
+
+  @@unique([classOfferingId, staffUserId, removedAt], name: "unique_active_instructor")
+  @@index([classOfferingId])
+  @@index([staffUserId])
+  @@map("class_instructors")
+}
+
 enum EnrollmentStatus {
   active
   inactive
@@ -33,6 +391,16 @@ enum InvoiceStatus {
   void
 }
 
+enum PaymentMethod {
+  cash
+  debit
+  visa
+  mastercard
+  etransfer
+  website
+  other
+}
+
 enum MakeUpStatus {
   requested
   scheduled
@@ -45,8 +413,8 @@ enum StaffRole {
   admin
   manager
   supervisor
-  instructor
   viewer
+  instructor
 }
 
 enum TrialStatus {
@@ -55,410 +423,4 @@ enum TrialStatus {
   noshow
   converted
   cancelled
-}
-
-enum PaymentMethod {
-  cash
-  debit
-  visa
-  mastercard
-  etransfer
-  website
-  other
-}
-
-model TrialBooking {
-  id                   String      @id @default(uuid())
-  classSessionId       String
-  childName            String
-  childAge             Int
-  parentPhone          String
-  status               TrialStatus @default(scheduled)
-  notes                String?
-  createdAt            DateTime    @default(now())
-  createdBy            String?
-  updatedAt            DateTime    @updatedAt
-  updatedBy            String?
-  convertedAt          DateTime?
-  convertedBy          String?
-  convertedToStudentId String?
-
-  classSession       ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
-  createdByUser      StaffUser?   @relation("TrialBookingCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  updatedByUser      StaffUser?   @relation("TrialBookingUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
-  convertedByUser    StaffUser?   @relation("TrialBookingConvertedBy", fields: [convertedBy], references: [id], onDelete: SetNull)
-  convertedToStudent Student?     @relation(fields: [convertedToStudentId], references: [id], onDelete: SetNull)
-
-  @@index([classSessionId])
-  @@index([status])
-  @@map("trial_bookings")
-}
-
-model StaffUser {
-  id       String    @id @default(cuid())
-  authId   String    @unique // Supabase auth.users.id
-  email    String    @unique
-  fullName String
-  role     StaffRole
-  active   Boolean   @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations for audit tracking
-  attendanceMarked             Attendance[]      @relation("AttendanceMarkedBy")
-  attendanceUpdated            Attendance[]      @relation("AttendanceUpdatedBy")
-  makeUpsCreated               MakeUpBooking[]   @relation("MakeUpCreatedBy")
-  makeUpsUpdated               MakeUpBooking[]   @relation("MakeUpUpdatedBy")
-  enrollmentsCreated           Enrollment[]      @relation("EnrollmentCreatedBy")
-  transfersInitiated           Enrollment[]      @relation("EnrollmentTransferredBy")
-  skipsCreated                 EnrollmentSkip[]  @relation("SkipCreatedBy")
-  studentsCreated              Student[]         @relation("StudentCreatedBy")
-  studentsUpdated              Student[]         @relation("StudentUpdatedBy")
-  guardiansCreated             Guardian[]        @relation("GuardianCreatedBy")
-  guardiansUpdated             Guardian[]        @relation("GuardianUpdatedBy")
-  termsCreated                 Term[]            @relation("TermCreatedBy")
-  classInstructorAssignments   ClassInstructor[] @relation("ClassInstructorToStaffUser")
-  instructorAssignmentsCreated ClassInstructor[] @relation("ClassInstructorAssignedBy")
-  instructorAssignmentsRemoved ClassInstructor[] @relation("ClassInstructorRemovedBy")
-  trialBookingsCreated         TrialBooking[]    @relation("TrialBookingCreatedBy")
-  trialBookingsUpdated         TrialBooking[]    @relation("TrialBookingUpdatedBy")
-  trialBookingsConverted       TrialBooking[]    @relation("TrialBookingConvertedBy")
-  invoicesCreated  Invoice[]  @relation("InvoiceCreatedBy")
-  invoicesUpdated  Invoice[]  @relation("InvoiceUpdatedBy")
-  paymentsCreated  Payment[]  @relation("PaymentCreatedBy")
-  auditLogs                    AuditLog[]
-}
-
-// Audit log for complete history
-model AuditLog {
-  id      String    @id @default(cuid())
-  staffId String
-  staff   StaffUser @relation(fields: [staffId], references: [id])
-
-  action     String // "mark_attendance", "create_enrollment", "transfer_enrollment", etc.
-  entityType String // "attendance", "enrollment", "student", etc.
-  entityId   String // ID of the affected record
-  changes    Json? // What changed (old value → new value)
-  metadata   Json? // Additional context
-
-  createdAt DateTime @default(now())
-
-  @@index([staffId])
-  @@index([entityType, entityId])
-  @@index([createdAt])
-}
-
-model Term {
-  id        String   @id @default(cuid())
-  startDate DateTime @db.Date
-  endDate   DateTime @db.Date
-  name      String
-  slug      String?  @unique
-
-  offerings ClassOffering[]
-
-  createdBy      String?
-  createdByStaff StaffUser? @relation("TermCreatedBy", fields: [createdBy], references: [id])
-  createdAt      DateTime   @default(now())
-
-  updatedAt DateTime @updatedAt
-}
-
-model ClassOffering {
-  id     String @id @default(cuid())
-  termId String
-  term   Term   @relation(fields: [termId], references: [id], onDelete: Cascade)
-
-  weekday   Int
-  startTime String
-  endTime   String
-  title     String
-  duration  Int
-  capacity  Int
-  notes     String?
-
-  sessions    ClassSession[]
-  enrollments Enrollment[]
-  instructors ClassInstructor[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([termId])
-  @@index([termId, weekday, startTime])
-}
-
-model ClassSession {
-  id         String        @id @default(cuid())
-  offeringId String
-  offering   ClassOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
-
-  date   DateTime      @db.Date
-  status SessionStatus @default(scheduled)
-  notes  String?
-
-  attendance      Attendance[]
-  makeUps         MakeUpBooking[]
-  enrollmentSkips EnrollmentSkip[]
-  trialBookings   TrialBooking[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([offeringId, date])
-  @@index([date])
-  @@index([offeringId, date])
-  @@index([offeringId])
-}
-
-model Enrollment {
-  id         String        @id @default(cuid())
-  studentId  String
-  offeringId String
-  offering   ClassOffering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
-  student    Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  status     EnrollmentStatus @default(active)
-  enrollDate DateTime         @default(now())
-  endDate    DateTime?        @db.Date
-  notes      String?
-
-  //Transfer Info
-  transferredToId    String?     @unique
-  transferredFromId  String?     @unique
-  transferredTo      Enrollment? @relation("EnrollmentTransfer", fields: [transferredToId], references: [id], onDelete: SetNull)
-  transferredFrom    Enrollment? @relation("EnrollmentTransfer")
-  transferredAt      DateTime?
-  transferNotes      String?
-  transferredBy      String?
-  transferredByStaff StaffUser?  @relation("EnrollmentTransferredBy", fields: [transferredBy], references: [id])
-
-  createdBy      String?
-  createdByStaff StaffUser? @relation("EnrollmentCreatedBy", fields: [createdBy], references: [id])
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-
-  classRatio       String  @default("3:1")
-  invoiceLineItem  InvoiceLineItem? 
-
-  attendance      Attendance[]
-  enrollmentSkips EnrollmentSkip[]
-
-  @@unique([offeringId, studentId], name: "offeringId_studentId")
-  @@index([studentId])
-  @@index([offeringId])
-  @@index([offeringId, enrollDate])
-  @@index([offeringId, endDate])
-  @@index([createdBy])
-  @@index([transferredBy])
-  @@index([offeringId, status])
-}
-
-model EnrollmentSkip {
-  id             String       @id @default(cuid())
-  enrollmentId   String
-  classSessionId String
-  enrollment     Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  classSession   ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
-
-  reason String?
-
-  createdBy      String?
-  createdByStaff StaffUser? @relation("SkipCreatedBy", fields: [createdBy], references: [id])
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-
-  @@unique([enrollmentId, classSessionId])
-  @@index([classSessionId])
-  @@index([createdBy])
-  @@index([enrollmentId])
-  @@index([enrollmentId, classSessionId])
-}
-
-model Attendance {
-  id             String       @id @default(cuid())
-  classSessionId String
-  enrollmentId   String
-  classSession   ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
-  enrollment     Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-
-  status AttendanceStatus
-  notes  String?
-
-  markedBy      String?
-  markedByStaff StaffUser? @relation("AttendanceMarkedBy", fields: [markedBy], references: [id])
-  markedAt      DateTime   @default(now())
-
-  updatedBy      String?
-  updatedByStaff StaffUser? @relation("AttendanceUpdatedBy", fields: [updatedBy], references: [id])
-  updatedAt      DateTime   @updatedAt
-
-  @@unique([enrollmentId, classSessionId], name: "enrollmentId_classSessionId")
-  @@index([classSessionId])
-  @@index([markedBy])
-  @@index([enrollmentId])
-  @@index([enrollmentId, classSessionId])
-  @@index([classSessionId, status])
-}
-
-model Student {
-  id        String    @id @default(cuid())
-  shortCode String?   @unique
-  firstName String
-  lastName  String
-  birthdate DateTime?
-  level     String?
-
-  guardianId String
-  guardian   Guardian @relation(fields: [guardianId], references: [id])
-
-  enrollments        Enrollment[]
-  makeUps            MakeUpBooking[]
-  convertedFromTrial TrialBooking[]
-
-  createdBy      String?
-  createdByStaff StaffUser? @relation("StudentCreatedBy", fields: [createdBy], references: [id])
-  createdAt      DateTime   @default(now())
-
-  updatedBy      String?
-  updatedByStaff StaffUser? @relation("StudentUpdatedBy", fields: [updatedBy], references: [id])
-  updatedAt      DateTime   @updatedAt
-
-  @@index([guardianId])
-  @@index([lastName, firstName])
-  @@index([createdBy])
-  @@index([level])
-}
-
-model Guardian {
-  id        String  @id @default(cuid())
-  shortCode String  @unique
-  fullName  String
-  email     String  @unique
-  phone     String
-  address   Json?
-  notes     String?
-
-  invoices Invoice[]
-  students Student[]
-
-  createdBy      String?
-  createdByStaff StaffUser? @relation("GuardianCreatedBy", fields: [createdBy], references: [id])
-  createdAt      DateTime   @default(now())
-
-  updatedBy      String?
-  updatedByStaff StaffUser? @relation("GuardianUpdatedBy", fields: [updatedBy], references: [id])
-  updatedAt      DateTime   @updatedAt
-
-  @@index([fullName])
-  @@index([email])
-  @@index([createdBy])
-}
-
-model Invoice {
-  id            String        @id @default(uuid())
-  invoiceNumber String?       @unique // Staff-entered, nullable for drafts
-  guardianId    String
-  totalAmount   Decimal       @db.Decimal(10, 2) // Calculated but overridable
-  status        InvoiceStatus @default(partial)
-  notes         String?       @db.Text
-  
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  createdBy     String?
-  updatedBy     String?
-  
-  // Relations
-  guardian      Guardian      @relation(fields: [guardianId], references: [id], onDelete: Restrict)
-  lineItems     InvoiceLineItem[]
-  payments      Payment[]
-  createdByUser StaffUser?    @relation("InvoiceCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  updatedByUser StaffUser?    @relation("InvoiceUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
-  
-  @@index([guardianId])
-  @@index([invoiceNumber])
-  @@index([status])
-  @@index([createdAt])
-}
-
-model Payment {
-  id            String        @id @default(uuid())
-  invoiceId     String
-  amount        Decimal       @db.Decimal(10, 2)
-  paymentDate   DateTime    
-  paymentMethod PaymentMethod
-  notes         String?       @db.Text 
-  
-  createdAt     DateTime      @default(now())
-  createdBy     String?
-  
-  // Relations
-  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  createdByUser StaffUser?    @relation("PaymentCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  
-  @@index([invoiceId])
-  @@index([paymentDate])
-}
-
-model InvoiceLineItem {
-  id           String    @id @default(uuid())
-  invoiceId    String
-  enrollmentId String?   @unique // Nullable for custom line items, unique so enrollment can only be on one invoice
-  description  String    // Auto-generated for enrollments, manual for custom items
-  amount       Decimal   @db.Decimal(10, 2)
-  
-  createdAt    DateTime  @default(now())
-  
-  // Relations
-  invoice      Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
-  
-  @@index([invoiceId])
-  @@index([enrollmentId])
-}
-
-model MakeUpBooking {
-  id             String       @id @default(cuid())
-  studentId      String
-  classSessionId String
-  student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  classSession   ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
-
-  status MakeUpStatus @default(requested)
-  notes  String?
-
-  createdBy      String?
-  createdByStaff StaffUser? @relation("MakeUpCreatedBy", fields: [createdBy], references: [id])
-  createdAt      DateTime   @default(now())
-
-  updatedBy      String?
-  updatedByStaff StaffUser? @relation("MakeUpUpdatedBy", fields: [updatedBy], references: [id])
-  updatedAt      DateTime   @updatedAt
-
-  @@unique([studentId, classSessionId])
-  @@index([classSessionId])
-  @@index([createdBy])
-  @@index([classSessionId, status]) // NEW
-  @@index([studentId])
-}
-
-model ClassInstructor {
-  id              String    @id @default(uuid())
-  classOfferingId String
-  staffUserId     String
-  assignedAt      DateTime  @default(now())
-  assignedBy      String?
-  removedAt       DateTime?
-  removedBy       String?
-
-  classOffering  ClassOffering @relation(fields: [classOfferingId], references: [id], onDelete: Cascade)
-  staffUser      StaffUser     @relation("ClassInstructorToStaffUser", fields: [staffUserId], references: [id], onDelete: Cascade)
-  assignedByUser StaffUser?    @relation("ClassInstructorAssignedBy", fields: [assignedBy], references: [id], onDelete: SetNull)
-  removedByUser  StaffUser?    @relation("ClassInstructorRemovedBy", fields: [removedBy], references: [id], onDelete: SetNull)
-
-  @@unique([classOfferingId, staffUserId, removedAt], name: "unique_active_instructor")
-  @@index([classOfferingId])
-  @@index([staffUserId])
-  @@map("class_instructors")
 }

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Term } from "@school/shared-types";
+import type { Term } from "@school/shared-types";
 
 import { useRouter } from "next/navigation";
 

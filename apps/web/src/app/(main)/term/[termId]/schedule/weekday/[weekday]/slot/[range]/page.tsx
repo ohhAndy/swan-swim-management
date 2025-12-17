@@ -1,6 +1,6 @@
 import { getSlotPage } from "@/lib/api/schedule";
 import { weekdayName, groupByOffering } from "@/lib/schedule/transform";
-import { SlotPage } from "@school/shared-types";
+import type { SlotPage } from "@school/shared-types";
 import { SlotHeader } from "@/components/schedule/SlotHeader";
 import { SlotBlock } from "@/components/schedule/SlotBlock";
 import { BackButton } from "@/components/nav/BackButton";

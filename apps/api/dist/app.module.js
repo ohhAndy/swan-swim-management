@@ -23,6 +23,8 @@ const auth_module_1 = require("./auth/auth.module");
 const config_1 = require("@nestjs/config");
 const class_instructors_module_1 = require("./class-instructor/class-instructors.module");
 const trial_bookings_module_1 = require("./trial-bookings/trial-bookings.module");
+const invoices_module_1 = require("./invoices/invoices.module");
+const payments_module_1 = require("./payments/payments.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -47,6 +49,8 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             class_instructors_module_1.ClassInstructorsModule,
             trial_bookings_module_1.TrialBookingsModule,
+            invoices_module_1.InvoicesModule,
+            payments_module_1.PaymentsModule,
         ],
     })
 ], AppModule);

@@ -1,0 +1,343 @@
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateInvoiceDto } from "./dto/create-invoice.dto";
+import { UpdateInvoiceDto } from './dto/update-invoice.dto';
+import { InvoiceQueryDto } from './dto/invoice-query.dto';
+import { UnInvoicedEnrollmentsQueryDto } from './dto/uninvoiced-enrollments-query.dto';
+import { Prisma } from '@prisma/client';
+import { CreateInvoiceLineItemDto } from './dto/create-invoice.dto';
+
+@Injectable()
+export class InvoicesService {
+  constructor(private prisma: PrismaService) {}
+
+  // Calculate suggested amount for an enrollment based on class ratio and skips
+  calculateEnrollmentAmount(enrollment: any): number {
+    const rates = {
+      '3:1': 50,
+      '2:1': 73,
+      '1:1': 140,
+    };
+
+    const rate = rates[enrollment.classRatio as keyof typeof rates] || 50; // Default to 3:1 if unknown
+    const totalWeeks = 8; // Standard term length
+    const skippedWeeks = enrollment.enrollmentSkips?.length || 0;
+    const attendingWeeks = totalWeeks - skippedWeeks;
+
+    return rate * attendingWeeks;
+  }
+
+  // Create invoice with line items
+  async create(createInvoiceDto: CreateInvoiceDto, user: any) {
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+    if (!staffUser) return;
+
+    // Validate that enrollments aren't already invoiced
+    const lineItems: CreateInvoiceLineItemDto[] = createInvoiceDto.lineItems;
+    const enrollmentIds: string[] = lineItems
+      .filter(item => item.enrollmentId)
+      .map(item => item.enrollmentId!);
+
+    if (enrollmentIds.length > 0) {
+      const alreadyInvoiced = await this.prisma.invoiceLineItem.findMany({
+        where: { enrollmentId: { in: enrollmentIds } },
+        include: { invoice: true },
+      });
+
+      if (alreadyInvoiced.length > 0) {
+        const invoiceNumbers = alreadyInvoiced
+          .map(item => item.invoice.invoiceNumber || item.invoice.id)
+          .join(', ');
+        throw new BadRequestException(
+          `Some enrollments are already on invoices: ${invoiceNumbers}`
+        );
+      }
+    }
+
+    // Create invoice with line items
+    const invoice = await this.prisma.invoice.create({
+      data: {
+        invoiceNumber: createInvoiceDto.invoiceNumber,
+        guardianId: createInvoiceDto.guardianId,
+        totalAmount: createInvoiceDto.totalAmount,
+        notes: createInvoiceDto.notes,
+        createdBy: staffUser.id,
+        status: 'partial',
+        lineItems: {
+          create: lineItems.map(item => ({
+            enrollmentId: item.enrollmentId,
+            description: item.description,
+            amount: item.amount,
+          })),
+        },
+      },
+      include: {
+        lineItems: {
+          include: {
+            enrollment: {
+              include: {
+                student: true,
+                offering: {
+                  include: {
+                    term: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        guardian: true,
+        payments: true,
+      },
+    });
+
+    return this.enrichInvoice(invoice);
+  }
+
+  // Get invoice by ID
+  async findOne(id: string) {
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { id },
+      include: {
+        lineItems: {
+          include: {
+            enrollment: {
+              include: {
+                student: true,
+                offering: {
+                  include: {
+                    term: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        guardian: true,
+        payments: {
+          orderBy: { paymentDate: 'desc' },
+          include: {
+            createdByUser: {
+              select: { id: true, fullName: true },
+            },
+          },
+        },
+        createdByUser: {
+          select: { id: true, fullName: true },
+        },
+        updatedByUser: {
+          select: { id: true, fullName: true },
+        },
+      },
+    });
+
+    if (!invoice) {
+      throw new NotFoundException(`Invoice with ID ${id} not found`);
+    }
+
+    return this.enrichInvoice(invoice);
+  }
+
+  // List invoices with filters
+  async findAll(query: InvoiceQueryDto) {
+    const page = parseInt(query.page ?? "") || 1;
+    const limit = parseInt(query.limit ?? "") || 20;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.InvoiceWhereInput = {};
+
+    // Search by invoice number
+    if (query.search) {
+      where.invoiceNumber = {
+        contains: query.search,
+        mode: 'insensitive',
+      };
+    }
+
+    // Filter by status
+    if (query.status && query.status !== 'all') {
+      where.status = query.status;
+    }
+
+    // Filter by guardian
+    if (query.guardianId) {
+      where.guardianId = query.guardianId;
+    }
+
+    // Filter by date range
+    if (query.startDate || query.endDate) {
+      where.createdAt = {};
+      if (query.startDate) {
+        where.createdAt.gte = new Date(query.startDate);
+      }
+      if (query.endDate) {
+        where.createdAt.lte = new Date(query.endDate);
+      }
+    }
+
+    const [invoices, total] = await Promise.all([
+      this.prisma.invoice.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          guardian: true,
+          lineItems: true,
+          payments: true,
+        },
+      }),
+      this.prisma.invoice.count({ where }),
+    ]);
+
+    return {
+      data: invoices.map(inv => this.enrichInvoice(inv)),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // Update invoice
+  async update(id: string, updateInvoiceDto: UpdateInvoiceDto, user: any) {
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+    if (!staffUser) return;
+
+    const invoice = await this.prisma.invoice.update({
+      where: { id },
+      data: {
+        ...updateInvoiceDto,
+        updatedBy: staffUser.id,
+      },
+      include: {
+        lineItems: {
+          include: {
+            enrollment: {
+              include: {
+                student: true,
+                offering: {
+                  include: {
+                    term: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        guardian: true,
+        payments: true,
+      },
+    });
+    
+    return this.enrichInvoice(invoice);
+  }
+
+  // Get un-invoiced enrollments
+  async getUnInvoicedEnrollments(query: UnInvoicedEnrollmentsQueryDto) {
+    const page = parseInt(query.page ?? "") || 1;
+    const limit = parseInt(query.limit ?? "") || 50;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.EnrollmentWhereInput = {
+      invoiceLineItem: null, // Not linked to any invoice
+      status: 'active', // Only active enrollments
+    };
+
+    if (query.guardianId) {
+      where.student = {
+        guardianId: query.guardianId,
+      };
+    }
+
+    if (query.termId) {
+      where.offering = {
+        termId: query.termId,
+      };
+    }
+
+    const [enrollments, total] = await Promise.all([
+      this.prisma.enrollment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [
+          { student: { guardianId: 'asc' } },
+          { createdAt: 'desc' },
+        ],
+        include: {
+          student: {
+            include: {
+              guardian: true,
+            },
+          },
+          offering: {
+            include: {
+              term: true,
+            },
+          },
+          enrollmentSkips: true,
+        },
+      }),
+      this.prisma.enrollment.count({ where }),
+    ]);
+
+    // Enrich with suggested amounts
+    const enrichedEnrollments = enrollments.map(enrollment => ({
+      ...enrollment,
+      suggestedAmount: this.calculateEnrollmentAmount(enrollment),
+    }));
+
+    return {
+      data: enrichedEnrollments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // Delete invoice (admin only, cascades to line items and payments)
+  async remove(id: string) {
+    await this.prisma.invoice.delete({
+      where: { id },
+    });
+    return { message: 'Invoice deleted successfully' };
+  }
+
+  // Helper: Enrich invoice with calculated fields
+  private enrichInvoice(invoice: any) {
+    const amountPaid = invoice.payments?.reduce(
+      (sum: number, payment: { amount: number | Prisma.Decimal }) => 
+        sum + Number(payment.amount),
+      0
+    ) ?? 0;
+
+    const balance = Number(invoice.totalAmount) - amountPaid;
+
+    // Auto-calculate status based on payments (unless manually voided)
+    let calculatedStatus = invoice.status;
+    if (invoice.status !== 'void') {
+      if (amountPaid >= Number(invoice.totalAmount)) {
+        calculatedStatus = 'paid';
+      } else if (amountPaid > 0) {
+        calculatedStatus = 'partial';
+      }
+    }
+
+    return {
+      ...invoice,
+      amountPaid,
+      balance,
+      calculatedStatus,
+    };
+  }
+}

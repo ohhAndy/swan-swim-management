@@ -1,4 +1,4 @@
-import { SlotPage, Term } from "@school/shared-types";
+import type { SlotPage, Term } from "@school/shared-types";
 import { createClient } from "../supabase/client";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;

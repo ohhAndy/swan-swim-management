@@ -14,6 +14,8 @@ import { AuthModule } from "./auth/auth.module";
 import { ConfigModule } from "@nestjs/config";
 import { ClassInstructorsModule } from "./class-instructor/class-instructors.module";
 import { TrialBookingsModule } from "./trial-bookings/trial-bookings.module";
+import { InvoicesModule } from "./invoices/invoices.module";
+import { PaymentsModule } from "./payments/payments.module";
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { TrialBookingsModule } from "./trial-bookings/trial-bookings.module";
     AuthModule,
     ClassInstructorsModule,
     TrialBookingsModule,
+    InvoicesModule, 
+    PaymentsModule,
   ],
 })
 export class AppModule {}

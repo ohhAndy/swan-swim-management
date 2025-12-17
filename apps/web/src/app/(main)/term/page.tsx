@@ -1,5 +1,5 @@
 import { getAllTerms } from "@/lib/api/schedule";
-import { Term } from "@school/shared-types";
+import type { Term } from "@school/shared-types";
 
 import { YEARS } from "@/lib/schedule/slots";
 

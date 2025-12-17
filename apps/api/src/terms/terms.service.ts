@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { MakeupLite, RosterResponse, SlotPage, Term, TrialLite } from "@school/shared-types";
+import type { MakeupLite, RosterResponse, SlotPage, Term, TrialLite } from "@school/shared-types";
 import { CreateTermInput } from "./dto/create-term.dto";
 import { SessionStatus, Prisma } from "@prisma/client";
 

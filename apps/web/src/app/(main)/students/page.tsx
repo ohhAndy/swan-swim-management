@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { searchStudents } from "@/lib/api/students";
 import StudentsListClient from "./StudentListClient";
 import { getCurrentUser } from "@/lib/auth/user";
