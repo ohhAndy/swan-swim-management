@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Post, Body, Patch } from '@nestjs/common';
-import { StaffUsersService } from './staff-users.service';
+import { Controller, Get, Param, Post, Body, Patch } from "@nestjs/common";
+import { StaffUsersService } from "./staff-users.service";
+import { Public } from "../auth/public.decorator";
 
-@Controller('staff-users')
+@Controller("staff-users")
 export class StaffUsersController {
   constructor(private readonly staffUsersService: StaffUsersService) {}
 
@@ -10,27 +11,32 @@ export class StaffUsersController {
     return this.staffUsersService.findAll();
   }
 
-  @Get('by-auth/:authId')
-  async getByAuthId(@Param('authId') authId: string) {
+  @Public()
+  @Get("by-auth/:authId")
+  async getByAuthId(@Param("authId") authId: string) {
     return this.staffUsersService.findByAuthId(authId);
   }
 
   @Post()
-  async createStaffUser(@Body() body: {
-    authId: string;
-    email: string;
-    fullName: string;
-    role?: 'admin' | 'manager' | 'supervisor' | 'viewer';
-  }) {
+  async createStaffUser(
+    @Body()
+    body: {
+      authId: string;
+      email: string;
+      fullName: string;
+      role?: "admin" | "manager" | "supervisor" | "viewer";
+    }
+  ) {
     return this.staffUsersService.createStaffUser(body);
   }
 
-  @Patch(':id')
+  @Patch(":id")
   async updateStaffUser(
-    @Param('id') id: string,
-    @Body() body: {
+    @Param("id") id: string,
+    @Body()
+    body: {
       fullName?: string;
-      role?: 'admin' | 'manager' | 'supervisor' | 'viewer';
+      role?: "admin" | "manager" | "supervisor" | "viewer";
       active?: boolean;
     }
   ) {
