@@ -41,6 +41,7 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@school/shared-types": "*",
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
     "@types/react": "^19",
