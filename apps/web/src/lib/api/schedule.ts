@@ -5,14 +5,15 @@ const API = process.env.NEXT_PUBLIC_API_URL!;
 
 async function getAuthHeaders() {
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${session?.access_token}`,
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${session?.access_token}`,
   };
 }
-
 
 export async function getSlotPage(
   termId: string,
@@ -35,7 +36,7 @@ export async function getTimeSlotsByWeekday(
   termId: string,
   weekday: number
 ): Promise<string[]> {
-  const headers = await getAuthHeaders();;
+  const headers = await getAuthHeaders();
   const res = await fetch(
     `${API}/terms/${termId}/schedule/weekday/${weekday}/slots`,
     { cache: "no-store", headers }
@@ -48,7 +49,10 @@ export async function getTimeSlotsByWeekday(
 
 export async function getTermTitle(termId: string): Promise<string> {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/terms/${termId}`, { cache: "no-store", headers });
+  const res = await fetch(`${API}/terms/${termId}`, {
+    cache: "no-store",
+    headers,
+  });
   if (!res.ok) {
     throw new Error("Failed to fetch slot page");
   }
@@ -63,7 +67,6 @@ export async function getAllTerms(): Promise<Term[]> {
   }
   return res.json();
 }
-
 
 export async function scheduleMakeUp(payload: {
   studentId: string;
@@ -134,19 +137,36 @@ export async function getAvailableClassesForTransfer(
     termId,
     excludeOfferingId: currentOfferingId,
   });
-  
+
   if (level) {
-    params.set('level', level);
+    params.set("level", level);
   }
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/offerings/available-for-transfer?${params.toString()}`, {
-    cache: 'no-store',
-    headers,
-  });
-  
+  const res = await fetch(
+    `${API}/offerings/available-for-transfer?${params.toString()}`,
+    {
+      cache: "no-store",
+      headers,
+    }
+  );
+
   if (!res.ok) {
     throw new Error(`Failed to fetch available classes: ${res.status}`);
   }
-  
+
+  return res.json();
+}
+
+export async function getDailySchedule(termId: string, date: string) {
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API}/terms/${termId}/schedule/date/${date}`, {
+    cache: "no-store",
+    headers,
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch daily schedule: ${res.status}`);
+  }
+
   return res.json();
 }

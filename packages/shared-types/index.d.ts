@@ -1,5 +1,10 @@
 export type AttendanceStatus = "present" | "absent" | "excused";
-export type TrialStatus = "cancelled" | "scheduled" | "noshow" | "attended" | "converted";
+export type TrialStatus =
+  | "cancelled"
+  | "scheduled"
+  | "noshow"
+  | "attended"
+  | "converted";
 
 export type AttendanceMark = {
   id: string;
@@ -23,47 +28,49 @@ export type RosterRow = {
 };
 
 export type Term = {
-    id: string;
-    name: string;
+  id: string;
+  name: string;
+  startDate?: string | Date;
+  endDate?: string | Date;
 };
 
 export type SessionSummary = {
-    id: string;
-    date: string;
-    offeringId: string;
-    offeringTitle: string;
-    offeringNotes: string | null;
-    instructors: InstructorInfo[];
-}
+  id: string;
+  date: string;
+  offeringId: string;
+  offeringTitle: string;
+  offeringNotes: string | null;
+  instructors: InstructorInfo[];
+};
 
 export type RosterResponse = {
-    session: SessionSummary;
-    roster: RosterRow[];
-    capacity?: number;
-    filled?: number;
-    openSeats?: number;
-    status?: "scheduled" | "canceled" | "completed";
-    makeups: MakeupLite[];
-    trials: TrialLite[];
-}
+  session: SessionSummary;
+  roster: RosterRow[];
+  capacity?: number;
+  filled?: number;
+  openSeats?: number;
+  status?: "scheduled" | "canceled" | "completed";
+  makeups: MakeupLite[];
+  trials: TrialLite[];
+};
 
-export type MakeupLite = { 
+export type MakeupLite = {
   id: string;
   studentId: string;
   studentName: string;
   level: string | null;
   shortCode: string | null;
   status: "requested" | "scheduled" | "attended" | "cancelled" | "missed";
-}
+};
 
-export type TrialLite = { 
+export type TrialLite = {
   id: string;
   childName: string;
   childAge: number;
   parentPhone: string;
   status: TrialStatus;
   notes: string | null;
-}
+};
 
 export type SlotPage = {
   meta: {

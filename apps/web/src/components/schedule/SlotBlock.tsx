@@ -222,7 +222,7 @@ export function SlotBlock({
   };
 
   return (
-    <div className="relative group">
+    <div className="relative group break-inside-avoid print:mb-5">
       <Card className="print:break-inside-avoid bg-white shadow-sm">
         <CardHeader className="gap-1 py-2">
           <div className="flex flex-col items-center justify-between gap-2">
@@ -334,7 +334,7 @@ export function SlotBlock({
       />
 
       {isRefreshing && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3 rounded-xl bg-white/90 px-6 py-5 shadow-md border border-gray-200">
             <Loader2 className="h-6 w-6 animate-spin text-gray-700" />
             <p className="text-sm font-medium text-gray-700">Updating…</p>

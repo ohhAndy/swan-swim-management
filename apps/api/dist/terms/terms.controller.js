@@ -43,11 +43,14 @@ let TermsController = class TermsController {
     async getSlotPage(termId, weekday, start, end) {
         return this.termsService.slotByWeekdayAndTime(weekday, termId, start, end);
     }
+    async getDailySchedule(termId, date) {
+        return this.termsService.getDailySchedule(termId, date);
+    }
 };
 exports.TermsController = TermsController;
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)('admin'),
+    (0, roles_decorator_1.Roles)("admin"),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -55,45 +58,53 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TermsController.prototype, "create", null);
 __decorate([
-    (0, common_1.Get)('all'),
+    (0, common_1.Get)("all"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], TermsController.prototype, "getAllTerms", null);
 __decorate([
-    (0, common_1.Get)(':termId'),
-    __param(0, (0, common_1.Param)('termId')),
+    (0, common_1.Get)(":termId"),
+    __param(0, (0, common_1.Param)("termId")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], TermsController.prototype, "getTermTitle", null);
 __decorate([
-    (0, common_1.Get)(':termId/schedule/weekday/:weekday/slots'),
-    __param(0, (0, common_1.Param)('termId')),
-    __param(1, (0, common_1.Param)('weekday')),
+    (0, common_1.Get)(":termId/schedule/weekday/:weekday/slots"),
+    __param(0, (0, common_1.Param)("termId")),
+    __param(1, (0, common_1.Param)("weekday")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], TermsController.prototype, "getTimeSlotsForWeekday", null);
 __decorate([
-    (0, common_1.Get)(':termId/schedule/weekday/:weekday/slots-default'),
-    __param(0, (0, common_1.Param)('termId')),
+    (0, common_1.Get)(":termId/schedule/weekday/:weekday/slots-default"),
+    __param(0, (0, common_1.Param)("termId")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], TermsController.prototype, "getDefaultTimeSlots", null);
 __decorate([
-    (0, common_1.Get)(':termId/schedule/weekday/:weekday/slot/:start/:end'),
-    __param(0, (0, common_1.Param)('termId')),
-    __param(1, (0, common_1.Param)('weekday', common_1.ParseIntPipe)),
-    __param(2, (0, common_1.Param)('start')),
-    __param(3, (0, common_1.Param)('end')),
+    (0, common_1.Get)(":termId/schedule/weekday/:weekday/slot/:start/:end"),
+    __param(0, (0, common_1.Param)("termId")),
+    __param(1, (0, common_1.Param)("weekday", common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Param)("start")),
+    __param(3, (0, common_1.Param)("end")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Number, String, String]),
     __metadata("design:returntype", Promise)
 ], TermsController.prototype, "getSlotPage", null);
+__decorate([
+    (0, common_1.Get)(":termId/schedule/date/:date"),
+    __param(0, (0, common_1.Param)("termId")),
+    __param(1, (0, common_1.Param)("date")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], TermsController.prototype, "getDailySchedule", null);
 exports.TermsController = TermsController = __decorate([
-    (0, common_1.Controller)('terms'),
+    (0, common_1.Controller)("terms"),
     (0, common_1.UseGuards)(supabase_auth_guard_1.SupabaseAuthGuard, roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [terms_service_1.TermsService])
 ], TermsController);

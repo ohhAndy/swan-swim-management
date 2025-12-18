@@ -118,6 +118,7 @@ export function EnrollStudentDialog({
         studentId: picked.id,
         offeringId,
         skippedDates: skippedDates.map((date) => date.slice(0, 10)),
+        classRatio,
       });
 
       onSuccess();

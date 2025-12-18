@@ -4,7 +4,13 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import type { MakeupLite, RosterResponse, SlotPage, Term, TrialLite } from "@school/shared-types";
+import type {
+  MakeupLite,
+  RosterResponse,
+  SlotPage,
+  Term,
+  TrialLite,
+} from "@school/shared-types";
 import { CreateTermInput } from "./dto/create-term.dto";
 import { SessionStatus, Prisma } from "@prisma/client";
 
@@ -84,7 +90,7 @@ export class TermsService {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
-    if(!staffUser) return;
+    if (!staffUser) return;
 
     const term = await this.prisma.$transaction(
       async (tx) => {
@@ -92,7 +98,13 @@ export class TermsService {
 
         //Create term
         const newTerm = await tx.term.create({
-          data: { name, slug: finalSlug, startDate: start, endDate: end, createdBy: staffUser?.id ?? null },
+          data: {
+            name,
+            slug: finalSlug,
+            startDate: start,
+            endDate: end,
+            createdBy: staffUser?.id ?? null,
+          },
         });
 
         const audit = await tx.auditLog.create({
@@ -103,8 +115,8 @@ export class TermsService {
             entityId: newTerm.id,
             metadata: {
               title: newTerm.name,
-            }
-          }
+            },
+          },
         });
 
         //Create Offerings (Day and Time Slot)
@@ -161,6 +173,8 @@ export class TermsService {
       select: {
         id: true,
         name: true,
+        startDate: true,
+        endDate: true,
       },
     });
     return terms;
@@ -185,7 +199,9 @@ export class TermsService {
       })
     );
     const results = await Promise.all(queries);
-    const result = results.map((first) => (first ? `${first.startTime}-${first.endTime}` : null))
+    const result = results.map((first) =>
+      first ? `${first.startTime}-${first.endTime}` : null
+    );
     return result;
   }
 
@@ -225,10 +241,10 @@ export class TermsService {
       }),
       this.prisma.classOffering.findMany({
         where: { weekday, startTime, endTime, termId },
-        select: { 
-          id: true, 
-          capacity: true, 
-          title: true, 
+        select: {
+          id: true,
+          capacity: true,
+          title: true,
         },
       }),
     ]);
@@ -278,7 +294,7 @@ export class TermsService {
                   },
                 },
               },
-              orderBy: { assignedAt: 'asc' },
+              orderBy: { assignedAt: "asc" },
             },
           },
         },
@@ -353,7 +369,9 @@ export class TermsService {
     const enrollmentIds = enrollments.map((e) => e.id);
 
     // Step 4: Fetch all remaining data IN PARALLEL
-    console.time("[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)");
+    console.time(
+      "[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)"
+    );
     const [
       attendanceRecords,
       skipRecords,
@@ -446,20 +464,25 @@ export class TermsService {
 
       // Query: Get trial counts per session (for capacity)
       this.prisma.trialBooking.groupBy({
-        by: ['classSessionId'],
-        where: { 
+        by: ["classSessionId"],
+        where: {
           classSessionId: { in: sessionIds },
-          status: { in: ['scheduled', 'attended'] }, 
+          status: { in: ["scheduled", "attended"] },
         },
         _count: { _all: true },
       }),
     ]);
-    console.timeEnd("[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)");
+    console.timeEnd(
+      "[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)"
+    );
 
     // Build maps
     console.time("[Schedule] 5. Build Maps + Response");
     // Build attendance map
-    const attendanceMap = new Map<string, Map<string, typeof attendanceRecords[0]>>();
+    const attendanceMap = new Map<
+      string,
+      Map<string, (typeof attendanceRecords)[0]>
+    >();
     for (const a of attendanceRecords) {
       if (!attendanceMap.has(a.enrollmentId)) {
         attendanceMap.set(a.enrollmentId, new Map());
@@ -493,17 +516,26 @@ export class TermsService {
     }
 
     // Build count maps
-    const skipCountMap = new Map(skipCounts.map((x) => [x.classSessionId, x._count._all]));
-    const excusedMap = new Map(excusedCounts.map((x) => [x.classSessionId, x._count._all]));
-    const makeupCountMap = new Map(makeupCounts.map((x) => [x.classSessionId, x._count._all]));
-    const trialCountMap = new Map(trialCounts.map((x) => [x.classSessionId, x._count._all]));
+    const skipCountMap = new Map(
+      skipCounts.map((x) => [x.classSessionId, x._count._all])
+    );
+    const excusedMap = new Map(
+      excusedCounts.map((x) => [x.classSessionId, x._count._all])
+    );
+    const makeupCountMap = new Map(
+      makeupCounts.map((x) => [x.classSessionId, x._count._all])
+    );
+    const trialCountMap = new Map(
+      trialCounts.map((x) => [x.classSessionId, x._count._all])
+    );
 
     // Build response
     const days = Array.from(sessionsByDate.entries())
       .sort()
       .map(([date, sessionList]) => {
         const rosters: RosterResponse[] = sessionList.map((s) => {
-          const offeringEnrollments = enrollmentsByOffering.get(s.offeringId) ?? [];
+          const offeringEnrollments =
+            enrollmentsByOffering.get(s.offeringId) ?? [];
           const regulars = offeringEnrollments.length;
           const skips = skipCountMap.get(s.id) ?? 0;
           const makeups = makeupCountMap.get(s.id) ?? 0;
@@ -511,7 +543,8 @@ export class TermsService {
           const excused = excusedMap.get(s.id) ?? 0;
           const capacity = capacityMap.get(s.offeringId) ?? 0;
 
-          const filled = Math.max(0, regulars - skips - excused) + makeups + trials;
+          const filled =
+            Math.max(0, regulars - skips - excused) + makeups + trials;
           const openSeats = Math.max(0, capacity - filled);
 
           const sessionMakeUps = makeUpsBySession.get(s.id) ?? [];
@@ -541,17 +574,25 @@ export class TermsService {
             const studentAttendance = attendanceMap.get(e.id);
             const attendance = studentAttendance?.get(s.id);
 
-            const paid = e.invoiceLineItem ? e.invoiceLineItem.invoice.payments.reduce((acc, payment) => {
-              return acc + Number(payment.amount);
-            }, 0) : null;
+            const paid = e.invoiceLineItem
+              ? e.invoiceLineItem.invoice.payments.reduce((acc, payment) => {
+                  return acc + Number(payment.amount);
+                }, 0)
+              : null;
 
-            const balance = e.invoiceLineItem ? Number(e.invoiceLineItem.invoice.totalAmount) - paid : null;
+            const balance = e.invoiceLineItem
+              ? Number(e.invoiceLineItem.invoice.totalAmount) - paid
+              : null;
 
             return {
               enrollmentId: e.id,
-              paymentStatus: e.invoiceLineItem ? e.invoiceLineItem.invoice.status : null,
+              paymentStatus: e.invoiceLineItem
+                ? e.invoiceLineItem.invoice.status
+                : null,
               balance,
-              invoiceNumber: e.invoiceLineItem ? e.invoiceLineItem.invoice.invoiceNumber : null,
+              invoiceNumber: e.invoiceLineItem
+                ? e.invoiceLineItem.invoice.invoiceNumber
+                : null,
               classRatio: e.classRatio,
               studentId: e.student.id,
               studentName: `${e.student.firstName} ${e.student.lastName}`,
@@ -576,7 +617,7 @@ export class TermsService {
               offeringId: s.offeringId,
               offeringTitle: s.offering.title,
               offeringNotes: s.offering.notes,
-              instructors: s.offering.instructors.map(i => ({
+              instructors: s.offering.instructors.map((i) => ({
                 id: i.id,
                 staffUserId: i.staffUserId,
                 staffName: i.staffUser.fullName,
@@ -603,5 +644,264 @@ export class TermsService {
       days,
     };
   }
-}
 
+  async getDailySchedule(termId: string, dateString: string) {
+    console.time("[DailySchedule] Total Time");
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      throw new BadRequestException("Invalid date format YYYY-MM-DD");
+    }
+    const targetDate = new Date(`${dateString}T04:00:00.000Z`);
+    const dow = estWeekday(targetDate);
+
+    console.time("[DailySchedule] Fetch Data");
+    const [term, offerings] = await Promise.all([
+      this.prisma.term.findUnique({
+        where: { id: termId },
+        select: { id: true, name: true },
+      }),
+      this.prisma.classOffering.findMany({
+        where: { termId, weekday: dow },
+        select: {
+          id: true,
+          title: true,
+          startTime: true,
+          endTime: true,
+          capacity: true,
+          notes: true,
+          instructors: {
+            where: { removedAt: null },
+            select: {
+              id: true,
+              staffUserId: true,
+              staffUser: { select: { fullName: true } },
+            },
+            orderBy: { assignedAt: "asc" },
+          },
+        },
+        orderBy: { startTime: "asc" },
+      }),
+    ]);
+
+    if (!term) throw new NotFoundException("Term not found");
+    if (offerings.length === 0) return { date: dateString, classes: [] };
+
+    const offeringIds = offerings.map((o) => o.id);
+
+    // Get exact sessions for this day
+    const sessions = await this.prisma.classSession.findMany({
+      where: {
+        offeringId: { in: offeringIds },
+        date: targetDate,
+      },
+      select: {
+        id: true,
+        offeringId: true,
+        status: true,
+        notes: true,
+      },
+    });
+
+    if (sessions.length === 0) {
+      return { date: dateString, classes: [] };
+    }
+
+    const sessionIds = sessions.map((s) => s.id);
+    const sessionMap = new Map(sessions.map((s) => [s.offeringId, s]));
+
+    // Get Enrollments (Students)
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: {
+        offeringId: { in: offeringIds },
+        status: "active",
+      },
+      select: {
+        id: true,
+        offeringId: true,
+        studentId: true,
+        classRatio: true,
+        notes: true,
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            shortCode: true,
+            level: true,
+            birthdate: true,
+          },
+        },
+      },
+    });
+
+    const enrollmentIds = enrollments.map((e) => e.id);
+    const enrollmentsByOffering = new Map<string, typeof enrollments>();
+    for (const e of enrollments) {
+      const arr = enrollmentsByOffering.get(e.offeringId) ?? [];
+      arr.push(e);
+      enrollmentsByOffering.set(e.offeringId, arr);
+    }
+
+    // Dynamic Data
+    const [attendance, makeups, trials, skips] = await Promise.all([
+      this.prisma.attendance.findMany({
+        where: {
+          classSessionId: { in: sessionIds },
+          enrollmentId: { in: enrollmentIds },
+        },
+        select: { enrollmentId: true, status: true, id: true },
+      }),
+      this.prisma.makeUpBooking.findMany({
+        where: { classSessionId: { in: sessionIds } },
+        select: {
+          id: true,
+          classSessionId: true,
+          status: true,
+          student: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              level: true,
+              birthdate: true,
+              shortCode: true,
+            },
+          },
+        },
+      }),
+      this.prisma.trialBooking.findMany({
+        where: { classSessionId: { in: sessionIds } },
+        select: {
+          id: true,
+          classSessionId: true,
+          childName: true,
+          childAge: true,
+          status: true,
+          notes: true,
+        },
+      }),
+      this.prisma.enrollmentSkip.findMany({
+        where: {
+          classSessionId: { in: sessionIds },
+          enrollmentId: { in: enrollmentIds },
+        },
+        select: { enrollmentId: true },
+      }),
+    ]);
+    console.timeEnd("[DailySchedule] Fetch Data");
+
+    const attendanceMap = new Map(attendance.map((a) => [a.enrollmentId, a]));
+    const skipSet = new Set(skips.map((s) => s.enrollmentId));
+
+    const makeupsBySession = new Map<string, typeof makeups>();
+    for (const m of makeups) {
+      const arr = makeupsBySession.get(m.classSessionId) ?? [];
+      arr.push(m);
+      makeupsBySession.set(m.classSessionId, arr);
+    }
+
+    const trialsBySession = new Map<string, typeof trials>();
+    for (const t of trials) {
+      const arr = trialsBySession.get(t.classSessionId) ?? [];
+      arr.push(t);
+      trialsBySession.set(t.classSessionId, arr);
+    }
+
+    // Transform Data
+    const classes = offerings
+      .map((offering) => {
+        const session = sessionMap.get(offering.id);
+        if (!session) return null;
+
+        const sessionMakeups = makeupsBySession.get(session.id) ?? [];
+        const sessionTrials = trialsBySession.get(session.id) ?? [];
+        const sessionEnrollments = enrollmentsByOffering.get(offering.id) ?? [];
+
+        // Count logic matching SlotBlock
+        const regularCount = sessionEnrollments.length;
+        const skipCount = sessionEnrollments.filter((e) =>
+          skipSet.has(e.id)
+        ).length;
+
+        // Count active makeups/trials for capacity
+        const activeMakeups = sessionMakeups.length;
+        const activeTrials = sessionTrials.filter((t) =>
+          ["scheduled", "attended"].includes(t.status)
+        ).length;
+
+        const filled =
+          Math.max(0, regularCount - skipCount) + activeMakeups + activeTrials;
+
+        const roster = [
+          ...sessionEnrollments.map((e) => {
+            const isSkipped = skipSet.has(e.id);
+            const att = attendanceMap.get(e.id);
+            return {
+              id: e.id, // Enrollment ID for updates
+              type: "student",
+              name: `${e.student.firstName} ${e.student.lastName}`,
+              studentId: e.student.id,
+              level: e.student.level,
+              age: e.student.birthdate
+                ? new Date().getFullYear() - e.student.birthdate.getFullYear()
+                : null,
+              status: att?.status ?? (isSkipped ? "skipped" : null),
+              ratio: e.classRatio,
+              notes: e.notes,
+              isSkipped,
+            };
+          }),
+          ...sessionMakeups.map((m) => ({
+            id: m.id, // Makeup ID for updates
+            type: "makeup",
+            name: `${m.student.firstName} ${m.student.lastName}`,
+            studentId: m.student.id,
+            level: m.student.level,
+            age: m.student.birthdate
+              ? new Date().getFullYear() - m.student.birthdate.getFullYear()
+              : null,
+            status: m.status,
+            ratio: "3:1",
+            notes: "Makeup",
+            isSkipped: false,
+          })),
+          ...sessionTrials.map((t) => ({
+            id: t.id, // Trial ID for updates
+            type: "trial",
+            name: t.childName,
+            studentId: null,
+            level: null,
+            age: t.childAge,
+            status: t.status,
+            ratio: "3:1",
+            notes: t.notes ?? "Trial",
+            isSkipped: false,
+          })),
+        ].sort((a, b) => a.name.localeCompare(b.name));
+
+        return {
+          id: session.id, // Session ID needed usually, but here we used cls.id which is session.id
+          offeringId: offering.id,
+          title: offering.title,
+          time: `${offering.startTime}-${offering.endTime}`,
+          instructors: offering.instructors.map((i) => ({
+            id: i.id,
+            staffUserId: i.staffUserId,
+            staffName: i.staffUser.fullName,
+          })),
+          capacity: offering.capacity,
+          filled,
+          roster,
+        };
+      })
+      .filter(Boolean);
+
+    console.timeEnd("[DailySchedule] Total Time");
+
+    return {
+      date: dateString,
+      termName: term.name,
+      classes: classes,
+    };
+  }
+}

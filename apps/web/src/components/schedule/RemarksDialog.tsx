@@ -17,13 +17,15 @@ import { Label } from "@/components/ui/label";
 interface RemarksDialogProps {
   title: string;
   initialRemarks: string | null;
-  triggerLabel: string;
+  trigger?: React.ReactNode;
+  triggerLabel?: string;
   onSave: (remarks: string) => Promise<void>;
 }
 
 export default function RemarksDialog({
   title,
   initialRemarks,
+  trigger,
   triggerLabel,
   onSave,
 }: RemarksDialogProps) {
@@ -56,13 +58,17 @@ export default function RemarksDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs px-2 py-1 h-auto rounded-none transition-colors bg-gray-50 hover:bg-gray-200"
-        >
-          {triggerLabel}
-        </Button>
+        {trigger ? (
+          trigger
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs px-2 py-1 h-auto rounded-none transition-colors bg-gray-50 hover:bg-gray-200"
+          >
+            {triggerLabel || "Open"}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
@@ -96,10 +102,7 @@ export default function RemarksDialog({
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isSaving || !hasChanges}
-          >
+          <Button onClick={handleSave} disabled={isSaving || !hasChanges}>
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </DialogFooter>

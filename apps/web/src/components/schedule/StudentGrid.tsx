@@ -17,7 +17,12 @@ import { CurrentUser } from "@/lib/auth/user";
 import { hasPermission } from "@/lib/auth/permissions";
 import { PermissionGate } from "../auth/PermissionGate";
 import RemarksDialog from "./RemarksDialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 import { AlertCircle, CheckCircle, DollarSign } from "lucide-react";
 
 function calcAge(birthdateString: string): number {
@@ -83,7 +88,11 @@ function getTrialStatusColour(status: string) {
   }
 }
 
-function getPaymentStatus(status: string | null, invoiceNumber: string | null, balance: number | null) {
+function getPaymentStatus(
+  status: string | null,
+  invoiceNumber: string | null,
+  balance: number | null
+) {
   if (!status) {
     // Not invoiced
     return (
@@ -102,8 +111,7 @@ function getPaymentStatus(status: string | null, invoiceNumber: string | null, b
     );
   }
 
-
-  if (status === 'paid') {
+  if (status === "paid") {
     return (
       <TooltipProvider>
         <Tooltip>
@@ -120,7 +128,7 @@ function getPaymentStatus(status: string | null, invoiceNumber: string | null, b
     );
   }
 
-  if (status === 'partial') {
+  if (status === "partial") {
     return (
       <TooltipProvider>
         <Tooltip>
@@ -131,7 +139,9 @@ function getPaymentStatus(status: string | null, invoiceNumber: string | null, b
           </TooltipTrigger>
           <TooltipContent>
             <p>Partial Payment</p>
-            <p className="text-xs">Balance: ${balance ? balance.toFixed(2) : "can't find balance"}</p>
+            <p className="text-xs">
+              Balance: ${balance ? balance.toFixed(2) : "can't find balance"}
+            </p>
             <p className="text-xs">Invoice #{invoiceNumber}</p>
           </TooltipContent>
         </Tooltip>
@@ -139,7 +149,7 @@ function getPaymentStatus(status: string | null, invoiceNumber: string | null, b
     );
   }
 
-  if (status === 'void') {
+  if (status === "void") {
     return (
       <TooltipProvider>
         <Tooltip>
@@ -300,7 +310,7 @@ export function StudentGrid({
   onMakeUpClick?: (date: string) => void;
   onTrialUpdate?: (trialId: string, status: string) => Promise<void>;
   onTrialClick?: (date: string) => void;
-  onTrialConvert?: (trial: { 
+  onTrialConvert?: (trial: {
     id: string;
     childName: string;
     childAge: number;
@@ -456,15 +466,11 @@ export function StudentGrid({
         gridTemplateColumns: `0.5fr 2fr 52px 52px 52px repeat(${cols}, minmax(52px,1fr)) 1.5fr`,
       }}
     >
-      <div className="bg-muted px-2 py-1 text-center font-semibold">
-        Status
-      </div>
+      <div className="bg-muted px-2 py-1 text-center font-semibold">Status</div>
       <div className="bg-muted px-2 py-1 text-center font-semibold">
         Student
       </div>
-      <div className="bg-muted px-2 py-1 text-center font-semibold">
-        Ratio
-      </div>
+      <div className="bg-muted px-2 py-1 text-center font-semibold">Ratio</div>
       <div className="bg-muted px-2 py-1 text-center font-semibold">Age</div>
       <div className="bg-muted px-2 py-1 text-center font-semibold">Level</div>
       {header.map((h, i) => (
@@ -483,7 +489,10 @@ export function StudentGrid({
 
       {rows.map((r) => (
         <div key={r.id} className="contents">
-          <div key={r.id + "-payment"}className="px-2 py-1 flex items-center justify-center">
+          <div
+            key={r.id + "-payment"}
+            className="px-2 py-1 flex items-center justify-center"
+          >
             {getPaymentStatus(r.paymentStatus, r.invoiceNumber, r.balance)}
           </div>
           <div
@@ -768,10 +777,13 @@ export function StudentGrid({
                             isUpdating ? "opacity-50 cursor-not-allowed" : ""
                           }`}
                           disabled={isUpdating}
-                          title={`${trialStudent.childName} (Age ${trialStudent.childAge}) ${
-                            isConverted ? '(Converted - No further action)' : `(${trialStudent.status}) - Click to change`
+                          title={`${trialStudent.childName} (Age ${
+                            trialStudent.childAge
+                          }) ${
+                            isConverted
+                              ? "(Converted - No further action)"
+                              : `(${trialStudent.status}) - Click to change`
                           }`}
-                          
                         >
                           <div className="truncate">
                             {trialStudent.childName} -{" "}

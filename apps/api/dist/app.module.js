@@ -25,6 +25,10 @@ const class_instructors_module_1 = require("./class-instructor/class-instructors
 const trial_bookings_module_1 = require("./trial-bookings/trial-bookings.module");
 const invoices_module_1 = require("./invoices/invoices.module");
 const payments_module_1 = require("./payments/payments.module");
+const core_1 = require("@nestjs/core");
+const throttler_1 = require("@nestjs/throttler");
+const supabase_auth_guard_1 = require("./auth/supabase-auth.guard");
+const roles_guard_1 = require("./auth/roles.guard");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -33,8 +37,14 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({
                 isGlobal: true, // ensures env vars are accessible anywhere
-                envFilePath: ['.env', 'apps/api/.env'], // support multiple fallback paths
+                envFilePath: [".env", "apps/api/.env"], // support multiple fallback paths
             }),
+            throttler_1.ThrottlerModule.forRoot([
+                {
+                    ttl: 60000,
+                    limit: 100,
+                },
+            ]),
             prisma_module_1.PrismaModule,
             terms_module_1.TermsModule,
             sessions_module_1.SessionsModule,
@@ -51,6 +61,20 @@ exports.AppModule = AppModule = __decorate([
             trial_bookings_module_1.TrialBookingsModule,
             invoices_module_1.InvoicesModule,
             payments_module_1.PaymentsModule,
+        ],
+        providers: [
+            {
+                provide: core_1.APP_GUARD,
+                useClass: throttler_1.ThrottlerGuard,
+            },
+            {
+                provide: core_1.APP_GUARD,
+                useClass: supabase_auth_guard_1.SupabaseAuthGuard,
+            },
+            {
+                provide: core_1.APP_GUARD,
+                useClass: roles_guard_1.RolesGuard,
+            },
         ],
     })
 ], AppModule);

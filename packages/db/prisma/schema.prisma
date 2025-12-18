@@ -160,7 +160,7 @@ model Enrollment {
   transferredTo      Enrollment?      @relation("EnrollmentTransfer", fields: [transferredToId], references: [id])
   transferredFrom    Enrollment?      @relation("EnrollmentTransfer")
   enrollmentSkips    EnrollmentSkip[]
-  classRatio       String  @default("3:1") // "3:1", "2:1", "1:1", "Private", etc.
+  classRatio       String  @default("3:1") // "3:1", "2:1", "1:1"
   invoiceLineItem  InvoiceLineItem? // Reverse relation to check if invoiced
 
   @@unique([offeringId, studentId], name: "offeringId_studentId")
