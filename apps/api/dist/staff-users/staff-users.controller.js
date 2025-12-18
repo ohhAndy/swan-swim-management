@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StaffUsersController = void 0;
 const common_1 = require("@nestjs/common");
 const staff_users_service_1 = require("./staff-users.service");
+const public_decorator_1 = require("../auth/public.decorator");
 let StaffUsersController = class StaffUsersController {
     constructor(staffUsersService) {
         this.staffUsersService = staffUsersService;
@@ -40,8 +41,9 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], StaffUsersController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)('by-auth/:authId'),
-    __param(0, (0, common_1.Param)('authId')),
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Get)("by-auth/:authId"),
+    __param(0, (0, common_1.Param)("authId")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
@@ -54,14 +56,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], StaffUsersController.prototype, "createStaffUser", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Patch)(":id"),
+    __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], StaffUsersController.prototype, "updateStaffUser", null);
 exports.StaffUsersController = StaffUsersController = __decorate([
-    (0, common_1.Controller)('staff-users'),
+    (0, common_1.Controller)("staff-users"),
     __metadata("design:paramtypes", [staff_users_service_1.StaffUsersService])
 ], StaffUsersController);
