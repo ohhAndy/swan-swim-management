@@ -1,11 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 import { CreateInvoiceDto } from "./dto/create-invoice.dto";
-import { UpdateInvoiceDto } from './dto/update-invoice.dto';
-import { InvoiceQueryDto } from './dto/invoice-query.dto';
-import { UnInvoicedEnrollmentsQueryDto } from './dto/uninvoiced-enrollments-query.dto';
-import { Prisma } from '@prisma/client';
-import { CreateInvoiceLineItemDto } from './dto/create-invoice.dto';
+import { UpdateInvoiceDto } from "./dto/update-invoice.dto";
+import { InvoiceQueryDto } from "./dto/invoice-query.dto";
+import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-query.dto";
+import { Prisma } from "@prisma/client";
+import { CreateInvoiceLineItemDto } from "./dto/create-invoice.dto";
 
 @Injectable()
 export class InvoicesService {
@@ -14,9 +18,9 @@ export class InvoicesService {
   // Calculate suggested amount for an enrollment based on class ratio and skips
   calculateEnrollmentAmount(enrollment: any): number {
     const rates = {
-      '3:1': 50,
-      '2:1': 73,
-      '1:1': 140,
+      "3:1": 50,
+      "2:1": 73,
+      "1:1": 140,
     };
 
     const rate = rates[enrollment.classRatio as keyof typeof rates] || 50; // Default to 3:1 if unknown
@@ -37,8 +41,8 @@ export class InvoicesService {
     // Validate that enrollments aren't already invoiced
     const lineItems: CreateInvoiceLineItemDto[] = createInvoiceDto.lineItems;
     const enrollmentIds: string[] = lineItems
-      .filter(item => item.enrollmentId)
-      .map(item => item.enrollmentId!);
+      .filter((item) => item.enrollmentId)
+      .map((item) => item.enrollmentId!);
 
     if (enrollmentIds.length > 0) {
       const alreadyInvoiced = await this.prisma.invoiceLineItem.findMany({
@@ -48,8 +52,8 @@ export class InvoicesService {
 
       if (alreadyInvoiced.length > 0) {
         const invoiceNumbers = alreadyInvoiced
-          .map(item => item.invoice.invoiceNumber || item.invoice.id)
-          .join(', ');
+          .map((item) => item.invoice.invoiceNumber || item.invoice.id)
+          .join(", ");
         throw new BadRequestException(
           `Some enrollments are already on invoices: ${invoiceNumbers}`
         );
@@ -64,9 +68,9 @@ export class InvoicesService {
         totalAmount: createInvoiceDto.totalAmount,
         notes: createInvoiceDto.notes,
         createdBy: staffUser.id,
-        status: 'partial',
+        status: "partial",
         lineItems: {
-          create: lineItems.map(item => ({
+          create: lineItems.map((item) => ({
             enrollmentId: item.enrollmentId,
             description: item.description,
             amount: item.amount,
@@ -117,7 +121,7 @@ export class InvoicesService {
         },
         guardian: true,
         payments: {
-          orderBy: { paymentDate: 'desc' },
+          orderBy: { paymentDate: "desc" },
           include: {
             createdByUser: {
               select: { id: true, fullName: true },
@@ -152,12 +156,12 @@ export class InvoicesService {
     if (query.search) {
       where.invoiceNumber = {
         contains: query.search,
-        mode: 'insensitive',
+        mode: "insensitive",
       };
     }
 
     // Filter by status
-    if (query.status && query.status !== 'all') {
+    if (query.status && query.status !== "all") {
       where.status = query.status;
     }
 
@@ -182,7 +186,7 @@ export class InvoicesService {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           guardian: true,
           lineItems: true,
@@ -193,7 +197,7 @@ export class InvoicesService {
     ]);
 
     return {
-      data: invoices.map(inv => this.enrichInvoice(inv)),
+      data: invoices.map((inv) => this.enrichInvoice(inv)),
       pagination: {
         page,
         limit,
@@ -210,32 +214,98 @@ export class InvoicesService {
     });
     if (!staffUser) return;
 
-    const invoice = await this.prisma.invoice.update({
-      where: { id },
-      data: {
-        ...updateInvoiceDto,
-        updatedBy: staffUser.id,
-      },
-      include: {
-        lineItems: {
-          include: {
-            enrollment: {
-              include: {
-                student: true,
-                offering: {
-                  include: {
-                    term: true,
+    const { lineItems, ...updateData } = updateInvoiceDto;
+
+    // Start a transaction to ensure integrity
+    const invoice = await this.prisma.$transaction(async (prisma) => {
+      // 1. Update basic invoice fields
+      await prisma.invoice.update({
+        where: { id },
+        data: {
+          ...updateData,
+          updatedBy: staffUser.id,
+        },
+      });
+
+      // 2. Handle line items if provided
+      if (lineItems) {
+        // Get existing items to know what to delete
+        const existingItems = await prisma.invoiceLineItem.findMany({
+          where: { invoiceId: id },
+        });
+        const existingIds = new Set(existingItems.map((i) => i.id));
+        const newIds = new Set(lineItems.filter((i) => i.id).map((i) => i.id));
+
+        // Delete items that are no longer present
+        const toDelete = [...existingIds].filter((id) => !newIds.has(id));
+        if (toDelete.length > 0) {
+          await prisma.invoiceLineItem.deleteMany({
+            where: { id: { in: toDelete } },
+          });
+        }
+
+        // Upsert items (Create or Update)
+        for (const item of lineItems) {
+          if (item.id && existingIds.has(item.id)) {
+            // Update existing
+            await prisma.invoiceLineItem.update({
+              where: { id: item.id },
+              data: {
+                description: item.description,
+                amount: item.amount,
+                enrollmentId: item.enrollmentId,
+              },
+            });
+          } else {
+            // Create new
+            await prisma.invoiceLineItem.create({
+              data: {
+                invoiceId: id,
+                description: item.description!, // Required for create
+                amount: item.amount!, // Required for create
+                enrollmentId: item.enrollmentId,
+              },
+            });
+          }
+        }
+
+        // recalculate total amount
+        const agg = await prisma.invoiceLineItem.aggregate({
+          where: { invoiceId: id },
+          _sum: { amount: true },
+        });
+
+        // Update the invoice total
+        await prisma.invoice.update({
+          where: { id },
+          data: { totalAmount: agg._sum.amount || 0 },
+        });
+      }
+
+      // 3. Return updated invoice with all relations
+      return prisma.invoice.findUniqueOrThrow({
+        where: { id },
+        include: {
+          lineItems: {
+            include: {
+              enrollment: {
+                include: {
+                  student: true,
+                  offering: {
+                    include: {
+                      term: true,
+                    },
                   },
                 },
               },
             },
           },
+          guardian: true,
+          payments: true,
         },
-        guardian: true,
-        payments: true,
-      },
+      });
     });
-    
+
     return this.enrichInvoice(invoice);
   }
 
@@ -247,7 +317,7 @@ export class InvoicesService {
 
     const where: Prisma.EnrollmentWhereInput = {
       invoiceLineItem: null, // Not linked to any invoice
-      status: 'active', // Only active enrollments
+      status: "active", // Only active enrollments
     };
 
     if (query.guardianId) {
@@ -267,10 +337,7 @@ export class InvoicesService {
         where,
         skip,
         take: limit,
-        orderBy: [
-          { student: { guardianId: 'asc' } },
-          { createdAt: 'desc' },
-        ],
+        orderBy: [{ student: { guardianId: "asc" } }, { createdAt: "desc" }],
         include: {
           student: {
             include: {
@@ -289,7 +356,7 @@ export class InvoicesService {
     ]);
 
     // Enrich with suggested amounts
-    const enrichedEnrollments = enrollments.map(enrollment => ({
+    const enrichedEnrollments = enrollments.map((enrollment) => ({
       ...enrollment,
       suggestedAmount: this.calculateEnrollmentAmount(enrollment),
     }));
@@ -310,26 +377,27 @@ export class InvoicesService {
     await this.prisma.invoice.delete({
       where: { id },
     });
-    return { message: 'Invoice deleted successfully' };
+    return { message: "Invoice deleted successfully" };
   }
 
   // Helper: Enrich invoice with calculated fields
   private enrichInvoice(invoice: any) {
-    const amountPaid = invoice.payments?.reduce(
-      (sum: number, payment: { amount: number | Prisma.Decimal }) => 
-        sum + Number(payment.amount),
-      0
-    ) ?? 0;
+    const amountPaid =
+      invoice.payments?.reduce(
+        (sum: number, payment: { amount: number | Prisma.Decimal }) =>
+          sum + Number(payment.amount),
+        0
+      ) ?? 0;
 
     const balance = Number(invoice.totalAmount) - amountPaid;
 
     // Auto-calculate status based on payments (unless manually voided)
     let calculatedStatus = invoice.status;
-    if (invoice.status !== 'void') {
+    if (invoice.status !== "void") {
       if (amountPaid >= Number(invoice.totalAmount)) {
-        calculatedStatus = 'paid';
+        calculatedStatus = "paid";
       } else if (amountPaid > 0) {
-        calculatedStatus = 'partial';
+        calculatedStatus = "partial";
       }
     }
 

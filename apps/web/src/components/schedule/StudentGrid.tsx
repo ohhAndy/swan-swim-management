@@ -617,10 +617,10 @@ export function StudentGrid({
           <div className="col-span-full border-t-2 border-gray-00 my-1"></div>
           {Array.from({ length: maxMakeUpsPerDate }, (_, rowIndex) => (
             <div key={`makeup-row-${rowIndex}`} className="contents">
+              <div className="px-2 py-1 text-center bg-blue-50"></div>
               <div className="px-2 py-1 font-bold text-center bg-blue-50 text-md text-gray-600">
                 {rowIndex === 0 ? "Make-ups" : ""}
               </div>
-              <div className="px-2 py-1 text-center bg-blue-50"></div>
               <div className="px-2 py-1 text-center bg-blue-50"></div>
               <div className="px-2 py-1 text-center bg-blue-50"></div>
               <div className="px-2 py-1 text-center bg-blue-50"></div>
@@ -724,10 +724,10 @@ export function StudentGrid({
         <>
           {Array.from({ length: maxTrialsPerDate }, (_, rowIndex) => (
             <div key={`trial-row-${rowIndex}`} className="contents">
+              <div className="px-2 py-1 text-center bg-purple-50"></div>
               <div className="px-2 py-1 font-bold text-center bg-purple-50 text-md text-gray-600">
                 {rowIndex === 0 ? "Trials" : ""}
               </div>
-              <div className="px-2 py-1 text-center bg-purple-50"></div>
               <div className="px-2 py-1 text-center bg-purple-50"></div>
               <div className="px-2 py-1 text-center bg-purple-50"></div>
               <div className="px-2 py-1 text-center bg-purple-50"></div>
@@ -850,12 +850,12 @@ export function StudentGrid({
       )}
 
       <div className="contents group">
+        <div className="px-2 py-1 text-center bg-gray-50"></div>
         <div className="px-2 py-1 text-center bg-gray-50 text-md text-gray-500">
           <span className="opacity-0 group-hover:opacity-100 transition-opacity">
             Add
           </span>
         </div>
-        <div className="px-2 py-1 text-center bg-gray-50"></div>
         <div className="px-2 py-1 text-center bg-gray-50"></div>
         <div className="px-2 py-1 text-center bg-gray-50"></div>
         <div className="px-2 py-1 text-center bg-gray-50"></div>

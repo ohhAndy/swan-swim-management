@@ -9,7 +9,7 @@ import {
   createPayment,
   deletePayment,
   type Invoice,
-  type Payment,
+  type InvoiceLineItem,
 } from "@/lib/api/invoice-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +57,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, DollarSign, Edit, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -79,6 +79,12 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
     "partial"
   );
 
+  // Use string for amount to allow easy decimal editing
+  interface EditableLineItem extends Omit<InvoiceLineItem, "amount"> {
+    amount: string;
+  }
+  const [editLineItems, setEditLineItems] = useState<EditableLineItem[]>([]);
+
   // Payment form state
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(
@@ -92,6 +98,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
 
   useEffect(() => {
     loadInvoice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoiceId]);
 
   async function loadInvoice() {
@@ -102,6 +109,12 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
       setEditInvoiceNumber(data.invoiceNumber || "");
       setEditNotes(data.notes || "");
       setEditStatus(data.status);
+      setEditLineItems(
+        data.lineItems.map((item) => ({
+          ...item,
+          amount: item.amount.toString(),
+        }))
+      );
     } catch (error) {
       console.error("Failed to load invoice:", error);
       toast.error("Failed to load invoice");
@@ -119,6 +132,12 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
         invoiceNumber: editInvoiceNumber || undefined,
         notes: editNotes || undefined,
         status: editStatus,
+        lineItems: editLineItems.map((item) => ({
+          id: item.id.startsWith("temp-") ? undefined : item.id,
+          enrollmentId: item.enrollmentId,
+          description: item.description,
+          amount: parseFloat(item.amount) || 0,
+        })),
       });
       toast.success("Invoice updated");
       setEditMode(false);
@@ -309,7 +328,14 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(invoice.totalAmount)}
+              {formatCurrency(
+                editMode
+                  ? editLineItems.reduce(
+                      (sum, i) => sum + (parseFloat(i.amount) || 0),
+                      0
+                    )
+                  : invoice.totalAmount
+              )}
             </div>
           </CardContent>
         </Card>
@@ -319,7 +345,19 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(invoice.amountPaid)}
+              {/* Recalculate if editing, otherwise use saved */}
+              {formatCurrency(
+                editMode
+                  ? editLineItems.reduce(
+                      (sum, i) => sum + (parseFloat(i.amount) || 0),
+                      0
+                    ) -
+                      (invoice.amountPaid || 0) <
+                    0 // Handle potentially negative balance display logic if needed (paid > total)
+                    ? invoice.amountPaid // Keep paid consistent
+                    : invoice.amountPaid
+                  : invoice.amountPaid
+              )}
             </div>
           </CardContent>
         </Card>
@@ -329,7 +367,17 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
-              {formatCurrency(invoice.balance)}
+              {formatCurrency(
+                editMode
+                  ? Math.max(
+                      0,
+                      editLineItems.reduce(
+                        (sum, i) => sum + (parseFloat(i.amount) || 0),
+                        0
+                      ) - invoice.amountPaid
+                    )
+                  : invoice.balance
+              )}
             </div>
           </CardContent>
         </Card>
@@ -399,19 +447,94 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
               <TableRow>
                 <TableHead>Description</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
+                {editMode && <TableHead className="w-[50px]"></TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invoice.lineItems.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.description}</TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(item.amount)}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {(editMode ? editLineItems : invoice.lineItems).map(
+                (item, idx) => (
+                  <TableRow key={item.id || idx}>
+                    <TableCell>
+                      {editMode ? (
+                        <Input
+                          value={item.description}
+                          onChange={(e) => {
+                            const updated = [...editLineItems];
+                            updated[idx] = {
+                              ...updated[idx],
+                              description: e.target.value,
+                            };
+                            setEditLineItems(updated);
+                          }}
+                        />
+                      ) : (
+                        item.description
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {editMode ? (
+                        <Input
+                          type="number"
+                          className="text-right max-w-[150px] ml-auto"
+                          value={item.amount}
+                          onChange={(e) => {
+                            const updated = [...editLineItems];
+                            updated[idx] = {
+                              ...updated[idx],
+                              amount: e.target.value,
+                            };
+                            setEditLineItems(updated);
+                          }}
+                        />
+                      ) : (
+                        formatCurrency(
+                          typeof item.amount === "string"
+                            ? parseFloat(item.amount)
+                            : item.amount
+                        )
+                      )}
+                    </TableCell>
+                    {editMode && (
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditLineItems(
+                              editLineItems.filter((_, i) => i !== idx)
+                            );
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                )
+              )}
             </TableBody>
           </Table>
+          {editMode && (
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditLineItems([
+                    ...editLineItems,
+                    {
+                      id: `temp-${Date.now()}`,
+                      description: "New Item",
+                      amount: "0",
+                    } as EditableLineItem,
+                  ]);
+                }}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Item
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

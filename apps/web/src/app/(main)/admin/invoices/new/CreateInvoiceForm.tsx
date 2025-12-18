@@ -42,11 +42,10 @@ interface UnInvoicedEnrollment {
       name: string;
     };
   };
-  skips: {
+  enrollmentSkips: {
     id: string;
     enrollmentId: string;
     classSessionId: string;
-    date: string;
   }[];
 }
 
@@ -73,6 +72,9 @@ export default function CreateInvoiceForm() {
   const [customLineItems, setCustomLineItems] = useState<LineItem[]>([]);
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [notes, setNotes] = useState("");
+  const [enrollmentAmounts, setEnrollmentAmounts] = useState<
+    Record<string, string>
+  >({});
 
   // Search guardians
   useEffect(() => {
@@ -142,7 +144,12 @@ export default function CreateInvoiceForm() {
     // Sum selected enrollments
     const enrollmentTotal = enrollments
       .filter((e) => selectedEnrollments.has(e.id))
-      .reduce((sum, e) => sum + e.suggestedAmount, 0);
+      .reduce((sum, e) => {
+        const val = parseFloat(
+          enrollmentAmounts[e.id] ?? e.suggestedAmount.toString()
+        );
+        return sum + (isNaN(val) ? 0 : val);
+      }, 0);
 
     // Sum custom line items
     const customTotal = customLineItems.reduce(
@@ -175,11 +182,21 @@ export default function CreateInvoiceForm() {
       enrollments
         .filter((e) => selectedEnrollments.has(e.id))
         .forEach((enrollment) => {
-          const desc = `${enrollment.student.firstName} ${enrollment.student.lastName} - ${DAY_LABELS[enrollment.offering.weekday]} ${enrollment.offering.startTime} ${enrollment.student.level} - ${enrollment.offering.term.name} (${enrollment.classRatio})`;
+          const desc = `${enrollment.student.firstName} ${
+            enrollment.student.lastName
+          } - ${DAY_LABELS[enrollment.offering.weekday]} ${
+            enrollment.offering.startTime
+          } ${enrollment.student.level} - ${enrollment.offering.term.name} (${
+            enrollment.classRatio
+          })`;
           lineItems.push({
             enrollmentId: enrollment.id,
             description: desc,
-            amount: enrollment.suggestedAmount,
+            amount:
+              parseFloat(
+                enrollmentAmounts[enrollment.id] ??
+                  enrollment.suggestedAmount.toString()
+              ) || 0,
           });
         });
 
@@ -329,13 +346,29 @@ export default function CreateInvoiceForm() {
                         </div>
                         <div className="text-sm">
                           {enrollment.classRatio} •{" "}
-                          {8 - (enrollment.skips ? enrollment.skips.length : 0)} weeks
+                          {8 -
+                            (enrollment.enrollmentSkips
+                              ? enrollment.enrollmentSkips.length
+                              : 0)}{" "}
+                          weeks
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-medium">
-                          ${enrollment.suggestedAmount.toFixed(2)}
-                        </div>
+                      <div className="text-right w-32">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={
+                            enrollmentAmounts[enrollment.id] ??
+                            enrollment.suggestedAmount
+                          }
+                          onChange={(e) => {
+                            setEnrollmentAmounts({
+                              ...enrollmentAmounts,
+                              [enrollment.id]: e.target.value,
+                            });
+                          }}
+                          className="h-8 text-right"
+                        />
                       </div>
                     </div>
                   ))}

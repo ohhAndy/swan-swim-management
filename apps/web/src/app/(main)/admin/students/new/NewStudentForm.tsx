@@ -21,7 +21,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { PRESCHOOL_LEVELS, SWIMMER_LEVELS, SWIMTEAM_LEVELS } from "@/lib/constants/levels";
+import {
+  PRESCHOOL_LEVELS,
+  SWIMMER_LEVELS,
+  SWIMTEAM_LEVELS,
+} from "@/lib/constants/levels";
 
 export default function NewStudentForm() {
   const router = useRouter();
@@ -54,7 +58,7 @@ export default function NewStudentForm() {
       setSubmitting(true);
       await createStudent(values);
       reset();
-      router.refresh();
+      router.push("/students");
     } catch (e) {
       alert(e instanceof Error ? e.message : "Create student failed");
     } finally {
@@ -128,7 +132,9 @@ export default function NewStudentForm() {
             </SelectTrigger>
             <SelectContent className="max-h-64 overflow-y-auto">
               <SelectGroup>
-                <SelectLabel className="font-light text-gray-500 text-xs">Preschool</SelectLabel>
+                <SelectLabel className="font-light text-gray-500 text-xs">
+                  Preschool
+                </SelectLabel>
                 {PRESCHOOL_LEVELS.map((levelOption) => (
                   <SelectItem key={levelOption} value={levelOption}>
                     {levelOption}
@@ -136,7 +142,9 @@ export default function NewStudentForm() {
                 ))}
               </SelectGroup>
               <SelectGroup>
-                <SelectLabel className="font-light text-gray-500 text-xs">Swimmer</SelectLabel>
+                <SelectLabel className="font-light text-gray-500 text-xs">
+                  Swimmer
+                </SelectLabel>
                 {SWIMMER_LEVELS.map((levelOption) => (
                   <SelectItem key={levelOption} value={levelOption}>
                     {levelOption}
@@ -144,7 +152,9 @@ export default function NewStudentForm() {
                 ))}
               </SelectGroup>
               <SelectGroup>
-                <SelectLabel className="font-light text-gray-500 text-xs">Swim Team</SelectLabel>
+                <SelectLabel className="font-light text-gray-500 text-xs">
+                  Swim Team
+                </SelectLabel>
                 {SWIMTEAM_LEVELS.map((levelOption) => (
                   <SelectItem key={levelOption} value={levelOption}>
                     {levelOption}

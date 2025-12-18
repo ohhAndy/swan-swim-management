@@ -34,7 +34,7 @@ export default async function DashboardPage() {
               <Button
                 asChild
                 variant="outline"
-                className="w-full bg-[#1c82c5] hover:bg-[#156a9e]"
+                className="w-full bg-[#1c82c5] hover:bg-[#156a9e] text-black"
               >
                 <Link href={`/term/${latestTerm.id}/schedule/date/${today}`}>
                   View Today&apos;s Schedule
