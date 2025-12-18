@@ -6,4 +6,5 @@ exports.EnrollWithSkipSchema = zod_1.z.object({
     studentId: zod_1.z.string().min(1),
     offeringId: zod_1.z.string().min(1),
     skippedDates: zod_1.z.array(zod_1.z.string()).min(0),
+    classRatio: zod_1.z.string().min(1),
 });

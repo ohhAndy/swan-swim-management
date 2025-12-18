@@ -4,10 +4,6 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import {
-  countUsedSeatsForSession,
-  hasTimeConflict,
-} from "../sessions/sessions.helpers";
 import { EnrollWithSkipInput } from "./dto/enrollment.dto";
 import { TransferEnrollmentDto } from "./dto/transfer.dto";
 
@@ -196,7 +192,7 @@ export class EnrollmentsService {
   }
 
   async enrollWithSkips(input: EnrollWithSkipInput, user: any) {
-    const { studentId, offeringId, skippedDates } = input;
+    const { studentId, offeringId, skippedDates, classRatio } = input;
 
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
@@ -234,6 +230,7 @@ export class EnrollmentsService {
           status: "active",
           enrollDate: new Date(),
           createdBy: staffUser.id,
+          classRatio,
         },
       });
 

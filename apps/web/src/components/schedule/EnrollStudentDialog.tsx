@@ -3,10 +3,26 @@
 import { enrollStudentWithSkips } from "@/lib/api/schedule-client";
 import { searchStudents, StudentLite } from "@/lib/api/students-client";
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
+import { redirect } from "next/dist/server/api-utils";
+import { useRouter } from "next/navigation";
+import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 interface EnrollStudentDialogProps {
   open: boolean;
@@ -39,12 +55,16 @@ export function EnrollStudentDialog({
   isoDates,
   onSuccess,
 }: EnrollStudentDialogProps) {
+  const router = useRouter();
+
   const [q, setQ] = useState("");
   const [results, setResults] = useState<StudentLite[]>([]);
   const [picked, setPicked] = useState<StudentLite | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
+
+  const [classRatio, setClassRatio] = useState<string>("3.1");
 
   useEffect(() => {
     if (open) {
@@ -161,10 +181,52 @@ export function EnrollStudentDialog({
                   onClick={() => setPicked(r)}
                 >
                   <span className="font-medium">{`${r.firstName} ${r.lastName}`}</span>
-                  <span className="text-sm text-slate-500">{r.level ?? ""} - {r.birthdate ? calcAge(r.birthdate) : ""}</span>
+                  <span className="text-sm text-slate-500">
+                    {r.level ?? ""} - {r.birthdate ? calcAge(r.birthdate) : ""}
+                  </span>
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="classRatio">Class Ratio</Label>
+            <Select value={classRatio} onValueChange={setClassRatio}>
+              <SelectTrigger id="classRatio">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3:1">
+                  <div className="flex items-center justify-between w-full">
+                    <span>3:1 (Group)</span>
+                    <span className="text-sm text-muted-foreground ml-4">
+                      &nbsp; - $50/class
+                    </span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="2:1">
+                  <div className="flex items-center justify-between w-full">
+                    <span>2:1 (Semi-Private) </span>
+                    <span className="text-sm text-muted-foreground ml-4">
+                      &nbsp; - $73/class
+                    </span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="1:1">
+                  <div className="flex items-center justify-between w-full">
+                    <span>1:1 (Private)</span>
+                    <span className="text-sm text-muted-foreground ml-4">
+                      &nbsp; - $140/class
+                    </span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="other">
+                  <div className="flex items-center justify-between w-full">
+                    <span>Other</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Date Selection */}
@@ -187,7 +249,7 @@ export function EnrollStudentDialog({
 
             <div className="grid grid-cols-4 gap-2">
               {isoDates.map((date, index) => {
-                const shortDate = date.slice(5, 10); 
+                const shortDate = date.slice(5, 10);
                 const isSelected = selectedDates.has(date);
 
                 return (
@@ -218,16 +280,24 @@ export function EnrollStudentDialog({
           {err && <p className="text-sm text-red-600">{err}</p>}
         </div>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
+        <DialogFooter className="flex justify-between sm:justify-between">
           <Button
-            onClick={submit}
-            disabled={!picked || loading || selectedCount === 0}
+            variant="outline"
+            onClick={() => router.push("/admin/students/new")}
           >
-            {loading ? "Enrolling..." : `Enroll for ${selectedCount} classes`}
+            + Create New Student
           </Button>
+          <div className="flex gap-3">
+            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={submit}
+              disabled={!picked || loading || selectedCount === 0}
+            >
+              {loading ? "Enrolling..." : `Enroll for ${selectedCount} classes`}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

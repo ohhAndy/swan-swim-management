@@ -175,7 +175,7 @@ let EnrollmentsService = class EnrollmentsService {
         });
     }
     async enrollWithSkips(input, user) {
-        const { studentId, offeringId, skippedDates } = input;
+        const { studentId, offeringId, skippedDates, classRatio } = input;
         const staffUser = await this.prisma.staffUser.findUnique({
             where: { authId: user.authId },
         });
@@ -211,6 +211,7 @@ let EnrollmentsService = class EnrollmentsService {
                     status: "active",
                     enrollDate: new Date(),
                     createdBy: staffUser.id,
+                    classRatio,
                 },
             });
             // Create skips if any

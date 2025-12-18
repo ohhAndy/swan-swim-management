@@ -8,6 +8,10 @@ export type AttendanceMark = {
 
 export type RosterRow = {
   enrollmentId: string;
+  paymentStatus: string | null;
+  invoiceNumber: string | null;
+  balance: number | null;
+  classRatio: string;
   studentId: string;
   studentName: string;
   studentLevel: string | null;

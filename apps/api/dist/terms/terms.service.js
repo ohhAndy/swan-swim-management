@@ -269,6 +269,20 @@ let TermsService = class TermsService {
                 offeringId: true,
                 studentId: true,
                 notes: true,
+                classRatio: true,
+                invoiceLineItem: {
+                    select: {
+                        invoice: {
+                            select: {
+                                id: true,
+                                invoiceNumber: true,
+                                status: true,
+                                totalAmount: true,
+                                payments: true,
+                            },
+                        },
+                    },
+                },
                 student: {
                     select: {
                         id: true,
@@ -450,8 +464,16 @@ let TermsService = class TermsService {
                     const skippedSessionIds = Array.from(studentSkips);
                     const studentAttendance = attendanceMap.get(e.id);
                     const attendance = studentAttendance?.get(s.id);
+                    const paid = e.invoiceLineItem ? e.invoiceLineItem.invoice.payments.reduce((acc, payment) => {
+                        return acc + Number(payment.amount);
+                    }, 0) : null;
+                    const balance = e.invoiceLineItem ? Number(e.invoiceLineItem.invoice.totalAmount) - paid : null;
                     return {
                         enrollmentId: e.id,
+                        paymentStatus: e.invoiceLineItem ? e.invoiceLineItem.invoice.status : null,
+                        balance,
+                        invoiceNumber: e.invoiceLineItem ? e.invoiceLineItem.invoice.invoiceNumber : null,
+                        classRatio: e.classRatio,
                         studentId: e.student.id,
                         studentName: `${e.student.firstName} ${e.student.lastName}`,
                         shortCode: e.student.shortCode,

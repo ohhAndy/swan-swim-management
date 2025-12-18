@@ -82,6 +82,7 @@ export async function enrollStudentWithSkips(payload: {
   studentId: string;
   offeringId: string;
   skippedDates: string[];
+  classRatio: string;
 }) {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API}/enrollments/with-skip`, {

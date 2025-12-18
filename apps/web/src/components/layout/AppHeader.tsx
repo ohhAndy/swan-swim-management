@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { UserMenu } from "../auth/UserMenu";
 import { getCurrentUser } from "@/lib/auth/user";
+import { PermissionGate } from "../auth/PermissionGate";
 
 export async function AppHeader() {
   const user = await getCurrentUser();
@@ -28,6 +29,11 @@ export async function AppHeader() {
           <Link href="/students" className="text-sm font-medium hover:text-blue-600">
             Students
           </Link>
+          <PermissionGate allowedRoles={['admin', 'manager']} currentRole={user.role}>
+            <Link href="/invoices" className="text-sm font-medium hover:text-blue-600">
+              Invoices
+            </Link>
+          </PermissionGate>
           <Link href="/term" className="text-sm font-medium hover:text-blue-600">
             Schedule
           </Link>

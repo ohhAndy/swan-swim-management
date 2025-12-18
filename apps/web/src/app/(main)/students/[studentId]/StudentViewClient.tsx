@@ -30,11 +30,12 @@ import {
   SWIMTEAM_LEVELS,
 } from "@/lib/constants/levels";
 
-import { Student } from "@/lib/constants/student";
+import { Enrollment, Student } from "@/lib/constants/student";
 import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
 import { z } from "zod";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { CurrentUser } from "@/lib/auth/user";
+import { DollarSign, AlertCircle, CheckCircle } from "lucide-react";
 
 const EditStudentSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -45,6 +46,61 @@ const EditStudentSchema = z.object({
 });
 
 type EditStudentInput = z.infer<typeof EditStudentSchema>;
+
+function getInvoiceStatusBadge(enrollment: Enrollment) {
+  if (!enrollment.invoiceLineItem) {
+    // Not invoiced yet
+    return (
+      <Badge variant="destructive" className="flex items-center gap-1">
+        <AlertCircle className="w-3 h-3" />
+        Not Invoiced
+      </Badge>
+    );
+  }
+
+  // Has invoice - check payment status
+  const invoice = enrollment.invoiceLineItem.invoice;
+
+  if (!invoice) {
+    return null;
+  }
+
+  if (invoice.status === "paid") {
+    return (
+      <Badge variant="default" className="flex items-center gap-1">
+        <CheckCircle className="w-3 h-3 shrink-0" />
+        Paid
+      </Badge>
+    );
+  }
+
+  if (invoice.status === "partial") {
+    const paid = invoice.payments.reduce((acc, payment) => {
+      return acc + payment.amount
+    }, 0);
+    const balance = invoice.totalAmount - paid;
+    return (
+      <Badge
+        variant="outline"
+        className="flex items-center gap-1"
+      >
+        <DollarSign className="w-3 h-3 shrink-0" />
+        Partial (${balance.toFixed(2)} due)
+
+      </Badge>
+    );
+  }
+
+  if (invoice.status === "void") {
+    return ( 
+      <Badge variant="outline" className="flex items-center gap-1">
+        <AlertCircle className="w-3 h-3 shrink-0" />
+        Void
+      </Badge>
+    );
+  }
+  return null;
+}
 
 export default function StudentViewClient({
   student,
@@ -397,42 +453,47 @@ export default function StudentViewClient({
         </div>
 
         {/* Guardian Information Card */}
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Guardian
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <Label className="text-sm font-medium text-gray-600">
-                  Name
-                </Label>
-                <p className="text-lg">{student.guardian.fullName}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-gray-500" />
-                <a
-                  href={`mailto:${student.guardian.email}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  {student.guardian.email}
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-gray-500" />
-                <a
-                  href={`tel:${student.guardian.phone}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  {student.guardian.phone}
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <PermissionGate
+          allowedRoles={["admin", "manager"]}
+          currentRole={user.role}
+        >
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Guardian
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">
+                    Name
+                  </Label>
+                  <p className="text-lg">{student.guardian.fullName}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-gray-500" />
+                  <a
+                    href={`mailto:${student.guardian.email}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    {student.guardian.email}
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-gray-500" />
+                  <a
+                    href={`tel:${student.guardian.phone}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    {student.guardian.phone}
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </PermissionGate>
       </div>
 
       {/* Basic Enrollments Section - We'll enhance this later */}
@@ -458,6 +519,8 @@ export default function StudentViewClient({
                       .map((i) => i.staffUser.fullName)
                       .join(", ");
 
+                    const badge = getInvoiceStatusBadge(enrollment);
+
                     return (
                       <div
                         key={enrollment.id}
@@ -471,12 +534,12 @@ export default function StudentViewClient({
                             <p className="text-sm font-medium">
                               {enrollment.offering.term.name}
                             </p>
+
                             <p className="text-sm text-gray-600 pt-2">
                               {FULL_DAY_LABELS[enrollment.offering.weekday]}{" "}
                               {enrollment.offering.startTime}-
-                              {enrollment.offering.endTime}
+                              {enrollment.offering.endTime} ({enrollment.classRatio})
                             </p>
-                            {/* ADD INSTRUCTOR DISPLAY HERE */}
                             {instructors.length > 0 ? (
                               <p className="text-sm text-gray-600 mt-1">
                                 <span className="font-medium">Instructor:</span>{" "}
@@ -495,20 +558,21 @@ export default function StudentViewClient({
                             </p>
                           </div>
                           <div className="flex flex-col justify-between h-30">
-                            <Badge
-                              variant="default"
-                              className="bg-green-100 text-green-800 flex items-center justify-center"
+                            {badge}
+
+                            <PermissionGate
+                              allowedRoles={["admin", "manager"]}
+                              currentRole={user.role}
                             >
-                              {enrollment.status}
-                            </Badge>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleTransferClick(enrollment)}
-                              className="bg-yellow-100 text-black"
-                            >
-                              Transfer
-                            </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleTransferClick(enrollment)}
+                                className="bg-yellow-100 text-black"
+                              >
+                                Transfer
+                              </Button>
+                            </PermissionGate>
                           </div>
                         </div>
                       </div>
@@ -538,7 +602,7 @@ export default function StudentViewClient({
                       <p className="text-sm text-gray-600">
                         {FULL_DAY_LABELS[enrollment.offering.weekday]}{" "}
                         {enrollment.offering.startTime}-
-                        {enrollment.offering.endTime}
+                        {enrollment.offering.endTime} ({enrollment.classRatio})
                       </p>
                       {/* ADD INSTRUCTOR DISPLAY HERE TOO */}
                       {instructors.length > 0 ? (
@@ -558,7 +622,7 @@ export default function StudentViewClient({
                         )}
                       </p>
                     </div>
-                    <Badge variant="secondary">{enrollment.status}</Badge>
+                    {getInvoiceStatusBadge(enrollment)}
                   </div>
                 </div>
               );

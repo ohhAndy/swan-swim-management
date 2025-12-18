@@ -22,6 +22,7 @@ import {
 import { Plus, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import type { GuardianLite } from "@/lib/api/guardian-client";
+import { DAY_LABELS } from "@/lib/schedule/slots";
 
 interface UnInvoicedEnrollment {
   id: string;
@@ -31,12 +32,12 @@ interface UnInvoicedEnrollment {
     id: string;
     firstName: string;
     lastName: string;
+    level: string;
   };
   offering: {
     id: string;
     weekday: number;
     startTime: string;
-    level: string;
     term: {
       name: string;
     };
@@ -174,7 +175,7 @@ export default function CreateInvoiceForm() {
       enrollments
         .filter((e) => selectedEnrollments.has(e.id))
         .forEach((enrollment) => {
-          const desc = `${enrollment.student.firstName} ${enrollment.student.lastName} - ${enrollment.offering.weekday} ${enrollment.offering.startTime} ${enrollment.offering.level} - ${enrollment.offering.term.name} (${enrollment.classRatio})`;
+          const desc = `${enrollment.student.firstName} ${enrollment.student.lastName} - ${DAY_LABELS[enrollment.offering.weekday]} ${enrollment.offering.startTime} ${enrollment.student.level} - ${enrollment.offering.term.name} (${enrollment.classRatio})`;
           lineItems.push({
             enrollmentId: enrollment.id,
             description: desc,
@@ -321,9 +322,9 @@ export default function CreateInvoiceForm() {
                           {enrollment.student.lastName}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {enrollment.offering.weekday}{" "}
+                          {DAY_LABELS[enrollment.offering.weekday]}{" "}
                           {enrollment.offering.startTime} -{" "}
-                          {enrollment.offering.level} -{" "}
+                          {enrollment.student.level} -{" "}
                           {enrollment.offering.term.name}
                         </div>
                         <div className="text-sm">

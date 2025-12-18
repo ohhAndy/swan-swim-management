@@ -17,6 +17,8 @@ import { CurrentUser } from "@/lib/auth/user";
 import { hasPermission } from "@/lib/auth/permissions";
 import { PermissionGate } from "../auth/PermissionGate";
 import RemarksDialog from "./RemarksDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { AlertCircle, CheckCircle, DollarSign } from "lucide-react";
 
 function calcAge(birthdateString: string): number {
   const birthdate = new Date(birthdateString);
@@ -81,9 +83,89 @@ function getTrialStatusColour(status: string) {
   }
 }
 
+function getPaymentStatus(status: string | null, invoiceNumber: string | null, balance: number | null) {
+  if (!status) {
+    // Not invoiced
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center">
+              <AlertCircle className="w-4 h-4 text-red-500" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Not Invoiced</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+
+  if (status === 'paid') {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Paid (Invoice #{invoiceNumber})</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  if (status === 'partial') {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center">
+              <DollarSign className="w-4 h-4 text-yellow-600" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Partial Payment</p>
+            <p className="text-xs">Balance: ${balance ? balance.toFixed(2) : "can't find balance"}</p>
+            <p className="text-xs">Invoice #{invoiceNumber}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  if (status === 'void') {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center">
+              <span className="text-xs text-muted-foreground">VOID</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Invoice Voided</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return null;
+}
+
 type Row = {
   id: string;
   name: string;
+  paymentStatus: string | null;
+  balance: number | null;
+  invoiceNumber: string | null;
+  classRatio: string;
   studentId: string;
   code: string | null;
   level: string | null;
@@ -102,6 +184,10 @@ function buildRow(rosters: RosterResponse[]): Row[] {
       const cur = map.get(p.enrollmentId) ?? {
         id: p.enrollmentId,
         name: p.studentName,
+        paymentStatus: p.paymentStatus,
+        balance: p.balance,
+        invoiceNumber: p.invoiceNumber,
+        classRatio: p.classRatio,
         studentId: p.studentId,
         code: p.shortCode ?? null,
         level: p.studentLevel,
@@ -367,11 +453,17 @@ export function StudentGrid({
     <div
       className="grid border-t text-sm bg-muted"
       style={{
-        gridTemplateColumns: `1.6fr 0.5fr 0.5fr repeat(${cols}, minmax(52px,1fr)) 1.4fr`,
+        gridTemplateColumns: `0.5fr 2fr 52px 52px 52px repeat(${cols}, minmax(52px,1fr)) 1.5fr`,
       }}
     >
       <div className="bg-muted px-2 py-1 text-center font-semibold">
+        Status
+      </div>
+      <div className="bg-muted px-2 py-1 text-center font-semibold">
         Student
+      </div>
+      <div className="bg-muted px-2 py-1 text-center font-semibold">
+        Ratio
       </div>
       <div className="bg-muted px-2 py-1 text-center font-semibold">Age</div>
       <div className="bg-muted px-2 py-1 text-center font-semibold">Level</div>
@@ -391,6 +483,9 @@ export function StudentGrid({
 
       {rows.map((r) => (
         <div key={r.id} className="contents">
+          <div key={r.id + "-payment"}className="px-2 py-1 flex items-center justify-center">
+            {getPaymentStatus(r.paymentStatus, r.invoiceNumber, r.balance)}
+          </div>
           <div
             key={r.id + "-name"}
             className="px-2 py-1 text-center truncate max-w-[150px]"
@@ -398,6 +493,9 @@ export function StudentGrid({
             <Link className="hover:underline" href={`/students/${r.studentId}`}>
               {r.name}
             </Link>
+          </div>
+          <div key={r.id + "-ratio"} className="px-2 py-1 text-center">
+            {r.classRatio ? r.classRatio : ""}
           </div>
           <div key={r.id + "-age"} className="px-2 py-1 text-center">
             {r.birthdate ? calcAge(r.birthdate) : ""}
@@ -515,6 +613,8 @@ export function StudentGrid({
               </div>
               <div className="px-2 py-1 text-center bg-blue-50"></div>
               <div className="px-2 py-1 text-center bg-blue-50"></div>
+              <div className="px-2 py-1 text-center bg-blue-50"></div>
+              <div className="px-2 py-1 text-center bg-blue-50"></div>
 
               {header.map((h, colIndex) => {
                 const dayKey = h.key + "T04:00:00.000Z";
@@ -618,6 +718,8 @@ export function StudentGrid({
               <div className="px-2 py-1 font-bold text-center bg-purple-50 text-md text-gray-600">
                 {rowIndex === 0 ? "Trials" : ""}
               </div>
+              <div className="px-2 py-1 text-center bg-purple-50"></div>
+              <div className="px-2 py-1 text-center bg-purple-50"></div>
               <div className="px-2 py-1 text-center bg-purple-50"></div>
               <div className="px-2 py-1 text-center bg-purple-50"></div>
 
@@ -741,6 +843,8 @@ export function StudentGrid({
             Add
           </span>
         </div>
+        <div className="px-2 py-1 text-center bg-gray-50"></div>
+        <div className="px-2 py-1 text-center bg-gray-50"></div>
         <div className="px-2 py-1 text-center bg-gray-50"></div>
         <div className="px-2 py-1 text-center bg-gray-50"></div>
 

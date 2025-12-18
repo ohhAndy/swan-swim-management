@@ -28,6 +28,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     });
 
     if (!res.ok) {
+      console.log(await res.text())
       console.error('Failed to fetch staff user');
       return null;
     }

@@ -40,8 +40,26 @@ export interface Enrollment {
   offeringId: string;
   status: "active" | "dropped" | "waitlisted" | "transferred";
   enrollDate: string;
+  classRatio: string;
   offering: Offering;
   attendance: Attendance[];
+  invoiceLineItem: InvoiceLineItem;
+}
+
+export interface Payment {
+  amount: number;
+}
+
+export interface InvoiceLineItem {
+  invoice: Invoice;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  status: "partial" | "paid" | "void";
+  totalAmount: number;
+  payments: Payment[]
 }
 
 export interface Guardian {

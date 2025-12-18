@@ -352,9 +352,16 @@ export default function StudentsListClient({
                           <div className="text-gray-900">
                             {student.guardian.fullName}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {student.guardian.email}
-                          </div>
+                          <PermissionGate allowedRoles={["admin", "manager"]} currentRole={user.role}>
+                            <div className="text-sm text-gray-500">
+                              {student.guardian.email}
+                            </div>
+                          </PermissionGate>
+                          <PermissionGate allowedRoles={["admin", "manager"]} currentRole={user.role}>
+                            <div className="text-sm text-gray-500">
+                              {student.guardian.phone}
+                            </div>
+                          </PermissionGate>
                         </td>
                         <td className="p-4 text-gray-600">
                           {new Date(student.createdAt).toLocaleDateString(

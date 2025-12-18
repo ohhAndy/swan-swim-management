@@ -12,7 +12,6 @@ export class PaymentsService {
       where: { authId: user.authId },
     });
     if (!staffUser) return;
-    console.log(staffUser);
     // Check if invoice exists
     const invoice = await this.prisma.invoice.findUnique({
       where: { id: createPaymentDto.invoiceId },

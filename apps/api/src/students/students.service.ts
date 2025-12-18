@@ -109,6 +109,7 @@ export class StudentsService {
             offeringId: true,
             status: true,
             enrollDate: true,
+            classRatio: true,
             offering: {
               select: {
                 id: true,
@@ -151,6 +152,19 @@ export class StudentsService {
                   select: {
                     id: true,
                     date: true,
+                  },
+                },
+              },
+            },
+            invoiceLineItem: {
+              select: {
+                invoice: {
+                  select: {
+                    id: true,
+                    invoiceNumber: true,
+                    status: true,
+                    totalAmount: true,
+                    payments: true,
                   },
                 },
               },
