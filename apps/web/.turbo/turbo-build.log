@@ -1,0 +1,256 @@
+
+> web@0.1.0 build
+> next build
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\andyh\package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * C:\Users\andyh\Desktop\swan-swim-management\package-lock.json
+
+   ▲ Next.js 15.5.2
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (118kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ⚠ Compiled with warnings in 1742ms
+
+../../node_modules/@supabase/realtime-js/dist/module/lib/websocket-factory.js
+A Node.js API is used (process.versions at line: 32) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+../../node_modules/@supabase/realtime-js/dist/module/lib/websocket-factory.js
+../../node_modules/@supabase/realtime-js/dist/module/index.js
+../../node_modules/@supabase/supabase-js/dist/module/index.js
+../../node_modules/@supabase/ssr/dist/module/createBrowserClient.js
+../../node_modules/@supabase/ssr/dist/module/index.js
+./src/lib/supabase/middleware.ts
+
+../../node_modules/@supabase/supabase-js/dist/module/index.js
+A Node.js API is used (process.version at line: 24) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+../../node_modules/@supabase/supabase-js/dist/module/index.js
+../../node_modules/@supabase/ssr/dist/module/createBrowserClient.js
+../../node_modules/@supabase/ssr/dist/module/index.js
+./src/lib/supabase/middleware.ts
+
+ ✓ Compiled successfully in 14.4s
+   Linting and checking validity of types ...
+
+./src/app/(auth)/login/page.tsx
+38:14  Warning: 'err' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/(main)/admin/terms/new/OfferingList.tsx
+6:8  Warning: 'FieldArrayWithId' is defined but never used.  @typescript-eslint/no-unused-vars
+18:3  Warning: 'submitting' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/(main)/students/page.tsx
+1:10  Warning: 'Suspense' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/(main)/students/StudentListClient.tsx
+3:20  Warning: 'useEffect' is defined but never used.  @typescript-eslint/no-unused-vars
+5:31  Warning: 'Calendar' is defined but never used.  @typescript-eslint/no-unused-vars
+5:41  Warning: 'Award' is defined but never used.  @typescript-eslint/no-unused-vars
+18:29  Warning: 'CardHeader' is defined but never used.  @typescript-eslint/no-unused-vars
+18:41  Warning: 'CardTitle' is defined but never used.  @typescript-eslint/no-unused-vars
+84:9  Warning: 'displayEnrollmentStatus' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+85:9  Warning: 'displayLevel' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/page.tsx
+1:8  Warning: 'Image' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/guardians/GuardianCreateModal.tsx
+56:6  Warning: 'FormOutput' is defined but never used.  @typescript-eslint/no-unused-vars
+78:5  Warning: 'watch' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/guardians/GuardianPicker.tsx
+11:10  Warning: 'Divide' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/schedule/AssignInstructorDialog.tsx
+91:53  Warning: 'staffName' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/schedule/EnrollStudentDialog.tsx
+76:6  Warning: React Hook useEffect has missing dependencies: 'doSearch' and 'submit'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/schedule/OfferingInfoDialog.tsx
+14:10  Warning: 'Textarea' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/schedule/ScheduleMakeUpDialog.tsx
+74:6  Warning: React Hook useEffect has missing dependencies: 'doSearch' and 'submit'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/schedule/SlotBlock.tsx
+19:10  Warning: 'Edit' is defined but never used.  @typescript-eslint/no-unused-vars
+29:3  Warning: 'notes' is defined but never used.  @typescript-eslint/no-unused-vars
+30:3  Warning: 'dateLabels' is defined but never used.  @typescript-eslint/no-unused-vars
+44:10  Warning: 'isUpdating' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/schedule/StudentGrid.tsx
+183:6  Warning: 'AttendanceUpdate' is defined but never used.  @typescript-eslint/no-unused-vars
+189:6  Warning: 'MakeupUpdate' is defined but never used.  @typescript-eslint/no-unused-vars
+475:34  Warning: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+578:40  Warning: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+686:42  Warning: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+703:40  Warning: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/schedule/TransferEnrollmentDialog.tsx
+105:6  Warning: React Hook useEffect has a missing dependency: 'fetchAvailableClasses'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+112:6  Warning: React Hook useEffect has missing dependencies: 'autoSuggestSkips' and 'selectedClass'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+118:6  Warning: React Hook useEffect has missing dependencies: 'fetchAvailableClasses' and 'open'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/lib/api/attendance-client.ts
+2:10  Warning: 'TrialStatus' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/lib/api/students.ts
+3:10  Warning: 'createClient' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/lib/api/term-client.ts
+50:9  Warning: 'data' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/lib/auth/permissions.ts
+4:33  Warning: 'role' is defined but never used.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/13) ...
+Error getting current user: Error: Dynamic server usage: Route /forbidden couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\18.js:19:21222)
+    at n (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\602.js:38:278674)
+    at f (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\api\auth\logout\route.js:1:1084)
+    at e (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:10447)
+    at j (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:4191)
+    at stringify (<anonymous>) {
+  description: "Route /forbidden couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+   Generating static pages (3/13) 
+   Generating static pages (6/13) 
+Error getting current user: Error: Dynamic server usage: Route /students couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\18.js:19:21222)
+    at n (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\602.js:38:278674)
+    at f (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\api\auth\logout\route.js:1:1084)
+    at e (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:10447)
+    at j (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:4191)
+    at stringify (<anonymous>) {
+  description: "Route /students couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /students couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\18.js:19:21222)
+    at n (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\602.js:38:278674)
+    at f (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\api\auth\logout\route.js:1:1084)
+    at e (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:10447)
+    at i (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\(main)\students\page.js:1:2085)
+    at stringify (<anonymous>) {
+  description: "Route /students couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /term couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\18.js:19:21222)
+    at n (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\602.js:38:278674)
+    at f (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\api\auth\logout\route.js:1:1084)
+    at e (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:10447)
+    at j (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:4191)
+    at stringify (<anonymous>) {
+  description: "Route /term couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+   Generating static pages (9/13) 
+Error getting current user: Error: Dynamic server usage: Route /dashboard couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\18.js:19:21222)
+    at n (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\602.js:38:278674)
+    at f (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\api\auth\logout\route.js:1:1084)
+    at e (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:10447)
+    at j (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:4191)
+    at stringify (<anonymous>) {
+  description: "Route /dashboard couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /dashboard couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\18.js:19:21222)
+    at n (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\602.js:38:278674)
+    at f (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\api\auth\logout\route.js:1:1084)
+    at e (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:10447)
+    at aj (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\(main)\dashboard\page.js:1:26607)
+    at stringify (<anonymous>) {
+  description: "Route /dashboard couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /admin/terms/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\18.js:19:21222)
+    at n (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\602.js:38:278674)
+    at f (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\api\auth\logout\route.js:1:1084)
+    at e (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:10447)
+    at j (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:4191)
+    at stringify (<anonymous>) {
+  description: "Route /admin/terms/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /admin/terms/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\18.js:19:21222)
+    at n (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\602.js:38:278674)
+    at f (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\api\auth\logout\route.js:1:1084)
+    at e (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:10447)
+    at i (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\(main)\admin\terms\new\page.js:2:9776)
+    at stringify (<anonymous>) {
+  description: "Route /admin/terms/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /admin/students/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\18.js:19:21222)
+    at n (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\602.js:38:278674)
+    at f (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\api\auth\logout\route.js:1:1084)
+    at e (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:10447)
+    at j (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:4191)
+    at stringify (<anonymous>) {
+  description: "Route /admin/students/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /admin/students/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\18.js:19:21222)
+    at n (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\602.js:38:278674)
+    at f (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\api\auth\logout\route.js:1:1084)
+    at e (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\chunks\943.js:1:10447)
+    at i (C:\Users\andyh\Desktop\swan-swim-management\apps\web\.next\server\app\(main)\admin\students\new\page.js:2:8972)
+    at stringify (<anonymous>) {
+  description: "Route /admin/students/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+ ✓ Generating static pages (13/13)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                    Size  First Load JS
+┌ ○ /                                                         285 B         102 kB
+├ ○ /_not-found                                               985 B         103 kB
+├ ƒ /admin/students/new                                     6.08 kB         220 kB
+├ ƒ /admin/terms/new                                        5.66 kB         216 kB
+├ ƒ /api/auth/logout                                          147 B         102 kB
+├ ƒ /api/auth/me                                              147 B         102 kB
+├ ƒ /dashboard                                                147 B         102 kB
+├ ƒ /forbidden                                                147 B         102 kB
+├ ○ /login                                                  2.19 kB         161 kB
+├ ƒ /students                                               5.26 kB         191 kB
+├ ƒ /students/[studentId]                                   5.34 kB         224 kB
+├ ƒ /term                                                   1.34 kB         112 kB
+├ ƒ /term/[termId]/schedule                                 1.55 kB         113 kB
+└ ƒ /term/[termId]/schedule/weekday/[weekday]/slot/[range]  11.1 kB         214 kB
++ First Load JS shared by all                                102 kB
+  ├ chunks/18-ef38cc2f87045b34.js                           45.9 kB
+  ├ chunks/87c73c54-24122e7b92478d00.js                     54.2 kB
+  └ other shared chunks (total)                             2.01 kB
+
+
+ƒ Middleware                                                74.9 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+npm notice
+npm notice New major version of npm available! 10.8.3 -> 11.6.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.2
+npm notice To update run: npm install -g npm@11.6.2
+npm notice

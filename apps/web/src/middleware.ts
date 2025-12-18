@@ -1,0 +1,45 @@
+import { updateSession } from "@/lib/supabase/middleware";
+import { type NextRequest, NextResponse } from "next/server";
+
+export async function middleware(request: NextRequest) {
+  const start = Date.now(); // start timing
+
+  const response = await updateSession(request);
+  const { pathname } = request.nextUrl;
+
+  // Check session cookie
+  const sessionCookie = request.cookies
+    .getAll()
+    .find(
+      (cookie) =>
+        cookie.name.startsWith("sb-") && cookie.name.endsWith("-auth-token")
+    );
+
+  // Use response for public routes / redirects
+  if (pathname.startsWith("/login") && sessionCookie) {
+    const redirectUrl = new URL("/dashboard", request.url);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  const publicRoutes = ['/login'];
+
+  if (publicRoutes.some((route) => pathname.startsWith(route))) {
+    console.log(`[Request] GET ${pathname} → 200 (public) - ${Date.now() - start}ms`);
+    return response;
+  }
+
+  if (!sessionCookie) {
+    const redirectUrl = new URL("/login", request.url);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  console.log(`[Request] GET ${pathname} → 200 - ${Date.now() - start}ms`);
+
+  return response;
+}
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};
