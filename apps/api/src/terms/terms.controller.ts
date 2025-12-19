@@ -6,6 +6,7 @@ import {
   Body,
   Post,
   UseGuards,
+  Query,
 } from "@nestjs/common";
 import { TermsService } from "./terms.service";
 import type { SlotPage, Term } from "@school/shared-types";
@@ -68,5 +69,13 @@ export class TermsController {
     @Param("date") date: string
   ) {
     return this.termsService.getDailySchedule(termId, date);
+  }
+
+  @Get(":termId/availability")
+  async getTermAvailability(
+    @Param("termId") termId: string,
+    @Query("level") level?: string
+  ) {
+    return this.termsService.getTermAvailability(termId, level);
   }
 }

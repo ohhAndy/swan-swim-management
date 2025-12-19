@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { calculateClassUsage } from "../common/capacity.utils";
 
 @Injectable()
 export class SessionsService {
@@ -19,7 +20,15 @@ export class SessionsService {
         weekday: params.weekday,
         startTime: params.startTime,
       },
-      select: { id: true, title: true, capacity: true },
+      select: {
+        id: true,
+        title: true,
+        capacity: true,
+        instructors: {
+          where: { removedAt: null },
+          select: { id: true },
+        },
+      },
     });
     if (offerings.length === 0) return [];
 
@@ -28,7 +37,7 @@ export class SessionsService {
       select: { id: true, offeringId: true },
     });
     const sessionByOffering = new Map(sessions.map((s) => [s.offeringId, s]));
-    const sessionIds = sessions.map(s => s.id);
+    const sessionIds = sessions.map((s) => s.id);
 
     const regulars = await this.prisma.enrollment.findMany({
       where: {
@@ -47,6 +56,7 @@ export class SessionsService {
             shortCode: true,
           },
         },
+        classRatio: true,
       },
     });
 
@@ -83,12 +93,12 @@ export class SessionsService {
     }, {});
 
     const skipsBySession = new Map<string, Set<string>>();
-    if(sessionIds.length) {
+    if (sessionIds.length) {
       const skips = await this.prisma.enrollmentSkip.findMany({
         where: { classSessionId: { in: sessionIds } },
         select: { classSessionId: true, enrollmentId: true },
       });
-      for(const s of skips) {
+      for (const s of skips) {
         const set = skipsBySession.get(s.classSessionId) ?? new Set<string>();
         set.add(s.enrollmentId);
         skipsBySession.set(s.classSessionId, set);
@@ -96,12 +106,12 @@ export class SessionsService {
     }
 
     const excusedBySession = new Map<string, Set<string>>();
-    if(sessionIds.length) {
+    if (sessionIds.length) {
       const excused = await this.prisma.attendance.findMany({
         where: { classSessionId: { in: sessionIds }, status: "excused" },
         select: { classSessionId: true, enrollmentId: true },
       });
-      for(const e of excused) {
+      for (const e of excused) {
         const set = excusedBySession.get(e.classSessionId) ?? new Set<string>();
         set.add(e.enrollmentId);
         excusedBySession.set(e.classSessionId, set);
@@ -110,8 +120,12 @@ export class SessionsService {
 
     return offerings.map((o) => {
       const ses = sessionByOffering.get(o.id);
-      const skipSet = ses ? (skipsBySession.get(ses.id) ?? new Set<string>()) : new Set<string>();
-      const excusedSet = ses ? (excusedBySession.get(ses.id) ?? new Set<string>()) : new Set<string>();
+      const skipSet = ses
+        ? skipsBySession.get(ses.id) ?? new Set<string>()
+        : new Set<string>();
+      const excusedSet = ses
+        ? excusedBySession.get(ses.id) ?? new Set<string>()
+        : new Set<string>();
 
       const regs = regulars
         .filter((r) => r.offeringId === o.id)
@@ -122,6 +136,7 @@ export class SessionsService {
           studentId: r.student.id,
           name: `${r.student.firstName} ${r.student.lastName}`,
           code: r.student.shortCode ?? null,
+          ratio: r.classRatio, // Using ratio for weighting
         }));
 
       const mUps = ses?.id
@@ -131,21 +146,33 @@ export class SessionsService {
             name: s.name,
             code: s.code,
             makeup: true,
+            ratio: "3:1", // Default makeup ratio
           }))
         : [];
-      
-      const filled = [...regs, ...mUps];  
-      const emptyCount = Math.max(0, o.capacity - filled.length);
+
+      // Calculate Weighted Usage
+      const { effectiveCapacity, openSeats } = calculateClassUsage(
+        [
+          ...regs.map((r) => ({ classRatio: r.ratio })),
+          ...mUps.map((m) => ({ classRatio: m.ratio })),
+        ],
+        o.instructors.length,
+        o.capacity
+      );
+
+      const filledItems = [...regs, ...mUps];
 
       return {
         offeringId: o.id,
         offeringTitle: o.title,
-        capacity: o.capacity,
+        capacity: effectiveCapacity,
         sessionId: ses?.id ?? null,
         date: params.dateOnly,
         seats: [
-            ...filled, 
-            ...Array.from({ length: emptyCount }).map(() => ({ type: "empty" as const })),
+          ...filledItems,
+          ...Array.from({ length: openSeats }).map(() => ({
+            type: "empty" as const,
+          })),
         ],
       };
     });

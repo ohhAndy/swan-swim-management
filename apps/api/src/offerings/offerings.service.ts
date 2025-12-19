@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { calculateClassUsage } from "../common/capacity.utils";
 
 @Injectable()
 export class OfferingsService {
@@ -65,8 +66,13 @@ export class OfferingsService {
       },
       include: {
         term: true,
-        _count: {
-          select: { enrollments: { where: { status: "active" } } },
+        enrollments: {
+          where: { status: "active" },
+          select: { classRatio: true },
+        },
+        instructors: {
+          where: { removedAt: null },
+          select: { id: true },
         },
         sessions: {
           orderBy: { date: "asc" },
@@ -79,7 +85,18 @@ export class OfferingsService {
       orderBy: [{ weekday: "asc" }, { startTime: "asc" }],
     });
 
-    return offerings;
+    return offerings.map((o) => {
+      const { filled, effectiveCapacity } = calculateClassUsage(
+        o.enrollments,
+        o.instructors.length,
+        o.capacity
+      );
+      return {
+        ...o,
+        capacity: effectiveCapacity,
+        _count: { enrollments: filled }, // Helper for frontend compatibility (note: float now)
+      };
+    });
   }
 
   async createOffering(

@@ -222,3 +222,40 @@ export async function deleteOffering(offeringId: string) {
 
   return res.json();
 }
+
+export async function getTermAvailability(
+  termId: string,
+  level?: string
+): Promise<
+  Record<
+    number,
+    Array<{
+      offeringId: string;
+      title: string;
+      time: string;
+      capacity: number;
+      sessions: Array<{
+        date: string;
+        openSeats: number;
+      }>;
+    }>
+  >
+> {
+  const params = new URLSearchParams();
+  if (level) params.set("level", level);
+
+  const headers = await getAuthHeaders();
+  const res = await fetch(
+    `${API}/terms/${termId}/availability?${params.toString()}`,
+    {
+      cache: "no-store",
+      headers,
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch availability: ${res.status}`);
+  }
+
+  return res.json();
+}

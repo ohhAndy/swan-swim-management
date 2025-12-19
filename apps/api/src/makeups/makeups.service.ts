@@ -18,7 +18,7 @@ export class MakeupsService {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
-    if(!staffUser) return;
+    if (!staffUser) return;
 
     return this.prisma.$transaction(async (tx) => {
       const session = await tx.classSession.findUnique({
@@ -37,13 +37,17 @@ export class MakeupsService {
         throw new BadRequestException("Has Time Conflict!");
       }
 
-      const { expectedRegulars, makeUpCount } = await countUsedSeatsForSession(
+      const { filled, effectiveCapacity } = await countUsedSeatsForSession(
         tx,
         session.offeringId,
         session.date
       );
-      const used = expectedRegulars + makeUpCount;
-      if (used >= session.offering.capacity)
+
+      // Check if adding one more (weight 1.0 assumed for makeup) exceeds capacity
+      // However, `filled` is float.
+      // If effectiveCaps is 5, filled 4.0 -> 5.0 OK.
+      // If filled 4.5 -> 5.5 > 5. Blocked.
+      if (filled + 1 > effectiveCapacity)
         throw new BadRequestException("No seats left");
 
       const booking = await tx.makeUpBooking.create({
@@ -69,7 +73,7 @@ export class MakeupsService {
             studentBirthDate: booking.student.birthdate,
             studentLevel: booking.student.level,
             date: booking.classSession.date,
-          }
+          },
         },
       });
 

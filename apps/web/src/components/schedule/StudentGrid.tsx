@@ -340,17 +340,25 @@ export function StudentGrid({
     return isoDates.map((iso) => {
       const d = new Date(iso);
       // Use UTC to ensure we show the server-persisted date exactly
-      const date = d.toLocaleDateString("en-US", {
+      const dateLabel = d.toLocaleDateString("en-US", {
         timeZone: "UTC",
         month: "numeric",
         day: "numeric",
       });
+
+      // Find session for this date
+      const dateKey = iso.split("T")[0]; // YYYY-MM-DD
+      const roster = rosters.find((r) => r.session.date.startsWith(dateKey));
+
       return {
-        key: iso.split("T")[0],
-        label: date,
+        key: dateKey,
+        label: dateLabel,
+        filled: roster?.filled,
+        capacity: roster?.capacity,
+        openSeats: roster?.openSeats,
       };
     });
-  }, [isoDates]);
+  }, [isoDates, rosters]);
 
   const dateToSessionId = new Map<string, string>();
   for (const r of rosters) {
@@ -485,10 +493,21 @@ export function StudentGrid({
       {header.map((h, i) => (
         <div
           key={`h-${i}`}
-          className="bg-muted px-2 py-1 text-center font-semibold sticky top-0 z-10"
-          title={h.key}
+          className="bg-muted px-2 py-1 text-center font-semibold sticky top-0 z-10 flex flex-col items-center justify-center leading-tight"
+          title={`Status: ${h.filled}/${h.capacity} Filled`}
         >
-          {h.label}
+          <span>{h.label}</span>
+          {typeof h.openSeats === "number" && (
+            <span
+              className={`text-[10px] ${
+                h.openSeats === 0
+                  ? "text-red-600 font-bold"
+                  : "text-gray-500 font-normal"
+              }`}
+            >
+              {h.openSeats} left
+            </span>
+          )}
         </div>
       ))}
 

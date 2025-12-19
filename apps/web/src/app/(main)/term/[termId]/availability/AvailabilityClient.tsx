@@ -1,0 +1,186 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { getTermAvailability, getTermTitle } from "@/lib/api/schedule-client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
+import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  SWIMMER_LEVELS,
+  PRESCHOOL_LEVELS,
+  SWIMTEAM_LEVELS,
+} from "@/lib/constants/levels";
+import { BackButton } from "@/components/nav/BackButton";
+
+type AvailabilityData = Record<
+  number,
+  Array<{
+    offeringId: string;
+    title: string;
+    time: string;
+    capacity: number;
+    sessions: Array<{
+      date: string;
+      openSeats: number;
+    }>;
+  }>
+>;
+
+export default function AvailabilityClient({ termId }: { termId: string }) {
+  const router = useRouter();
+  const [level, setLevel] = useState<string>("all");
+  const [data, setData] = useState<AvailabilityData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [termName, setTermName] = useState("");
+
+  const allLevels = [
+    ...PRESCHOOL_LEVELS,
+    ...SWIMMER_LEVELS,
+    ...SWIMTEAM_LEVELS,
+  ];
+
+  useEffect(() => {
+    getTermTitle(termId).then(setTermName).catch(console.error);
+  }, [termId]);
+
+  useEffect(() => {
+    async function fetch() {
+      setLoading(true);
+      try {
+        const res = await getTermAvailability(
+          termId,
+          level === "all" ? undefined : level
+        );
+        setData(res);
+      } catch (error) {
+        console.error("Failed to fetch availability", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetch();
+  }, [termId, level]);
+
+  const weekdays = [0, 1, 2, 3, 4, 5, 6]; // Sun-Sat
+
+  return (
+    <main className="p-4 md:p-6 pb-20 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <BackButton fallbackHref={`/term/${termId}/schedule`} />
+            <h1 className="text-2xl font-bold tracking-tight">Open Slots</h1>
+          </div>
+          <p className="text-muted-foreground">
+            {termName} - Showing classes with availability
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Select value={level} onValueChange={setLevel}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by Level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Levels</SelectItem>
+              {allLevels.map((l) => (
+                <SelectItem key={l} value={l}>
+                  {l}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : !data || Object.keys(data).length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-lg">
+          <p>No available classes found for the selected usage.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {weekdays.map((wd) => {
+            const dayClasses = data[wd];
+            if (!dayClasses || dayClasses.length === 0) return null;
+
+            return (
+              <div key={wd} className="space-y-3">
+                <h3 className="font-semibold text-lg bg-muted/50 p-2 rounded text-center">
+                  {FULL_DAY_LABELS[wd]}
+                </h3>
+                <div className="space-y-3">
+                  {dayClasses.map((cls) => (
+                    <Card key={cls.offeringId} className="overflow-hidden">
+                      <CardHeader className="p-3 bg-blue-50/50 pb-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-sm font-medium leading-tight">
+                              {cls.title}
+                            </CardTitle>
+                            <CardDescription className="text-xs mt-1 font-mono">
+                              {cls.time}
+                            </CardDescription>
+                          </div>
+                          <div className="text-xs bg-white px-1.5 py-0.5 rounded border shadow-sm">
+                            Cap: {cls.capacity}
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <div className="divide-y text-sm max-h-48 overflow-y-auto">
+                          {cls.sessions.map((sess) => (
+                            <div
+                              key={sess.date}
+                              className="p-2 flex justify-between items-center hover:bg-muted/50 cursor-pointer transition-colors"
+                              onClick={() =>
+                                router.push(
+                                  `/term/${termId}/schedule/date/${sess.date}`
+                                )
+                              }
+                            >
+                              <span>
+                                {new Date(
+                                  sess.date + "T12:00:00Z"
+                                ).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </span>
+                              <span className="font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full text-xs">
+                                {sess.openSeats} left
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </main>
+  );
+}
