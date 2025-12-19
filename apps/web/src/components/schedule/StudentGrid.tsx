@@ -337,10 +337,19 @@ export function StudentGrid({
   const trials = useMemo(() => buildTrials(rosters), [rosters]);
 
   const header = useMemo(() => {
-    return isoDates.map((iso) => ({
-      key: iso.split("T")[0],
-      label: new Date(iso).toLocaleDateString("en-CA"),
-    }));
+    return isoDates.map((iso) => {
+      const d = new Date(iso);
+      // Use UTC to ensure we show the server-persisted date exactly
+      const date = d.toLocaleDateString("en-US", {
+        timeZone: "UTC",
+        month: "numeric",
+        day: "numeric",
+      });
+      return {
+        key: iso.split("T")[0],
+        label: date,
+      };
+    });
   }, [isoDates]);
 
   const dateToSessionId = new Map<string, string>();
@@ -479,7 +488,7 @@ export function StudentGrid({
           className="bg-muted px-2 py-1 text-center font-semibold sticky top-0 z-10"
           title={h.key}
         >
-          {h.label.slice(5)}
+          {h.label}
         </div>
       ))}
 

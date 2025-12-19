@@ -12,7 +12,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GuardiansService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
-const client_1 = require("@prisma/client");
 let GuardiansService = class GuardiansService {
     constructor(prisma) {
         this.prisma = prisma;
@@ -85,7 +84,7 @@ let GuardiansService = class GuardiansService {
                     shortCode: generatedShortCode,
                     email,
                     phone,
-                    address: address ?? client_1.Prisma.JsonNull,
+                    address: address ?? null,
                     notes: notes ?? null,
                     createdBy: staffUser.id,
                 },

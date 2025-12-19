@@ -14,39 +14,27 @@ import type {
 import { CreateTermInput } from "./dto/create-term.dto";
 import { SessionStatus, Prisma } from "@prisma/client";
 
-const TZ = "America/Toronto";
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function estDayKey(d: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d);
+// Use UTC for date matching to ensure consistency
+function getUTCDayKey(d: Date): string {
+  return d.toISOString().split("T")[0];
 }
 
-function estWeekday(d: Date): number {
-  const label = new Intl.DateTimeFormat("en-US", {
-    timeZone: TZ,
-    weekday: "short",
-  }).format(d);
-  return DAYS.indexOf(label as (typeof DAYS)[number]);
-}
-
-//gen function for dates
 function* weeklyDates(start: Date, end: Date, weekday: number) {
   const cur = new Date(start);
-  while (estWeekday(cur) !== weekday) {
+  // Set to noon UTC to avoid timezone shifts (e.g. 00:00 UTC -> 19:00 EST prev day)
+  cur.setUTCHours(12, 0, 0, 0);
+
+  // Advance to first matching weekday (UTC)
+  while (cur.getUTCDay() !== weekday) {
     cur.setDate(cur.getDate() + 1);
   }
 
-  const endKey = estDayKey(end);
+  const endKey = getUTCDayKey(end);
   while (true) {
-    const curKey = estDayKey(cur);
+    const curKey = getUTCDayKey(cur);
     if (curKey > endKey) break;
 
-    yield new Date(curKey);
+    yield new Date(cur); // Returns a new Date object with same time
 
     cur.setDate(cur.getDate() + 7);
   }
@@ -652,7 +640,8 @@ export class TermsService {
       throw new BadRequestException("Invalid date format YYYY-MM-DD");
     }
     const targetDate = new Date(`${dateString}T04:00:00.000Z`);
-    const dow = estWeekday(targetDate);
+    // Use UTC Day
+    const dow = targetDate.getUTCDay();
 
     console.time("[DailySchedule] Fetch Data");
     const [term, offerings] = await Promise.all([

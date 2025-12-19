@@ -29,6 +29,12 @@ let OfferingsController = class OfferingsController {
     async updateOfferingInfo(offeringId, body, user) {
         return this.offeringsService.updateOfferingInfo(offeringId, body, user);
     }
+    async createOffering(body, user) {
+        return this.offeringsService.createOffering(body, user);
+    }
+    async deleteOffering(offeringId, user) {
+        return this.offeringsService.deleteOffering(offeringId, user);
+    }
 };
 exports.OfferingsController = OfferingsController;
 __decorate([
@@ -42,7 +48,7 @@ __decorate([
 ], OfferingsController.prototype, "getAvailableForTransfer", null);
 __decorate([
     (0, common_1.Patch)(":offeringId"),
-    (0, roles_decorator_1.Roles)('admin', 'manager', 'supervisor'),
+    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
     __param(0, (0, common_1.Param)("offeringId")),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -50,6 +56,24 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], OfferingsController.prototype, "updateOfferingInfo", null);
+__decorate([
+    (0, common_1.Post)(),
+    (0, roles_decorator_1.Roles)("admin", "manager"),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], OfferingsController.prototype, "createOffering", null);
+__decorate([
+    (0, common_1.Delete)(":offeringId"),
+    (0, roles_decorator_1.Roles)("admin", "manager"),
+    __param(0, (0, common_1.Param)("offeringId")),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], OfferingsController.prototype, "deleteOffering", null);
 exports.OfferingsController = OfferingsController = __decorate([
     (0, common_1.Controller)("offerings"),
     (0, common_1.UseGuards)(supabase_auth_guard_1.SupabaseAuthGuard, roles_guard_1.RolesGuard),

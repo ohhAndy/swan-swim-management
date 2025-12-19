@@ -16,14 +16,15 @@ import { ScheduleMakeupDialog } from "./ScheduleMakeUpDialog";
 import { CurrentUser } from "@/lib/auth/user";
 import { PermissionGate } from "../auth/PermissionGate";
 import { updateRemarks } from "@/lib/api/students-client";
-import { Edit, Loader2, Users } from "lucide-react";
+import { Loader2, Users } from "lucide-react";
 import OfferingDialog from "./OfferingInfoDialog";
 import { updateOfferingInfo } from "@/lib/api/schedule-client";
 import { AssignInstructorDialog } from "./AssignInstructorDialog";
 import { ScheduleTrialDialog } from "./ScheduleTrialDialog";
 import { updateTrialStatus } from "@/lib/api/trial-client";
 import { ConvertTrialDialog } from "./ConvertTrialDialog";
-
+import { Trash2 } from "lucide-react";
+import { deleteOffering } from "@/lib/api/schedule-client";
 export function SlotBlock({
   title,
   notes,
@@ -256,16 +257,45 @@ export function SlotBlock({
                 allowedRoles={["admin", "manager", "supervisor"]}
                 currentRole={user.role}
               >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setInstructorDialogOpen(true)}
-                  disabled={!fallbackOfferingId}
-                  className="text-xs bg-[#bce0f7]"
-                >
-                  <Users className="h-3 w-3 mr-1" />
-                  {instructorNames || "No Instructor Assigned"}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setInstructorDialogOpen(true)}
+                    disabled={!fallbackOfferingId}
+                    className="text-xs bg-[#bce0f7]"
+                  >
+                    <Users className="h-3 w-3 mr-1" />
+                    {instructorNames || "No Instructor Assigned"}
+                  </Button>
+
+                  {(user.role === "admin" || user.role === "manager") && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-700 p-2 h-auto"
+                      onClick={() => {
+                        if (
+                          confirm(
+                            "Are you sure you want to delete this class? This action cannot be undone and will fail if there are active enrollments."
+                          )
+                        ) {
+                          setIsUpdating(true);
+                          deleteOffering(fallbackOfferingId!)
+                            .then(() => {
+                              startTransition(() => {
+                                router.refresh();
+                              });
+                            })
+                            .catch((e) => alert(e.message))
+                            .finally(() => setIsUpdating(false));
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </PermissionGate>
             </div>
           </div>

@@ -5,11 +5,13 @@ const API = process.env.NEXT_PUBLIC_API_URL!;
 
 async function getAuthHeaders() {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${session?.access_token}`,
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${session?.access_token}`,
   };
 }
 
@@ -34,7 +36,7 @@ export async function getTimeSlotsByWeekday(
   termId: string,
   weekday: number
 ): Promise<string[]> {
-  const headers = await getAuthHeaders();;
+  const headers = await getAuthHeaders();
   const res = await fetch(
     `${API}/terms/${termId}/schedule/weekday/${weekday}/slots`,
     { cache: "no-store", headers }
@@ -47,7 +49,10 @@ export async function getTimeSlotsByWeekday(
 
 export async function getTermTitle(termId: string): Promise<string> {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/terms/${termId}`, { cache: "no-store", headers });
+  const res = await fetch(`${API}/terms/${termId}`, {
+    cache: "no-store",
+    headers,
+  });
   if (!res.ok) {
     throw new Error("Failed to fetch slot page");
   }
@@ -133,39 +138,87 @@ export async function getAvailableClassesForTransfer(
     termId,
     excludeOfferingId: currentOfferingId,
   });
-  
+
   if (level) {
-    params.set('level', level);
+    params.set("level", level);
   }
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/offerings/available-for-transfer?${params.toString()}`, {
-    cache: 'no-store',
-    headers,
-  });
-  
+  const res = await fetch(
+    `${API}/offerings/available-for-transfer?${params.toString()}`,
+    {
+      cache: "no-store",
+      headers,
+    }
+  );
+
   if (!res.ok) {
     throw new Error(`Failed to fetch available classes: ${res.status}`);
   }
-  
+
   return res.json();
 }
 
-export async function updateOfferingInfo(
-  offeringId: string, 
-  title: string,
-) {
+export async function updateOfferingInfo(offeringId: string, title: string) {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API}/offerings/${offeringId}`, {
     method: "PATCH",
     headers,
     body: JSON.stringify({ title }),
   });
-  
+
   if (!res.ok) {
     const errorText = await res.text();
     console.error("API Error:", res.status, res.statusText, errorText);
     throw new Error(`Failed to update offering: ${res.status} - ${errorText}`);
   }
-  
+
+  return res.json();
+}
+
+export async function createOffering(payload: {
+  termId: string;
+  weekday: number;
+  startTime: string;
+  title: string;
+  capacity: number;
+  notes?: string;
+}) {
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API}/offerings`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to create offering: ${res.status} - ${errorText}`);
+  }
+
+  return res.json();
+}
+
+export async function deleteOffering(offeringId: string) {
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API}/offerings/${offeringId}`, {
+    method: "DELETE",
+    headers,
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    // Try to parse JSON error if possible
+    try {
+      const json = JSON.parse(errorText);
+      throw new Error(
+        json.message || `Failed to delete offering: ${res.status}`
+      );
+    } catch {
+      throw new Error(
+        `Failed to delete offering: ${res.status} - ${errorText}`
+      );
+    }
+  }
+
   return res.json();
 }

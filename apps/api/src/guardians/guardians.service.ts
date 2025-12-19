@@ -90,7 +90,7 @@ export class GuardiansService {
           shortCode: generatedShortCode,
           email,
           phone,
-          address: address ?? Prisma.JsonNull,
+          address: address ?? null,
           notes: notes ?? null,
           createdBy: staffUser.id,
         },

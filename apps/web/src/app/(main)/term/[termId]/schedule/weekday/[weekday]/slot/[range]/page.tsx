@@ -7,9 +7,11 @@ import { BackButton } from "@/components/nav/BackButton";
 import NextButton from "@/components/nav/NextButton";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
+import { AddClassDialog } from "@/components/schedule/AddClassDialog";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 
 function parseRange(range: string) {
-  const [start, end] = range.split("-");
+  const [start, end] = decodeURIComponent(range).split("-");
   return { start, end };
 }
 
@@ -50,8 +52,18 @@ export default async function SlotPageView({
           termId={termId}
         />
       </div>
-
-      <SlotHeader title={title} subtitle={subtitle} />
+      <SlotHeader title={title} subtitle={subtitle}>
+        <PermissionGate
+          allowedRoles={["admin", "manager"]}
+          currentRole={user.role}
+        >
+          <AddClassDialog
+            termId={termId}
+            weekday={Number(weekday)}
+            startTime={start}
+          />
+        </PermissionGate>
+      </SlotHeader>
       <div className="grid gap-5 print:block">
         {blocks.map((b) => (
           <SlotBlock

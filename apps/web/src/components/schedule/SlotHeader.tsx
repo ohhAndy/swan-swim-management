@@ -3,9 +3,11 @@ import { PrintButton } from "./PrintButton";
 export function SlotHeader({
   title,
   subtitle,
+  children,
 }: {
   title: string;
   subtitle?: string | null;
+  children?: React.ReactNode;
 }) {
   return (
     <div className="mb-4 flex items-center justify-between rounded-md bg-slate-200 px-4 py-2 print:hidden">
@@ -15,7 +17,10 @@ export function SlotHeader({
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         ) : null}
       </div>
-      <PrintButton />
+      <div className="flex items-center gap-2">
+        {children}
+        <PrintButton />
+      </div>
     </div>
   );
 }
