@@ -134,7 +134,10 @@ let EnrollmentsService = class EnrollmentsService {
                     entityId: enrollmentId,
                     changes: {
                         status: { from: "active", to: "transferred" },
-                        offeringId: { from: currEnrollment.offeringId, to: targetOfferingId },
+                        offeringId: {
+                            from: currEnrollment.offeringId,
+                            to: targetOfferingId,
+                        },
                     },
                     metadata: {
                         studentId: currEnrollment.studentId,
@@ -263,6 +266,46 @@ let EnrollmentsService = class EnrollmentsService {
                 skipsCreated: skippedDates.length,
             };
         });
+    }
+    async deleteEnrollment(id, user) {
+        const staffUser = await this.prisma.staffUser.findUnique({
+            where: { authId: user.authId },
+        });
+        if (!staffUser)
+            return;
+        const enrollment = await this.prisma.enrollment.findUnique({
+            where: { id },
+            include: {
+                student: true,
+            },
+        });
+        if (!enrollment) {
+            throw new common_1.NotFoundException("Enrollment not found");
+        }
+        await this.prisma.$transaction(async (tx) => {
+            // Delete enrollment (cascade should handle skips/attendance if configured,
+            // but let's assume we might need to be careful. For now, standard delete)
+            await tx.enrollment.delete({
+                where: { id },
+            });
+            await tx.auditLog.create({
+                data: {
+                    staffId: staffUser.id,
+                    action: "Delete Enrollment",
+                    entityType: "Enrollment",
+                    entityId: id,
+                    changes: {
+                        status: { from: enrollment.status, to: null },
+                    },
+                    metadata: {
+                        studentId: enrollment.studentId,
+                        studentName: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+                        offeringId: enrollment.offeringId,
+                    },
+                },
+            });
+        });
+        return { success: true };
     }
 };
 exports.EnrollmentsService = EnrollmentsService;

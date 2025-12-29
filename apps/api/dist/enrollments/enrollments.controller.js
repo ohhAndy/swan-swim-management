@@ -35,11 +35,14 @@ let EnrollmentsController = class EnrollmentsController {
     async updateRemarks(id, body, user) {
         return this.enrollmentsService.updateRemarks(id, body, user);
     }
+    async deleteEnrollment(id, user) {
+        return this.enrollmentsService.deleteEnrollment(id, user);
+    }
 };
 exports.EnrollmentsController = EnrollmentsController;
 __decorate([
     (0, common_1.Post)("with-skip"),
-    (0, roles_decorator_1.Roles)('admin', 'manager'),
+    (0, roles_decorator_1.Roles)("admin", "manager"),
     __param(0, (0, common_1.Body)(new nestjs_zod_1.ZodValidationPipe(enrollment_dto_1.EnrollWithSkipSchema))),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -48,7 +51,7 @@ __decorate([
 ], EnrollmentsController.prototype, "enrollWithSkips", null);
 __decorate([
     (0, common_1.Post)(":id/transfer"),
-    (0, roles_decorator_1.Roles)('admin', 'manager'),
+    (0, roles_decorator_1.Roles)("admin", "manager"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)(new nestjs_zod_1.ZodValidationPipe(transfer_dto_1.transferEnrollmentSchema))),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -58,7 +61,7 @@ __decorate([
 ], EnrollmentsController.prototype, "transferEnrollment", null);
 __decorate([
     (0, common_1.Put)(":id/remarks"),
-    (0, roles_decorator_1.Roles)('admin', 'manager', 'supervisor'),
+    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -66,6 +69,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EnrollmentsController.prototype, "updateRemarks", null);
+__decorate([
+    (0, common_1.Delete)(":id"),
+    (0, roles_decorator_1.Roles)("admin", "manager"),
+    __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], EnrollmentsController.prototype, "deleteEnrollment", null);
 exports.EnrollmentsController = EnrollmentsController = __decorate([
     (0, common_1.Controller)("enrollments"),
     (0, common_1.UseGuards)(supabase_auth_guard_1.SupabaseAuthGuard, roles_guard_1.RolesGuard),

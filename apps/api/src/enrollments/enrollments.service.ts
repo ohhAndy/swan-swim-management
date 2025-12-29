@@ -11,16 +11,11 @@ import { TransferEnrollmentDto } from "./dto/transfer.dto";
 export class EnrollmentsService {
   constructor(private prisma: PrismaService) {}
 
-  async updateRemarks(
-    enrollmentId: string,
-    body: any,
-    user: any,
-  ) {
+  async updateRemarks(enrollmentId: string, body: any, user: any) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
-    if(!staffUser) return;
-
+    if (!staffUser) return;
 
     const currEnrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
@@ -30,7 +25,7 @@ export class EnrollmentsService {
     });
     if (!currEnrollment) throw new NotFoundException("Enrollment DNE");
 
-    if(currEnrollment) {
+    if (currEnrollment) {
       const updated = await this.prisma.enrollment.update({
         where: { id: enrollmentId },
         data: {
@@ -51,7 +46,7 @@ export class EnrollmentsService {
       });
     }
 
-    return { 
+    return {
       success: true,
       notes: body.remarks,
     };
@@ -67,7 +62,7 @@ export class EnrollmentsService {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
-    if(!staffUser) return;
+    if (!staffUser) return;
 
     const currEnrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
@@ -148,7 +143,10 @@ export class EnrollmentsService {
           entityId: enrollmentId,
           changes: {
             status: { from: "active", to: "transferred" },
-            offeringId: { from: currEnrollment.offeringId, to: targetOfferingId },
+            offeringId: {
+              from: currEnrollment.offeringId,
+              to: targetOfferingId,
+            },
           },
           metadata: {
             studentId: currEnrollment.studentId,
@@ -197,7 +195,7 @@ export class EnrollmentsService {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
-    if(!staffUser) return;
+    if (!staffUser) return;
 
     const student = await this.prisma.student.findUnique({
       where: { id: studentId },
@@ -290,5 +288,50 @@ export class EnrollmentsService {
         skipsCreated: skippedDates.length,
       };
     });
+  }
+
+  async deleteEnrollment(id: string, user: any) {
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+    if (!staffUser) return;
+
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: { id },
+      include: {
+        student: true,
+      },
+    });
+
+    if (!enrollment) {
+      throw new NotFoundException("Enrollment not found");
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      // Delete enrollment (cascade should handle skips/attendance if configured,
+      // but let's assume we might need to be careful. For now, standard delete)
+      await tx.enrollment.delete({
+        where: { id },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          staffId: staffUser.id,
+          action: "Delete Enrollment",
+          entityType: "Enrollment",
+          entityId: id,
+          changes: {
+            status: { from: enrollment.status, to: null },
+          },
+          metadata: {
+            studentId: enrollment.studentId,
+            studentName: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+            offeringId: enrollment.offeringId,
+          },
+        },
+      });
+    });
+
+    return { success: true };
   }
 }

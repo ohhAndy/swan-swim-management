@@ -40,9 +40,12 @@ let MakeupsService = class MakeupsService {
             if (await (0, sessions_helpers_1.hasTimeConflict)(tx, studentId, session.date)) {
                 throw new common_1.BadRequestException("Has Time Conflict!");
             }
-            const { expectedRegulars, makeUpCount } = await (0, sessions_helpers_1.countUsedSeatsForSession)(tx, session.offeringId, session.date);
-            const used = expectedRegulars + makeUpCount;
-            if (used >= session.offering.capacity)
+            const { filled, effectiveCapacity } = await (0, sessions_helpers_1.countUsedSeatsForSession)(tx, session.offeringId, session.date);
+            // Check if adding one more (weight 1.0 assumed for makeup) exceeds capacity
+            // However, `filled` is float.
+            // If effectiveCaps is 5, filled 4.0 -> 5.0 OK.
+            // If filled 4.5 -> 5.5 > 5. Blocked.
+            if (filled + 1 > effectiveCapacity)
                 throw new common_1.BadRequestException("No seats left");
             const booking = await tx.makeUpBooking.create({
                 data: {
@@ -66,7 +69,7 @@ let MakeupsService = class MakeupsService {
                         studentBirthDate: booking.student.birthdate,
                         studentLevel: booking.student.level,
                         date: booking.classSession.date,
-                    }
+                    },
                 },
             });
             return { makeUpId: booking.id, status: booking.status };

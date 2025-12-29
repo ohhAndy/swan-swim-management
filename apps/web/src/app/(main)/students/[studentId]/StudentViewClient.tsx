@@ -4,12 +4,31 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Edit2, Save, X, User, Calendar, Phone, Mail } from "lucide-react";
+import {
+  Edit2,
+  Save,
+  X,
+  User,
+  Calendar,
+  Phone,
+  Mail,
+  Trash2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -21,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { updateStudent } from "@/lib/api/students-client";
+import { deleteEnrollment } from "@/lib/api/schedule-client";
 
 import { TransferEnrollmentDialog } from "@/components/schedule/TransferEnrollmentDialog";
 
@@ -76,23 +96,19 @@ function getInvoiceStatusBadge(enrollment: Enrollment) {
 
   if (invoice.status === "partial") {
     const paid = invoice.payments.reduce((acc, payment) => {
-      return acc + payment.amount
+      return acc + payment.amount;
     }, 0);
     const balance = invoice.totalAmount - paid;
     return (
-      <Badge
-        variant="outline"
-        className="flex items-center gap-1"
-      >
+      <Badge variant="outline" className="flex items-center gap-1">
         <DollarSign className="w-3 h-3 shrink-0" />
         Partial (${balance.toFixed(2)} due)
-
       </Badge>
     );
   }
 
   if (invoice.status === "void") {
-    return ( 
+    return (
       <Badge variant="outline" className="flex items-center gap-1">
         <AlertCircle className="w-3 h-3 shrink-0" />
         Void
@@ -135,6 +151,11 @@ export default function StudentViewClient({
       status: string;
     }>;
   } | null>(null);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [enrollmentToDelete, setEnrollmentToDelete] = useState<string | null>(
+    null
+  );
 
   const {
     register,
@@ -246,6 +267,30 @@ export default function StudentViewClient({
     setTransferDialogOpen(false);
     setSelectedEnrollment(null);
     router.refresh();
+  };
+
+  const handleDeleteClick = (enrollmentId: string) => {
+    setEnrollmentToDelete(enrollmentId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!enrollmentToDelete) return;
+
+    try {
+      setLoading(true);
+      await deleteEnrollment(enrollmentToDelete);
+      setDeleteDialogOpen(false);
+      setEnrollmentToDelete(null);
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to delete enrollment:", error);
+      alert(
+        error instanceof Error ? error.message : "Failed to delete enrollment"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -538,7 +583,8 @@ export default function StudentViewClient({
                             <p className="text-sm text-gray-600 pt-2">
                               {FULL_DAY_LABELS[enrollment.offering.weekday]}{" "}
                               {enrollment.offering.startTime}-
-                              {enrollment.offering.endTime} ({enrollment.classRatio})
+                              {enrollment.offering.endTime} (
+                              {enrollment.classRatio})
                             </p>
                             {instructors.length > 0 ? (
                               <p className="text-sm text-gray-600 mt-1">
@@ -568,9 +614,18 @@ export default function StudentViewClient({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleTransferClick(enrollment)}
-                                className="bg-yellow-100 text-black"
+                                className="bg-yellow-100 text-black mb-2"
                               >
                                 Transfer
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteClick(enrollment.id)}
+                                className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
                               </Button>
                             </PermissionGate>
                           </div>
@@ -652,6 +707,28 @@ export default function StudentViewClient({
           onSuccess={handleTransferSuccess}
         />
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              enrollment record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={loading}
+            >
+              {loading ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

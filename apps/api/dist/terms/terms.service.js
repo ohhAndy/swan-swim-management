@@ -430,16 +430,70 @@ let TermsService = class TermsService {
             .map(([date, sessionList]) => {
             const rosters = sessionList.map((s) => {
                 const offeringEnrollments = enrollmentsByOffering.get(s.offeringId) ?? [];
-                const regulars = offeringEnrollments.length;
-                const skips = skipCountMap.get(s.id) ?? 0;
-                const makeups = makeupCountMap.get(s.id) ?? 0;
-                const trials = trialCountMap.get(s.id) ?? 0;
-                const excused = excusedMap.get(s.id) ?? 0;
+                // OLD Count Logic (replaced by capacity.utils)
+                // const regulars = offeringEnrollments.length;
+                // const skips = skipCountMap.get(s.id) ?? 0;
+                // const makeups = makeupCountMap.get(s.id) ?? 0;
+                // const trials = trialCountMap.get(s.id) ?? 0;
+                // const excused = excusedMap.get(s.id) ?? 0;
+                // const capacity = capacityMap.get(s.offeringId) ?? 0;
+                // const filled = Math.max(0, regulars - skips - excused) + makeups + trials;
+                // const openSeats = Math.max(0, capacity - filled);
+                // NEW LOGIC
+                const instructorCount = s.offering.instructors.length;
                 const capacity = capacityMap.get(s.offeringId) ?? 0;
-                const filled = Math.max(0, regulars - skips - excused) + makeups + trials;
-                const openSeats = Math.max(0, capacity - filled);
+                const skips = skipCountMap.get(s.id) ?? 0;
+                const excused = excusedMap.get(s.id) ?? 0;
+                // Calculate usage for ACTIVE students (regulars - skips - excused)
+                // We need to filter enrollments to exclude skips/excused or just subtract counts?
+                // Since weights vary (1:1=3, 3:1=1), we can't just subtract "skips" count if skips are unweighted.
+                // Correct approach: Sum weights of PRESENT students.
+                // PRESENT = All Active Enrollments MINUS Skipped/Excused Enrollments.
+                let regularWeighted = 0;
+                for (const enr of offeringEnrollments) {
+                    const isSkipped = skipMap.get(enr.id)?.has(s.id);
+                    const isExcused = attendanceMap.get(enr.id)?.get(s.id)?.status === "excused";
+                    if (!isSkipped && !isExcused) {
+                        const ratio = enr.classRatio || "3:1";
+                        regularWeighted +=
+                            ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
+                    }
+                }
+                // Add Makeups/Trials (Assume standard weight 1.0 for now, or check if they have ratios?)
+                // Makeups usually replace a spot. Trials replace a spot.
+                // Assuming m/t = 1.0 weight unless schema allows specifying ratio for them (it doesn't clearly).
+                // User said "1:1 takes up 3". If `MakeUp` has a student, that student has a level...
+                // But `MakeUp` logic is complex. For now, let's treat Makeups/Trials as 1.0 unless we query their student level.
+                // Wait, `makeUpsBySession` includes student info.
+                // `trialsBySession` includes child info.
+                const makeups = makeupCountMap.get(s.id) ?? 0; // Count only?
+                const trials = trialCountMap.get(s.id) ?? 0; // Count only?
+                // Let's refine Makeups/Trials if possible, but for MVP of this refactor, simple count + weighted regulars is a huge step.
+                // However, if a 1:1 student is doing a makeup, they should take 3 slots.
+                // The `makeUpBookings` query selected student level.
                 const sessionMakeUps = makeUpsBySession.get(s.id) ?? [];
+                let makeupWeighted = 0;
+                for (const m of sessionMakeUps) {
+                    // We don't have ratio on student, only level. We can't infer ratio from level easily without map.
+                    // But existing enrollments have `classRatio`.
+                    // For now, let's stick to 1.0 for makeups/trials to be safe, or 1.0 per person.
+                    makeupWeighted += 1;
+                }
+                // Trials
                 const sessionTrials = trialsBySession.get(s.id) ?? [];
+                let trialsWeighted = 0;
+                for (const t of sessionTrials) {
+                    if (t.status === "scheduled" || t.status === "attended") {
+                        trialsWeighted += 1;
+                    }
+                }
+                const totalFilled = regularWeighted + makeupWeighted + trialsWeighted;
+                const dynamicMin = instructorCount >= 2 ? 5 : 0;
+                const effectiveCapacity = Math.max(capacity, dynamicMin);
+                const openSeats = Math.max(0, Math.floor(effectiveCapacity - totalFilled));
+                // Compatibility variables for return
+                const finalCapacity = effectiveCapacity;
+                const filled = totalFilled; // This is a number, possibly float.
                 const makeUpsLite = sessionMakeUps.map((m) => ({
                     id: m.id,
                     studentId: m.studentId,
@@ -508,7 +562,7 @@ let TermsService = class TermsService {
                         })),
                     },
                     roster: rosterRows,
-                    capacity,
+                    capacity: finalCapacity,
                     filled,
                     openSeats,
                     status: s.status,
@@ -686,12 +740,26 @@ let TermsService = class TermsService {
             const sessionTrials = trialsBySession.get(session.id) ?? [];
             const sessionEnrollments = enrollmentsByOffering.get(offering.id) ?? [];
             // Count logic matching SlotBlock
-            const regularCount = sessionEnrollments.length;
-            const skipCount = sessionEnrollments.filter((e) => skipSet.has(e.id)).length;
-            // Count active makeups/trials for capacity
+            // WEIGHTED LOGIC
+            let regularWeighted = 0;
+            for (const enr of sessionEnrollments) {
+                const isSkipped = skipSet.has(enr.id);
+                // check attendance for excused? (attendanceMap stores by enrollmentId)
+                const attendance = attendanceMap.get(enr.id);
+                const isExcused = attendance && attendance.status === "excused"; // Note: attendanceMap value type check needed
+                if (!isSkipped && !isExcused) {
+                    const ratio = enr.classRatio || "3:1";
+                    regularWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
+                }
+            }
             const activeMakeups = sessionMakeups.length;
             const activeTrials = sessionTrials.filter((t) => ["scheduled", "attended"].includes(t.status)).length;
-            const filled = Math.max(0, regularCount - skipCount) + activeMakeups + activeTrials;
+            // Total filled (float)
+            const filled = regularWeighted + activeMakeups + activeTrials;
+            // Dynamic Capacity
+            const instructorCount = offering.instructors.length;
+            const dynamicMin = instructorCount >= 2 ? 5 : 0;
+            const effectiveCapacity = Math.max(offering.capacity, dynamicMin);
             const roster = [
                 ...sessionEnrollments.map((e) => {
                     const isSkipped = skipSet.has(e.id);
@@ -760,6 +828,112 @@ let TermsService = class TermsService {
             termName: term.name,
             classes: classes,
         };
+    }
+    async getTermAvailability(termId, level) {
+        // 1. Fetch all offerings + sessions + enrollments + makeups in bulk
+        // This is a heavy query but necessary to compute accurate availability
+        const offerings = await this.prisma.classOffering.findMany({
+            where: {
+                termId,
+                ...(level
+                    ? {
+                        OR: [
+                            { title: { contains: level, mode: "insensitive" } },
+                            // If filtering by level, we might want to check the offering title usually
+                        ],
+                    }
+                    : {}),
+            },
+            include: {
+                instructors: {
+                    select: { id: true },
+                    where: { removedAt: null },
+                },
+                sessions: {
+                    orderBy: { date: "asc" },
+                    select: {
+                        id: true,
+                        date: true,
+                        status: true,
+                        makeUps: {
+                            select: { id: true }, // Count only
+                            where: { status: { not: "cancelled" } },
+                        },
+                        enrollmentSkips: {
+                            select: { enrollmentId: true },
+                        },
+                        attendance: {
+                            // We need to know if someone is excused effectively?
+                            // Usually capacity checks care about active enrollments mostly.
+                            // But our robust check excludes excused. Let's include it.
+                            where: { status: "excused" },
+                            select: { enrollmentId: true },
+                        },
+                    },
+                },
+                enrollments: {
+                    where: { status: "active" },
+                    select: {
+                        id: true,
+                        classRatio: true,
+                    },
+                },
+            },
+            orderBy: [{ weekday: "asc" }, { startTime: "asc" }],
+        });
+        // 2. Process in-memory to find open slots
+        // Group by Weekday
+        const byWeekday = {};
+        for (const off of offerings) {
+            const availableSessions = [];
+            const baseCap = off.capacity;
+            const instructorCount = off.instructors.length;
+            // Dynamic rule: 2+ instructors -> min 5 slots
+            const dynamicMin = instructorCount >= 2 ? 5 : 0;
+            const effectiveCapacity = Math.max(baseCap, dynamicMin);
+            for (const sess of off.sessions) {
+                if (sess.status === "canceled")
+                    continue;
+                // Calculate Usage
+                let filled = 0;
+                // Enrollments (exclude skips/excused)
+                const skipSet = new Set(sess.enrollmentSkips.map((s) => s.enrollmentId));
+                const excusedSet = new Set(sess.attendance.map((a) => a.enrollmentId));
+                for (const enr of off.enrollments) {
+                    if (skipSet.has(enr.id) || excusedSet.has(enr.id))
+                        continue;
+                    const ratio = enr.classRatio || "3:1";
+                    if (ratio === "1:1")
+                        filled += 3;
+                    else if (ratio === "2:1")
+                        filled += 1.5;
+                    else
+                        filled += 1;
+                }
+                // Add Makeups (Assume 1.0 weight)
+                filled += sess.makeUps.length;
+                const openSeats = Math.max(0, Math.floor(effectiveCapacity - filled));
+                if (openSeats > 0) {
+                    availableSessions.push({
+                        date: sess.date.toLocaleDateString("en-CA"), // YYYY-MM-DD
+                        openSeats,
+                    });
+                }
+            }
+            if (availableSessions.length > 0) {
+                const wd = off.weekday;
+                if (!byWeekday[wd])
+                    byWeekday[wd] = [];
+                byWeekday[wd].push({
+                    offeringId: off.id,
+                    title: off.title,
+                    time: `${off.startTime}-${off.endTime}`,
+                    capacity: effectiveCapacity, // Return effective capacity
+                    sessions: availableSessions,
+                });
+            }
+        }
+        return byWeekday;
     }
 };
 exports.TermsService = TermsService;

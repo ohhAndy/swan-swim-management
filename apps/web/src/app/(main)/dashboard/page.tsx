@@ -40,6 +40,15 @@ export default async function DashboardPage() {
                   View Today&apos;s Schedule
                 </Link>
               </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="w-full bg-[#1c82c5] hover:bg-[#156a9e] text-black mt-2"
+              >
+                <Link href={`/term/${latestTerm.id}/availability`}>
+                  View Availability
+                </Link>
+              </Button>
             </div>
           )}
         </CardContent>

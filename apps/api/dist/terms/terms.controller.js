@@ -46,6 +46,9 @@ let TermsController = class TermsController {
     async getDailySchedule(termId, date) {
         return this.termsService.getDailySchedule(termId, date);
     }
+    async getTermAvailability(termId, level) {
+        return this.termsService.getTermAvailability(termId, level);
+    }
 };
 exports.TermsController = TermsController;
 __decorate([
@@ -103,6 +106,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], TermsController.prototype, "getDailySchedule", null);
+__decorate([
+    (0, common_1.Get)(":termId/availability"),
+    __param(0, (0, common_1.Param)("termId")),
+    __param(1, (0, common_1.Query)("level")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], TermsController.prototype, "getTermAvailability", null);
 exports.TermsController = TermsController = __decorate([
     (0, common_1.Controller)("terms"),
     (0, common_1.UseGuards)(supabase_auth_guard_1.SupabaseAuthGuard, roles_guard_1.RolesGuard),

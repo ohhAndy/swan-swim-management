@@ -2,12 +2,18 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.countUsedSeatsForSession = countUsedSeatsForSession;
 exports.hasTimeConflict = hasTimeConflict;
+const capacity_utils_1 = require("../common/capacity.utils");
 async function countUsedSeatsForSession(tx, offeringId, date) {
     const session = await tx.classSession.findFirst({
         where: { offeringId, date },
         select: { id: true },
     });
-    const expectedRegulars = await tx.enrollment.count({
+    // Get Offering details for dynamic capacity
+    const offering = await tx.classOffering.findUnique({
+        where: { id: offeringId },
+        select: { capacity: true, instructors: { where: { removedAt: null } } },
+    });
+    const enrollments = await tx.enrollment.findMany({
         where: {
             offeringId,
             status: "active",
@@ -27,16 +33,24 @@ async function countUsedSeatsForSession(tx, offeringId, date) {
                 }
                 : {}),
         },
+        select: { classRatio: true },
     });
-    const makeUpCount = session
-        ? await tx.makeUpBooking.count({
+    const makeups = session
+        ? await tx.makeUpBooking.findMany({
             where: {
                 classSessionId: session.id,
                 status: { in: ["scheduled", "attended"] },
             },
+            select: { id: true },
         })
-        : 0;
-    return { expectedRegulars, makeUpCount, sessionId: session?.id ?? null };
+        : [];
+    const { filled, effectiveCapacity, openSeats } = (0, capacity_utils_1.calculateClassUsage)([...enrollments, ...makeups.map(() => ({ classRatio: "3:1" }))], offering?.instructors.length ?? 0, offering?.capacity ?? 0);
+    return {
+        filled,
+        effectiveCapacity,
+        openSeats,
+        sessionId: session?.id ?? null,
+    };
 }
 async function hasTimeConflict(tx, studentId, date) {
     const sameTimeSessions = await tx.classSession.findMany({

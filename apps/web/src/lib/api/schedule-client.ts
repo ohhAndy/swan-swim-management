@@ -259,3 +259,19 @@ export async function getTermAvailability(
 
   return res.json();
 }
+export async function deleteEnrollment(enrollmentId: string) {
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API}/enrollments/${enrollmentId}`, {
+    method: "DELETE",
+    headers,
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(
+      `Failed to delete enrollment: ${res.status} - ${errorText}`
+    );
+  }
+
+  return res.json();
+}

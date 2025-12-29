@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.OfferingsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const capacity_utils_1 = require("../common/capacity.utils");
 let OfferingsService = class OfferingsService {
     constructor(prisma) {
         this.prisma = prisma;
@@ -61,8 +62,13 @@ let OfferingsService = class OfferingsService {
             },
             include: {
                 term: true,
-                _count: {
-                    select: { enrollments: { where: { status: "active" } } },
+                enrollments: {
+                    where: { status: "active" },
+                    select: { classRatio: true },
+                },
+                instructors: {
+                    where: { removedAt: null },
+                    select: { id: true },
                 },
                 sessions: {
                     orderBy: { date: "asc" },
@@ -74,7 +80,14 @@ let OfferingsService = class OfferingsService {
             },
             orderBy: [{ weekday: "asc" }, { startTime: "asc" }],
         });
-        return offerings;
+        return offerings.map((o) => {
+            const { filled, effectiveCapacity } = (0, capacity_utils_1.calculateClassUsage)(o.enrollments, o.instructors.length, o.capacity);
+            return {
+                ...o,
+                capacity: effectiveCapacity,
+                _count: { enrollments: filled }, // Helper for frontend compatibility (note: float now)
+            };
+        });
     }
     async createOffering(data, user) {
         const staffUser = await this.prisma.staffUser.findUnique({
