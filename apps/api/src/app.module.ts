@@ -16,6 +16,7 @@ import { ClassInstructorsModule } from "./class-instructor/class-instructors.mod
 import { TrialBookingsModule } from "./trial-bookings/trial-bookings.module";
 import { InvoicesModule } from "./invoices/invoices.module";
 import { PaymentsModule } from "./payments/payments.module";
+import { StatisticsModule } from "./statistics/statistics.module";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { SupabaseAuthGuard } from "./auth/supabase-auth.guard";
@@ -49,6 +50,7 @@ import { RolesGuard } from "./auth/roles.guard";
     TrialBookingsModule,
     InvoicesModule,
     PaymentsModule,
+    StatisticsModule,
   ],
   providers: [
     {

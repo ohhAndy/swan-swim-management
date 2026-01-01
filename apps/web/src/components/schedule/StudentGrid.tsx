@@ -700,7 +700,9 @@ export function StudentGrid({
                           title={`${makeUpStudent.studentName} (${makeUpStudent.level}) (${makeUpStudent.status}) - Click to change`}
                         >
                           <div className="truncate">
-                            {makeUpStudent.studentName.split(" ")[0]} -{" "}
+                            {makeUpStudent.studentName.split(" ")[0]}
+                          </div>
+                          <div className="truncate">
                             {makeUpStudent.level
                               ? LEVEL_MAP.get(makeUpStudent.level)
                               : ""}

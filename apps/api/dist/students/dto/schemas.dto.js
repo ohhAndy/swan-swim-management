@@ -7,7 +7,7 @@ exports.createStudentSchema = zod_1.z.object({
     shortCode: zod_1.z.string().min(1).max(32).optional(),
     firstName: zod_1.z.string().min(1).max(64),
     lastName: zod_1.z.string().min(1).max(64),
-    level: zod_1.z.string().optional(),
+    level: zod_1.z.string().nullable().optional(),
     birthdate: zod_1.z.coerce.date().optional(),
 });
 exports.updateStudentSchema = exports.createStudentSchema.partial();

@@ -23,11 +23,13 @@ export type GuardianLite = {
 
 async function getAuthHeaders() {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${session?.access_token}`,
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${session?.access_token}`,
   };
 }
 
@@ -65,5 +67,31 @@ export async function createGuardian(input: {
   });
   if (!res.ok)
     throw new Error(await res.text().catch(() => "Create guardian failed"));
+  return (await res.json()) as GuardianLite;
+}
+
+export async function updateGuardian(
+  id: string,
+  input: {
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    shortCode?: string;
+    address?: Address;
+    notes?: string;
+  }
+) {
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API}/guardians/${id}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(input),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to update guardian: ${res.status} - ${errorText}`);
+  }
+
   return (await res.json()) as GuardianLite;
 }

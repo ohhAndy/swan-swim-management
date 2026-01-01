@@ -150,6 +150,7 @@ export class OfferingsService {
       // We need to find all dates in the term that match this weekday
       const start = new Date(term.startDate);
       const end = new Date(term.endDate);
+      end.setUTCHours(23, 59, 59, 999);
 
       const dates: Date[] = [];
       const cur = new Date(start);

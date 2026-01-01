@@ -41,6 +41,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { updateStudent } from "@/lib/api/students-client";
 import { deleteEnrollment } from "@/lib/api/schedule-client";
+import { updateGuardian } from "@/lib/api/guardian-client";
 
 import { TransferEnrollmentDialog } from "@/components/schedule/TransferEnrollmentDialog";
 
@@ -60,12 +61,20 @@ import { DollarSign, AlertCircle, CheckCircle } from "lucide-react";
 const EditStudentSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  shortCode: z.string().optional(),
-  level: z.string().optional(),
-  birthdate: z.string().optional(),
+  shortCode: z.string().nullable().optional(),
+  level: z.string().nullable().optional(),
+  birthdate: z.string().nullable().optional(),
 });
 
 type EditStudentInput = z.infer<typeof EditStudentSchema>;
+
+const EditGuardianSchema = z.object({
+  fullName: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email"),
+  phone: z.string().min(1, "Phone is required"),
+});
+
+type EditGuardianInput = z.infer<typeof EditGuardianSchema>;
 
 function getInvoiceStatusBadge(enrollment: Enrollment) {
   if (!enrollment.invoiceLineItem) {
@@ -127,6 +136,7 @@ export default function StudentViewClient({
 }) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingGuardian, setIsEditingGuardian] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
@@ -171,7 +181,21 @@ export default function StudentViewClient({
       lastName: student.lastName,
       shortCode: student.shortCode || "",
       level: student.level || "",
-      birthdate: student.birthdate || "",
+      birthdate: student.birthdate ? student.birthdate.split("T")[0] : "",
+    },
+  });
+
+  const {
+    register: registerGuardian,
+    handleSubmit: handleSubmitGuardian,
+    formState: { errors: errorsGuardian },
+    reset: resetGuardian,
+  } = useForm<EditGuardianInput>({
+    resolver: zodResolver(EditGuardianSchema),
+    defaultValues: {
+      fullName: student.guardian.fullName,
+      email: student.guardian.email,
+      phone: student.guardian.phone,
     },
   });
 
@@ -185,15 +209,15 @@ export default function StudentViewClient({
     const birth = new Date(birthdate);
     const today = new Date();
 
-    let years = today.getFullYear() - birth.getFullYear();
-    let months = today.getMonth() - birth.getMonth();
+    let years = today.getUTCFullYear() - birth.getUTCFullYear();
+    let months = today.getUTCMonth() - birth.getUTCMonth();
 
     if (months < 0) {
       years--;
       months += 12;
     }
 
-    if (today.getDate() < birth.getDate()) {
+    if (today.getUTCDate() < birth.getUTCDate()) {
       months--;
       if (months < 0) {
         years--;
@@ -233,6 +257,31 @@ export default function StudentViewClient({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveGuardian = async (data: EditGuardianInput) => {
+    try {
+      setLoading(true);
+      await updateGuardian(student.guardian.id, {
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+      });
+      setIsEditingGuardian(false);
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to update guardian:", error);
+      alert(
+        error instanceof Error ? error.message : "Failed to update guardian"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelGuardian = () => {
+    resetGuardian();
+    setIsEditingGuardian(false);
   };
 
   const handleLevelSelect = (selectedLevel: string) => {
@@ -385,7 +434,8 @@ export default function StudentViewClient({
                     <p className="text-lg">
                       {student.birthdate
                         ? new Date(student.birthdate).toLocaleDateString(
-                            "en-CA"
+                            "en-CA",
+                            { timeZone: "UTC" }
                           )
                         : "—"}
                     </p>
@@ -504,37 +554,120 @@ export default function StudentViewClient({
         >
           <div>
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-4">
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
                   Guardian
                 </CardTitle>
+                {!isEditingGuardian ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingGuardian(true)}
+                  >
+                    <Edit2 className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCancelGuardian}
+                      disabled={loading}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSubmitGuardian(handleSaveGuardian)}
+                      disabled={loading}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {loading ? "Saving..." : "Save"}
+                    </Button>
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="space-y-3">
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">
-                    Name
-                  </Label>
-                  <p className="text-lg">{student.guardian.fullName}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-500" />
-                  <a
-                    href={`mailto:${student.guardian.email}`}
-                    className="text-blue-600 hover:underline"
-                  >
-                    {student.guardian.email}
-                  </a>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-500" />
-                  <a
-                    href={`tel:${student.guardian.phone}`}
-                    className="text-blue-600 hover:underline"
-                  >
-                    {student.guardian.phone}
-                  </a>
-                </div>
+                {!isEditingGuardian ? (
+                  <>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">
+                        Name
+                      </Label>
+                      <p className="text-lg">{student.guardian.fullName}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">
+                        Email
+                      </Label>
+                      <div className="flex items-center gap-2 mt-1 min-w-0">
+                        <Mail className="h-4 w-4 text-gray-500 shrink-0" />
+                        <a
+                          href={`mailto:${student.guardian.email}`}
+                          className="text-blue-600 hover:underline break-all"
+                        >
+                          {student.guardian.email}
+                        </a>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">
+                        Phone
+                      </Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Phone className="h-4 w-4 text-gray-500" />
+                        <a
+                          href={`tel:${student.guardian.phone}`}
+                          className="text-blue-600 hover:underline"
+                        >
+                          {student.guardian.phone}
+                        </a>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <form className="space-y-4">
+                    <div className="space-y-1">
+                      <Label>Full Name</Label>
+                      <Input
+                        {...registerGuardian("fullName")}
+                        disabled={loading}
+                      />
+                      {errorsGuardian.fullName && (
+                        <p className="text-xs text-red-600">
+                          {errorsGuardian.fullName.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Email</Label>
+                      <Input
+                        {...registerGuardian("email")}
+                        disabled={loading}
+                      />
+                      {errorsGuardian.email && (
+                        <p className="text-xs text-red-600">
+                          {errorsGuardian.email.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Phone</Label>
+                      <Input
+                        {...registerGuardian("phone")}
+                        disabled={loading}
+                      />
+                      {errorsGuardian.phone && (
+                        <p className="text-xs text-red-600">
+                          {errorsGuardian.phone.message}
+                        </p>
+                      )}
+                    </div>
+                  </form>
+                )}
               </CardContent>
             </Card>
           </div>
