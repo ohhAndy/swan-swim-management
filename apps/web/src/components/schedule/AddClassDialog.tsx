@@ -22,6 +22,7 @@ interface AddClassDialogProps {
   termId: string;
   weekday: number;
   startTime: string; // HH:MM
+  duration?: number;
   onSuccess?: () => void;
 }
 
@@ -29,6 +30,7 @@ export function AddClassDialog({
   termId,
   weekday,
   startTime,
+  duration,
   onSuccess,
 }: AddClassDialogProps) {
   const router = useRouter();
@@ -49,6 +51,7 @@ export function AddClassDialog({
         startTime,
         title,
         capacity: parseInt(capacity) || 3,
+        duration,
       });
       setOpen(false);
       setTitle("");

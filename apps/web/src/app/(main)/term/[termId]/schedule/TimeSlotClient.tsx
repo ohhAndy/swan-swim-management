@@ -16,12 +16,21 @@ export default function TimeSlots({
   termId: string;
 }) {
   const router = useRouter();
+
+  const getDuration = (timeSlot: string) => {
+    const [start, end] = timeSlot.split("-");
+    if (!start || !end) return 0;
+    const [h1, m1] = start.split(":").map(Number);
+    const [h2, m2] = end.split(":").map(Number);
+    return h2 * 60 + m2 - (h1 * 60 + m1);
+  };
+
   return (
     <Card className="w-full rounded-sm">
       <CardHeader className="text-lg font-semibold text-center font-fredoka">
         <CardTitle>{FULL_DAY_LABELS[weekday]}</CardTitle>
       </CardHeader>
-      <CardContent> 
+      <CardContent>
         <div className="flex flex-col gap-2 items-center">
           {timeSlots.map((t, i) => (
             <Button
@@ -35,7 +44,15 @@ export default function TimeSlots({
                 )
               }
             >
-              <span className="text-center align-middle text-sm text-[#1c82c5]">{t}</span>
+              <span
+                className={`text-center align-middle text-sm ${
+                  getDuration(t) === 30
+                    ? "text-yellow-600 font-medium"
+                    : "text-[#1c82c5]"
+                }`}
+              >
+                {t}
+              </span>
             </Button>
           ))}
         </div>

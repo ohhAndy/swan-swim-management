@@ -478,7 +478,7 @@ export function StudentGrid({
 
   return (
     <div
-      className="grid border-t text-sm bg-muted"
+      className="grid border text-sm bg-gray-200 gap-px"
       style={{
         gridTemplateColumns: `0.5fr 2fr 52px 52px 52px repeat(${cols}, minmax(52px,1fr)) 1.5fr`,
       }}
@@ -519,25 +519,25 @@ export function StudentGrid({
         <div key={r.id} className="contents">
           <div
             key={r.id + "-payment"}
-            className="px-2 py-1 flex items-center justify-center"
+            className="px-2 py-1 flex items-center justify-center bg-white"
           >
             {getPaymentStatus(r.paymentStatus, r.invoiceNumber, r.balance)}
           </div>
           <div
             key={r.id + "-name"}
-            className="px-2 py-1 text-center truncate max-w-[150px]"
+            className="px-2 py-1 text-center truncate max-w-[150px] bg-white"
           >
             <Link className="hover:underline" href={`/students/${r.studentId}`}>
               {r.name}
             </Link>
           </div>
-          <div key={r.id + "-ratio"} className="px-2 py-1 text-center">
+          <div key={r.id + "-ratio"} className="px-2 py-1 text-center bg-white">
             {r.classRatio ? r.classRatio : ""}
           </div>
-          <div key={r.id + "-age"} className="px-2 py-1 text-center">
+          <div key={r.id + "-age"} className="px-2 py-1 text-center bg-white">
             {r.birthdate ? calcAge(r.birthdate) : ""}
           </div>
-          <div key={r.id + "-level"} className="px-2 py-1 text-center">
+          <div key={r.id + "-level"} className="px-2 py-1 text-center bg-white">
             {r.level ? LEVEL_MAP.get(r.level) : ""}
           </div>
 
@@ -630,13 +630,18 @@ export function StudentGrid({
               </DropdownMenu>
             );
           })}
-          <RemarksDialog
-            key={r.id + "-remarks"}
-            title={`${r.name} - Remarks`}
-            initialRemarks={r.remarks}
-            triggerLabel="View / Edit"
-            onSave={(remarks) => handleSaveRemarks(r.enrollmentId, remarks)}
-          />
+          <div
+            key={r.id + "-remarks-cell"}
+            className="px-2 py-1 flex items-center justify-center bg-white"
+          >
+            <RemarksDialog
+              key={r.id + "-remarks"}
+              title={`${r.name} - Remarks`}
+              initialRemarks={r.remarks}
+              triggerLabel="View / Edit"
+              onSave={(remarks) => handleSaveRemarks(r.enrollmentId, remarks)}
+            />
+          </div>
         </div>
       ))}
 

@@ -6,16 +6,20 @@ import { redirect } from "next/navigation";
 export default async function StudentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ 
-    query?: string; 
-    page?: string; 
+  searchParams: Promise<{
+    query?: string;
+    page?: string;
     enrollmentStatus?: string;
     level?: string;
   }>;
 }) {
   const user = await getCurrentUser();
   if (!user) {
-    redirect('/login')
+    redirect("/login");
+  }
+
+  if (user.role !== "admin" && user.role !== "manager") {
+    redirect("/");
   }
 
   const resolvedParams = await searchParams;
@@ -34,7 +38,7 @@ export default async function StudentsPage({
 
   return (
     <div className="container mx-auto py-6 px-4">
-      <StudentsListClient 
+      <StudentsListClient
         initialData={studentsData}
         initialQuery={query}
         initialPage={page}

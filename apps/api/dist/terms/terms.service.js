@@ -915,7 +915,7 @@ let TermsService = class TermsService {
                 const openSeats = Math.max(0, Math.floor(effectiveCapacity - filled));
                 if (openSeats > 0) {
                     availableSessions.push({
-                        date: sess.date.toLocaleDateString("en-CA"), // YYYY-MM-DD
+                        date: sess.date.toISOString().split("T")[0], // YYYY-MM-DD (UTC)
                         openSeats,
                     });
                 }

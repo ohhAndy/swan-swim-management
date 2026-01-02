@@ -12,12 +12,16 @@ export default async function StudentPage({
 
   const user = await getCurrentUser();
   if (!user) {
-    redirect('/login')
+    redirect("/login");
+  }
+
+  if (user.role !== "admin" && user.role !== "manager") {
+    redirect("/");
   }
 
   try {
     const student = await getStudentById(resolvedParams.studentId);
-    return <StudentViewClient student={student} user={user}/>;
+    return <StudentViewClient student={student} user={user} />;
   } catch (error) {
     console.error("Failed to fetch student:", error);
     notFound();

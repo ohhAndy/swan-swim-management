@@ -54,6 +54,7 @@ export class OfferingsController {
       startTime: string;
       title: string;
       capacity: number;
+      duration?: number;
       notes?: string;
     },
     @CurrentUser() user: any

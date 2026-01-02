@@ -100,7 +100,7 @@ let OfferingsService = class OfferingsService {
         });
         if (!term)
             throw new common_1.NotFoundException("Term not found");
-        const DURATION = 45;
+        const DURATION = data.duration || 45;
         const [h, m] = data.startTime.split(":").map(Number);
         const total = h * 60 + m + DURATION;
         const hh = Math.floor((total % (24 * 60)) / 60.0);

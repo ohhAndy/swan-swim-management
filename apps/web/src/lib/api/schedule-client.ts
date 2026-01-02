@@ -181,6 +181,7 @@ export async function createOffering(payload: {
   startTime: string;
   title: string;
   capacity: number;
+  duration?: number;
   notes?: string;
 }) {
   const headers = await getAuthHeaders();

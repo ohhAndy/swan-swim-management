@@ -28,6 +28,12 @@ export default async function SlotPageView({
   const resolvedParams = await params;
   const { weekday, termId, range } = resolvedParams;
   const { start, end } = parseRange(range);
+
+  // Calculate duration
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  const duration = eh * 60 + em - (sh * 60 + sm);
+
   const data: SlotPage = await getSlotPage(termId, Number(weekday), start, end);
 
   const title = `${weekdayName(data.meta.weekday)} - ${data.meta.startTime} - ${
@@ -61,6 +67,7 @@ export default async function SlotPageView({
             termId={termId}
             weekday={Number(weekday)}
             startTime={start}
+            duration={duration}
           />
         </PermissionGate>
       </SlotHeader>

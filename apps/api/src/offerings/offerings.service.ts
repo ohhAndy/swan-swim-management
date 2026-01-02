@@ -106,6 +106,7 @@ export class OfferingsService {
       startTime: string; // HH:MM
       title: string;
       capacity: number;
+      duration?: number;
       notes?: string;
     },
     user: any
@@ -120,7 +121,7 @@ export class OfferingsService {
     });
     if (!term) throw new NotFoundException("Term not found");
 
-    const DURATION = 45;
+    const DURATION = data.duration || 45;
 
     const [h, m] = data.startTime.split(":").map(Number);
     const total = h * 60 + m + DURATION;

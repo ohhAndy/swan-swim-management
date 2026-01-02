@@ -1,5 +1,7 @@
 import { getTimeSlotsByWeekday, getTermTitle } from "@/lib/api/schedule";
 import TimeSlots from "./TimeSlotClient";
+import { getCurrentUser } from "@/lib/auth/user";
+import { redirect } from "next/navigation";
 
 export default async function TimeSlotsPage({
   params,
@@ -8,6 +10,15 @@ export default async function TimeSlotsPage({
 }) {
   const resolvedParams = await params;
   const { termId } = resolvedParams;
+
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  // Only admin and manager can see the full weekly schedule grid
+  if (user.role !== "admin" && user.role !== "manager") {
+    const today = new Date().toISOString().split("T")[0];
+    redirect(`/term/${termId}/schedule/date/${today}`);
+  }
 
   const timeSlotsByDay: Record<number, string[]> = {};
 
