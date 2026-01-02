@@ -3,6 +3,13 @@ import Link from "next/link";
 import { UserMenu } from "../auth/UserMenu";
 import { getCurrentUser } from "@/lib/auth/user";
 import { PermissionGate } from "../auth/PermissionGate";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 
 export async function AppHeader() {
   const user = await getCurrentUser();
@@ -46,12 +53,22 @@ export async function AppHeader() {
             allowedRoles={["admin", "manager"]}
             currentRole={user.role}
           >
-            <Link
-              href="/invoices"
-              className="text-sm font-medium hover:text-blue-600"
-            >
-              Invoices
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center text-sm font-medium hover:text-blue-600 outline-none">
+                Billing <ChevronDown className="ml-1 h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href="/invoices">Invoices</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/payments">Payments</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/enrollments/uninvoiced">Uninvoiced</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </PermissionGate>
           <PermissionGate
             allowedRoles={["admin", "manager"]}

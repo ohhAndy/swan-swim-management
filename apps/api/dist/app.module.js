@@ -26,6 +26,7 @@ const trial_bookings_module_1 = require("./trial-bookings/trial-bookings.module"
 const invoices_module_1 = require("./invoices/invoices.module");
 const payments_module_1 = require("./payments/payments.module");
 const statistics_module_1 = require("./statistics/statistics.module");
+const exports_module_1 = require("./exports/exports.module");
 const core_1 = require("@nestjs/core");
 const throttler_1 = require("@nestjs/throttler");
 const supabase_auth_guard_1 = require("./auth/supabase-auth.guard");
@@ -63,6 +64,7 @@ exports.AppModule = AppModule = __decorate([
             invoices_module_1.InvoicesModule,
             payments_module_1.PaymentsModule,
             statistics_module_1.StatisticsModule,
+            exports_module_1.ExportsModule,
         ],
         providers: [
             {

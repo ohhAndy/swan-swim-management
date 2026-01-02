@@ -16,6 +16,7 @@
     "@nestjs/throttler": "^6.5.0",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
+    "exceljs": "^4.4.0",
     "helmet": "^8.1.0",
     "nestjs-zod": "^5.0.1",
     "pg": "^8.16.3",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",
+    "@types/exceljs": "^0.5.3",
     "@types/node": "^24.3.0",
     "prisma": "^7.2.0"
   }

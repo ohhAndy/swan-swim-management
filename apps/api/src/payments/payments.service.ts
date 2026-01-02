@@ -1,10 +1,86 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreatePaymentDto } from './dto/create-payment.dto';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreatePaymentDto } from "./dto/create-payment.dto";
 
 @Injectable()
 export class PaymentsService {
   constructor(private prisma: PrismaService) {}
+
+  // Get all payments with pagination and filters
+  async findAll(
+    page: number = 1,
+    limit: number = 50,
+    startDate?: string,
+    endDate?: string,
+    method?: string,
+    query?: string
+  ) {
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (startDate && endDate) {
+      where.paymentDate = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      };
+    } else if (startDate) {
+      where.paymentDate = {
+        gte: new Date(startDate),
+      };
+    } else if (endDate) {
+      where.paymentDate = {
+        lte: new Date(endDate),
+      };
+    }
+
+    if (method && method !== "all") {
+      where.paymentMethod = method;
+    }
+
+    if (query) {
+      where.invoice = {
+        invoiceNumber: {
+          contains: query,
+          mode: "insensitive",
+        },
+      };
+    }
+
+    const [payments, total] = await Promise.all([
+      this.prisma.payment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { paymentDate: "desc" },
+        include: {
+          invoice: {
+            include: {
+              guardian: true,
+            },
+          },
+          createdByUser: {
+            select: { id: true, fullName: true },
+          },
+        },
+      }),
+      this.prisma.payment.count({ where }),
+    ]);
+
+    return {
+      data: payments,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
 
   // Record a payment
   async create(createPaymentDto: CreatePaymentDto, user: any) {
@@ -19,12 +95,14 @@ export class PaymentsService {
     });
 
     if (!invoice) {
-      throw new NotFoundException(`Invoice with ID ${createPaymentDto.invoiceId} not found`);
+      throw new NotFoundException(
+        `Invoice with ID ${createPaymentDto.invoiceId} not found`
+      );
     }
 
     // Check if invoice is voided
-    if (invoice.status === 'void') {
-      throw new BadRequestException('Cannot add payment to a voided invoice');
+    if (invoice.status === "void") {
+      throw new BadRequestException("Cannot add payment to a voided invoice");
     }
 
     // Calculate current amount paid
@@ -37,7 +115,11 @@ export class PaymentsService {
     const newTotal = currentAmountPaid + createPaymentDto.amount;
     if (newTotal > Number(invoice.totalAmount)) {
       throw new BadRequestException(
-        `Payment of $${createPaymentDto.amount} would exceed invoice total. Balance remaining: $${Number(invoice.totalAmount) - currentAmountPaid}`
+        `Payment of $${
+          createPaymentDto.amount
+        } would exceed invoice total. Balance remaining: $${
+          Number(invoice.totalAmount) - currentAmountPaid
+        }`
       );
     }
 
@@ -66,7 +148,8 @@ export class PaymentsService {
 
     // Update invoice status based on new payment total
     const totalPaid = currentAmountPaid + createPaymentDto.amount;
-    const newStatus = totalPaid >= Number(invoice.totalAmount) ? 'paid' : 'partial';
+    const newStatus =
+      totalPaid >= Number(invoice.totalAmount) ? "paid" : "partial";
 
     await this.prisma.invoice.update({
       where: { id: createPaymentDto.invoiceId },
@@ -88,7 +171,7 @@ export class PaymentsService {
 
     const payments = await this.prisma.payment.findMany({
       where: { invoiceId },
-      orderBy: { paymentDate: 'desc' },
+      orderBy: { paymentDate: "desc" },
       include: {
         createdByUser: {
           select: { id: true, fullName: true },
@@ -139,19 +222,21 @@ export class PaymentsService {
     });
 
     // Recalculate invoice status
-    const remainingPayments = payment.invoice.payments.filter(p => p.id !== id);
+    const remainingPayments = payment.invoice.payments.filter(
+      (p) => p.id !== id
+    );
     const totalPaid = remainingPayments.reduce(
       (sum, p) => sum + Number(p.amount),
       0
     );
 
-    let newStatus: 'paid' | 'partial' | 'void' = 'partial';
-    if (payment.invoice.status === 'void') {
-      newStatus = 'void';
+    let newStatus: "paid" | "partial" | "void" = "partial";
+    if (payment.invoice.status === "void") {
+      newStatus = "void";
     } else if (totalPaid >= Number(payment.invoice.totalAmount)) {
-      newStatus = 'paid';
+      newStatus = "paid";
     } else if (totalPaid === 0) {
-      newStatus = 'partial'; // Or could be 'unpaid' if you add that status
+      newStatus = "partial"; // Or could be 'unpaid' if you add that status
     }
 
     await this.prisma.invoice.update({
@@ -159,6 +244,6 @@ export class PaymentsService {
       data: { status: newStatus },
     });
 
-    return { message: 'Payment deleted successfully' };
+    return { message: "Payment deleted successfully" };
   }
 }

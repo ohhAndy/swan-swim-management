@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { getInvoices, type Invoice } from '@/lib/api/invoice-client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { getInvoices, type Invoice } from "@/lib/api/invoice-client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -19,10 +19,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Search } from 'lucide-react';
-
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, FileSpreadsheet } from "lucide-react";
+import { exportInvoices } from "@/lib/api/payments";
 interface Props {
   userRole: string;
 }
@@ -31,8 +31,8 @@ export default function InvoicesListClient({ userRole }: Props) {
   const router = useRouter();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -45,14 +45,14 @@ export default function InvoicesListClient({ userRole }: Props) {
       setLoading(true);
       const result = await getInvoices({
         search: search || undefined,
-        status: statusFilter as 'paid' | 'partial' | 'void' | 'all',
+        status: statusFilter as "paid" | "partial" | "void" | "all",
         page,
         limit: 20,
       });
       setInvoices(result.data);
       setTotalPages(result.pagination.totalPages);
     } catch (error) {
-      console.error('Failed to load invoices:', error);
+      console.error("Failed to load invoices:", error);
     } finally {
       setLoading(false);
     }
@@ -60,29 +60,36 @@ export default function InvoicesListClient({ userRole }: Props) {
 
   function getStatusBadge(status: string) {
     const variants = {
-      paid: 'default',
-      partial: 'secondary',
-      void: 'destructive',
+      paid: "default",
+      partial: "secondary",
+      void: "destructive",
     };
     return (
-      <Badge variant={variants[status as keyof typeof variants] as "default" | "secondary" | "destructive"}>
+      <Badge
+        variant={
+          variants[status as keyof typeof variants] as
+            | "default"
+            | "secondary"
+            | "destructive"
+        }
+      >
         {status.toUpperCase()}
       </Badge>
     );
   }
 
   function formatCurrency(amount: number) {
-    return new Intl.NumberFormat('en-CA', {
-      style: 'currency',
-      currency: 'CAD',
+    return new Intl.NumberFormat("en-CA", {
+      style: "currency",
+      currency: "CAD",
     }).format(amount);
   }
 
   function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   }
 
@@ -92,11 +99,9 @@ export default function InvoicesListClient({ userRole }: Props) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Invoices</h1>
-          <p className="text-muted-foreground">
-            Manage invoices and payments
-          </p>
+          <p className="text-muted-foreground">Manage invoices and payments</p>
         </div>
-        <Button onClick={() => router.push('/admin/invoices/new')}>
+        <Button onClick={() => router.push("/admin/invoices/new")}>
           <Plus className="w-4 h-4 mr-2" />
           Create Invoice
         </Button>
@@ -129,10 +134,31 @@ export default function InvoicesListClient({ userRole }: Props) {
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="paid">Paid</SelectItem>
-            <SelectItem value="partial">Partial</SelectItem>
             <SelectItem value="void">Void</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-600"
+          onClick={async () => {
+            try {
+              const blob = await exportInvoices({
+                status: statusFilter === "all" ? undefined : statusFilter,
+                query: search || undefined,
+              });
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "invoices.xlsx";
+              a.click();
+            } catch (error) {
+              console.error("Failed to export invoices", error);
+            }
+          }}
+        >
+          <FileSpreadsheet className="mr-2 h-4 w-4" />
+          Export to Excel
+        </Button>
       </div>
 
       {/* Table */}
@@ -174,9 +200,7 @@ export default function InvoicesListClient({ userRole }: Props) {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {invoice.guardian.fullName}
-                    </TableCell>
+                    <TableCell>{invoice.guardian.fullName}</TableCell>
                     <TableCell>{formatDate(invoice.createdAt)}</TableCell>
                     <TableCell>{formatCurrency(invoice.totalAmount)}</TableCell>
                     <TableCell>{formatCurrency(invoice.amountPaid)}</TableCell>

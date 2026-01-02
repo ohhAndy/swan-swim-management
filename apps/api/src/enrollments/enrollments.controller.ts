@@ -6,6 +6,7 @@ import {
   Put,
   UseGuards,
   Delete,
+  Get,
 } from "@nestjs/common";
 import { EnrollmentsService } from "./enrollments.service";
 import {
@@ -26,6 +27,12 @@ import { CurrentUser } from "../auth/current-user.decorator";
 @UseGuards(SupabaseAuthGuard, RolesGuard)
 export class EnrollmentsController {
   constructor(private readonly enrollmentsService: EnrollmentsService) {}
+
+  @Get("uninvoiced")
+  @Roles("admin", "manager")
+  async findUninvoiced() {
+    return this.enrollmentsService.findUninvoiced();
+  }
 
   @Post("with-skip")
   @Roles("admin", "manager")

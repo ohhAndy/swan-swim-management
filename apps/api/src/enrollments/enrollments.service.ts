@@ -334,4 +334,27 @@ export class EnrollmentsService {
 
     return { success: true };
   }
+  async findUninvoiced() {
+    return this.prisma.enrollment.findMany({
+      where: {
+        status: "active",
+        invoiceLineItem: null,
+      },
+      include: {
+        student: {
+          include: {
+            guardian: true,
+          },
+        },
+        offering: {
+          include: {
+            term: true,
+          },
+        },
+      },
+      orderBy: {
+        enrollDate: "desc",
+      },
+    });
+  }
 }
