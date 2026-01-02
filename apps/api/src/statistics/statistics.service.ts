@@ -15,21 +15,36 @@ export class StatisticsService {
     const offerings = await this.prisma.classOffering.findMany({
       where: { termId },
       include: {
-        _count: {
+        enrollments: {
+          where: { status: "active" },
           select: {
-            enrollments: {
-              where: { status: "active" },
-            },
+            classRatio: true,
           },
         },
       },
     });
 
     const totalCapacity = offerings.reduce((sum, off) => sum + off.capacity, 0);
-    const totalEnrollments = offerings.reduce(
-      (sum, off) => sum + off._count.enrollments,
-      0
-    );
+
+    const getEnrollmentWeight = (ratio: string) => {
+      switch (ratio) {
+        case "1:1":
+          return 3;
+        case "2:1":
+          return 1.5;
+        case "3:1":
+        default:
+          return 1;
+      }
+    };
+
+    const totalEnrollments = offerings.reduce((sum, off) => {
+      const offeringWeight = off.enrollments.reduce(
+        (w, e) => w + getEnrollmentWeight(e.classRatio || "3:1"),
+        0
+      );
+      return sum + offeringWeight;
+    }, 0);
 
     // 2. Students per Day (Active enrollments only)
     // Group by weekday
@@ -38,7 +53,8 @@ export class StatisticsService {
     // We can iterate over offerings since we already fetched them with enrollment counts
     // However, if we want specific counts per day we can just sum up from the offerings
     offerings.forEach((off) => {
-      studentsPerDay[off.weekday] += off._count.enrollments;
+      // Use raw length for headcount, not weighted capacity
+      studentsPerDay[off.weekday] += off.enrollments.length;
     });
 
     // 3. Levels Breakdown
@@ -60,6 +76,8 @@ export class StatisticsService {
       const lvl = e.student.level || "Unknown";
       levels[lvl] = (levels[lvl] || 0) + 1;
     });
+
+    const activeStudents = activeEnrollments.length;
 
     // 4. Action Items
     // Pending makeups
@@ -84,6 +102,7 @@ export class StatisticsService {
     });
 
     return {
+      activeStudents,
       capacity: {
         total: totalCapacity,
         filled: totalEnrollments,

@@ -15,6 +15,7 @@ async function getAuthHeaders() {
 }
 
 export interface DashboardStats {
+  activeStudents: number;
   capacity: {
     total: number;
     filled: number;

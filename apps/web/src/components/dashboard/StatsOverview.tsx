@@ -51,7 +51,7 @@ export function StatsOverview({ termId }: { termId: string }) {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.capacity.filled}</div>
+            <div className="text-2xl font-bold">{stats.activeStudents}</div>
             <p className="text-xs text-muted-foreground">
               {stats.capacity.percentage}% of capacity filled
             </p>
