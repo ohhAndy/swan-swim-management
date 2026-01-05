@@ -23,7 +23,7 @@ export type Payment = {
   invoice: {
     id: string;
     invoiceNumber: string | null;
-    guardian: {
+    guardian?: {
       fullName: string;
     };
   };

@@ -99,6 +99,15 @@ export default function PaymentHistoryClient() {
   const hasFilters =
     startDate !== "" || endDate !== "" || method !== "all" || search !== "";
 
+  function formatDate(dateString: string) {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -213,7 +222,7 @@ export default function PaymentHistoryClient() {
                   {data.data.map((payment) => (
                     <TableRow key={payment.id}>
                       <TableCell className="whitespace-nowrap">
-                        {new Date(payment.paymentDate).toLocaleDateString()}
+                        {formatDate(payment.paymentDate)}
                       </TableCell>
                       <TableCell className="font-medium text-green-600">
                         ${Number(payment.amount).toFixed(2)}
@@ -221,7 +230,13 @@ export default function PaymentHistoryClient() {
                       <TableCell className="capitalize">
                         <Badge variant="outline">{payment.paymentMethod}</Badge>
                       </TableCell>
-                      <TableCell>{payment.invoice.guardian.fullName}</TableCell>
+                      <TableCell>
+                        {payment.invoice.guardian?.fullName || (
+                          <span className="text-muted-foreground italic">
+                            No Guardian
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <a
                           href={`/invoices/${payment.invoice.id}`}

@@ -96,6 +96,7 @@ export default function InvoicesListClient({ userRole }: Props) {
       year: "numeric",
       month: "short",
       day: "numeric",
+      timeZone: "UTC",
     });
   }
 

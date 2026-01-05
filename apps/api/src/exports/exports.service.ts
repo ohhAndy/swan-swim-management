@@ -74,7 +74,7 @@ export class ExportsService {
         date: p.paymentDate,
         amount: Number(p.amount),
         method: p.paymentMethod,
-        guardian: p.invoice.guardian.fullName,
+        guardian: p.invoice.guardian?.fullName || "No Guardian",
         invoiceNumber: p.invoice.invoiceNumber || "N/A",
         notes: p.notes,
       });
@@ -144,7 +144,7 @@ export class ExportsService {
       sheet.addRow({
         date: inv.createdAt,
         invoiceNumber: inv.invoiceNumber || "Draft",
-        guardian: inv.guardian.fullName,
+        guardian: inv.guardian?.fullName || "No Guardian",
         total: Number(inv.totalAmount),
         status: inv.status,
         notes: inv.notes,
