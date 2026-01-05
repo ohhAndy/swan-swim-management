@@ -88,7 +88,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
   // Payment form state
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toLocaleDateString("en-CA")
   );
   const [paymentMethod, setPaymentMethod] = useState<
     "cash" | "debit" | "visa" | "mastercard" | "etransfer" | "website" | "other"
@@ -249,6 +249,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
       year: "numeric",
       month: "short",
       day: "numeric",
+      timeZone: "UTC",
     });
   }
 

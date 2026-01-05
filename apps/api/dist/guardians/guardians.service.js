@@ -41,7 +41,6 @@ let GuardiansService = class GuardiansService {
                     fullName: true,
                     email: true,
                     phone: true,
-                    address: true,
                     notes: true,
                     createdAt: true,
                     updatedAt: true,
@@ -60,6 +59,73 @@ let GuardiansService = class GuardiansService {
                         firstName: true,
                         lastName: true,
                         shortCode: true,
+                        birthdate: true, // Added
+                        level: true, // Added
+                        enrollments: {
+                            // Added
+                            where: { status: { in: ["active", "inactive", "transferred"] } }, // Filter maybe? Keeping all for history
+                            orderBy: { enrollDate: "desc" },
+                            select: {
+                                id: true,
+                                status: true,
+                                enrollDate: true,
+                                classRatio: true,
+                                offering: {
+                                    select: {
+                                        id: true,
+                                        title: true,
+                                        termId: true, // Added for transfer dialog
+                                        weekday: true,
+                                        startTime: true,
+                                        endTime: true,
+                                        term: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                            },
+                                        },
+                                        instructors: {
+                                            where: { removedAt: null },
+                                            select: {
+                                                staffUser: {
+                                                    select: {
+                                                        fullName: true,
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                                invoiceLineItem: {
+                                    select: {
+                                        invoice: {
+                                            select: {
+                                                id: true,
+                                                status: true,
+                                                totalAmount: true,
+                                                payments: {
+                                                    select: {
+                                                        amount: true,
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                                attendance: {
+                                    select: {
+                                        id: true,
+                                        status: true,
+                                        markedAt: true,
+                                        classSession: {
+                                            select: {
+                                                date: true,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
                     },
                     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
                 },
@@ -70,7 +136,7 @@ let GuardiansService = class GuardiansService {
         return guardian;
     }
     async create(dto, user) {
-        const { fullName, shortCode, email, phone, address, notes } = dto;
+        const { fullName, shortCode, email, phone, notes } = dto;
         const staffUser = await this.prisma.staffUser.findUnique({
             where: { authId: user.authId },
         });
@@ -84,7 +150,6 @@ let GuardiansService = class GuardiansService {
                     shortCode: generatedShortCode,
                     email,
                     phone,
-                    address: address ?? null,
                     notes: notes ?? null,
                     createdBy: staffUser.id,
                 },
@@ -94,7 +159,6 @@ let GuardiansService = class GuardiansService {
                     fullName: true,
                     phone: true,
                     email: true,
-                    address: true,
                     notes: true,
                     createdAt: true,
                     createdBy: true,
@@ -114,7 +178,6 @@ let GuardiansService = class GuardiansService {
                         shortCode: { from: null, to: generatedShortCode },
                         email: { from: null, to: email },
                         phone: { from: null, to: phone },
-                        address: { from: null, to: address ?? null },
                         notes: { from: null, to: notes ?? null },
                     },
                     metadata: {
@@ -142,7 +205,6 @@ let GuardiansService = class GuardiansService {
                 shortCode: true,
                 email: true,
                 phone: true,
-                address: true,
                 notes: true,
             },
         });
@@ -157,7 +219,6 @@ let GuardiansService = class GuardiansService {
                             : {}),
                         ...(dto.email !== undefined ? { email: dto.email } : {}),
                         ...(dto.phone !== undefined ? { phone: dto.phone } : {}),
-                        ...(dto.address !== undefined ? { address: dto.address } : {}),
                         ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
                         updatedBy: staffUser.id,
                     },
@@ -167,7 +228,6 @@ let GuardiansService = class GuardiansService {
                         fullName: true,
                         email: true,
                         phone: true,
-                        address: true,
                         notes: true,
                         createdAt: true,
                         createdBy: true,
@@ -189,10 +249,6 @@ let GuardiansService = class GuardiansService {
                 }
                 if (dto.phone !== undefined && dto.phone !== existing.phone) {
                     changes.phone = { from: existing.phone, to: dto.phone };
-                }
-                if (dto.address !== undefined &&
-                    JSON.stringify(dto.address) !== JSON.stringify(existing.address)) {
-                    changes.address = { from: existing.address, to: dto.address };
                 }
                 if (dto.notes !== undefined && dto.notes !== existing.notes) {
                     changes.notes = { from: existing.notes, to: dto.notes };
@@ -236,7 +292,6 @@ let GuardiansService = class GuardiansService {
                 shortCode: true,
                 email: true,
                 phone: true,
-                address: true,
                 notes: true,
             },
         });
@@ -254,7 +309,6 @@ let GuardiansService = class GuardiansService {
                             shortCode: { from: guardian.shortCode, to: null },
                             email: { from: guardian.email, to: null },
                             phone: { from: guardian.phone, to: null },
-                            address: { from: guardian.address, to: null },
                             notes: { from: guardian.notes, to: null },
                         },
                         metadata: {

@@ -42,14 +42,18 @@ export default function DailyScheduleClient({
   data,
   termId,
   date,
+  userRole,
 }: {
   data: DailyScheduleResponse;
   termId: string;
   date: string;
+  userRole: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [editingClass, setEditingClass] = useState<DailyClass | null>(null);
+
+  const canEditLevel = userRole === "admin" || userRole === "manager";
 
   const handleLevelUpdate = async (studentId: string, level: string) => {
     await updateStudent(studentId, { level });
@@ -136,7 +140,9 @@ export default function DailyScheduleClient({
                         <CardContent className="p-0">
                           <DailyClassRoster
                             roster={cls.roster}
-                            onLevelUpdate={handleLevelUpdate}
+                            onLevelUpdate={
+                              canEditLevel ? handleLevelUpdate : undefined
+                            }
                             onAttendanceUpdate={async (item, status) => {
                               if (item.type === "student") {
                                 // cls.id is the classSessionId

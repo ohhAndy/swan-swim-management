@@ -19,5 +19,12 @@ export default async function DailySchedulePage({
   const { termId, date } = resolvedParams;
   const data = await getDailySchedule(termId, date);
 
-  return <DailyScheduleClient data={data} termId={termId} date={date} />;
+  return (
+    <DailyScheduleClient
+      data={data}
+      termId={termId}
+      date={date}
+      userRole={user.role}
+    />
+  );
 }

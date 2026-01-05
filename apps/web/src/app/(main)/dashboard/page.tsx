@@ -5,9 +5,14 @@ import { getAllTerms } from "@/lib/api/schedule";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { format } from "date-fns";
+import { PermissionGate } from "@/components/auth/PermissionGate";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
   const terms = await getAllTerms();
 
   const now = new Date();
@@ -53,21 +58,26 @@ export default async function DashboardPage() {
               <Button
                 asChild
                 variant="outline"
-                className="w-full bg-[#1c82c5] hover:bg-[#156a9e] text-black"
+                className="w-full bg-[#1c82c5] hover:bg-[#156a9e] text-white"
               >
                 <Link href={`/term/${termToUse.id}/schedule/date/${today}`}>
                   View Today&apos;s Schedule
                 </Link>
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="w-full bg-[#1c82c5] hover:bg-[#156a9e] text-black mt-2"
+              <PermissionGate
+                allowedRoles={["admin", "manager"]}
+                currentRole={user.role}
               >
-                <Link href={`/term/${termToUse.id}/availability`}>
-                  View Availability
-                </Link>
-              </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full bg-[#1c82c5] hover:bg-[#156a9e] text-white mt-2"
+                >
+                  <Link href={`/term/${termToUse.id}/availability`}>
+                    View Availability
+                  </Link>
+                </Button>
+              </PermissionGate>
             </div>
           )}
         </CardContent>

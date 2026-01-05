@@ -8,7 +8,7 @@ export default async function PaymentsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  if (user.role !== "admin" && user.role !== "manager") {
+  if (user.role !== "admin") {
     redirect("/");
   }
 

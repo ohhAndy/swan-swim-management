@@ -186,7 +186,9 @@ export class InvoicesService {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: {
+          [query.sortBy || "createdAt"]: query.sortOrder || "desc",
+        },
         include: {
           guardian: true,
           lineItems: true,

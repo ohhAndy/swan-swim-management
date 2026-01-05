@@ -2,23 +2,12 @@ import { createClient } from "../supabase/client";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
 
-export type Address = {
-  streetNumber: string;
-  streetName: string;
-  unit?: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  countryCode: string;
-};
-
 export type GuardianLite = {
   id: string;
   fullName: string;
   email: string;
   phone: string;
   shortCode?: string;
-  address?: Address | null;
 };
 
 async function getAuthHeaders() {
@@ -56,7 +45,7 @@ export async function createGuardian(input: {
   email: string;
   phone: string;
   shortCode?: string;
-  address?: Address;
+
   notes?: string;
 }) {
   const headers = await getAuthHeaders();
@@ -77,7 +66,7 @@ export async function updateGuardian(
     email?: string;
     phone?: string;
     shortCode?: string;
-    address?: Address;
+
     notes?: string;
   }
 ) {

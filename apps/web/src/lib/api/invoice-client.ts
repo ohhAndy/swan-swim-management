@@ -161,6 +161,8 @@ export async function getInvoices(params?: {
   endDate?: string;
   page?: number;
   limit?: number;
+  sortBy?: "createdAt" | "invoiceNumber";
+  sortOrder?: "asc" | "desc";
 }) {
   const headers = await getAuthHeaders();
   const queryParams = new URLSearchParams();
@@ -172,6 +174,8 @@ export async function getInvoices(params?: {
   if (params?.endDate) queryParams.append("endDate", params.endDate);
   if (params?.page) queryParams.append("page", params.page.toString());
   if (params?.limit) queryParams.append("limit", params.limit.toString());
+  if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
+  if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
 
   const res = await fetch(`${API}/invoices?${queryParams}`, {
     headers,

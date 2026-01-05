@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, FileSpreadsheet } from "lucide-react";
+import { Plus, Search, FileSpreadsheet, ArrowUpDown } from "lucide-react";
 import { exportInvoices } from "@/lib/api/payments";
 interface Props {
   userRole: string;
@@ -35,10 +35,14 @@ export default function InvoicesListClient({ userRole }: Props) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [sortBy, setSortBy] = useState<"createdAt" | "invoiceNumber">(
+    "createdAt"
+  );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     loadInvoices();
-  }, [search, statusFilter, page]);
+  }, [search, statusFilter, page, sortBy, sortOrder]);
 
   async function loadInvoices() {
     try {
@@ -48,6 +52,8 @@ export default function InvoicesListClient({ userRole }: Props) {
         status: statusFilter as "paid" | "partial" | "void" | "all",
         page,
         limit: 20,
+        sortBy,
+        sortOrder,
       });
       setInvoices(result.data);
       setTotalPages(result.pagination.totalPages);
@@ -137,6 +143,34 @@ export default function InvoicesListClient({ userRole }: Props) {
             <SelectItem value="void">Void</SelectItem>
           </SelectContent>
         </Select>
+
+        <Select
+          value={`${sortBy}-${sortOrder}`}
+          onValueChange={(value) => {
+            const [field, order] = value.split("-") as [
+              "createdAt" | "invoiceNumber",
+              "asc" | "desc"
+            ];
+            setSortBy(field);
+            setSortOrder(order);
+          }}
+        >
+          <SelectTrigger className="w-[200px]">
+            <ArrowUpDown className="w-4 h-4 mr-2 text-muted-foreground" />
+            <SelectValue placeholder="Sort order" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="createdAt-desc">Date: Newest first</SelectItem>
+            <SelectItem value="createdAt-asc">Date: Oldest first</SelectItem>
+            <SelectItem value="invoiceNumber-desc">
+              Invoice #: High to Low
+            </SelectItem>
+            <SelectItem value="invoiceNumber-asc">
+              Invoice #: Low to High
+            </SelectItem>
+          </SelectContent>
+        </Select>
+
         <Button
           variant="outline"
           className="bg-green-600 text-white hover:bg-green-700 hover:text-white border-green-600"

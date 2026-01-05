@@ -58,12 +58,17 @@ export async function AppHeader() {
                 Billing <ChevronDown className="ml-1 h-3 w-3" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href="/invoices">Invoices</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/payments">Payments</Link>
-                </DropdownMenuItem>
+                <PermissionGate
+                  allowedRoles={["admin"]}
+                  currentRole={user.role}
+                >
+                  <DropdownMenuItem asChild>
+                    <Link href="/invoices">Invoices</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/payments">Payments</Link>
+                  </DropdownMenuItem>
+                </PermissionGate>
                 <DropdownMenuItem asChild>
                   <Link href="/enrollments/uninvoiced">Uninvoiced</Link>
                 </DropdownMenuItem>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Search, Plus, Users, Calendar, Award } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,6 @@ import {
 } from "@/lib/constants/levels";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { CurrentUser } from "@/lib/auth/user";
-
 
 // Types based on your API response
 interface Student {
@@ -69,7 +69,6 @@ export default function StudentsListClient({
   initialLevel: string;
   user: CurrentUser;
 }) {
-
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -183,13 +182,15 @@ export default function StudentsListClient({
             Manage student profiles and enrollments
           </p>
         </div>
-        <PermissionGate allowedRoles={['admin', 'manager']} currentRole={user.role}>
+        <PermissionGate
+          allowedRoles={["admin", "manager"]}
+          currentRole={user.role}
+        >
           <Button onClick={() => router.push("/admin/students/new")}>
             <Plus className="h-4 w-4 mr-2" />
             Add New Student
           </Button>
         </PermissionGate>
-        
       </div>
 
       {/* Search and Filters */}
@@ -349,17 +350,38 @@ export default function StudentsListClient({
                           )}
                         </td>
                         <td className="p-4">
-                          <div className="text-gray-900">
-                            {student.guardian.fullName}
+                          <div className="text-gray-900 font-medium hover:text-blue-600 hover:underline">
+                            <Link
+                              href={`/guardians/${student.guardian.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {student.guardian.fullName}
+                            </Link>
                           </div>
-                          <PermissionGate allowedRoles={["admin", "manager"]} currentRole={user.role}>
-                            <div className="text-sm text-gray-500">
-                              {student.guardian.email}
+                          <PermissionGate
+                            allowedRoles={["admin", "manager"]}
+                            currentRole={user.role}
+                          >
+                            <div className="text-sm text-gray-500 hover:text-blue-600 hover:underline">
+                              <Link
+                                href={`/guardians/${student.guardian.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {student.guardian.email}
+                              </Link>
                             </div>
                           </PermissionGate>
-                          <PermissionGate allowedRoles={["admin", "manager"]} currentRole={user.role}>
-                            <div className="text-sm text-gray-500">
-                              {student.guardian.phone}
+                          <PermissionGate
+                            allowedRoles={["admin", "manager"]}
+                            currentRole={user.role}
+                          >
+                            <div className="text-sm text-gray-500 hover:text-blue-600 hover:underline">
+                              <Link
+                                href={`/guardians/${student.guardian.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {student.guardian.phone}
+                              </Link>
                             </div>
                           </PermissionGate>
                         </td>
@@ -395,7 +417,16 @@ export default function StudentsListClient({
                     <div className="space-y-1 text-sm text-gray-600">
                       <div>Code: {student.shortCode || "—"}</div>
                       <div>Age: {calculateAge(student.birthdate)}</div>
-                      <div>Guardian: {student.guardian.fullName}</div>
+                      <div>
+                        Guardian:{" "}
+                        <Link
+                          href={`/guardians/${student.guardian.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="hover:text-blue-600 hover:underline"
+                        >
+                          {student.guardian.fullName}
+                        </Link>
+                      </div>
                       <div>
                         Enrolled:{" "}
                         {new Date(student.createdAt).toLocaleDateString(
@@ -410,7 +441,7 @@ export default function StudentsListClient({
           )}
         </CardContent>
       </Card>
-          
+
       {/* Pagination */}
       {!loading && totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">

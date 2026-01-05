@@ -27,10 +27,10 @@ let TrialBookingsService = class TrialBookingsService {
             where: { id: classSessionId },
         });
         if (!session) {
-            throw new common_1.NotFoundException('Class session not found');
+            throw new common_1.NotFoundException("Class session not found");
         }
         if (childAge < 0 || childAge > 18) {
-            throw new common_1.BadRequestException('Invalid age');
+            throw new common_1.BadRequestException("Invalid age");
         }
         // Create trial booking with audit log
         return this.prisma.$transaction(async (tx) => {
@@ -41,7 +41,7 @@ let TrialBookingsService = class TrialBookingsService {
                     childAge,
                     parentPhone,
                     notes,
-                    status: 'scheduled',
+                    status: "scheduled",
                     createdBy: user.id,
                 },
                 include: {
@@ -67,8 +67,8 @@ let TrialBookingsService = class TrialBookingsService {
             await tx.auditLog.create({
                 data: {
                     staffId: user.id,
-                    action: 'Create Trial Booking',
-                    entityType: 'TrialBooking',
+                    action: "Create Trial Booking",
+                    entityType: "TrialBooking",
                     entityId: trial.id,
                     metadata: {
                         childName,
@@ -104,11 +104,34 @@ let TrialBookingsService = class TrialBookingsService {
             },
         });
         if (!trial) {
-            throw new common_1.NotFoundException('Trial booking not found');
+            throw new common_1.NotFoundException("Trial booking not found");
         }
         // Don't allow status changes on converted trials
-        if (trial.status === 'converted' && status !== 'converted') {
-            throw new common_1.BadRequestException('Cannot change status of converted trial');
+        if (trial.status === "converted" && status !== "converted") {
+            throw new common_1.BadRequestException("Cannot change status of converted trial");
+        }
+        // Check if the incoming status is empty strings (deletion request)
+        // We cast to string because the enum won't technically allow empty string, but runtime value from UI might be empty
+        if (!status || status === "") {
+            return this.prisma.$transaction(async (tx) => {
+                await tx.auditLog.create({
+                    data: {
+                        staffId: user.id,
+                        action: "Delete Trial Booking",
+                        entityType: "TrialBooking",
+                        entityId: trialId,
+                        metadata: {
+                            childName: trial.childName,
+                            childAge: trial.childAge,
+                            parentPhone: trial.parentPhone,
+                            status: trial.status,
+                        },
+                    },
+                });
+                return tx.trialBooking.delete({
+                    where: { id: trialId },
+                });
+            });
         }
         return this.prisma.$transaction(async (tx) => {
             const updated = await tx.trialBooking.update({
@@ -129,8 +152,8 @@ let TrialBookingsService = class TrialBookingsService {
             await tx.auditLog.create({
                 data: {
                     staffId: user.id,
-                    action: 'Update Trial Status',
-                    entityType: 'TrialBooking',
+                    action: "Update Trial Status",
+                    entityType: "TrialBooking",
                     entityId: trialId,
                     metadata: {
                         childName: trial.childName,
@@ -154,23 +177,23 @@ let TrialBookingsService = class TrialBookingsService {
             where: { id: trialId },
         });
         if (!trial) {
-            throw new common_1.NotFoundException('Trial booking not found');
+            throw new common_1.NotFoundException("Trial booking not found");
         }
-        if (trial.status === 'converted') {
-            throw new common_1.BadRequestException('Trial already converted');
+        if (trial.status === "converted") {
+            throw new common_1.BadRequestException("Trial already converted");
         }
         // Verify student exists
         const student = await this.prisma.student.findUnique({
             where: { id: studentId },
         });
         if (!student) {
-            throw new common_1.NotFoundException('Student not found');
+            throw new common_1.NotFoundException("Student not found");
         }
         return this.prisma.$transaction(async (tx) => {
             const updated = await tx.trialBooking.update({
                 where: { id: trialId },
                 data: {
-                    status: 'converted',
+                    status: "converted",
                     convertedAt: new Date(),
                     convertedBy: user.id,
                     convertedToStudentId: studentId,
@@ -193,8 +216,8 @@ let TrialBookingsService = class TrialBookingsService {
             await tx.auditLog.create({
                 data: {
                     staffId: user.id,
-                    action: 'Convert Trial to Student',
-                    entityType: 'TrialBooking',
+                    action: "Convert Trial to Student",
+                    entityType: "TrialBooking",
                     entityId: trialId,
                     metadata: {
                         trialChildName: trial.childName,
@@ -216,17 +239,17 @@ let TrialBookingsService = class TrialBookingsService {
             where: { id: trialId },
         });
         if (!trial) {
-            throw new common_1.NotFoundException('Trial booking not found');
+            throw new common_1.NotFoundException("Trial booking not found");
         }
-        if (trial.status === 'converted') {
-            throw new common_1.BadRequestException('Cannot delete converted trial');
+        if (trial.status === "converted") {
+            throw new common_1.BadRequestException("Cannot delete converted trial");
         }
         return this.prisma.$transaction(async (tx) => {
             await tx.auditLog.create({
                 data: {
                     staffId: user.id,
-                    action: 'Delete Trial Booking',
-                    entityType: 'TrialBooking',
+                    action: "Delete Trial Booking",
+                    entityType: "TrialBooking",
                     entityId: trialId,
                     metadata: {
                         childName: trial.childName,
