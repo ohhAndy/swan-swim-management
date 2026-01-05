@@ -64,9 +64,12 @@ export class InvoicesService {
     const invoice = await this.prisma.invoice.create({
       data: {
         invoiceNumber: createInvoiceDto.invoiceNumber,
-        guardianId: createInvoiceDto.guardianId,
+        guardianId: createInvoiceDto.guardianId || null,
         totalAmount: createInvoiceDto.totalAmount,
         notes: createInvoiceDto.notes,
+        createdAt: createInvoiceDto.createdAt
+          ? new Date(createInvoiceDto.createdAt)
+          : undefined,
         createdBy: staffUser.id,
         status: "partial",
         lineItems: {
@@ -225,6 +228,9 @@ export class InvoicesService {
         where: { id },
         data: {
           ...updateData,
+          createdAt: updateData.createdAt
+            ? new Date(updateData.createdAt)
+            : undefined,
           updatedBy: staffUser.id,
         },
       });

@@ -12,6 +12,7 @@ export const UpdateInvoiceSchema = z.object({
   totalAmount: z.number().min(0).optional(),
   status: z.enum(["paid", "partial", "void"]).optional(),
   notes: z.string().optional(),
+  createdAt: z.string().optional(), // Allow editing invoice date
   lineItems: z.array(UpdateInvoiceLineItemSchema).optional(),
 });
 

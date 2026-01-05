@@ -68,9 +68,13 @@ export default function CreateInvoiceForm() {
   const [selectedEnrollments, setSelectedEnrollments] = useState<Set<string>>(
     new Set()
   );
+  const [skipGuardian, setSkipGuardian] = useState(false);
 
   const [customLineItems, setCustomLineItems] = useState<LineItem[]>([]);
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState(
+    new Date().toLocaleDateString("en-CA")
+  );
   const [notes, setNotes] = useState("");
   const [enrollmentAmounts, setEnrollmentAmounts] = useState<
     Record<string, string>
@@ -90,12 +94,20 @@ export default function CreateInvoiceForm() {
   // Load enrollments when guardian selected
   useEffect(() => {
     if (selectedGuardian) {
+      setSkipGuardian(false);
       loadEnrollments();
     } else {
       setEnrollments([]);
       setSelectedEnrollments(new Set());
     }
   }, [selectedGuardian]);
+
+  // Reset guardian if skip is selected
+  useEffect(() => {
+    if (skipGuardian) {
+      setSelectedGuardian(null);
+    }
+  }, [skipGuardian]);
 
   async function loadEnrollments() {
     if (!selectedGuardian) return;
@@ -163,8 +175,8 @@ export default function CreateInvoiceForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!selectedGuardian) {
-      toast.error("Please select a guardian");
+    if (!selectedGuardian && !skipGuardian) {
+      toast.error("Please select a guardian or choose to skip");
       return;
     }
 
@@ -208,10 +220,13 @@ export default function CreateInvoiceForm() {
       });
 
       const invoice = await createInvoice({
-        guardianId: selectedGuardian.id,
+        guardianId: selectedGuardian?.id,
         invoiceNumber: invoiceNumber || undefined,
         totalAmount: calculateTotal(),
         notes: notes || undefined,
+        createdAt: invoiceDate
+          ? new Date(invoiceDate).toISOString()
+          : undefined,
         lineItems,
       });
 
@@ -304,78 +319,89 @@ export default function CreateInvoiceForm() {
               </Button>
             </div>
           )}
+          {!selectedGuardian && !skipGuardian && (
+            <div className="flex justify-center border-t pt-4 mt-4">
+              <Button variant="ghost" onClick={() => setSkipGuardian(true)}>
+                Skip / Create Invoice without Guardian
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {selectedGuardian && (
+      {(selectedGuardian || skipGuardian) && (
         <>
-          {/* Enrollments */}
-          <Card>
-            <CardHeader>
-              <CardTitle>2. Select Enrollments</CardTitle>
-              <CardDescription>
-                Un-invoiced enrollments for this guardian
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {enrollments.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No un-invoiced enrollments found
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {enrollments.map((enrollment) => (
-                    <div
-                      key={enrollment.id}
-                      className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50"
-                    >
-                      <Checkbox
-                        checked={selectedEnrollments.has(enrollment.id)}
-                        onCheckedChange={() => toggleEnrollment(enrollment.id)}
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium">
-                          {enrollment.student.firstName}{" "}
-                          {enrollment.student.lastName}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {DAY_LABELS[enrollment.offering.weekday]}{" "}
-                          {enrollment.offering.startTime} -{" "}
-                          {enrollment.student.level} -{" "}
-                          {enrollment.offering.term.name}
-                        </div>
-                        <div className="text-sm">
-                          {enrollment.classRatio} •{" "}
-                          {8 -
-                            (enrollment.enrollmentSkips
-                              ? enrollment.enrollmentSkips.length
-                              : 0)}{" "}
-                          weeks
-                        </div>
-                      </div>
-                      <div className="text-right w-32">
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={
-                            enrollmentAmounts[enrollment.id] ??
-                            enrollment.suggestedAmount
+          {/* Enrollments - Only show if Guardian Selected */}
+          {selectedGuardian && (
+            <Card>
+              <CardHeader>
+                <CardTitle>2. Select Enrollments</CardTitle>
+                <CardDescription>
+                  Un-invoiced enrollments for this guardian
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {enrollments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No un-invoiced enrollments found
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {enrollments.map((enrollment) => (
+                      <div
+                        key={enrollment.id}
+                        className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50"
+                      >
+                        <Checkbox
+                          checked={selectedEnrollments.has(enrollment.id)}
+                          onCheckedChange={() =>
+                            toggleEnrollment(enrollment.id)
                           }
-                          onChange={(e) => {
-                            setEnrollmentAmounts({
-                              ...enrollmentAmounts,
-                              [enrollment.id]: e.target.value,
-                            });
-                          }}
-                          className="h-8 text-right"
                         />
+                        <div className="flex-1">
+                          <div className="font-medium">
+                            {enrollment.student.firstName}{" "}
+                            {enrollment.student.lastName}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {DAY_LABELS[enrollment.offering.weekday]}{" "}
+                            {enrollment.offering.startTime} -{" "}
+                            {enrollment.student.level} -{" "}
+                            {enrollment.offering.term.name}
+                          </div>
+                          <div className="text-sm">
+                            {enrollment.classRatio} •{" "}
+                            {8 -
+                              (enrollment.enrollmentSkips
+                                ? enrollment.enrollmentSkips.length
+                                : 0)}{" "}
+                            weeks
+                          </div>
+                        </div>
+                        <div className="text-right w-32">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={
+                              enrollmentAmounts[enrollment.id] ??
+                              enrollment.suggestedAmount
+                            }
+                            onChange={(e) => {
+                              setEnrollmentAmounts({
+                                ...enrollmentAmounts,
+                                [enrollment.id]: e.target.value,
+                              });
+                            }}
+                            className="h-8 text-right"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Custom Line Items */}
           <Card>
@@ -451,6 +477,15 @@ export default function CreateInvoiceForm() {
                   placeholder="Enter invoice number"
                   value={invoiceNumber}
                   onChange={(e) => setInvoiceNumber(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="invoiceDate">Invoice Date</Label>
+                <Input
+                  id="invoiceDate"
+                  type="date"
+                  value={invoiceDate}
+                  onChange={(e) => setInvoiceDate(e.target.value)}
                 />
               </div>
               <div>

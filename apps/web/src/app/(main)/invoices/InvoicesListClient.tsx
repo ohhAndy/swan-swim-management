@@ -234,7 +234,13 @@ export default function InvoicesListClient({ userRole }: Props) {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>{invoice.guardian.fullName}</TableCell>
+                    <TableCell>
+                      {invoice.guardian?.fullName || (
+                        <span className="text-muted-foreground italic">
+                          No Guardian
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>{formatDate(invoice.createdAt)}</TableCell>
                     <TableCell>{formatCurrency(invoice.totalAmount)}</TableCell>
                     <TableCell>{formatCurrency(invoice.amountPaid)}</TableCell>

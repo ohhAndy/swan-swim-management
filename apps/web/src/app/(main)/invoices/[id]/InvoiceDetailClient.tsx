@@ -78,6 +78,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
   const [editStatus, setEditStatus] = useState<"paid" | "partial" | "void">(
     "partial"
   );
+  const [editDate, setEditDate] = useState("");
 
   // Use string for amount to allow easy decimal editing
   interface EditableLineItem extends Omit<InvoiceLineItem, "amount"> {
@@ -109,6 +110,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
       setEditInvoiceNumber(data.invoiceNumber || "");
       setEditNotes(data.notes || "");
       setEditStatus(data.status);
+      setEditDate(new Date(data.createdAt).toISOString().split("T")[0]);
       setEditLineItems(
         data.lineItems.map((item) => ({
           ...item,
@@ -132,6 +134,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
         invoiceNumber: editInvoiceNumber || undefined,
         notes: editNotes || undefined,
         status: editStatus,
+        createdAt: editDate ? new Date(editDate).toISOString() : undefined,
         lineItems: editLineItems.map((item) => ({
           id: item.id.startsWith("temp-") ? undefined : item.id,
           enrollmentId: item.enrollmentId,
@@ -278,7 +281,11 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
             <h1 className="text-3xl font-bold">
               {invoice.invoiceNumber || `Invoice ${invoice.id.slice(0, 8)}`}
             </h1>
-            <p className="text-muted-foreground">{invoice.guardian.fullName}</p>
+            <p className="text-muted-foreground">
+              {invoice.guardian?.fullName || (
+                <span className="italic">No Guardian</span>
+              )}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -391,14 +398,25 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
             <CardTitle>Edit Invoice</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="editInvoiceNumber">Invoice Number</Label>
-              <Input
-                id="editInvoiceNumber"
-                value={editInvoiceNumber}
-                onChange={(e) => setEditInvoiceNumber(e.target.value)}
-                placeholder="Enter invoice number"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="editInvoiceNumber">Invoice Number</Label>
+                <Input
+                  id="editInvoiceNumber"
+                  value={editInvoiceNumber}
+                  onChange={(e) => setEditInvoiceNumber(e.target.value)}
+                  placeholder="Enter invoice number"
+                />
+              </div>
+              <div>
+                <Label htmlFor="editDate">Invoice Date</Label>
+                <Input
+                  id="editDate"
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                />
+              </div>
             </div>
             <div>
               <Label htmlFor="editStatus">Status</Label>

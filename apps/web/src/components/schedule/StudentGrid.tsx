@@ -634,13 +634,36 @@ export function StudentGrid({
             key={r.id + "-remarks-cell"}
             className="px-2 py-1 flex items-center justify-center bg-white"
           >
-            <RemarksDialog
-              key={r.id + "-remarks"}
-              title={`${r.name} - Remarks`}
-              initialRemarks={r.remarks}
-              triggerLabel="View / Edit"
-              onSave={(remarks) => handleSaveRemarks(r.enrollmentId, remarks)}
-            />
+            {r.remarks ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-block">
+                      <RemarksDialog
+                        key={r.id + "-remarks"}
+                        title={`${r.name} - Remarks`}
+                        initialRemarks={r.remarks}
+                        triggerLabel="View / Edit"
+                        onSave={(remarks) =>
+                          handleSaveRemarks(r.enrollmentId, remarks)
+                        }
+                      />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs break-words">
+                    {r.remarks}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <RemarksDialog
+                key={r.id + "-remarks"}
+                title={`${r.name} - Remarks`}
+                initialRemarks={r.remarks}
+                triggerLabel="View / Edit"
+                onSave={(remarks) => handleSaveRemarks(r.enrollmentId, remarks)}
+              />
+            )}
           </div>
         </div>
       ))}
