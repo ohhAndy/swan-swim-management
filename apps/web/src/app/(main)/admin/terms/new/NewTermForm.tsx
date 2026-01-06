@@ -46,7 +46,7 @@ export default function NewTermForm() {
           await createTerm(values);
           router.push(`/term`);
         } catch (e: unknown) {
-          const msg = e instanceof Error ? e.message : "Something went wrong"; 
+          const msg = e instanceof Error ? e.message : "Something went wrong";
           form.setError("root", {
             type: "server",
             message: msg,
@@ -117,17 +117,18 @@ export default function NewTermForm() {
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={submitting || form.formState.isSubmitting}>
-          {submitting || form.formState.isSubmitting ? "Creating…" : "Create term"}
+        <Button
+          type="submit"
+          disabled={submitting || form.formState.isSubmitting}
+        >
+          {submitting || form.formState.isSubmitting
+            ? "Creating…"
+            : "Create term"}
         </Button>
       </div>
 
       <QuickAdd form={form} />
-      <OfferingList
-        form={form}
-        fieldArray={fieldArray}
-        submitting={submitting}
-      />
+      <OfferingList form={form} fieldArray={fieldArray} />
     </form>
   );
 }

@@ -3,7 +3,6 @@
 import {
   type UseFieldArrayReturn,
   type UseFormReturn,
-  type FieldArrayWithId,
   useWatch,
 } from "react-hook-form";
 import type { FormInput } from "@/lib/zod/term";
@@ -15,11 +14,9 @@ import { DAY_LABELS } from "@/lib/schedule/slots";
 export default function OfferingList({
   form,
   fieldArray,
-  submitting,
 }: {
   form: UseFormReturn<FormInput>;
   fieldArray: UseFieldArrayReturn<FormInput, "templates", "id">;
-  submitting: boolean;
 }) {
   const { fields, append, remove } = fieldArray;
 
@@ -45,17 +42,27 @@ export default function OfferingList({
       weekday: Number(templates?.[i]?.weekday ?? 1),
       startTime: String(templates?.[i]?.startTime ?? ""),
     }));
-    
-    const byDay: Record<number, { index: number, fieldId: string, startTime: string }[]> = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
-    for(const r of rows) {
-      byDay[r.weekday].push({ index: r.index, fieldId: r.fieldId, startTime: r.startTime })
+
+    const byDay: Record<
+      number,
+      { index: number; fieldId: string; startTime: string }[]
+    > = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+    for (const r of rows) {
+      byDay[r.weekday].push({
+        index: r.index,
+        fieldId: r.fieldId,
+        startTime: r.startTime,
+      });
     }
 
     return Array.from({ length: 7 }, (_, day) => {
       const dayRows = byDay[day];
-      const byTime: Record<string, { index: number, fieldId: string }[]> = {};
+      const byTime: Record<string, { index: number; fieldId: string }[]> = {};
       for (const r of dayRows) {
-        (byTime[r.startTime] ??= []).push({ index: r.index, fieldId: r.fieldId });
+        (byTime[r.startTime] ??= []).push({
+          index: r.index,
+          fieldId: r.fieldId,
+        });
       }
 
       //sort key pair values then map them to an obj
@@ -82,8 +89,10 @@ export default function OfferingList({
   );
 
   const addForDay = (weekday: number) => addOne({ weekday });
-  const addForDayTime = (weekday: number, startTime: string) => addOne({ weekday, startTime });
-  const timeKey = (weekday: number, startTime: string) => `${weekday}__${startTime}`;
+  const addForDayTime = (weekday: number, startTime: string) =>
+    addOne({ weekday, startTime });
+  const timeKey = (weekday: number, startTime: string) =>
+    `${weekday}__${startTime}`;
 
   return (
     <div className="space-y-4">
@@ -185,7 +194,7 @@ export default function OfferingList({
                       className="flex cursor-pointer select-none items-center justify-between gap-2 px-3 py-2"
                       onClick={(e) => {
                         e.preventDefault();
-                        setCollapsedTime((m) => ({ ...m, [k]: !m[k] }))
+                        setCollapsedTime((m) => ({ ...m, [k]: !m[k] }));
                       }}
                     >
                       <div className="text-sm font-medium">
@@ -213,7 +222,7 @@ export default function OfferingList({
                           key={fieldId}
                           form={form}
                           index={index}
-                          remove={() => remove(index)} 
+                          remove={() => remove(index)}
                         />
                       ))}
                     </div>

@@ -10,181 +10,18 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "../ui/dropdown-menu";
-import Link from "next/link";
 
+import { StudentRow } from "./StudentRow";
 import { LEVEL_MAP } from "@/lib/constants/levels";
 import { CurrentUser } from "@/lib/auth/user";
 import { hasPermission } from "@/lib/auth/permissions";
 import { PermissionGate } from "../auth/PermissionGate";
-import RemarksDialog from "./RemarksDialog";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
-import { AlertCircle, CheckCircle, DollarSign } from "lucide-react";
+  getMakeUpStatusColour,
+  getTrialStatusColour,
+} from "@/lib/utils/student-helpers";
 
-function calcAge(birthdateString: string): number {
-  const birthdate = new Date(birthdateString);
-  const today = new Date();
-
-  let age = today.getFullYear() - birthdate.getFullYear();
-
-  const hadBirthdayThisYear =
-    today.getMonth() > birthdate.getMonth() ||
-    (today.getMonth() === birthdate.getMonth() &&
-      today.getDate() >= birthdate.getDate());
-
-  if (!hadBirthdayThisYear) age--;
-
-  return age;
-}
-
-function markClass(status: string | undefined) {
-  switch (status) {
-    case "P": // Present
-      return "bg-green-100 text-green-800";
-    case "A": // Absent
-      return "bg-red-100 text-red-800";
-    case "E": // Excused
-      return "bg-yellow-100 text-yellow-800";
-    default:
-      return "bg-gray-50";
-  }
-}
-
-function getMakeUpStatusColour(status: string) {
-  switch (status) {
-    case "attended":
-      return "bg-green-100 text-green-800";
-    case "scheduled":
-      return "bg-blue-100 text-blue-800";
-    case "requested":
-      return "bg-gray-100 text-gray-800";
-    case "cancelled":
-      return "bg-orange-100 text-orange-800";
-    case "missed":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-}
-
-function getTrialStatusColour(status: string) {
-  switch (status) {
-    case "attended":
-      return "bg-green-100 text-green-800";
-    case "scheduled":
-      return "bg-purple-100 text-purple-800";
-    case "noshow":
-      return "bg-red-100 text-red-800";
-    case "converted":
-      return "bg-blue-100 text-blue-800";
-    case "cancelled":
-      return "bg-orange-100 text-orange-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-}
-
-function getPaymentStatus(
-  status: string | null,
-  invoiceNumber: string | null,
-  balance: number | null
-) {
-  if (!status) {
-    // Not invoiced
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center justify-center">
-              <AlertCircle className="w-4 h-4 text-red-500" />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Not Invoiced</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  if (status === "paid") {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center justify-center">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Paid (Invoice #{invoiceNumber})</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  if (status === "partial") {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center justify-center">
-              <DollarSign className="w-4 h-4 text-yellow-600" />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Partial Payment</p>
-            <p className="text-xs">
-              Balance: ${balance ? balance.toFixed(2) : "can't find balance"}
-            </p>
-            <p className="text-xs">Invoice #{invoiceNumber}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  if (status === "void") {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center justify-center">
-              <span className="text-xs text-muted-foreground">VOID</span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Invoice Voided</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  return null;
-}
-
-type Row = {
-  id: string;
-  name: string;
-  paymentStatus: string | null;
-  balance: number | null;
-  invoiceNumber: string | null;
-  classRatio: string;
-  studentId: string;
-  code: string | null;
-  level: string | null;
-  marks: Record<string, string>;
-  skippedSessionIds: string[];
-  enrollmentId: string;
-  birthdate: string | null;
-  remarks: string | null;
-};
+import { Row } from "./grid-types";
 
 function buildRow(rosters: RosterResponse[]): Row[] {
   const map = new Map<string, Row>();
@@ -252,13 +89,6 @@ function buildTrials(rosters: RosterResponse[]): Record<string, TrialLite[]> {
   return trialsByDate;
 }
 
-const ATTENDANCE_OPTIONS = [
-  { value: "", label: "Not marked", shortLabel: "" },
-  { value: "present", label: "Present", shortLabel: "P" },
-  { value: "absent", label: "Absent", shortLabel: "A" },
-  { value: "excused", label: "Excused", shortLabel: "E" },
-];
-
 const MAKEUP_OPTIONS = [
   { value: "", label: "Remove Makeup", shortLabel: "" },
   { value: "scheduled", label: "Scheduled", shortLabel: "S" },
@@ -275,17 +105,6 @@ const TRIAL_OPTIONS = [
   { value: "noshow", label: "No Show", shortLabel: "A" },
   { value: "cancelled", label: "Cancelled", shortLabel: "X" },
 ];
-
-type AttendanceUpdate = {
-  enrollmentId: string;
-  dayKey: string;
-  status: string;
-};
-
-type MakeupUpdate = {
-  makeupId: string;
-  status: string;
-};
 
 export function StudentGrid({
   isoDates,
@@ -516,156 +335,17 @@ export function StudentGrid({
       </div>
 
       {rows.map((r) => (
-        <div key={r.id} className="contents">
-          <div
-            key={r.id + "-payment"}
-            className="px-2 py-1 flex items-center justify-center bg-white"
-          >
-            {getPaymentStatus(r.paymentStatus, r.invoiceNumber, r.balance)}
-          </div>
-          <div
-            key={r.id + "-name"}
-            className="px-2 py-1 text-center truncate max-w-[150px] bg-white"
-          >
-            <Link className="hover:underline" href={`/students/${r.studentId}`}>
-              {r.name}
-            </Link>
-          </div>
-          <div key={r.id + "-ratio"} className="px-2 py-1 text-center bg-white">
-            {r.classRatio ? r.classRatio : ""}
-          </div>
-          <div key={r.id + "-age"} className="px-2 py-1 text-center bg-white">
-            {r.birthdate ? calcAge(r.birthdate) : ""}
-          </div>
-          <div key={r.id + "-level"} className="px-2 py-1 text-center bg-white">
-            {r.level ? LEVEL_MAP.get(r.level) : ""}
-          </div>
-
-          {header.map((h, i) => {
-            const dayKey = h.key + "T04:00:00.000Z";
-            const sessionId = dateToSessionId.get(dayKey);
-            const isSkipped =
-              sessionId && r.skippedSessionIds.includes(sessionId);
-            const updateKey = `${r.enrollmentId}-${dayKey}`;
-            const isUpdating = updating === updateKey;
-
-            const baseMark = r.marks[dayKey];
-            const baseStatus =
-              baseMark === "P"
-                ? "present"
-                : baseMark === "A"
-                ? "absent"
-                : baseMark === "E"
-                ? "excused"
-                : "";
-
-            const overrideStatus = attnOverrides[`${r.enrollmentId}|${dayKey}`];
-            const currentStatus = overrideStatus ?? baseStatus;
-
-            const mark =
-              currentStatus === "present"
-                ? "P"
-                : currentStatus === "absent"
-                ? "A"
-                : currentStatus === "excused"
-                ? "E"
-                : "";
-
-            if (isSkipped) {
-              return (
-                <div
-                  key={`${r.id}-${i}`}
-                  className="px-2 py-1 text-center font-semibold rounded bg-black text-white"
-                >
-                  SKIP
-                </div>
-              );
-            }
-
-            return (
-              <DropdownMenu key={`${r.id}-${i}`}>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className={`px-2 py-1 text-center font-semibold rounded transition-colors hover:bg-gray-200 ${markClass(
-                      mark
-                    )} ${
-                      isUpdating || !canEdit
-                        ? "opacity-50 cursor-not-allowed"
-                        : "cursor-pointer"
-                    } ${!canEdit ? "pointer-events-none opacity-70" : ""}`}
-                    disabled={isUpdating || !canEdit}
-                    title={
-                      canEdit
-                        ? `${r.name} - ${h.label} - Click to change attendance`
-                        : `${r.name} - ${h.label} - Read Only`
-                    }
-                  >
-                    {mark ?? ""}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  {ATTENDANCE_OPTIONS.map((option) => (
-                    <DropdownMenuItem
-                      key={option.value}
-                      onSelect={(e) => {
-                        if (canEdit) {
-                          handleAttendanceUpdate(
-                            r.enrollmentId,
-                            dayKey,
-                            option.value
-                          );
-                        }
-                      }}
-                      className={
-                        currentStatus === option.value ? "bg-blue-50" : ""
-                      }
-                    >
-                      <span className="font-medium mr-2">
-                        {option.shortLabel || "—"}
-                      </span>
-                      {option.label}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            );
-          })}
-          <div
-            key={r.id + "-remarks-cell"}
-            className="px-2 py-1 flex items-center justify-center bg-white"
-          >
-            {r.remarks ? (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-block">
-                      <RemarksDialog
-                        key={r.id + "-remarks"}
-                        title={`${r.name} - Remarks`}
-                        initialRemarks={r.remarks}
-                        triggerLabel="View / Edit"
-                        onSave={(remarks) =>
-                          handleSaveRemarks(r.enrollmentId, remarks)
-                        }
-                      />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs break-words">
-                    {r.remarks}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            ) : (
-              <RemarksDialog
-                key={r.id + "-remarks"}
-                title={`${r.name} - Remarks`}
-                initialRemarks={r.remarks}
-                triggerLabel="View / Edit"
-                onSave={(remarks) => handleSaveRemarks(r.enrollmentId, remarks)}
-              />
-            )}
-          </div>
-        </div>
+        <StudentRow
+          key={r.id}
+          row={r}
+          header={header}
+          dateToSessionId={dateToSessionId}
+          attnOverrides={attnOverrides}
+          updating={updating}
+          canEdit={canEdit}
+          onAttendanceUpdate={handleAttendanceUpdate}
+          onSaveRemarks={handleSaveRemarks}
+        />
       ))}
 
       {maxMakeUpsPerDate > 0 && (
@@ -742,7 +422,7 @@ export function StudentGrid({
                         {MAKEUP_OPTIONS.map((option) => (
                           <DropdownMenuItem
                             key={option.value}
-                            onSelect={(e) =>
+                            onSelect={() =>
                               handleMakeUpUpdate(makeUpStudent.id, option.value)
                             }
                             className={
@@ -855,7 +535,7 @@ export function StudentGrid({
                           {TRIAL_OPTIONS.map((option) => (
                             <DropdownMenuItem
                               key={option.value}
-                              onSelect={(e) =>
+                              onSelect={() =>
                                 handleTrialUpdate(trialStudent.id, option.value)
                               }
                               className={
@@ -872,7 +552,7 @@ export function StudentGrid({
                           ))}
                           {/* Convert Button */}
                           <DropdownMenuItem
-                            onSelect={(e) => {
+                            onSelect={() => {
                               if (onTrialConvert) {
                                 onTrialConvert({
                                   id: trialStudent.id,

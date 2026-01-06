@@ -5,11 +5,13 @@ const API = process.env.NEXT_PUBLIC_API_URL!;
 
 async function getAuthHeaders() {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${session?.access_token}`,
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${session?.access_token}`,
   };
 }
 
@@ -47,5 +49,5 @@ export async function createTerm(values: FormOutput) {
     throw new Error(message);
   }
 
-  const data = await res.json();
+  await res.json();
 }

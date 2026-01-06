@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Search, Plus, Users, Calendar, Award } from "lucide-react";
+import { Search, Plus, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { searchStudents } from "@/lib/api/students-client";
 
@@ -79,9 +79,6 @@ export default function StudentsListClient({
   );
   const [level, setLevel] = useState(initialLevel);
   const [loading, setLoading] = useState(false);
-
-  const displayEnrollmentStatus = enrollmentStatus || "all";
-  const displayLevel = level || "all";
 
   // Calculate age helper
   const calculateAge = (birthdate: string | null) => {

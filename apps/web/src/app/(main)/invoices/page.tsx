@@ -16,7 +16,7 @@ export default async function InvoicesPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <InvoicesListClient userRole={user.role} />
+      <InvoicesListClient />
     </div>
   );
 }

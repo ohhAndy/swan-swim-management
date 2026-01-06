@@ -41,9 +41,6 @@ export default async function SlotPageView({
   }`;
   const subtitle = data.meta.term?.name ?? null;
 
-  const dateLabels = data.days.map((d) =>
-    new Date(d.date).toLocaleDateString()
-  );
   const isoDates = data.days.map((d) => d.date);
   const blocks = groupByOffering(data);
 
@@ -76,8 +73,6 @@ export default async function SlotPageView({
           <SlotBlock
             key={b.offeringKey}
             title={b.title}
-            notes={b.notes}
-            dateLabels={dateLabels}
             isoDates={isoDates}
             rosters={b.rosters}
             user={user}

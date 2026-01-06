@@ -27,22 +27,17 @@ import { Trash2 } from "lucide-react";
 import { deleteOffering } from "@/lib/api/schedule-client";
 export function SlotBlock({
   title,
-  notes,
-  dateLabels,
   isoDates,
   rosters,
   user,
 }: {
   title: string;
-  notes: string;
-  dateLabels: string[];
   isoDates: string[];
   rosters: RosterResponse[];
   user: CurrentUser;
 }) {
   const router = useRouter();
   const [isRefreshing, startTransition] = useTransition();
-  const [isUpdating, setIsUpdating] = useState(false);
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
   const [makeupDialogOpen, setMakeupDialogOpen] = useState(false);
   const [instructorDialogOpen, setInstructorDialogOpen] = useState(false);
@@ -100,8 +95,6 @@ export function SlotBlock({
     sessionId: string,
     status: string
   ) => {
-    setIsUpdating(true);
-
     try {
       await upsertAttendance(
         enrollmentId,
@@ -110,13 +103,10 @@ export function SlotBlock({
       );
     } catch (error) {
       console.error("Failed to upsert attendance:", error);
-    } finally {
-      setIsUpdating(false);
     }
   };
 
   const handleMakeUpUpdate = async (makeUpId: string, status: string) => {
-    setIsUpdating(true);
     try {
       await updateMakeupStatus(
         makeUpId,
@@ -124,13 +114,10 @@ export function SlotBlock({
       );
     } catch (error) {
       console.error("Failed to update makeup status:", error);
-    } finally {
-      setIsUpdating(false);
     }
   };
 
   const handleTrialUpdate = async (trialId: string, status: string) => {
-    setIsUpdating(true);
     try {
       await updateTrialStatus(
         trialId,
@@ -144,13 +131,10 @@ export function SlotBlock({
       );
     } catch (error) {
       console.error("Failed to update trial status:", error);
-    } finally {
-      setIsUpdating(false);
     }
   };
 
   const handleRemarksUpdate = async (enrollmentId: string, notes: string) => {
-    setIsUpdating(true);
     try {
       await updateRemarks(enrollmentId, notes);
       startTransition(() => {
@@ -159,13 +143,10 @@ export function SlotBlock({
     } catch (error) {
       console.error("Failed to update remarks:", error);
       throw error; // Re-throw so the dialog can show error state
-    } finally {
-      setIsUpdating(false);
     }
   };
 
   const handleOfferingUpdate = async (title: string) => {
-    setIsUpdating(true);
     try {
       await updateOfferingInfo(fallbackOfferingId, title);
       startTransition(() => {
@@ -174,8 +155,6 @@ export function SlotBlock({
     } catch (error) {
       console.error("Failed to update remarks:", error);
       throw error; // Re-throw so the dialog can show error state
-    } finally {
-      setIsUpdating(false);
     }
   };
 
@@ -280,15 +259,13 @@ export function SlotBlock({
                             "Are you sure you want to delete this class? This action cannot be undone and will fail if there are active enrollments."
                           )
                         ) {
-                          setIsUpdating(true);
                           deleteOffering(fallbackOfferingId!)
                             .then(() => {
                               startTransition(() => {
                                 router.refresh();
                               });
                             })
-                            .catch((e) => alert(e.message))
-                            .finally(() => setIsUpdating(false));
+                            .catch((e) => alert(e.message));
                         }
                       }}
                     >

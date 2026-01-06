@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getInvoices, type Invoice } from "@/lib/api/invoice-client";
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, FileSpreadsheet, ArrowUpDown } from "lucide-react";
 import { exportInvoices } from "@/lib/api/payments";
-interface Props {
-  userRole: string;
-}
 
-export default function InvoicesListClient({ userRole }: Props) {
+export default function InvoicesListClient() {
   const router = useRouter();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,11 +37,7 @@ export default function InvoicesListClient({ userRole }: Props) {
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  useEffect(() => {
-    loadInvoices();
-  }, [search, statusFilter, page, sortBy, sortOrder]);
-
-  async function loadInvoices() {
+  const loadInvoices = useCallback(async () => {
     try {
       setLoading(true);
       const result = await getInvoices({
@@ -62,7 +55,11 @@ export default function InvoicesListClient({ userRole }: Props) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [search, statusFilter, page, sortBy, sortOrder]);
+
+  useEffect(() => {
+    loadInvoices();
+  }, [loadInvoices]);
 
   function getStatusBadge(status: string) {
     const variants = {

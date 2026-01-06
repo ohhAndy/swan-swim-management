@@ -19,11 +19,6 @@ import {
 import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import {
-  SWIMMER_LEVELS,
-  PRESCHOOL_LEVELS,
-  SWIMTEAM_LEVELS,
-} from "@/lib/constants/levels";
 import { BackButton } from "@/components/nav/BackButton";
 
 type AvailabilityData = Record<

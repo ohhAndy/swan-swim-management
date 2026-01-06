@@ -4,7 +4,6 @@ import { BackButton } from "@/components/nav/BackButton";
 import { format } from "date-fns";
 import { updateRemarks, updateStudent } from "@/lib/api/students-client";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import type { RosterItem } from "@/components/schedule/DailyClassRoster";
 import { DailyClassRoster } from "@/components/schedule/DailyClassRoster";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -50,7 +49,7 @@ export default function DailyScheduleClient({
   userRole: string;
 }) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+
   const [editingClass, setEditingClass] = useState<DailyClass | null>(null);
 
   const canEditLevel = userRole === "admin" || userRole === "manager";

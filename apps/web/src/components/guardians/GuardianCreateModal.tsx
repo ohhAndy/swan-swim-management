@@ -123,7 +123,6 @@ export function GuardianCreateModal({
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
   } = useForm<FormInput>({
     resolver: zodResolver(guardianSchema),
     defaultValues: {

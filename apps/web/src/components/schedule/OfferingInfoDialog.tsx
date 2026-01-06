@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Label } from "@/components/ui/label";
 import { Input } from "../ui/input";
 import { Edit } from "lucide-react";
@@ -46,20 +46,17 @@ export default function OfferingDialog({
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen) {
       // Reset to initial value when opening
-      setTitle(initialTitle|| "");
+      setTitle(initialTitle || "");
     }
     setOpen(newOpen);
   };
 
-  const hasChanges = title !== (initialTitle|| "");
+  const hasChanges = title !== (initialTitle || "");
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-        >
+        <Button variant="ghost" size="sm">
           {triggerLabel}
           <Edit></Edit>
         </Button>
@@ -67,9 +64,7 @@ export default function OfferingDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edit Title</DialogTitle>
-          <DialogDescription>
-            {`Include lane number!`}
-          </DialogDescription>
+          <DialogDescription>{`Include lane number!`}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
@@ -91,10 +86,7 @@ export default function OfferingDialog({
           >
             Cancel
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isSaving || !hasChanges}
-          >
+          <Button onClick={handleSave} disabled={isSaving || !hasChanges}>
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </DialogFooter>
