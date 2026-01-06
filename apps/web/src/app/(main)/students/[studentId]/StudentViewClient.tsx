@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -707,7 +708,12 @@ export default function StudentViewClient({
                         <div className="flex justify-between items-start">
                           <div>
                             <h4 className="font-medium">
-                              {enrollment.offering.title}
+                              <Link
+                                href={`/term/${enrollment.offering.termId}/schedule/weekday/${enrollment.offering.weekday}/slot/${enrollment.offering.startTime}-${enrollment.offering.endTime}`}
+                                className="hover:underline text-blue-600"
+                              >
+                                {enrollment.offering.title}
+                              </Link>
                             </h4>
                             <p className="text-sm font-medium">
                               {enrollment.offering.term.name}
@@ -735,8 +741,69 @@ export default function StudentViewClient({
                                 enrollment.enrollDate
                               ).toLocaleDateString("en-CA")}
                             </p>
+
+                            {/* Makeups Section */}
+                            {(() => {
+                              const termMakeups = student.makeUps.filter(
+                                (m) =>
+                                  m.classSession.offering.termId ===
+                                  enrollment.offering.termId
+                              );
+
+                              if (termMakeups.length === 0) return null;
+
+                              return (
+                                <div className="mt-4 pt-3 border-t border-green-200">
+                                  <h5 className="text-sm font-semibold mb-2 flex items-center gap-1.5 text-green-800">
+                                    <span className="bg-green-200 p-0.5 rounded text-xs">
+                                      Makeups
+                                    </span>
+                                  </h5>
+                                  <div className="flex flex-col gap-2">
+                                    {termMakeups.map((m) => (
+                                      <div
+                                        key={m.id}
+                                        className="text-sm border border-green-200 bg-white/50 rounded px-2 py-1.5 flex justify-between items-center"
+                                      >
+                                        <div className="flex flex-col">
+                                          <span className="font-medium text-gray-800">
+                                            {new Date(
+                                              m.classSession.date
+                                            ).toLocaleDateString("en-CA", {
+                                              timeZone: "UTC",
+                                              month: "short",
+                                              day: "numeric",
+                                              weekday: "short",
+                                            })}
+                                          </span>
+                                          <span className="text-xs text-gray-500">
+                                            {m.classSession.offering.title} (
+                                            {m.classSession.offering.startTime})
+                                          </span>
+                                        </div>
+                                        <span
+                                          title={m.status}
+                                          className={`text-[10px] w-5 h-5 flex items-center justify-center rounded-full border border-gray-200 font-bold
+                                              ${
+                                                m.status === "scheduled"
+                                                  ? "bg-blue-100 text-blue-700 border-blue-300"
+                                                  : m.status === "attended"
+                                                  ? "bg-green-100 text-green-700 border-green-300"
+                                                  : m.status === "requested"
+                                                  ? "bg-orange-100 text-orange-700 border-orange-300"
+                                                  : "bg-gray-100 text-gray-600"
+                                              }`}
+                                        >
+                                          {m.status.charAt(0).toUpperCase()}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
-                          <div className="flex flex-col justify-between h-30">
+                          <div className="flex flex-col justify-between h-30 mt-6 lg:mt-0">
                             {badge}
 
                             <PermissionGate

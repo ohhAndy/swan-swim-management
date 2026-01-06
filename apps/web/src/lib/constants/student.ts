@@ -20,7 +20,7 @@ export interface Offering {
   capacity: number;
   termId: string;
   term: Term;
-  instructors: Instructor[]
+  instructors: Instructor[];
 }
 
 export interface ClassSession {
@@ -59,7 +59,7 @@ export interface Invoice {
   invoiceNumber: string;
   status: "partial" | "paid" | "void";
   totalAmount: number;
-  payments: Payment[]
+  payments: Payment[];
 }
 
 export interface Guardian {
@@ -67,6 +67,23 @@ export interface Guardian {
   fullName: string;
   email: string;
   phone: string;
+}
+
+export interface Makeup {
+  id: string;
+  status: "requested" | "scheduled" | "attended" | "cancelled" | "missed";
+  notes: string | null;
+  createdAt: string;
+  classSession: {
+    date: string;
+    offering: {
+      title: string;
+      weekday: number;
+      startTime: string;
+      endTime: string;
+      termId: string;
+    };
+  };
 }
 
 export interface Student {
@@ -79,6 +96,7 @@ export interface Student {
   guardianId: string;
   guardian: Guardian;
   enrollments: Enrollment[];
+  makeUps: Makeup[];
   createdAt: string;
   updatedAt: string;
 }

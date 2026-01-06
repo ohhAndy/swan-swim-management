@@ -136,7 +136,7 @@ export class StudentsService {
                       },
                     },
                   },
-                  orderBy: { assignedAt: 'asc' },
+                  orderBy: { assignedAt: "asc" },
                 },
               },
             },
@@ -171,6 +171,29 @@ export class StudentsService {
             },
           },
           orderBy: { enrollDate: "desc" },
+        },
+        makeUps: {
+          select: {
+            id: true,
+            status: true,
+            notes: true,
+            createdAt: true,
+            classSession: {
+              select: {
+                date: true,
+                offering: {
+                  select: {
+                    title: true,
+                    weekday: true,
+                    startTime: true,
+                    endTime: true,
+                    termId: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { classSession: { date: "desc" } },
         },
         createdAt: true,
         updatedAt: true,

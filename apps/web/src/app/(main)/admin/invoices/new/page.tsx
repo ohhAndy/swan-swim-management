@@ -1,16 +1,18 @@
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/user';
-import CreateInvoiceForm from './CreateInvoiceForm';
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/user";
+import CreateInvoiceForm from "./CreateInvoiceForm";
+
+export const dynamic = "force-dynamic";
 
 export default async function NewInvoicePage() {
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect('/login');
+    redirect("/login");
   }
 
-  if (user.role !== 'admin' && user.role !== 'manager') {
-    redirect('/invoices');
+  if (user.role !== "admin" && user.role !== "manager") {
+    redirect("/invoices");
   }
 
   return (
