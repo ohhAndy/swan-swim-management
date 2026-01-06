@@ -25,6 +25,8 @@ import { updateTrialStatus } from "@/lib/api/trial-client";
 import { ConvertTrialDialog } from "./ConvertTrialDialog";
 import { Trash2 } from "lucide-react";
 import { deleteOffering } from "@/lib/api/schedule-client";
+import { useSlotDialogs } from "./useSlotDialogs";
+
 export function SlotBlock({
   title,
   isoDates,
@@ -38,26 +40,7 @@ export function SlotBlock({
 }) {
   const router = useRouter();
   const [isRefreshing, startTransition] = useTransition();
-  const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
-  const [makeupDialogOpen, setMakeupDialogOpen] = useState(false);
-  const [instructorDialogOpen, setInstructorDialogOpen] = useState(false);
-  const [selectedMakeupDate, setSelectedMakeupDate] = useState<string | null>(
-    null
-  );
-  const [trialDialogOpen, setTrialDialogOpen] = useState(false);
-  const [selectedTrialDate, setSelectedTrialDate] = useState<string | null>(
-    null
-  );
-  const [selectedTrialSessionId, setSelectedTrialSessionId] = useState<
-    string | null
-  >(null);
-  const [convertTrialDialogOpen, setConvertTrialDialogOpen] = useState(false);
-  const [selectedTrialForConversion, setSelectedTrialForConversion] = useState<{
-    id: string;
-    childName: string;
-    childAge: number;
-    parentPhone: string;
-  } | null>(null);
+  const dialogs = useSlotDialogs();
   const [rostersState, setRostersState] = useState(rosters);
 
   useEffect(() => {
@@ -159,17 +142,14 @@ export function SlotBlock({
   };
 
   const handleMakeupClick = (date: string) => {
-    setSelectedMakeupDate(date);
-    setMakeupDialogOpen(true);
+    dialogs.makeup.open(date);
   };
 
   const handleTrialClick = (date: string) => {
-    setSelectedTrialDate(date);
     // Find the session ID for this date
     const ymd = date.slice(0, 10);
     const sessionId = byDate[ymd]?.sessionId || null;
-    setSelectedTrialSessionId(sessionId);
-    setTrialDialogOpen(true);
+    dialogs.trial.open(date, sessionId);
   };
 
   const handleTrialConvert = (trial: {
@@ -178,8 +158,7 @@ export function SlotBlock({
     childAge: number;
     parentPhone: string;
   }) => {
-    setSelectedTrialForConversion(trial);
-    setConvertTrialDialogOpen(true);
+    dialogs.convertTrial.open(trial);
   };
 
   const handleCreateNewStudentFromTrial = (trialInfo: {
@@ -189,7 +168,7 @@ export function SlotBlock({
   }) => {
     // TODO: Navigate to create student page with pre-filled info
     // For now, just close the dialog
-    setConvertTrialDialogOpen(false);
+    dialogs.convertTrial.close();
     alert(
       `Create new student: ${trialInfo.childName}\nThis should navigate to the create student page with info pre-filled.`
     );
@@ -222,7 +201,7 @@ export function SlotBlock({
               >
                 <Button
                   variant="outline"
-                  onClick={() => setEnrollDialogOpen(true)}
+                  onClick={dialogs.enroll.open}
                   disabled={!fallbackOfferingId}
                   className="text-xs hover:underline font-medium opacity-70 hover:opacity-100 transition-all"
                 >
@@ -240,7 +219,7 @@ export function SlotBlock({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setInstructorDialogOpen(true)}
+                    onClick={dialogs.instructor.open}
                     disabled={!fallbackOfferingId}
                     className="text-xs bg-[#bce0f7]"
                   >
@@ -299,41 +278,41 @@ export function SlotBlock({
       </Card>
 
       <EnrollStudentDialog
-        open={enrollDialogOpen}
-        onOpenChange={setEnrollDialogOpen}
+        open={dialogs.enroll.isOpen}
+        onOpenChange={dialogs.enroll.setOpen}
         offeringId={fallbackOfferingId || ""}
         isoDates={isoDates}
         onSuccess={handleDialogSuccess}
       />
 
       <ScheduleMakeupDialog
-        open={makeupDialogOpen}
-        onOpenChange={setMakeupDialogOpen}
-        selectedDate={selectedMakeupDate}
+        open={dialogs.makeup.isOpen}
+        onOpenChange={dialogs.makeup.setOpen}
+        selectedDate={dialogs.makeup.selectedDate}
         rosters={rosters}
         onSuccess={handleDialogSuccess}
       />
 
       <ScheduleTrialDialog
-        open={trialDialogOpen}
-        onOpenChange={setTrialDialogOpen}
-        selectedDate={selectedTrialDate}
-        sessionId={selectedTrialSessionId}
+        open={dialogs.trial.isOpen}
+        onOpenChange={dialogs.trial.setOpen}
+        selectedDate={dialogs.trial.selectedDate}
+        sessionId={dialogs.trial.selectedSessionId}
         offeringTitle={title}
         onSuccess={handleDialogSuccess}
       />
 
       <ConvertTrialDialog
-        open={convertTrialDialogOpen}
-        onOpenChange={setConvertTrialDialogOpen}
-        trial={selectedTrialForConversion}
+        open={dialogs.convertTrial.isOpen}
+        onOpenChange={dialogs.convertTrial.setOpen}
+        trial={dialogs.convertTrial.selectedTrial}
         onSuccess={handleDialogSuccess}
         onCreateNewStudent={handleCreateNewStudentFromTrial}
       />
 
       <AssignInstructorDialog
-        open={instructorDialogOpen}
-        onOpenChange={setInstructorDialogOpen}
+        open={dialogs.instructor.isOpen}
+        onOpenChange={dialogs.instructor.setOpen}
         classOfferingId={fallbackOfferingId || ""}
         currentInstructors={instructors}
         onSuccess={handleDialogSuccess}

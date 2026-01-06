@@ -4,22 +4,12 @@ import type {
   TrialLite,
 } from "@school/shared-types";
 import { useState, useMemo } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "../ui/dropdown-menu";
-
 import { StudentRow } from "./StudentRow";
-import { LEVEL_MAP } from "@/lib/constants/levels";
+import { MakeupRow } from "./MakeupRow";
+import { TrialRow } from "./TrialRow";
+import { PermissionGate } from "../auth/PermissionGate";
 import { CurrentUser } from "@/lib/auth/user";
 import { hasPermission } from "@/lib/auth/permissions";
-import { PermissionGate } from "../auth/PermissionGate";
-import {
-  getMakeUpStatusColour,
-  getTrialStatusColour,
-} from "@/lib/utils/student-helpers";
 
 import { Row } from "./grid-types";
 
@@ -88,23 +78,6 @@ function buildTrials(rosters: RosterResponse[]): Record<string, TrialLite[]> {
   }
   return trialsByDate;
 }
-
-const MAKEUP_OPTIONS = [
-  { value: "", label: "Remove Makeup", shortLabel: "" },
-  { value: "scheduled", label: "Scheduled", shortLabel: "S" },
-  { value: "requested", label: "Requested", shortLabel: "R" },
-  { value: "cancelled", label: "Cancelled", shortLabel: "X" },
-  { value: "attended", label: "Attended", shortLabel: "P" },
-  { value: "missed", label: "Missed", shortLabel: "A" },
-];
-
-const TRIAL_OPTIONS = [
-  { value: "", label: "Remove Trial", shortLabel: "" },
-  { value: "scheduled", label: "Scheduled", shortLabel: "S" },
-  { value: "attended", label: "Attended", shortLabel: "P" },
-  { value: "noshow", label: "No Show", shortLabel: "A" },
-  { value: "cancelled", label: "Cancelled", shortLabel: "X" },
-];
 
 export function StudentGrid({
   isoDates,
@@ -352,107 +325,15 @@ export function StudentGrid({
         <>
           <div className="col-span-full border-t-2 border-gray-00 my-1"></div>
           {Array.from({ length: maxMakeUpsPerDate }, (_, rowIndex) => (
-            <div key={`makeup-row-${rowIndex}`} className="contents">
-              <div className="px-2 py-1 text-center bg-blue-50"></div>
-              <div className="px-2 py-1 font-bold text-center bg-blue-50 text-md text-gray-600">
-                {rowIndex === 0 ? "Make-ups" : ""}
-              </div>
-              <div className="px-2 py-1 text-center bg-blue-50"></div>
-              <div className="px-2 py-1 text-center bg-blue-50"></div>
-              <div className="px-2 py-1 text-center bg-blue-50"></div>
-
-              {header.map((h, colIndex) => {
-                const dayKey = h.key + "T04:00:00.000Z";
-                const makeUpsForDate = makeUps[dayKey] || [];
-                const makeUpStudent = makeUpsForDate[rowIndex]; // Get the make-up for this row index
-
-                if (makeUpStudent) {
-                  const override = makeupOverrides[makeUpStudent.id];
-
-                  if (override === "__removed__") {
-                    return (
-                      <div
-                        key={`makeup-removed-${rowIndex}-${colIndex}`}
-                        className="px-2 py-1 text-center bg-blue-50"
-                      ></div>
-                    );
-                  }
-
-                  const effectiveStatus = override ?? makeUpStudent.status;
-
-                  const statusMark =
-                    effectiveStatus === "attended"
-                      ? "P"
-                      : effectiveStatus === "scheduled"
-                      ? "S"
-                      : effectiveStatus === "requested"
-                      ? "R"
-                      : effectiveStatus === "cancelled"
-                      ? "X"
-                      : effectiveStatus === "missed"
-                      ? "A"
-                      : "";
-
-                  const statusClass = getMakeUpStatusColour(effectiveStatus);
-                  const updateKey = `makeup-${makeUpStudent.id}`;
-                  const isUpdating = updating === updateKey;
-
-                  return (
-                    <DropdownMenu key={`makeup-${rowIndex}-${colIndex}`}>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          className={`px-1 py-1 text-center text-xs font-medium rounded hover:bg-gray-200 transition-colors cursor-pointer ${statusClass} ${
-                            isUpdating ? "opacity-50 cursor-not-allowed" : ""
-                          }`}
-                          disabled={isUpdating}
-                          title={`${makeUpStudent.studentName} (${makeUpStudent.level}) (${makeUpStudent.status}) - Click to change`}
-                        >
-                          <div className="truncate">
-                            {makeUpStudent.studentName.split(" ")[0]}
-                          </div>
-                          <div className="truncate">
-                            {makeUpStudent.level
-                              ? LEVEL_MAP.get(makeUpStudent.level)
-                              : ""}
-                          </div>
-                          <div className="font-bold">{statusMark}</div>
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {MAKEUP_OPTIONS.map((option) => (
-                          <DropdownMenuItem
-                            key={option.value}
-                            onSelect={() =>
-                              handleMakeUpUpdate(makeUpStudent.id, option.value)
-                            }
-                            className={
-                              makeUpStudent.status === option.value
-                                ? "bg-blue-50"
-                                : ""
-                            }
-                          >
-                            <span className="font-medium mr-2">
-                              {option.shortLabel || "-"}
-                            </span>
-                            {option.label}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  );
-                } else {
-                  // Empty cell for dates with no make-up in this row
-                  return (
-                    <div
-                      key={`makeup-empty-${rowIndex}-${colIndex}`}
-                      className="px-2 py-1 text-center bg-blue-50"
-                    ></div>
-                  );
-                }
-              })}
-
-              <div className="px-2 py-1 bg-blue-50" />
-            </div>
+            <MakeupRow
+              key={`makeup-row-${rowIndex}`}
+              rowIndex={rowIndex}
+              header={header}
+              makeUps={makeUps}
+              makeupOverrides={makeupOverrides}
+              updating={updating}
+              onMakeUpUpdate={handleMakeUpUpdate}
+            />
           ))}
         </>
       )}
@@ -461,128 +342,16 @@ export function StudentGrid({
       {maxTrialsPerDate > 0 && (
         <>
           {Array.from({ length: maxTrialsPerDate }, (_, rowIndex) => (
-            <div key={`trial-row-${rowIndex}`} className="contents">
-              <div className="px-2 py-1 text-center bg-purple-50"></div>
-              <div className="px-2 py-1 font-bold text-center bg-purple-50 text-md text-gray-600">
-                {rowIndex === 0 ? "Trials" : ""}
-              </div>
-              <div className="px-2 py-1 text-center bg-purple-50"></div>
-              <div className="px-2 py-1 text-center bg-purple-50"></div>
-              <div className="px-2 py-1 text-center bg-purple-50"></div>
-
-              {header.map((h, colIndex) => {
-                const dayKey = h.key + "T04:00:00.000Z";
-                const trialsForDate = trials[dayKey] || [];
-                const trialStudent = trialsForDate[rowIndex];
-
-                if (trialStudent) {
-                  const override = trialOverrides[trialStudent.id];
-
-                  if (override === "__removed__") {
-                    return (
-                      <div
-                        key={`trial-removed-${rowIndex}-${colIndex}`}
-                        className="px-2 py-1 text-center bg-purple-50"
-                      ></div>
-                    );
-                  }
-
-                  const effectiveStatus = override ?? trialStudent.status;
-
-                  const statusMark =
-                    effectiveStatus === "attended"
-                      ? "P"
-                      : effectiveStatus === "scheduled"
-                      ? "S"
-                      : effectiveStatus === "noshow"
-                      ? "A"
-                      : effectiveStatus === "converted"
-                      ? "C"
-                      : effectiveStatus === "cancelled"
-                      ? "X"
-                      : "";
-
-                  const statusClass = getTrialStatusColour(effectiveStatus);
-                  const updateKey = `trial-${trialStudent.id}`;
-                  const isUpdating = updating === updateKey;
-                  const isConverted = effectiveStatus === "converted";
-
-                  return (
-                    <DropdownMenu key={`trial-${rowIndex}-${colIndex}`}>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          className={`px-1 py-1 text-center text-xs font-medium rounded hover:bg-gray-200 transition-colors cursor-pointer ${statusClass} ${
-                            isUpdating ? "opacity-50 cursor-not-allowed" : ""
-                          }`}
-                          disabled={isUpdating}
-                          title={`${trialStudent.childName} (Age ${
-                            trialStudent.childAge
-                          }) ${
-                            isConverted
-                              ? "(Converted - No further action)"
-                              : `(${trialStudent.status}) - Click to change`
-                          }`}
-                        >
-                          <div className="truncate">
-                            {trialStudent.childName} -{" "}
-                            {trialStudent.childAge.toString()}y
-                          </div>
-                          <div className="font-bold">{statusMark}</div>
-                        </button>
-                      </DropdownMenuTrigger>
-                      {!isConverted && (
-                        <DropdownMenuContent>
-                          {TRIAL_OPTIONS.map((option) => (
-                            <DropdownMenuItem
-                              key={option.value}
-                              onSelect={() =>
-                                handleTrialUpdate(trialStudent.id, option.value)
-                              }
-                              className={
-                                trialStudent.status === option.value
-                                  ? "bg-purple-50"
-                                  : ""
-                              }
-                            >
-                              <span className="font-medium mr-2">
-                                {option.shortLabel || "-"}
-                              </span>
-                              {option.label}
-                            </DropdownMenuItem>
-                          ))}
-                          {/* Convert Button */}
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              if (onTrialConvert) {
-                                onTrialConvert({
-                                  id: trialStudent.id,
-                                  childName: trialStudent.childName,
-                                  childAge: trialStudent.childAge,
-                                  parentPhone: trialStudent.parentPhone,
-                                });
-                              }
-                            }}
-                            className="bg-blue-50 font-medium border-t"
-                          >
-                            <span className="font-bold mr-2">→</span>
-                            Convert to Student
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      )}
-                    </DropdownMenu>
-                  );
-                } else {
-                  return (
-                    <div
-                      key={`trial-empty-${rowIndex}-${colIndex}`}
-                      className="px-2 py-1 text-center bg-purple-50"
-                    ></div>
-                  );
-                }
-              })}
-
-              <div className="px-2 py-1 bg-purple-50" />
-            </div>
+            <TrialRow
+              key={`trial-row-${rowIndex}`}
+              rowIndex={rowIndex}
+              header={header}
+              trials={trials}
+              trialOverrides={trialOverrides}
+              updating={updating}
+              onTrialUpdate={handleTrialUpdate}
+              onTrialConvert={onTrialConvert}
+            />
           ))}
         </>
       )}
