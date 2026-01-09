@@ -48,6 +48,7 @@ export function TrialRow({
       <div className="px-2 py-1 text-center bg-purple-50"></div>
       <div className="px-2 py-1 text-center bg-purple-50"></div>
       <div className="px-2 py-1 text-center bg-purple-50"></div>
+      <div className="px-2 py-1 text-center bg-purple-50"></div>
 
       {header.map((h, colIndex) => {
         const dayKey = h.key + "T04:00:00.000Z";

@@ -140,6 +140,12 @@ export class StudentsService {
                         fullName: true,
                       },
                     },
+                    instructor: {
+                      select: {
+                        firstName: true,
+                        lastName: true,
+                      },
+                    },
                   },
                   orderBy: { assignedAt: "asc" },
                 },

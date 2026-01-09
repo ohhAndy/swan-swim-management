@@ -48,12 +48,12 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
     "PS3",
     "PS4",
     "PS5",
-    "S1",
-    "S2",
-    "S3",
-    "S4",
-    "S5",
-    "S6",
+    "SW1",
+    "SW2",
+    "SW3",
+    "SW4",
+    "SW5",
+    "SW6",
   ];
 
   useEffect(() => {

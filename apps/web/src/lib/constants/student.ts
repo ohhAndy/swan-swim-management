@@ -12,6 +12,10 @@ export interface Instructor {
   staffUser: {
     fullName: string;
   };
+  instructor?: {
+    firstName: string;
+    lastName: string;
+  };
 }
 
 export interface Offering {

@@ -322,6 +322,12 @@ export class TermsService {
                     fullName: true,
                   },
                 },
+                instructor: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
               },
               orderBy: { assignedAt: "asc" },
             },
@@ -724,7 +730,9 @@ export class TermsService {
               instructors: s.offering.instructors.map((i) => ({
                 id: i.id,
                 staffUserId: i.staffUserId,
-                staffName: i.staffUser.fullName,
+                staffName: i.instructor
+                  ? `${i.instructor.firstName} ${i.instructor.lastName}`
+                  : i.staffUser?.fullName ?? "Unknown",
               })),
             },
             roster: rosterRows,
@@ -780,6 +788,7 @@ export class TermsService {
               id: true,
               staffUserId: true,
               staffUser: { select: { fullName: true } },
+              instructor: { select: { firstName: true, lastName: true } },
             },
             orderBy: { assignedAt: "asc" },
           },
@@ -1047,7 +1056,9 @@ export class TermsService {
           instructors: offering.instructors.map((i) => ({
             id: i.id,
             staffUserId: i.staffUserId,
-            staffName: i.staffUser.fullName,
+            staffName: i.instructor
+              ? `${i.instructor.firstName} ${i.instructor.lastName}`
+              : i.staffUser?.fullName ?? "Unknown",
           })),
           capacity: offering.capacity,
           filled,

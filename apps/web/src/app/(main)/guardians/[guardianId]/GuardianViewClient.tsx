@@ -84,6 +84,10 @@ type OfferingData = {
     staffUser: {
       fullName: string;
     };
+    instructor?: {
+      firstName: string;
+      lastName: string;
+    };
   }>;
 };
 
@@ -585,7 +589,11 @@ export default function GuardianViewClient({
                           const instructors =
                             enrollment.offering.instructors || [];
                           const instructorNames = instructors
-                            .map((i) => i.staffUser.fullName)
+                            .map((i) =>
+                              i.instructor
+                                ? `${i.instructor.firstName} ${i.instructor.lastName}`
+                                : i.staffUser?.fullName ?? "Unknown"
+                            )
                             .join(", ");
                           const invoiceBadge =
                             getInvoiceStatusBadge(enrollment);
@@ -667,22 +675,37 @@ export default function GuardianViewClient({
                         Recent Inactive Enrollments
                       </h3>
                       <div className="grid gap-2">
-                        {otherEnrollments.slice(0, 3).map(
-                          (
-                            enrollment // Limit to 3 for brevity
-                          ) => (
+                        {otherEnrollments.slice(0, 3).map((enrollment) => {
+                          const instructors =
+                            enrollment.offering.instructors || [];
+                          const instructorNames = instructors
+                            .map((i) =>
+                              i.instructor
+                                ? `${i.instructor.firstName} ${i.instructor.lastName}`
+                                : i.staffUser?.fullName ?? "Unknown"
+                            )
+                            .join(", ");
+
+                          return (
                             <div
                               key={enrollment.id}
                               className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded border border-gray-100 opacity-70"
                             >
-                              <div>
-                                <span className="font-medium">
-                                  {enrollment.offering.title}
-                                </span>
-                                <span className="text-gray-500 mx-1">•</span>
-                                <span className="text-gray-500">
-                                  {enrollment.offering.term.name}
-                                </span>
+                              <div className="flex flex-col">
+                                <div>
+                                  <span className="font-medium">
+                                    {enrollment.offering.title}
+                                  </span>
+                                  <span className="text-gray-500 mx-1">•</span>
+                                  <span className="text-gray-500">
+                                    {enrollment.offering.term.name}
+                                  </span>
+                                </div>
+                                {instructorNames && (
+                                  <div className="text-xs text-gray-500">
+                                    Instructor: {instructorNames}
+                                  </div>
+                                )}
                               </div>
                               <Badge
                                 variant="outline"
@@ -691,8 +714,8 @@ export default function GuardianViewClient({
                                 {enrollment.status}
                               </Badge>
                             </div>
-                          )
-                        )}
+                          );
+                        })}
                         {otherEnrollments.length > 3 && (
                           <p className="text-xs text-center text-gray-400 mt-1">
                             +{otherEnrollments.length - 3} more...

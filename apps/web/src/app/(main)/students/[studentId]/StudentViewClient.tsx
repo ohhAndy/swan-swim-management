@@ -706,7 +706,11 @@ export default function StudentViewClient({
                   {currentEnrollments.map((enrollment) => {
                     const instructors = enrollment.offering.instructors || [];
                     const instructorNames = instructors
-                      .map((i) => i.staffUser.fullName)
+                      .map((i) =>
+                        i.instructor
+                          ? `${i.instructor.firstName} ${i.instructor.lastName}`
+                          : i.staffUser?.fullName ?? "Unknown"
+                      )
                       .join(", ");
 
                     const badge = getInvoiceStatusBadge(enrollment);
@@ -873,7 +877,11 @@ export default function StudentViewClient({
             {pastEnrollments.map((enrollment) => {
               const instructors = enrollment.offering.instructors || [];
               const instructorNames = instructors
-                .map((i) => i.staffUser.fullName)
+                .map((i) =>
+                  i.instructor
+                    ? `${i.instructor.firstName} ${i.instructor.lastName}`
+                    : i.staffUser?.fullName ?? "Unknown"
+                )
                 .join(", ");
 
               return (

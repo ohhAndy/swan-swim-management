@@ -106,6 +106,12 @@ export class GuardiansService {
                             fullName: true,
                           },
                         },
+                        instructor: {
+                          select: {
+                            firstName: true,
+                            lastName: true,
+                          },
+                        },
                       },
                     },
                   },
