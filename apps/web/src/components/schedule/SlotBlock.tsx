@@ -182,12 +182,17 @@ export function SlotBlock({
     childAge: number;
     parentPhone: string;
   }) => {
-    // TODO: Navigate to create student page with pre-filled info
-    // For now, just close the dialog
     dialogs.convertTrial.close();
-    alert(
-      `Create new student: ${trialInfo.childName}\nThis should navigate to the create student page with info pre-filled.`
-    );
+
+    const parts = trialInfo.childName.trim().split(/\s+/);
+    const firstName = parts[0] || "";
+    const lastName = parts.slice(1).join(" ") || "";
+
+    const params = new URLSearchParams();
+    if (firstName) params.set("firstName", firstName);
+    if (lastName) params.set("lastName", lastName);
+
+    router.push(`/admin/students/new?${params.toString()}`);
   };
 
   const handleDialogSuccess = () => {

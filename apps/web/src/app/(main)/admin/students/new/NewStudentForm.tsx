@@ -3,7 +3,7 @@
 import { createStudent } from "@/lib/api/students-client";
 import { CreateStudentInput, CreateStudentSchema } from "@/lib/zod/student";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -32,6 +32,8 @@ export default function NewStudentForm() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
 
+  const searchParams = useSearchParams();
+
   const {
     register,
     handleSubmit,
@@ -44,8 +46,8 @@ export default function NewStudentForm() {
     defaultValues: {
       guardianId: "",
       shortCode: "",
-      firstName: "",
-      lastName: "",
+      firstName: searchParams.get("firstName") || "",
+      lastName: searchParams.get("lastName") || "",
       level: "",
       birthdate: "2000-01-01",
     },
