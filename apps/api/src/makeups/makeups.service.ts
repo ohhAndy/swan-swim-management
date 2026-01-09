@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import {
   countUsedSeatsForSession,
   hasTimeConflict,
@@ -17,15 +18,30 @@ export class MakeupsService {
 
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
+      include: { accessibleLocations: true },
     });
     if (!staffUser) return;
 
     return this.prisma.$transaction(async (tx) => {
       const session = await tx.classSession.findUnique({
         where: { id: classSessionId },
-        include: { offering: { select: { id: true, capacity: true } } },
+        include: {
+          offering: {
+            select: {
+              id: true,
+              capacity: true,
+              term: { select: { locationId: true } },
+            },
+          },
+        },
       });
       if (!session) throw new BadRequestException("Session not found");
+
+      // Validate Location Access
+      validateLocationAccess(
+        staffUser,
+        session.offering.term.locationId ?? undefined
+      );
 
       const dup = await tx.makeUpBooking.findUnique({
         where: { studentId_classSessionId: { studentId, classSessionId } },

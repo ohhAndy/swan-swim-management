@@ -15,6 +15,7 @@ import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentUser, CurrentStaffUser } from "../auth/current-user.decorator";
+import { CurrentLocationId } from "../auth/current-location.decorator";
 
 @Controller("terms")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -23,14 +24,22 @@ export class TermsController {
 
   @Post()
   @Roles("admin")
-  async create(@Body() body: unknown, @CurrentUser() user: any) {
+  async create(
+    @Body() body: unknown,
+    @CurrentUser() user: any,
+    @CurrentLocationId() locationId?: string
+  ) {
     const input = CreateTermSchema.parse(body);
-    return await this.termsService.createTermWithSchedule(input, user);
+    return await this.termsService.createTermWithSchedule(
+      input,
+      user,
+      locationId
+    );
   }
 
   @Get("all")
-  async getAllTerms(): Promise<Term[]> {
-    return this.termsService.getAllTerms();
+  async getAllTerms(@CurrentLocationId() locationId?: string): Promise<Term[]> {
+    return this.termsService.getAllTerms(locationId);
   }
 
   @Get(":termId")

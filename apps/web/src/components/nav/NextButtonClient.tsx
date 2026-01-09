@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "../ui/button";
 
 export function NextButtonClient({
@@ -12,15 +12,11 @@ export function NextButtonClient({
   nextWeekday: number;
   nextSlot: string;
 }) {
-  const router = useRouter();
   return (
-    <Button
-      onClick={() =>
-        router.push(`${baseHref}/weekday/${nextWeekday}/slot/${nextSlot}`)
-      }
-      variant="outline"
-    >
-      Next →
+    <Button variant="outline" asChild>
+      <Link href={`${baseHref}/weekday/${nextWeekday}/slot/${nextSlot}`}>
+        Next →
+      </Link>
     </Button>
   );
 }

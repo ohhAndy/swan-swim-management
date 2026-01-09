@@ -20,14 +20,19 @@ export default async function TimeSlotsPage({
     redirect(`/term/${termId}/schedule/date/${today}`);
   }
 
+  const weekdayPromises = Array.from({ length: 7 }).map((_, weekday) =>
+    getTimeSlotsByWeekday(termId, weekday)
+  );
+
+  const [fetchTitle, ...weeklySlots] = await Promise.all([
+    getTermTitle(termId),
+    ...weekdayPromises,
+  ]);
+
   const timeSlotsByDay: Record<number, string[]> = {};
-
-  for (let weekday = 0; weekday < 7; weekday++) {
-    const timeSlots: string[] = await getTimeSlotsByWeekday(termId, weekday);
-    timeSlotsByDay[weekday] = timeSlots;
-  }
-
-  const fetchTitle: string = await getTermTitle(termId);
+  weeklySlots.forEach((slots, index) => {
+    timeSlotsByDay[index] = slots;
+  });
   const termTitle = fetchTitle === "" ? null : fetchTitle;
 
   return (

@@ -1,14 +1,26 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { validateLocationAccess } from "../common/helpers/location-access.helper";
 
 @Injectable()
 export class StatisticsService {
   constructor(private prisma: PrismaService) {}
 
-  async getDashboardStats(termId: string) {
+  async getDashboardStats(termId: string, user: any, locationId?: string) {
     if (!termId) {
       throw new Error("Term ID is required");
     }
+
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+      include: { accessibleLocations: true },
+    });
+
+    if (!staffUser) {
+      throw new Error("User not found");
+    }
+
+    const validatedLocationId = validateLocationAccess(staffUser, locationId);
 
     // 1. Enrollment Capacity
     // Fetch all offerings for the term
@@ -82,7 +94,14 @@ export class StatisticsService {
     // 4. Action Items
     // Pending makeups
     const pendingMakeups = await this.prisma.makeUpBooking.count({
-      where: { status: "requested" },
+      where: {
+        status: "requested",
+        classSession: validatedLocationId
+          ? {
+              offering: { term: { locationId: validatedLocationId } },
+            }
+          : undefined,
+      },
     });
 
     // Upcoming trials (next 7 days)
@@ -97,6 +116,9 @@ export class StatisticsService {
             gte: new Date(),
             lte: sevenDaysFromNow,
           },
+          ...(validatedLocationId
+            ? { offering: { term: { locationId: validatedLocationId } } }
+            : {}),
         },
       },
     });

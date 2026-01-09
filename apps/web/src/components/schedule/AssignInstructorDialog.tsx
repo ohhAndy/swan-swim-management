@@ -21,8 +21,8 @@ import { Loader2, X } from "lucide-react";
 import {
   assignInstructor,
   removeInstructor,
-  getStaffUsers,
 } from "@/lib/api/instructor-client";
+import { getInstructors, type Instructor } from "@/lib/api/instructors";
 import type { InstructorInfo } from "@school/shared-types";
 
 interface AssignInstructorDialogProps {
@@ -42,49 +42,43 @@ export function AssignInstructorDialog({
   onSuccess,
   levelName,
 }: AssignInstructorDialogProps) {
-  const [staffUsers, setStaffUsers] = useState<
-    Array<{
-      id: string;
-      fullName: string;
-      email: string;
-      role: string;
-      active: boolean;
-    }>
+  const [availableInstructors, setAvailableInstructors] = useState<
+    Instructor[]
   >([]);
-  const [selectedStaffId, setSelectedStaffId] = useState<string>("");
+  const [selectedInstructorId, setSelectedInstructorId] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [loadingStaff, setLoadingStaff] = useState(true);
+  const [loadingInstructors, setLoadingInstructors] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
-      loadStaffUsers();
+      loadInstructors();
     }
   }, [open]);
 
-  const loadStaffUsers = async () => {
+  const loadInstructors = async () => {
     try {
-      setLoadingStaff(true);
+      setLoadingInstructors(true);
       setError(null);
-      const users = await getStaffUsers();
-      // Filter to only active staff
-      setStaffUsers(users.filter((u) => u.active));
+      // Get all active instructors
+      const instructors = await getInstructors(true);
+      setAvailableInstructors(instructors);
     } catch (error) {
-      setError("Failed to load staff users");
+      setError("Failed to load instructors");
       console.error(error);
     } finally {
-      setLoadingStaff(false);
+      setLoadingInstructors(false);
     }
   };
 
   const handleAssign = async () => {
-    if (!selectedStaffId) return;
+    if (!selectedInstructorId) return;
 
     try {
       setLoading(true);
       setError(null);
-      await assignInstructor(classOfferingId, selectedStaffId);
-      setSelectedStaffId("");
+      await assignInstructor(classOfferingId, selectedInstructorId);
+      setSelectedInstructorId("");
       onSuccess();
     } catch (error) {
       setError(
@@ -113,8 +107,9 @@ export function AssignInstructorDialog({
   };
 
   // Filter out already assigned instructors from dropdown
-  const availableStaff = staffUsers.filter(
-    (staff) => !currentInstructors.some((inst) => inst.staffUserId === staff.id)
+  const filteredInstructors = availableInstructors.filter(
+    (inst) =>
+      !currentInstructors.some((current) => current.staffUserId === inst.id) // Note: shared-types might still refer to staffUserId which effectively is now instructorId, need to check shared-types if possible, or assume it maps to ID
   );
 
   return (
@@ -168,28 +163,28 @@ export function AssignInstructorDialog({
 
           {/* Add New Instructor */}
           <div className="space-y-2">
-            <Label htmlFor="staff-select">Add Instructor</Label>
-            {loadingStaff ? (
+            <Label htmlFor="instructor-select">Add Instructor</Label>
+            {loadingInstructors ? (
               <div className="flex items-center justify-center p-4">
                 <Loader2 className="h-5 w-5 animate-spin" />
               </div>
             ) : (
               <Select
-                value={selectedStaffId}
-                onValueChange={setSelectedStaffId}
+                value={selectedInstructorId}
+                onValueChange={setSelectedInstructorId}
               >
-                <SelectTrigger id="staff-select">
-                  <SelectValue placeholder="Select a staff member" />
+                <SelectTrigger id="instructor-select">
+                  <SelectValue placeholder="Select an instructor" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableStaff.length === 0 ? (
+                  {filteredInstructors.length === 0 ? (
                     <div className="p-2 text-sm text-muted-foreground">
-                      No available staff members
+                      No available instructors
                     </div>
                   ) : (
-                    availableStaff.map((staff) => (
-                      <SelectItem key={staff.id} value={staff.id}>
-                        {staff.fullName} ({staff.role})
+                    filteredInstructors.map((instructor) => (
+                      <SelectItem key={instructor.id} value={instructor.id}>
+                        {instructor.firstName} {instructor.lastName}
                       </SelectItem>
                     ))
                   )}
@@ -207,7 +202,10 @@ export function AssignInstructorDialog({
           >
             Close
           </Button>
-          <Button onClick={handleAssign} disabled={!selectedStaffId || loading}>
+          <Button
+            onClick={handleAssign}
+            disabled={!selectedInstructorId || loading}
+          >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Assign Instructor
           </Button>

@@ -3,6 +3,7 @@
 import { BackButton } from "@/components/nav/BackButton";
 import { format } from "date-fns";
 import { updateRemarks, updateStudent } from "@/lib/api/students-client";
+import { updateReportCardStatus } from "@/lib/api/enrollment-client";
 import { useRouter } from "next/navigation";
 import type { RosterItem } from "@/components/schedule/DailyClassRoster";
 import { DailyClassRoster } from "@/components/schedule/DailyClassRoster";
@@ -179,6 +180,17 @@ export default function DailyScheduleClient({
                                 router.refresh();
                               }
                             }}
+                            onReportCardUpdate={async (
+                              enrollmentId,
+                              status
+                            ) => {
+                              await updateReportCardStatus(
+                                enrollmentId,
+                                status
+                              );
+                              router.refresh();
+                            }}
+                            userRole={userRole}
                           />
                         </CardContent>
                       </Card>

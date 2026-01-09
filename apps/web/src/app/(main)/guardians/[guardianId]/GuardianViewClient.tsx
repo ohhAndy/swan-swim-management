@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Edit2,
@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { updateGuardian } from "@/lib/api/guardian-client";
 import { deleteEnrollment } from "@/lib/api/schedule-client";
@@ -46,10 +47,11 @@ import {
 
 const EditGuardianSchema = z.object({
   fullName: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email"),
+  email: z.email("Invalid email"),
   phone: z.string().min(1, "Phone is required"),
   notes: z.string().optional(),
   shortCode: z.string().optional(),
+  waiverSigned: z.boolean(),
 });
 
 type EditGuardianInput = z.infer<typeof EditGuardianSchema>;
@@ -111,6 +113,7 @@ type GuardianData = {
   phone: string;
   shortCode?: string;
   notes?: string | null;
+  waiverSigned: boolean;
 
   students: Array<{
     id: string;
@@ -202,6 +205,7 @@ export default function GuardianViewClient({
     handleSubmit,
     formState: { errors },
     reset,
+    control,
   } = useForm<EditGuardianInput>({
     resolver: zodResolver(EditGuardianSchema),
     defaultValues: {
@@ -210,6 +214,7 @@ export default function GuardianViewClient({
       phone: guardian.phone,
       shortCode: guardian.shortCode ?? undefined,
       notes: guardian.notes || undefined,
+      waiverSigned: guardian.waiverSigned ?? false,
     },
   });
 
@@ -381,6 +386,21 @@ export default function GuardianViewClient({
                         {guardian.shortCode}
                       </Badge>
                     )}
+                    {guardian.waiverSigned ? (
+                      <Badge
+                        variant="default"
+                        className="mt-1 ml-2 text-xs bg-green-100 text-green-800 hover:bg-green-100 border-none"
+                      >
+                        <CheckCircle className="w-3 h-3 mr-1" /> Waiver Signed
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="mt-1 ml-2 text-xs text-gray-500 border-gray-300"
+                      >
+                        <AlertCircle className="w-3 h-3 mr-1" /> Waiver Pending
+                      </Badge>
+                    )}
                   </div>
 
                   <div>
@@ -454,6 +474,21 @@ export default function GuardianViewClient({
                       disabled={loading}
                       placeholder="(Optional)"
                     />
+                  </div>
+
+                  <div className="flex items-center gap-2 py-2">
+                    <Controller
+                      control={control}
+                      name="waiverSigned"
+                      render={({ field }) => (
+                        <Checkbox
+                          id="waiverSigned"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      )}
+                    />
+                    <Label htmlFor="waiverSigned">Waiver Signed</Label>
                   </div>
 
                   {/* Address Fields Simplified for brevity, typically would be a sub-form */}

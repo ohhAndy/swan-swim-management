@@ -680,7 +680,6 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                   <TableHead>Amount</TableHead>
                   <TableHead>Method</TableHead>
                   <TableHead>Notes</TableHead>
-                  <TableHead>Recorded By</TableHead>
                   {userRole === "admin" && <TableHead></TableHead>}
                 </TableRow>
               </TableHeader>
@@ -695,9 +694,6 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                       {payment.paymentMethod}
                     </TableCell>
                     <TableCell>{payment.notes || "-"}</TableCell>
-                    <TableCell>
-                      {payment.createdByUser?.fullName || "Unknown"}
-                    </TableCell>
                     {userRole === "admin" && (
                       <TableCell>
                         <AlertDialog>

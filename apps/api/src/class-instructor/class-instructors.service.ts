@@ -11,13 +11,15 @@ export class ClassInstructorsService {
 
   async assignInstructor(
     classOfferingId: string,
-    staffUserId: string,
-    assignedBy: any,
+    instructorId: string,
+    assignedByKey: any
   ) {
     const user = await this.prisma.staffUser.findUnique({
-      where: { authId: assignedBy.authId },
+      where: { authId: assignedByKey.authId },
     });
-    if(!user) return;
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
 
     // Verify class offering exists
     const classOffering = await this.prisma.classOffering.findUnique({
@@ -27,45 +29,39 @@ export class ClassInstructorsService {
       throw new NotFoundException("Class offering not found");
     }
 
-    // Verify staff user exists
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { id: staffUserId },
+    // Verify instructor exists
+    const instructor = await this.prisma.instructor.findUnique({
+      where: { id: instructorId },
     });
-    if (!staffUser) {
-      throw new NotFoundException("Staff user not found");
+    if (!instructor) {
+      throw new NotFoundException("Instructor not found");
     }
 
-    // Check if already assigned (active assignment)
-    const existing = await this.prisma.classInstructor.findFirst({
-      where: {
-        classOfferingId,
-        staffUserId,
-        removedAt: null,
-      },
-    });
-
-    if (existing) {
-      throw new ConflictException(
-        "This instructor is already assigned to this class"
-      );
-    }
-
-    // Create assignment
+    // Perform check and create atomically
     return this.prisma.$transaction(async (tx) => {
+      // Check if already assigned (active assignment)
+      const existing = await tx.classInstructor.findFirst({
+        where: {
+          classOfferingId,
+          instructorId,
+          removedAt: null,
+        },
+      });
+
+      if (existing) {
+        throw new ConflictException(
+          "This instructor is already assigned to this class"
+        );
+      }
+
       const assignment = await tx.classInstructor.create({
         data: {
           classOfferingId,
-          staffUserId,
+          instructorId,
           assignedBy: user.id,
         },
         include: {
-          staffUser: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true,
-            },
-          },
+          instructor: true,
           assignedByUser: {
             select: {
               id: true,
@@ -79,13 +75,13 @@ export class ClassInstructorsService {
       await tx.auditLog.create({
         data: {
           staffId: user.id,
-          action: 'Assign Instructor',
-          entityType: 'ClassInstructor',
+          action: "Assign Instructor",
+          entityType: "ClassInstructor",
           entityId: assignment.id,
           metadata: {
             classOfferingTitle: classOffering.title,
-            instructorName: staffUser.fullName,
-            instructorId: staffUser.id,
+            instructorName: `${instructor.firstName} ${instructor.lastName}`,
+            instructorId: instructor.id,
           },
         },
       });
@@ -98,17 +94,14 @@ export class ClassInstructorsService {
     const user = await this.prisma.staffUser.findUnique({
       where: { authId: removedBy.authId },
     });
-    if(!user) return;
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
 
     const assignment = await this.prisma.classInstructor.findUnique({
       where: { id: assignmentId },
       include: {
-        staffUser: {
-          select: {
-            id: true,
-            fullName: true,
-          },
-        },
+        instructor: true,
         classOffering: {
           select: {
             id: true,
@@ -136,12 +129,7 @@ export class ClassInstructorsService {
           removedBy: user.id,
         },
         include: {
-          staffUser: {
-            select: {
-              id: true,
-              fullName: true,
-            },
-          },
+          instructor: true,
           removedByUser: {
             select: {
               id: true,
@@ -155,13 +143,13 @@ export class ClassInstructorsService {
       await tx.auditLog.create({
         data: {
           staffId: user.id,
-          action: 'Remove Instructor',
-          entityType: 'ClassInstructor',
+          action: "Remove Instructor",
+          entityType: "ClassInstructor",
           entityId: assignmentId,
           metadata: {
             classOfferingTitle: assignment.classOffering.title,
-            instructorName: assignment.staffUser.fullName,
-            instructorId: assignment.staffUser.id,
+            instructorName: `${assignment.instructor.firstName} ${assignment.instructor.lastName}`,
+            instructorId: assignment.instructor.id,
           },
         },
       });
@@ -177,14 +165,7 @@ export class ClassInstructorsService {
         removedAt: null,
       },
       include: {
-        staffUser: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-            role: true,
-          },
-        },
+        instructor: true,
       },
       orderBy: {
         assignedAt: "asc",
@@ -198,12 +179,7 @@ export class ClassInstructorsService {
         classOfferingId,
       },
       include: {
-        staffUser: {
-          select: {
-            id: true,
-            fullName: true,
-          },
-        },
+        instructor: true,
         assignedByUser: {
           select: {
             id: true,
@@ -223,10 +199,10 @@ export class ClassInstructorsService {
     });
   }
 
-  async getClassesForInstructor(staffUserId: string, activeOnly = true) {
+  async getClassesForInstructor(instructorId: string, activeOnly = true) {
     return this.prisma.classInstructor.findMany({
       where: {
-        staffUserId,
+        instructorId,
         ...(activeOnly ? { removedAt: null } : {}),
       },
       include: {

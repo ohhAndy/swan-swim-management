@@ -1,18 +1,6 @@
-import { createClient } from "../supabase/client";
+import { getHeaders } from "./headers";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
-
-async function getAuthHeaders() {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${session?.access_token}`,
-  };
-}
 
 export interface Guardian {
   id: string;
@@ -139,7 +127,7 @@ export interface CreatePaymentData {
 }
 
 export async function createInvoice(data: CreateInvoiceData): Promise<Invoice> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/invoices`, {
     method: "POST",
     headers,
@@ -165,7 +153,7 @@ export async function getInvoices(params?: {
   sortBy?: "createdAt" | "invoiceNumber";
   sortOrder?: "asc" | "desc";
 }) {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const queryParams = new URLSearchParams();
 
   if (params?.search) queryParams.append("search", params.search);
@@ -193,7 +181,7 @@ export async function getInvoices(params?: {
 }
 
 export async function getInvoice(id: string): Promise<Invoice> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/invoices/${id}`, {
     headers,
   });
@@ -222,7 +210,7 @@ export async function updateInvoice(
     }[];
   }
 ): Promise<Invoice> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/invoices/${id}`, {
     method: "PATCH",
     headers,
@@ -238,7 +226,7 @@ export async function updateInvoice(
 }
 
 export async function deleteInvoice(id: string): Promise<void> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/invoices/${id}`, {
     method: "DELETE",
     headers,
@@ -255,7 +243,7 @@ export async function getUnInvoicedEnrollments(params?: {
   page?: number;
   limit?: number;
 }) {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const queryParams = new URLSearchParams();
 
   if (params?.guardianId) queryParams.append("guardianId", params.guardianId);
@@ -276,7 +264,7 @@ export async function getUnInvoicedEnrollments(params?: {
 }
 
 export async function createPayment(data: CreatePaymentData): Promise<Payment> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/payments`, {
     method: "POST",
     headers,
@@ -294,7 +282,7 @@ export async function createPayment(data: CreatePaymentData): Promise<Payment> {
 export async function getPaymentsByInvoice(
   invoiceId: string
 ): Promise<Payment[]> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/payments/invoice/${invoiceId}`, {
     headers,
   });
@@ -307,7 +295,7 @@ export async function getPaymentsByInvoice(
 }
 
 export async function deletePayment(id: string): Promise<void> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/payments/${id}`, {
     method: "DELETE",
     headers,

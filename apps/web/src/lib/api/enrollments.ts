@@ -1,18 +1,6 @@
-import { createClient } from "../supabase/client";
+import { getHeaders } from "./headers";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
-
-async function getAuthHeaders() {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${session?.access_token}`,
-  };
-}
 
 export interface UninvoicedEnrollment {
   id: string;
@@ -39,7 +27,7 @@ export interface UninvoicedEnrollment {
 export async function getUninvoicedEnrollments(): Promise<
   UninvoicedEnrollment[]
 > {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/enrollments/uninvoiced`, {
     headers,
     cache: "no-store",

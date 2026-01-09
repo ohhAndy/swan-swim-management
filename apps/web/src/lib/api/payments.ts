@@ -1,18 +1,6 @@
-import { createClient } from "../supabase/client";
+import { getHeaders } from "./headers";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
-
-async function getAuthHeaders() {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${session?.access_token}`,
-  };
-}
 
 export type Payment = {
   id: string;
@@ -58,7 +46,7 @@ export async function getAllPayments({
   method,
   query,
 }: PaginatedParams & { query?: string }): Promise<PaginatedResponse<Payment>> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
 
   const params = new URLSearchParams({
     page: page.toString(),
@@ -93,7 +81,7 @@ export async function exportPayments({
   method?: string;
   query?: string;
 }) {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const params = new URLSearchParams();
 
   if (startDate) params.append("startDate", startDate);
@@ -121,7 +109,7 @@ export async function exportInvoices({
   status?: string;
   query?: string;
 }) {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const params = new URLSearchParams();
 
   if (startDate) params.append("startDate", startDate);

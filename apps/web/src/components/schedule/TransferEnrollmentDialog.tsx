@@ -258,8 +258,8 @@ export function TransferEnrollmentDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Classes</SelectItem>
-                  <SelectItem value="preschool">Preschool</SelectItem>
-                  <SelectItem value="swimmer">Swimmer</SelectItem>
+                  <SelectItem value="ps">Preschool</SelectItem>
+                  <SelectItem value="sw">Swimmer</SelectItem>
                   <SelectItem value="adult">Adult</SelectItem>
                 </SelectContent>
               </Select>

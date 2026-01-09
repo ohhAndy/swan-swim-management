@@ -31,8 +31,11 @@ function buildRow(rosters: RosterResponse[]): Row[] {
         birthdate: p.studentBirthDate,
         skippedSessionIds: p.skippedSessionIds,
         marks: {},
+        markMeta: {},
         enrollmentId: p.enrollmentId,
         remarks: p.notes ?? null,
+        reportCardStatus: p.reportCardStatus,
+        nextTermStatus: p.nextTermStatus,
       };
 
       const s = p.attendance?.status;
@@ -46,6 +49,7 @@ function buildRow(rosters: RosterResponse[]): Row[] {
           : "";
       if (mark) {
         cur.marks[dayKey] = mark;
+        cur.markMeta[dayKey] = { notes: p.attendance?.notes ?? null };
       }
       map.set(p.enrollmentId, cur);
     }
@@ -89,6 +93,7 @@ export function StudentGrid({
   onTrialClick,
   onTrialConvert,
   onRemarksUpdate,
+  onReportCardUpdate,
   user,
 }: {
   isoDates: string[];
@@ -109,6 +114,7 @@ export function StudentGrid({
     parentPhone: string;
   }) => void;
   onRemarksUpdate?: (enrollmentId: string, notes: string) => Promise<void>;
+  onReportCardUpdate?: (enrollmentId: string, status: string) => Promise<void>;
   user: CurrentUser;
 }) {
   const [updating, setUpdating] = useState<string | null>(null);
@@ -272,7 +278,7 @@ export function StudentGrid({
     <div
       className="grid border text-sm bg-gray-200 gap-px"
       style={{
-        gridTemplateColumns: `0.5fr 2fr 52px 52px 52px repeat(${cols}, minmax(52px,1fr)) 1.5fr`,
+        gridTemplateColumns: `0.5fr 2fr 52px 52px 52px 52px repeat(${cols}, minmax(52px,1fr)) 1.5fr`,
       }}
     >
       <div className="bg-muted px-2 py-1 text-center font-semibold">Status</div>
@@ -282,6 +288,7 @@ export function StudentGrid({
       <div className="bg-muted px-2 py-1 text-center font-semibold">Ratio</div>
       <div className="bg-muted px-2 py-1 text-center font-semibold">Age</div>
       <div className="bg-muted px-2 py-1 text-center font-semibold">Level</div>
+      <div className="bg-muted px-2 py-1 text-center font-semibold">Card</div>
       {header.map((h, i) => (
         <div
           key={`h-${i}`}
@@ -318,6 +325,8 @@ export function StudentGrid({
           canEdit={canEdit}
           onAttendanceUpdate={handleAttendanceUpdate}
           onSaveRemarks={handleSaveRemarks}
+          onReportCardUpdate={onReportCardUpdate}
+          userRole={user.role}
         />
       ))}
 
@@ -366,6 +375,7 @@ export function StudentGrid({
         <div className="px-2 py-1 text-center bg-gray-50"></div>
         <div className="px-2 py-1 text-center bg-gray-50"></div>
         <div className="px-2 py-1 text-center bg-gray-50"></div>
+        <div className="px-2 py-1 text-center bg-gray-50"></div>
 
         {header.map((h, colIndex) => {
           const dayKey = h.key + "T04:00:00.000Z";
@@ -382,19 +392,21 @@ export function StudentGrid({
                   {/* Makeup Button */}
                   <button
                     onClick={() => onMakeUpClick?.(dayKey)}
-                    className="p-1 rounded hover:bg-blue-100 text-blue-600 hover:text-blue-700 text-xs"
-                    title={`Add make-up for ${h.label}`}
+                    className="w-full flex flex-col items-center justify-center py-1 rounded hover:bg-blue-100 text-blue-600 hover:text-blue-700 leading-none gap-0.5"
+                    title={`Add makeup for ${h.label}`}
                   >
-                    + Makeup
+                    <span className="text-sm font-bold">+</span>
+                    <span className="text-[10px]">Makeup</span>
                   </button>
 
                   {/* Trial Button */}
                   <button
                     onClick={() => onTrialClick?.(dayKey)}
-                    className="p-1 rounded hover:bg-purple-100 text-purple-600 hover:text-purple-700 text-xs"
+                    className="w-full flex flex-col items-center justify-center py-1 rounded hover:bg-purple-100 text-purple-600 hover:text-purple-700 leading-none gap-0.5"
                     title={`Add trial for ${h.label}`}
                   >
-                    + Trial
+                    <span className="text-sm font-bold">+</span>
+                    <span className="text-[10px]">Trial</span>
                   </button>
                 </div>
               </PermissionGate>

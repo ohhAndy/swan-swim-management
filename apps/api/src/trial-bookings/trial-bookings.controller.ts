@@ -7,21 +7,40 @@ import {
   Body,
   Param,
   UseGuards,
-} from '@nestjs/common';
-import { TrialBookingsService } from './trial-bookings.service';
-import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
-import { CurrentUser } from '../auth/current-user.decorator';
-import { TrialStatus } from '@prisma/client';
+  Get,
+} from "@nestjs/common";
+import { TrialBookingsService } from "./trial-bookings.service";
+import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
+import { RolesGuard } from "../auth/roles.guard";
+import { Roles } from "../auth/roles.decorator";
+import { CurrentUser } from "../auth/current-user.decorator";
+import { TrialStatus } from "@prisma/client";
 
-@Controller('trial-bookings')
+@Controller("trial-bookings")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
 export class TrialBookingsController {
   constructor(private readonly service: TrialBookingsService) {}
 
+  @Get("upcoming")
+  @Roles("admin", "manager", "supervisor")
+  async getUpcoming() {
+    return this.service.findUpcoming();
+  }
+
+  @Get("past")
+  @Roles("admin", "manager", "supervisor")
+  async getPast() {
+    return this.service.findPast();
+  }
+
+  @Get("stats")
+  @Roles("admin", "manager")
+  async getStats() {
+    return this.service.getStats();
+  }
+
   @Post()
-  @Roles('admin', 'manager')
+  @Roles("admin", "manager")
   async createTrialBooking(
     @Body()
     body: {
@@ -31,7 +50,7 @@ export class TrialBookingsController {
       parentPhone: string;
       notes?: string;
     },
-    @CurrentUser() staffUser: any,
+    @CurrentUser() staffUser: any
   ) {
     return this.service.createTrialBooking(
       body.classSessionId,
@@ -39,35 +58,35 @@ export class TrialBookingsController {
       body.childAge,
       body.parentPhone,
       body.notes || null,
-      staffUser,
+      staffUser
     );
   }
 
-  @Patch(':id/status')
-  @Roles('admin', 'manager', 'supervisor')
+  @Patch(":id/status")
+  @Roles("admin", "manager", "supervisor")
   async updateStatus(
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Body() body: { status: TrialStatus },
-    @CurrentUser() staffUser: any,
+    @CurrentUser() staffUser: any
   ) {
     return this.service.updateTrialStatus(id, body.status, staffUser);
   }
 
-  @Patch(':id/convert')
-  @Roles('admin', 'manager')
+  @Patch(":id/convert")
+  @Roles("admin", "manager")
   async convertToStudent(
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Body() body: { studentId: string },
-    @CurrentUser() staffUser: any,
+    @CurrentUser() staffUser: any
   ) {
     return this.service.convertToStudent(id, body.studentId, staffUser);
   }
 
-  @Delete(':id')
-  @Roles('admin', 'manager')
+  @Delete(":id")
+  @Roles("admin", "manager")
   async deleteTrialBooking(
-    @Param('id') id: string,
-    @CurrentUser() staffUser: any,
+    @Param("id") id: string,
+    @CurrentUser() staffUser: any
   ) {
     return this.service.deleteTrialBooking(id, staffUser);
   }

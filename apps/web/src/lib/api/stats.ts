@@ -1,18 +1,6 @@
-import { createClient } from "@/lib/supabase/client";
+import { getHeaders } from "./headers";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
-
-async function getAuthHeaders() {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${session?.access_token}`,
-  };
-}
 
 export interface DashboardStats {
   activeStudents: number;
@@ -32,7 +20,7 @@ export interface DashboardStats {
 export async function getDashboardStats(
   termId: string
 ): Promise<DashboardStats> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/statistics/dashboard?termId=${termId}`, {
     headers,
   });

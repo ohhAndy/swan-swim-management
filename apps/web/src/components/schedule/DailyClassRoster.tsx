@@ -19,6 +19,18 @@ import { HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import RemarksDialog from "./RemarksDialog";
+import {
+  CalendarCheck,
+  CalendarClock,
+  CalendarX,
+  FileText,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type RosterItem = {
   id: string; // EnrollmentID, MakeupID, or TrialID
@@ -31,6 +43,8 @@ export type RosterItem = {
   ratio: string | null;
   notes: string | null;
   isSkipped: boolean;
+  reportCardStatus: string | null;
+  nextTermStatus: "not_registered" | "enrolled" | "paid" | null;
 };
 
 const ALL_LEVELS = [...PRESCHOOL_LEVELS, ...SWIMMER_LEVELS, ...SWIMTEAM_LEVELS];
@@ -40,6 +54,8 @@ type Props = {
   onLevelUpdate?: (studentId: string, level: string) => Promise<void>;
   onAttendanceUpdate?: (item: RosterItem, status: string) => Promise<void>;
   onRemarksUpdate?: (item: RosterItem, remarks: string) => Promise<void>;
+  onReportCardUpdate?: (enrollmentId: string, status: string) => Promise<void>;
+  userRole: string;
 };
 
 export function DailyClassRoster({
@@ -47,6 +63,8 @@ export function DailyClassRoster({
   onLevelUpdate,
   onAttendanceUpdate,
   onRemarksUpdate,
+  onReportCardUpdate,
+  userRole,
 }: Props) {
   const [updating, setUpdating] = useState<string | null>(null);
 
@@ -116,6 +134,68 @@ export function DailyClassRoster({
                     >
                       Trial
                     </Badge>
+                  )}
+                  {/* Next Term Status Icons (Mobile) */}
+                  {item.type === "student" &&
+                    userRole !== "supervisor" &&
+                    item.nextTermStatus === "paid" && (
+                      <CalendarCheck className="w-4 h-4 text-green-600 ml-1" />
+                    )}
+                  {item.type === "student" &&
+                    userRole !== "supervisor" &&
+                    item.nextTermStatus === "enrolled" && (
+                      <CalendarClock className="w-4 h-4 text-orange-500 ml-1" />
+                    )}
+                  {/* Report Card Badge (Mobile) */}
+                  {item.type === "student" && (
+                    <div className="ml-auto">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          disabled={!onReportCardUpdate || updating !== null}
+                        >
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[10px] h-5 cursor-pointer ml-1",
+                              item.reportCardStatus === "given"
+                                ? "bg-green-100 text-green-700 border-green-200"
+                                : item.reportCardStatus === "created"
+                                ? "bg-blue-100 text-blue-700 border-blue-200"
+                                : "bg-gray-100 text-gray-500"
+                            )}
+                          >
+                            {item.reportCardStatus === "given"
+                              ? "RC Given"
+                              : item.reportCardStatus === "created"
+                              ? "RC Created"
+                              : "No RC"}
+                          </Badge>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              onReportCardUpdate?.(item.id, "not_created")
+                            }
+                          >
+                            Not Created
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              onReportCardUpdate?.(item.id, "created")
+                            }
+                          >
+                            Created
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              onReportCardUpdate?.(item.id, "given")
+                            }
+                          >
+                            Given
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   )}
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -225,6 +305,7 @@ export function DailyClassRoster({
               <th className="p-3 w-20">Age</th>
               <th className="p-3 w-24">Ratio</th>
               <th className="p-3 w-32">Level</th>
+              <th className="p-3 w-28 text-center">Card</th>
               <th className="p-3 w-40 text-center">Status</th>
               <th className="p-3 w-16 text-center">Notes</th>
             </tr>
@@ -267,6 +348,55 @@ export function DailyClassRoster({
                           Trial
                         </Badge>
                       )}
+                      {item.type === "student" &&
+                        userRole !== "supervisor" &&
+                        item.nextTermStatus === "paid" && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="inline-flex ml-1 items-center justify-center">
+                                  <CalendarCheck className="w-4 h-4 text-green-600" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Next Term: Paid</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      {item.type === "student" &&
+                        userRole !== "supervisor" &&
+                        item.nextTermStatus === "enrolled" && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="inline-flex ml-1 items-center justify-center">
+                                  <CalendarClock className="w-4 h-4 text-orange-500" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Next Term: Enrolled (Unpaid)</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      {item.type === "student" &&
+                        userRole !== "supervisor" &&
+                        (!item.nextTermStatus ||
+                          item.nextTermStatus === "not_registered") && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="inline-flex ml-1 items-center justify-center opacity-20">
+                                  <CalendarX className="w-4 h-4" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Next Term: Not Registered</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                     </div>
                   </div>
                 </td>
@@ -315,6 +445,57 @@ export function DailyClassRoster({
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
+                </td>
+                <td className="p-3 text-center">
+                  {item.type === "student" && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        disabled={
+                          !onReportCardUpdate ||
+                          updating !== null ||
+                          item.type !== "student"
+                        }
+                        className={cn(
+                          "text-xs px-2 py-1 rounded border min-w-[80px]",
+                          !item.reportCardStatus ||
+                            item.reportCardStatus === "not_created"
+                            ? "bg-gray-50 border-gray-200 text-gray-500"
+                            : item.reportCardStatus === "created"
+                            ? "bg-blue-50 border-blue-200 text-blue-700"
+                            : "bg-green-50 border-green-200 text-green-700"
+                        )}
+                      >
+                        {item.reportCardStatus === "given"
+                          ? "Given"
+                          : item.reportCardStatus === "created"
+                          ? "Created"
+                          : "None"}
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            onReportCardUpdate?.(item.id, "not_created")
+                          }
+                        >
+                          Not Created
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            onReportCardUpdate?.(item.id, "created")
+                          }
+                        >
+                          Created
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            onReportCardUpdate?.(item.id, "given")
+                          }
+                        >
+                          Given
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </td>
                 <td className="p-3 text-center">
                   <div className="flex justify-center">

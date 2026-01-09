@@ -2,7 +2,9 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
+import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateInvoiceDto } from "./dto/create-invoice.dto";
 import { UpdateInvoiceDto } from "./dto/update-invoice.dto";
@@ -32,11 +34,30 @@ export class InvoicesService {
   }
 
   // Create invoice with line items
-  async create(createInvoiceDto: CreateInvoiceDto, user: any) {
+  async create(
+    createInvoiceDto: CreateInvoiceDto,
+    user: any,
+    locationId?: string
+  ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
+      include: { accessibleLocations: true },
     });
     if (!staffUser) return;
+
+    // Validate Location Access
+    const assignedLocationId =
+      validateLocationAccess(staffUser, locationId) ?? undefined;
+
+    // Additional check if user tries to create generically but fails helper logic?
+    // Actually helper returns locationId or throws. If null returned (admin global), assignedLocationId is null.
+    // However, Prisma might expect null or string.
+
+    // Original logic had some "assignedLocationId = locationId ?? null" for admin.
+    // And inferred single location for others.
+    // Helper does: return locationId (if passed), return inferred (if not passed), return null (if admin and not passed).
+
+    // So `assignedLocationId` can be string or null.
 
     // Validate that enrollments aren't already invoiced
     const lineItems: CreateInvoiceLineItemDto[] = createInvoiceDto.lineItems;
@@ -65,6 +86,7 @@ export class InvoicesService {
       data: {
         invoiceNumber: createInvoiceDto.invoiceNumber,
         guardianId: createInvoiceDto.guardianId || null,
+        locationId: assignedLocationId,
         totalAmount: createInvoiceDto.totalAmount,
         notes: createInvoiceDto.notes,
         createdAt: createInvoiceDto.createdAt
@@ -148,12 +170,23 @@ export class InvoicesService {
   }
 
   // List invoices with filters
-  async findAll(query: InvoiceQueryDto) {
+  async findAll(query: InvoiceQueryDto, user: any, locationId?: string) {
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+      include: { accessibleLocations: true },
+    });
+    if (!staffUser) throw new ForbiddenException("User not found");
+
+    const validatedLocationId = validateLocationAccess(staffUser, locationId);
     const page = parseInt(query.page ?? "") || 1;
     const limit = parseInt(query.limit ?? "") || 20;
     const skip = (page - 1) * limit;
 
     const where: Prisma.InvoiceWhereInput = {};
+
+    if (validatedLocationId) {
+      where.locationId = validatedLocationId;
+    }
 
     // Search by invoice number
     if (query.search) {
@@ -318,7 +351,18 @@ export class InvoicesService {
   }
 
   // Get un-invoiced enrollments
-  async getUnInvoicedEnrollments(query: UnInvoicedEnrollmentsQueryDto) {
+  async getUnInvoicedEnrollments(
+    query: UnInvoicedEnrollmentsQueryDto,
+    user: any,
+    locationId?: string
+  ) {
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+      include: { accessibleLocations: true },
+    });
+    if (!staffUser) throw new ForbiddenException("User not found");
+
+    const validatedLocationId = validateLocationAccess(staffUser, locationId);
     const page = parseInt(query.page ?? "") || 1;
     const limit = parseInt(query.limit ?? "") || 50;
     const skip = (page - 1) * limit;
@@ -338,6 +382,18 @@ export class InvoicesService {
       where.offering = {
         termId: query.termId,
       };
+    }
+
+    if (validatedLocationId) {
+      if (where.offering) {
+        where.offering = {
+          AND: [where.offering, { term: { locationId: validatedLocationId } }],
+        };
+      } else {
+        where.offering = {
+          term: { locationId: validatedLocationId },
+        };
+      }
     }
 
     const [enrollments, total] = await Promise.all([

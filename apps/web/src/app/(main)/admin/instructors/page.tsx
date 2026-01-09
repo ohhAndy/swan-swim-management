@@ -1,0 +1,32 @@
+import { Suspense } from "react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import InstructorsList from "./InstructorsList";
+
+export const dynamic = "force-dynamic";
+
+export default function InstructorsPage() {
+  return (
+    <div className="container mx-auto py-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">Instructors</h1>
+          <p className="text-muted-foreground">
+            Manage your teaching staff profiles
+          </p>
+        </div>
+        <Link href="/admin/instructors/new">
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Instructor
+          </Button>
+        </Link>
+      </div>
+
+      <Suspense fallback={<div>Loading...</div>}>
+        <InstructorsList />
+      </Suspense>
+    </div>
+  );
+}

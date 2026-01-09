@@ -24,7 +24,7 @@ let ClassInstructorsController = class ClassInstructorsController {
         this.service = service;
     }
     async assignInstructor(body, staffUser) {
-        return this.service.assignInstructor(body.classOfferingId, body.staffUserId, staffUser);
+        return this.service.assignInstructor(body.classOfferingId, body.instructorId, staffUser);
     }
     async removeInstructor(id, staffUser) {
         return this.service.removeInstructor(id, staffUser);
@@ -35,14 +35,14 @@ let ClassInstructorsController = class ClassInstructorsController {
     async getInstructorHistory(classOfferingId) {
         return this.service.getInstructorHistory(classOfferingId);
     }
-    async getClassesForInstructor(staffUserId) {
-        return this.service.getClassesForInstructor(staffUserId, true);
+    async getClassesForInstructor(instructorId) {
+        return this.service.getClassesForInstructor(instructorId, true);
     }
 };
 exports.ClassInstructorsController = ClassInstructorsController;
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)('admin', 'manager', 'supervisor'),
+    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -50,38 +50,38 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ClassInstructorsController.prototype, "assignInstructor", null);
 __decorate([
-    (0, common_1.Delete)(':id'),
-    (0, roles_decorator_1.Roles)('admin', 'manager', 'supervisor'),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Delete)(":id"),
+    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    __param(0, (0, common_1.Param)("id")),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], ClassInstructorsController.prototype, "removeInstructor", null);
 __decorate([
-    (0, common_1.Get)('class/:classOfferingId'),
-    (0, roles_decorator_1.Roles)('admin', 'manager', 'supervisor', 'viewer'),
-    __param(0, (0, common_1.Param)('classOfferingId')),
+    (0, common_1.Get)("class/:classOfferingId"),
+    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor", "viewer"),
+    __param(0, (0, common_1.Param)("classOfferingId")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ClassInstructorsController.prototype, "getActiveInstructors", null);
 __decorate([
-    (0, common_1.Get)('class/:classOfferingId/history'),
-    __param(0, (0, common_1.Param)('classOfferingId')),
+    (0, common_1.Get)("class/:classOfferingId/history"),
+    __param(0, (0, common_1.Param)("classOfferingId")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ClassInstructorsController.prototype, "getInstructorHistory", null);
 __decorate([
-    (0, common_1.Get)('instructor/:staffUserId'),
-    __param(0, (0, common_1.Param)('staffUserId')),
+    (0, common_1.Get)("instructor/:instructorId"),
+    __param(0, (0, common_1.Param)("instructorId")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], ClassInstructorsController.prototype, "getClassesForInstructor", null);
 exports.ClassInstructorsController = ClassInstructorsController = __decorate([
-    (0, common_1.Controller)('class-instructors'),
+    (0, common_1.Controller)("class-instructors"),
     (0, common_1.UseGuards)(supabase_auth_guard_1.SupabaseAuthGuard, roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [class_instructors_service_1.ClassInstructorsService])
 ], ClassInstructorsController);

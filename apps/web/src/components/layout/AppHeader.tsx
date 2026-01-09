@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { LocationSwitcher } from "@/components/LocationSwitcher";
 
 export async function AppHeader() {
   const user = await getCurrentUser();
@@ -17,37 +18,46 @@ export async function AppHeader() {
 
   return (
     <header className="sticky top-0 z-40 backdrop-blur dark:bg-slate-950/80">
-      <div className="mx-auto flex max-w-5xl items-center gap-3 px-6 py-3">
-        <Image
-          src="/NoBGLogoSQ.svg"
-          alt="Swan Swim School"
-          width={40}
-          height={40}
-          priority
-        />
-
-        <span className="text-base font-semibold hidden sm:block">
-          Swan Swim School Admin
-        </span>
-
+      <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-3">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <Image
+            src="/NoBGLogoSQ.svg"
+            alt="Swan Swim School"
+            width={32}
+            height={32}
+            priority
+          />
+          <span className="text-sm font-semibold hidden sm:block whitespace-nowrap">
+            Swan Swim School Admin
+          </span>
+        </Link>
         {/* spacer */}
-        <nav className="ml-auto flex items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="text-sm font-medium hover:text-blue-600"
-          >
-            Dashboard
-          </Link>
+        <nav className="ml-auto flex items-center gap-3">
           <PermissionGate
             allowedRoles={["admin", "manager"]}
             currentRole={user.role}
           >
-            <Link
-              href="/students"
-              className="text-sm font-medium hover:text-blue-600"
-            >
-              Students
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center text-sm font-medium hover:text-blue-600 outline-none">
+                Profiles <ChevronDown className="ml-1 h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href="/students">Students</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/guardians">Guardians</Link>
+                </DropdownMenuItem>
+                <PermissionGate
+                  allowedRoles={["admin"]}
+                  currentRole={user.role}
+                >
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/instructors">Instructors</Link>
+                  </DropdownMenuItem>
+                </PermissionGate>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </PermissionGate>
           <PermissionGate
             allowedRoles={["admin", "manager"]}
@@ -86,6 +96,18 @@ export async function AppHeader() {
               Schedule
             </Link>
           </PermissionGate>
+          <PermissionGate
+            allowedRoles={["admin", "manager", "supervisor"]}
+            currentRole={user.role}
+          >
+            <Link
+              href="/tasks"
+              className="text-sm font-medium hover:text-blue-600"
+            >
+              Tasks
+            </Link>
+          </PermissionGate>
+          <LocationSwitcher />
           <UserMenu user={user} />
         </nav>
       </div>

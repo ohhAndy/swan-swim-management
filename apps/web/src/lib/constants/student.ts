@@ -1,6 +1,9 @@
 export interface Term {
   id: string;
   name: string;
+  location?: {
+    name: string;
+  };
 }
 
 export interface Instructor {
@@ -44,6 +47,18 @@ export interface Enrollment {
   offering: Offering;
   attendance: Attendance[];
   invoiceLineItem: InvoiceLineItem;
+  transferredFrom?: {
+    offering: {
+      title: string;
+      term: { name: string };
+    };
+  } | null;
+  transferredTo?: {
+    offering: {
+      title: string;
+      term: { name: string };
+    };
+  } | null;
 }
 
 export interface Payment {

@@ -16,18 +16,22 @@ export class GuardiansService {
   constructor(private readonly prisma: PrismaService) {}
 
   async searchOrList(params: SearchGuardianDto) {
-    const { query, page = 1, pageSize = 20 } = params;
+    const { query, page = 1, pageSize = 20, waiverStatus } = params;
 
-    const where = query
-      ? {
-          OR: [
-            { fullName: { contains: query, mode: "insensitive" } },
-            { email: { contains: query, mode: "insensitive" } },
-            { shortCode: { contains: query, mode: "insensitive" } },
-            { phone: { contains: query, mode: "insensitive" } },
-          ] as Prisma.GuardianWhereInput[],
-        }
-      : {};
+    const where: Prisma.GuardianWhereInput = {
+      ...(query
+        ? {
+            OR: [
+              { fullName: { contains: query, mode: "insensitive" } },
+              { email: { contains: query, mode: "insensitive" } },
+              { shortCode: { contains: query, mode: "insensitive" } },
+              { phone: { contains: query, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+      ...(waiverStatus === "signed" ? { waiverSigned: true } : {}),
+      ...(waiverStatus === "pending" ? { waiverSigned: false } : {}),
+    };
 
     const [total, items] = await this.prisma.$transaction([
       this.prisma.guardian.count({ where }),
@@ -45,6 +49,13 @@ export class GuardiansService {
           notes: true,
           createdAt: true,
           updatedAt: true,
+          waiverSigned: true,
+          students: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
       }),
     ]);
@@ -139,7 +150,7 @@ export class GuardiansService {
   }
 
   async create(dto: CreateGuardianDto, user: any) {
-    const { fullName, shortCode, email, phone, notes } = dto;
+    const { fullName, shortCode, email, phone, notes, waiverSigned } = dto;
 
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
@@ -158,6 +169,7 @@ export class GuardiansService {
           phone,
 
           notes: notes ?? null,
+          waiverSigned: waiverSigned ?? false,
           createdBy: staffUser.id,
         },
         select: {
@@ -189,6 +201,7 @@ export class GuardiansService {
             phone: { from: null, to: phone },
 
             notes: { from: null, to: notes ?? null },
+            waiverSigned: { from: null, to: waiverSigned ?? false },
           },
           metadata: {
             guardianName: fullName,
@@ -220,6 +233,7 @@ export class GuardiansService {
         phone: true,
 
         notes: true,
+        waiverSigned: true,
       },
     });
 
@@ -236,6 +250,9 @@ export class GuardiansService {
             ...(dto.phone !== undefined ? { phone: dto.phone } : {}),
 
             ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
+            ...(dto.waiverSigned !== undefined
+              ? { waiverSigned: dto.waiverSigned }
+              : {}),
             updatedBy: staffUser.id,
           },
           select: {
@@ -246,6 +263,7 @@ export class GuardiansService {
             phone: true,
 
             notes: true,
+            waiverSigned: true,
             createdAt: true,
             createdBy: true,
             updatedAt: true,
@@ -274,6 +292,15 @@ export class GuardiansService {
 
         if (dto.notes !== undefined && dto.notes !== existing.notes) {
           changes.notes = { from: existing.notes, to: dto.notes };
+        }
+        if (
+          dto.waiverSigned !== undefined &&
+          dto.waiverSigned !== existing.waiverSigned
+        ) {
+          changes.waiverSigned = {
+            from: existing.waiverSigned,
+            to: dto.waiverSigned,
+          };
         }
 
         // Only create audit log if something actually changed
@@ -321,6 +348,7 @@ export class GuardiansService {
         phone: true,
 
         notes: true,
+        waiverSigned: true,
       },
     });
 
@@ -340,6 +368,7 @@ export class GuardiansService {
               phone: { from: guardian.phone, to: null },
 
               notes: { from: guardian.notes, to: null },
+              waiverSigned: { from: guardian.waiverSigned, to: null },
             },
             metadata: {
               guardianName: guardian.fullName,

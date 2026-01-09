@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MakeupsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const location_access_helper_1 = require("../common/helpers/location-access.helper");
 const sessions_helpers_1 = require("../sessions/sessions.helpers");
 let MakeupsService = class MakeupsService {
     constructor(prisma) {
@@ -21,16 +22,27 @@ let MakeupsService = class MakeupsService {
         const { studentId, classSessionId, notes } = input;
         const staffUser = await this.prisma.staffUser.findUnique({
             where: { authId: user.authId },
+            include: { accessibleLocations: true },
         });
         if (!staffUser)
             return;
         return this.prisma.$transaction(async (tx) => {
             const session = await tx.classSession.findUnique({
                 where: { id: classSessionId },
-                include: { offering: { select: { id: true, capacity: true } } },
+                include: {
+                    offering: {
+                        select: {
+                            id: true,
+                            capacity: true,
+                            term: { select: { locationId: true } },
+                        },
+                    },
+                },
             });
             if (!session)
                 throw new common_1.BadRequestException("Session not found");
+            // Validate Location Access
+            (0, location_access_helper_1.validateLocationAccess)(staffUser, session.offering.term.locationId ?? undefined);
             const dup = await tx.makeUpBooking.findUnique({
                 where: { studentId_classSessionId: { studentId, classSessionId } },
                 select: { id: true },

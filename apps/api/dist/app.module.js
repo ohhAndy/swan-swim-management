@@ -22,11 +22,14 @@ const staff_user_module_1 = require("./staff-users/staff-user.module");
 const auth_module_1 = require("./auth/auth.module");
 const config_1 = require("@nestjs/config");
 const class_instructors_module_1 = require("./class-instructor/class-instructors.module");
+const instructor_module_1 = require("./instructor/instructor.module");
 const trial_bookings_module_1 = require("./trial-bookings/trial-bookings.module");
 const invoices_module_1 = require("./invoices/invoices.module");
 const payments_module_1 = require("./payments/payments.module");
 const statistics_module_1 = require("./statistics/statistics.module");
 const exports_module_1 = require("./exports/exports.module");
+const locations_module_1 = require("./locations/locations.module");
+const tasks_module_1 = require("./tasks/tasks.module");
 const core_1 = require("@nestjs/core");
 const throttler_1 = require("@nestjs/throttler");
 const supabase_auth_guard_1 = require("./auth/supabase-auth.guard");
@@ -59,12 +62,15 @@ exports.AppModule = AppModule = __decorate([
             offerings_module_1.OfferingsModule,
             staff_user_module_1.StaffUsersModule,
             auth_module_1.AuthModule,
+            instructor_module_1.InstructorsModule, // New Module
             class_instructors_module_1.ClassInstructorsModule,
             trial_bookings_module_1.TrialBookingsModule,
             invoices_module_1.InvoicesModule,
             payments_module_1.PaymentsModule,
             statistics_module_1.StatisticsModule,
             exports_module_1.ExportsModule,
+            locations_module_1.LocationsModule,
+            tasks_module_1.TasksModule,
         ],
         providers: [
             {

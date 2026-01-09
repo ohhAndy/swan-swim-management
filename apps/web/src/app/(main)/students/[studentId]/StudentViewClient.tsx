@@ -50,6 +50,7 @@ import {
   PRESCHOOL_LEVELS,
   SWIMMER_LEVELS,
   SWIMTEAM_LEVELS,
+  PARENT_TOT_LEVELS,
 } from "@/lib/constants/levels";
 
 import { Enrollment, Student } from "@/lib/constants/student";
@@ -491,6 +492,16 @@ export default function StudentViewClient({
                       <SelectContent className="max-h-60 overflow-y-auto">
                         <SelectGroup>
                           <SelectLabel className="font-light text-gray-500 text-xs">
+                            Parent and Tot
+                          </SelectLabel>
+                          {PARENT_TOT_LEVELS.map((levelOption) => (
+                            <SelectItem key={levelOption} value={levelOption}>
+                              {levelOption}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                        <SelectGroup>
+                          <SelectLabel className="font-light text-gray-500 text-xs">
                             Preschool
                           </SelectLabel>
                           {PRESCHOOL_LEVELS.map((levelOption) => (
@@ -716,7 +727,9 @@ export default function StudentViewClient({
                               </Link>
                             </h4>
                             <p className="text-sm font-medium">
-                              {enrollment.offering.term.name}
+                              {enrollment.offering.term.name} •{" "}
+                              {enrollment.offering.term.location?.name ??
+                                "Unknown Location"}
                             </p>
 
                             <p className="text-sm text-gray-600 pt-2">
@@ -736,11 +749,30 @@ export default function StudentViewClient({
                               </p>
                             )}
                             <p className="text-sm text-gray-500 mt-1">
-                              Enrolled:{" "}
                               {new Date(
                                 enrollment.enrollDate
                               ).toLocaleDateString("en-CA")}
                             </p>
+                            {/* Transfer Info */}
+                            {enrollment.transferredFrom && (
+                              <p className="text-sm text-amber-600 mt-1">
+                                Transferred from:{" "}
+                                <span className="font-medium">
+                                  {enrollment.transferredFrom.offering.title}
+                                </span>{" "}
+                                ({enrollment.transferredFrom.offering.term.name}
+                                )
+                              </p>
+                            )}
+                            {enrollment.transferredTo && (
+                              <p className="text-sm text-blue-600 mt-1">
+                                Transferred to:{" "}
+                                <span className="font-medium">
+                                  {enrollment.transferredTo.offering.title}
+                                </span>{" "}
+                                ({enrollment.transferredTo.offering.term.name})
+                              </p>
+                            )}
 
                             {/* Makeups Section */}
                             {(() => {
@@ -871,11 +903,29 @@ export default function StudentViewClient({
                         </p>
                       )}
                       <p className="text-sm text-gray-500 mt-1">
-                        Enrolled:{" "}
                         {new Date(enrollment.enrollDate).toLocaleDateString(
                           "en-CA"
                         )}
                       </p>
+                      {/* Transfer Info */}
+                      {enrollment.transferredFrom && (
+                        <p className="text-sm text-amber-600 mt-1">
+                          Transferred from:{" "}
+                          <span className="font-medium">
+                            {enrollment.transferredFrom.offering.title}
+                          </span>{" "}
+                          ({enrollment.transferredFrom.offering.term.name})
+                        </p>
+                      )}
+                      {enrollment.transferredTo && (
+                        <p className="text-sm text-blue-600 mt-1">
+                          Transferred to:{" "}
+                          <span className="font-medium">
+                            {enrollment.transferredTo.offering.title}
+                          </span>{" "}
+                          ({enrollment.transferredTo.offering.term.name})
+                        </p>
+                      )}
                     </div>
                     {getInvoiceStatusBadge(enrollment)}
                   </div>

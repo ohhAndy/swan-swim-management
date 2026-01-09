@@ -123,6 +123,11 @@ export class StudentsService {
                   select: {
                     id: true,
                     name: true,
+                    location: {
+                      select: {
+                        name: true,
+                      },
+                    },
                   },
                 },
                 instructors: {
@@ -165,6 +170,34 @@ export class StudentsService {
                     status: true,
                     totalAmount: true,
                     payments: true,
+                  },
+                },
+              },
+            },
+            transferredFrom: {
+              select: {
+                offering: {
+                  select: {
+                    title: true,
+                    term: {
+                      select: {
+                        name: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            transferredTo: {
+              select: {
+                offering: {
+                  select: {
+                    title: true,
+                    term: {
+                      select: {
+                        name: true,
+                      },
+                    },
                   },
                 },
               },

@@ -23,7 +23,10 @@ export const SWIMMER_LEVELS = [
 
 export const SWIMTEAM_LEVELS = ["Junior Swim Team", "Senior Swim Team"];
 
+export const PARENT_TOT_LEVELS = ["Parent and Tot"];
+
 export const LEVEL_MAP = new Map<string, string>([
+  ["Parent and Tot", "P&T"],
   ["Preschool 1", "PS1"],
   ["Preschool 2", "PS2"],
   ["Preschool 3", "PS3"],
@@ -42,5 +45,5 @@ export const LEVEL_MAP = new Map<string, string>([
   ["Swimmer 6.1", "S6.1"],
   ["Swimmer 6.2", "S6.2"],
   ["Junior Swim Team", "Jr. ST"],
-  ["Senior Swim Team", "Sr. ST"]
+  ["Senior Swim Team", "Sr. ST"],
 ]);

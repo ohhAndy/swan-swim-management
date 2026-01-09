@@ -264,6 +264,103 @@ let TrialBookingsService = class TrialBookingsService {
             });
         });
     }
+    async findUpcoming() {
+        return this.prisma.trialBooking.findMany({
+            where: {
+                classSession: {
+                    date: {
+                        gte: new Date(),
+                    },
+                },
+                status: "scheduled",
+            },
+            include: {
+                classSession: {
+                    select: {
+                        date: true,
+                        offering: {
+                            select: {
+                                title: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: {
+                classSession: {
+                    date: "asc",
+                },
+            },
+        });
+    }
+    async findPast() {
+        return this.prisma.trialBooking.findMany({
+            where: {
+                OR: [
+                    {
+                        classSession: {
+                            date: {
+                                lt: new Date(),
+                            },
+                        },
+                    },
+                    {
+                        status: {
+                            not: "scheduled",
+                        },
+                    },
+                ],
+            },
+            include: {
+                classSession: {
+                    select: {
+                        date: true,
+                        offering: {
+                            select: {
+                                title: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: {
+                classSession: {
+                    date: "desc",
+                },
+            },
+        });
+    }
+    async getStats() {
+        const total = await this.prisma.trialBooking.count();
+        const converted = await this.prisma.trialBooking.count({
+            where: { status: "converted" },
+        });
+        const scheduled = await this.prisma.trialBooking.count({
+            where: { status: "scheduled" },
+        });
+        const attended = await this.prisma.trialBooking.count({
+            where: { status: "attended" },
+        });
+        const noshow = await this.prisma.trialBooking.count({
+            where: { status: "noshow" },
+        });
+        const cancelled = await this.prisma.trialBooking.count({
+            where: { status: "cancelled" },
+        });
+        const notConverted = attended + noshow + cancelled;
+        return {
+            total,
+            converted,
+            scheduled,
+            attended,
+            noshow,
+            cancelled,
+            notConverted,
+            conversionRate: attended + converted > 0
+                ? Math.round((converted / (attended + converted)) * 100)
+                : 0,
+        };
+    }
 };
 exports.TrialBookingsService = TrialBookingsService;
 exports.TrialBookingsService = TrialBookingsService = __decorate([

@@ -26,6 +26,7 @@ import { ConvertTrialDialog } from "./ConvertTrialDialog";
 import { Trash2 } from "lucide-react";
 import { deleteOffering } from "@/lib/api/schedule-client";
 import { useSlotDialogs } from "./useSlotDialogs";
+import { updateReportCardStatus } from "@/lib/api/enrollment-client";
 
 export function SlotBlock({
   title,
@@ -138,6 +139,21 @@ export function SlotBlock({
     } catch (error) {
       console.error("Failed to update remarks:", error);
       throw error; // Re-throw so the dialog can show error state
+    }
+  };
+
+  const handleReportCardUpdate = async (
+    enrollmentId: string,
+    status: string
+  ) => {
+    try {
+      await updateReportCardStatus(enrollmentId, status);
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (error) {
+      console.error("Failed to update report card status:", error);
+      throw error;
     }
   };
 
@@ -269,6 +285,7 @@ export function SlotBlock({
             onMakeUpUpdate={handleMakeUpUpdate}
             onMakeUpClick={handleMakeupClick}
             onRemarksUpdate={handleRemarksUpdate}
+            onReportCardUpdate={handleReportCardUpdate}
             onTrialUpdate={handleTrialUpdate}
             onTrialClick={handleTrialClick}
             onTrialConvert={handleTrialConvert}

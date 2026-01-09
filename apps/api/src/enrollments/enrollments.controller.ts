@@ -64,6 +64,20 @@ export class EnrollmentsController {
   ) {
     return this.enrollmentsService.updateRemarks(id, body, user);
   }
+
+  @Put(":id/report-card-status")
+  @Roles("admin", "manager", "supervisor")
+  async updateReportCardStatus(
+    @Param("id") id: string,
+    @Body() body: { status: string },
+    @CurrentUser() user: any
+  ) {
+    return this.enrollmentsService.updateReportCardStatus(
+      id,
+      body.status,
+      user
+    );
+  }
   @Delete(":id")
   @Roles("admin", "manager")
   async deleteEnrollment(@Param("id") id: string, @CurrentUser() user: any) {

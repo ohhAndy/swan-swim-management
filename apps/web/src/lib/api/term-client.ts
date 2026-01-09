@@ -1,22 +1,10 @@
 import type { FormOutput } from "../zod/term";
-import { createClient } from "@/lib/supabase/client";
+import { getHeaders } from "./headers";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
 
-async function getAuthHeaders() {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${session?.access_token}`,
-  };
-}
-
 export async function createTerm(values: FormOutput) {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/terms`, {
     method: "POST",
     headers,

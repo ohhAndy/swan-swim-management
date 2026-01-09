@@ -30,7 +30,7 @@ let MakeupsController = class MakeupsController {
 exports.MakeupsController = MakeupsController;
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)('admin', 'manager'),
+    (0, roles_decorator_1.Roles)("admin", "manager"),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),

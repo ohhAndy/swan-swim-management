@@ -17,17 +17,21 @@ let GuardiansService = class GuardiansService {
         this.prisma = prisma;
     }
     async searchOrList(params) {
-        const { query, page = 1, pageSize = 20 } = params;
-        const where = query
-            ? {
-                OR: [
-                    { fullName: { contains: query, mode: "insensitive" } },
-                    { email: { contains: query, mode: "insensitive" } },
-                    { shortCode: { contains: query, mode: "insensitive" } },
-                    { phone: { contains: query, mode: "insensitive" } },
-                ],
-            }
-            : {};
+        const { query, page = 1, pageSize = 20, waiverStatus } = params;
+        const where = {
+            ...(query
+                ? {
+                    OR: [
+                        { fullName: { contains: query, mode: "insensitive" } },
+                        { email: { contains: query, mode: "insensitive" } },
+                        { shortCode: { contains: query, mode: "insensitive" } },
+                        { phone: { contains: query, mode: "insensitive" } },
+                    ],
+                }
+                : {}),
+            ...(waiverStatus === "signed" ? { waiverSigned: true } : {}),
+            ...(waiverStatus === "pending" ? { waiverSigned: false } : {}),
+        };
         const [total, items] = await this.prisma.$transaction([
             this.prisma.guardian.count({ where }),
             this.prisma.guardian.findMany({
@@ -44,6 +48,13 @@ let GuardiansService = class GuardiansService {
                     notes: true,
                     createdAt: true,
                     updatedAt: true,
+                    waiverSigned: true,
+                    students: {
+                        select: {
+                            firstName: true,
+                            lastName: true,
+                        },
+                    },
                 },
             }),
         ]);
@@ -136,7 +147,7 @@ let GuardiansService = class GuardiansService {
         return guardian;
     }
     async create(dto, user) {
-        const { fullName, shortCode, email, phone, notes } = dto;
+        const { fullName, shortCode, email, phone, notes, waiverSigned } = dto;
         const staffUser = await this.prisma.staffUser.findUnique({
             where: { authId: user.authId },
         });
@@ -151,6 +162,7 @@ let GuardiansService = class GuardiansService {
                     email,
                     phone,
                     notes: notes ?? null,
+                    waiverSigned: waiverSigned ?? false,
                     createdBy: staffUser.id,
                 },
                 select: {
@@ -179,6 +191,7 @@ let GuardiansService = class GuardiansService {
                         email: { from: null, to: email },
                         phone: { from: null, to: phone },
                         notes: { from: null, to: notes ?? null },
+                        waiverSigned: { from: null, to: waiverSigned ?? false },
                     },
                     metadata: {
                         guardianName: fullName,
@@ -206,6 +219,7 @@ let GuardiansService = class GuardiansService {
                 email: true,
                 phone: true,
                 notes: true,
+                waiverSigned: true,
             },
         });
         if (existing) {
@@ -220,6 +234,9 @@ let GuardiansService = class GuardiansService {
                         ...(dto.email !== undefined ? { email: dto.email } : {}),
                         ...(dto.phone !== undefined ? { phone: dto.phone } : {}),
                         ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
+                        ...(dto.waiverSigned !== undefined
+                            ? { waiverSigned: dto.waiverSigned }
+                            : {}),
                         updatedBy: staffUser.id,
                     },
                     select: {
@@ -229,6 +246,7 @@ let GuardiansService = class GuardiansService {
                         email: true,
                         phone: true,
                         notes: true,
+                        waiverSigned: true,
                         createdAt: true,
                         createdBy: true,
                         updatedAt: true,
@@ -252,6 +270,13 @@ let GuardiansService = class GuardiansService {
                 }
                 if (dto.notes !== undefined && dto.notes !== existing.notes) {
                     changes.notes = { from: existing.notes, to: dto.notes };
+                }
+                if (dto.waiverSigned !== undefined &&
+                    dto.waiverSigned !== existing.waiverSigned) {
+                    changes.waiverSigned = {
+                        from: existing.waiverSigned,
+                        to: dto.waiverSigned,
+                    };
                 }
                 // Only create audit log if something actually changed
                 if (Object.keys(changes).length > 0) {
@@ -293,6 +318,7 @@ let GuardiansService = class GuardiansService {
                 email: true,
                 phone: true,
                 notes: true,
+                waiverSigned: true,
             },
         });
         if (guardian) {
@@ -310,6 +336,7 @@ let GuardiansService = class GuardiansService {
                             email: { from: guardian.email, to: null },
                             phone: { from: guardian.phone, to: null },
                             notes: { from: guardian.notes, to: null },
+                            waiverSigned: { from: guardian.waiverSigned, to: null },
                         },
                         metadata: {
                             guardianName: guardian.fullName,

@@ -24,6 +24,15 @@ let TrialBookingsController = class TrialBookingsController {
     constructor(service) {
         this.service = service;
     }
+    async getUpcoming() {
+        return this.service.findUpcoming();
+    }
+    async getPast() {
+        return this.service.findPast();
+    }
+    async getStats() {
+        return this.service.getStats();
+    }
     async createTrialBooking(body, staffUser) {
         return this.service.createTrialBooking(body.classSessionId, body.childName, body.childAge, body.parentPhone, body.notes || null, staffUser);
     }
@@ -39,8 +48,29 @@ let TrialBookingsController = class TrialBookingsController {
 };
 exports.TrialBookingsController = TrialBookingsController;
 __decorate([
+    (0, common_1.Get)("upcoming"),
+    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], TrialBookingsController.prototype, "getUpcoming", null);
+__decorate([
+    (0, common_1.Get)("past"),
+    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], TrialBookingsController.prototype, "getPast", null);
+__decorate([
+    (0, common_1.Get)("stats"),
+    (0, roles_decorator_1.Roles)("admin", "manager"),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], TrialBookingsController.prototype, "getStats", null);
+__decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)('admin', 'manager'),
+    (0, roles_decorator_1.Roles)("admin", "manager"),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -48,9 +78,9 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TrialBookingsController.prototype, "createTrialBooking", null);
 __decorate([
-    (0, common_1.Patch)(':id/status'),
-    (0, roles_decorator_1.Roles)('admin', 'manager', 'supervisor'),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Patch)(":id/status"),
+    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -58,9 +88,9 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TrialBookingsController.prototype, "updateStatus", null);
 __decorate([
-    (0, common_1.Patch)(':id/convert'),
-    (0, roles_decorator_1.Roles)('admin', 'manager'),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Patch)(":id/convert"),
+    (0, roles_decorator_1.Roles)("admin", "manager"),
+    __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -68,16 +98,16 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TrialBookingsController.prototype, "convertToStudent", null);
 __decorate([
-    (0, common_1.Delete)(':id'),
-    (0, roles_decorator_1.Roles)('admin', 'manager'),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Delete)(":id"),
+    (0, roles_decorator_1.Roles)("admin", "manager"),
+    __param(0, (0, common_1.Param)("id")),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], TrialBookingsController.prototype, "deleteTrialBooking", null);
 exports.TrialBookingsController = TrialBookingsController = __decorate([
-    (0, common_1.Controller)('trial-bookings'),
+    (0, common_1.Controller)("trial-bookings"),
     (0, common_1.UseGuards)(supabase_auth_guard_1.SupabaseAuthGuard, roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [trial_bookings_service_1.TrialBookingsService])
 ], TrialBookingsController);

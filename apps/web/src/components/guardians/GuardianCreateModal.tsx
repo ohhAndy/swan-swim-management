@@ -16,6 +16,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Controller } from "react-hook-form";
 
 const phoneRegex = /^\d{3}[-\s]\d{3}[-\s]\d{4}$/;
 const postalCodeRegex =
@@ -98,6 +100,7 @@ const guardianSchema = z.object({
     .optional()
     .or(z.literal(""))
     .transform((v) => v || undefined),
+  waiverSigned: z.boolean().default(false),
   address: addressFormSchema.optional(),
 });
 
@@ -119,6 +122,7 @@ export function GuardianCreateModal({
   const [busy, setBusy] = useState(false);
 
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors },
@@ -131,6 +135,7 @@ export function GuardianCreateModal({
       phone: "",
       shortCode: "",
       notes: "",
+      waiverSigned: false,
       address: {
         streetNumber: "",
         streetName: "",
@@ -203,7 +208,7 @@ export function GuardianCreateModal({
             <p className="text-xs text-red-600">{errors.email.message}</p>
           )}
         </div>
-        <div className="space-y-1">
+        <div className="space-y-1 relative">
           <Label>Phone Number</Label>
           <Input
             {...register("phone", {
@@ -220,6 +225,29 @@ export function GuardianCreateModal({
             <p className="text-xs text-red-600">{errors.phone.message}</p>
           )}
         </div>
+      </div>
+
+      <div className="-mt-2 sm:col-span-2">
+        <Controller
+          control={control}
+          name="waiverSigned"
+          render={({ field }) => (
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="waiverSigned"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                disabled={busy}
+              />
+              <Label
+                htmlFor="waiverSigned"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Waiver signed by guardian
+              </Label>
+            </div>
+          )}
+        />
       </div>
 
       <div className="rounded-md border p-3">
@@ -325,7 +353,7 @@ export function GuardianCreateModal({
           </div>
         </div>
 
-        <div className="space-y-1">
+        <div className="mt-4 space-y-1">
           <Label>Notes (optional)</Label>
           <Input {...register("notes")} placeholder="..." disabled={busy} />
           {errors.notes && (

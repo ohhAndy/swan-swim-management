@@ -71,6 +71,7 @@ export class EnrollmentsService {
           include: { term: true },
         },
         student: true,
+        invoiceLineItem: true,
       },
     });
     if (!currEnrollment) throw new NotFoundException("Enrollment DNE");
@@ -99,6 +100,23 @@ export class EnrollmentsService {
     if (existingEnrollment)
       throw new BadRequestException("Student already enrolled");
 
+    // Fetch sessions for both offerings to map them by index
+    const [oldSessions, newSessions] = await Promise.all([
+      this.prisma.classSession.findMany({
+        where: { offeringId: currEnrollment.offeringId },
+        orderBy: { date: "asc" },
+      }),
+      this.prisma.classSession.findMany({
+        where: { offeringId: targetOfferingId },
+        orderBy: { date: "asc" },
+      }),
+    ]);
+
+    // Fetch existing attendance
+    const oldAttendance = await this.prisma.attendance.findMany({
+      where: { enrollmentId: enrollmentId },
+    });
+
     return await this.prisma.$transaction(async (tx) => {
       // Create new enrollment
       const newEnrollment = await tx.enrollment.create({
@@ -112,10 +130,42 @@ export class EnrollmentsService {
         },
       });
 
-      // Create skips for new enrollment
-      if (skippedSessionIds.length > 0) {
+      // Map sessions and identify which new sessions should have attendance vs skips
+      const attendanceToCreate: any[] = [];
+      const finalSkippedSessionIds = new Set(skippedSessionIds);
+
+      oldSessions.forEach((oldSession, index) => {
+        const newSession = newSessions[index];
+        if (!newSession) return;
+
+        const att = oldAttendance.find(
+          (a) => a.classSessionId === oldSession.id
+        );
+        if (att) {
+          // If we have attendance, we transfer it and REMOVE from skips
+          attendanceToCreate.push({
+            enrollmentId: newEnrollment.id,
+            classSessionId: newSession.id,
+            status: att.status,
+            notes: `[Transferred] ${att.notes || ""}`.trim(),
+            markedBy: staffUser.id,
+            markedAt: new Date(),
+          });
+          finalSkippedSessionIds.delete(newSession.id);
+        }
+      });
+
+      // Create transferred attendance records
+      if (attendanceToCreate.length > 0) {
+        await tx.attendance.createMany({
+          data: attendanceToCreate,
+        });
+      }
+
+      // Create skips for new enrollment (only for those WITHOUT attendance)
+      if (finalSkippedSessionIds.size > 0) {
         await tx.enrollmentSkip.createMany({
-          data: skippedSessionIds.map((sessionId) => ({
+          data: Array.from(finalSkippedSessionIds).map((sessionId) => ({
             enrollmentId: newEnrollment.id,
             classSessionId: sessionId,
           })),
@@ -133,6 +183,16 @@ export class EnrollmentsService {
           transferredBy: staffUser?.id ?? null,
         },
       });
+
+      // Transfer invoice line item if it exists
+      if (currEnrollment.invoiceLineItem) {
+        await tx.invoiceLineItem.update({
+          where: { id: currEnrollment.invoiceLineItem.id },
+          data: {
+            enrollmentId: newEnrollment.id,
+          },
+        });
+      }
 
       // Create audit log for transfer
       await tx.auditLog.create({
@@ -288,6 +348,41 @@ export class EnrollmentsService {
         skipsCreated: skippedDates.length,
       };
     });
+  }
+
+  async updateReportCardStatus(
+    enrollmentId: string,
+    status: string,
+    user: any
+  ) {
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+    if (!staffUser) return;
+
+    const curr = await this.prisma.enrollment.findUnique({
+      where: { id: enrollmentId },
+    });
+    if (!curr) throw new NotFoundException("Enrollment not found");
+
+    const updated = await this.prisma.enrollment.update({
+      where: { id: enrollmentId },
+      data: { reportCardStatus: status },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        staffId: staffUser.id,
+        action: "Update Report Card Status",
+        entityType: "Enrollment",
+        entityId: enrollmentId,
+        changes: {
+          status: { from: curr.reportCardStatus, to: status },
+        },
+      },
+    });
+
+    return { success: true, status };
   }
 
   async deleteEnrollment(id: string, user: any) {

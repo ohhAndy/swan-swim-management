@@ -25,6 +25,7 @@ import {
   PRESCHOOL_LEVELS,
   SWIMMER_LEVELS,
   SWIMTEAM_LEVELS,
+  PARENT_TOT_LEVELS,
 } from "@/lib/constants/levels";
 
 export default function NewStudentForm() {
@@ -131,6 +132,16 @@ export default function NewStudentForm() {
               <SelectValue placeholder="Select swimming level" />
             </SelectTrigger>
             <SelectContent className="max-h-64 overflow-y-auto">
+              <SelectGroup>
+                <SelectLabel className="font-light text-gray-500 text-xs">
+                  Parent and Tot
+                </SelectLabel>
+                {PARENT_TOT_LEVELS.map((levelOption) => (
+                  <SelectItem key={levelOption} value={levelOption}>
+                    {levelOption}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
               <SelectGroup>
                 <SelectLabel className="font-light text-gray-500 text-xs">
                   Preschool

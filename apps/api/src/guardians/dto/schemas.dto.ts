@@ -9,6 +9,7 @@ export const createGuardianSchema = z.object({
   phone: z.string().regex(phoneRegex, "Invalid phone number"),
 
   notes: z.string().max(1000).optional(),
+  waiverSigned: z.boolean().default(false),
 });
 
 export type CreateGuardianDto = z.infer<typeof createGuardianSchema>;
@@ -20,5 +21,6 @@ export const searchGuardianSchema = z.object({
   query: z.string().optional(),
   page: z.coerce.number().min(1).default(1),
   pageSize: z.coerce.number().min(1).max(100).default(20),
+  waiverStatus: z.enum(["signed", "pending"]).optional(),
 });
 export type SearchGuardianDto = z.infer<typeof searchGuardianSchema>;

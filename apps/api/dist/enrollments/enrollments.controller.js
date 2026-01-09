@@ -38,6 +38,9 @@ let EnrollmentsController = class EnrollmentsController {
     async updateRemarks(id, body, user) {
         return this.enrollmentsService.updateRemarks(id, body, user);
     }
+    async updateReportCardStatus(id, body, user) {
+        return this.enrollmentsService.updateReportCardStatus(id, body.status, user);
+    }
     async deleteEnrollment(id, user) {
         return this.enrollmentsService.deleteEnrollment(id, user);
     }
@@ -79,6 +82,16 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], EnrollmentsController.prototype, "updateRemarks", null);
+__decorate([
+    (0, common_1.Put)(":id/report-card-status"),
+    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], EnrollmentsController.prototype, "updateReportCardStatus", null);
 __decorate([
     (0, common_1.Delete)(":id"),
     (0, roles_decorator_1.Roles)("admin", "manager"),

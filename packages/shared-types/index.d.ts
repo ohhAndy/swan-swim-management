@@ -9,6 +9,7 @@ export type TrialStatus =
 export type AttendanceMark = {
   id: string;
   status: AttendanceStatus;
+  notes?: string | null;
 };
 
 export type RosterRow = {
@@ -25,6 +26,8 @@ export type RosterRow = {
   notes: string | null;
   attendance: AttendanceMark | null;
   skippedSessionIds: string[];
+  reportCardStatus: string | null;
+  nextTermStatus: "not_registered" | "enrolled" | "paid";
 };
 
 export type Term = {

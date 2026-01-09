@@ -9,10 +9,12 @@ exports.createGuardianSchema = zod_1.z.object({
     email: zod_1.z.email(),
     phone: zod_1.z.string().regex(phoneRegex, "Invalid phone number"),
     notes: zod_1.z.string().max(1000).optional(),
+    waiverSigned: zod_1.z.boolean().default(false),
 });
 exports.updateGuardianSchema = exports.createGuardianSchema.partial();
 exports.searchGuardianSchema = zod_1.z.object({
     query: zod_1.z.string().optional(),
     page: zod_1.z.coerce.number().min(1).default(1),
     pageSize: zod_1.z.coerce.number().min(1).max(100).default(20),
+    waiverStatus: zod_1.z.enum(["signed", "pending"]).optional(),
 });

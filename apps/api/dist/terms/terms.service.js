@@ -61,15 +61,43 @@ let TermsService = class TermsService {
         }
         return candidate;
     }
-    async createTermWithSchedule(input, user) {
+    async createTermWithSchedule(input, user, locationId) {
         const { name, slug, startDate, endDate, weeks = 8, templates } = input;
         const start = new Date(startDate);
         const end = new Date(endDate);
         const staffUser = await this.prisma.staffUser.findUnique({
             where: { authId: user.authId },
+            include: { accessibleLocations: true },
         });
         if (!staffUser)
             return;
+        // Validate Location Access
+        let assignedLocationId = null;
+        if (staffUser.role === "admin") {
+            assignedLocationId = locationId ?? null;
+            // Admin can create global terms (null) or specific location terms
+            // If locationId provided, generic check not needed as Admin has all access
+        }
+        else {
+            // Non-admins must provide locationId if not global? Or assume their only location?
+            // Usually terms are location specific.
+            if (!locationId) {
+                // Try to infer? Or default to checking accessibleLocations[0]?
+                if (staffUser.accessibleLocations.length === 1) {
+                    assignedLocationId = staffUser.accessibleLocations[0].id;
+                }
+                else {
+                    throw new common_1.BadRequestException("Location ID required for term creation");
+                }
+            }
+            else {
+                const hasAccess = staffUser.accessibleLocations.some((l) => l.id === locationId);
+                if (!hasAccess) {
+                    throw new common_1.ForbiddenException("You do not have access to this location");
+                }
+                assignedLocationId = locationId;
+            }
+        }
         const term = await this.prisma.$transaction(async (tx) => {
             const finalSlug = slug ?? (await this.isUniqueSlug(this.slugify(name)));
             //Create term
@@ -80,6 +108,7 @@ let TermsService = class TermsService {
                     startDate: start,
                     endDate: end,
                     createdBy: staffUser?.id ?? null,
+                    locationId: assignedLocationId,
                 },
             });
             const audit = await tx.auditLog.create({
@@ -130,8 +159,10 @@ let TermsService = class TermsService {
         }, { maxWait: 10000, timeout: 20000 });
         return term.id;
     }
-    async getAllTerms() {
+    async getAllTerms(locationId) {
+        const where = locationId ? { locationId } : {};
         const terms = await this.prisma.term.findMany({
+            where,
             select: {
                 id: true,
                 name: true,
@@ -181,7 +212,7 @@ let TermsService = class TermsService {
         const [term, offerings] = await Promise.all([
             this.prisma.term.findUnique({
                 where: { id: termId },
-                select: { id: true, name: true },
+                select: { id: true, name: true, startDate: true },
             }),
             this.prisma.classOffering.findMany({
                 where: { weekday, startTime, endTime, termId },
@@ -267,6 +298,7 @@ let TermsService = class TermsService {
                 studentId: true,
                 notes: true,
                 classRatio: true,
+                reportCardStatus: true,
                 invoiceLineItem: {
                     select: {
                         invoice: {
@@ -302,7 +334,7 @@ let TermsService = class TermsService {
         const enrollmentIds = enrollments.map((e) => e.id);
         // Step 4: Fetch all remaining data IN PARALLEL
         console.time("[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)");
-        const [attendanceRecords, skipRecords, makeUpBookings, trialBookings, skipCounts, excusedCounts, makeupCounts, trialCounts,] = await Promise.all([
+        const [attendanceRecords, skipRecords, makeUpBookings, trialBookings, nextTerm,] = await Promise.all([
             // Query: Get attendance records
             this.prisma.attendance.findMany({
                 where: {
@@ -314,6 +346,7 @@ let TermsService = class TermsService {
                     enrollmentId: true,
                     classSessionId: true,
                     status: true,
+                    notes: true,
                 },
             }),
             // Query: Get enrollment skips
@@ -358,97 +391,91 @@ let TermsService = class TermsService {
                     notes: true,
                 },
             }),
-            // Query: Get skip counts per session
-            this.prisma.enrollmentSkip.groupBy({
-                by: ["classSessionId"],
-                where: { classSessionId: { in: sessionIds } },
-                _count: { _all: true },
-            }),
-            // Query: Get excused counts per session
-            this.prisma.attendance.groupBy({
-                by: ["classSessionId"],
-                where: { classSessionId: { in: sessionIds }, status: "excused" },
-                _count: { _all: true },
-            }),
-            // Query: Get makeup counts per session
-            this.prisma.makeUpBooking.groupBy({
-                by: ["classSessionId"],
-                where: { classSessionId: { in: sessionIds } },
-                _count: { _all: true },
-            }),
-            // Query: Get trial counts per session (for capacity)
-            this.prisma.trialBooking.groupBy({
-                by: ["classSessionId"],
-                where: {
-                    classSessionId: { in: sessionIds },
-                    status: { in: ["scheduled", "attended"] },
-                },
-                _count: { _all: true },
+            // Query: Next Term (for calculating status)
+            this.prisma.term.findFirst({
+                where: { startDate: { gt: term.startDate } },
+                orderBy: { startDate: "asc" },
+                select: { id: true },
             }),
         ]);
         console.timeEnd("[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)");
+        // Fetch Next Term Enrollments (Sequential as it depends on nextTerm)
+        const nextTermEnrollments = nextTerm
+            ? await this.prisma.enrollment.findMany({
+                where: {
+                    offering: { termId: nextTerm.id },
+                    studentId: { in: enrollmentIds },
+                    status: "active",
+                },
+                select: {
+                    studentId: true,
+                    invoiceLineItem: {
+                        select: {
+                            invoice: { select: { status: true } },
+                        },
+                    },
+                },
+            })
+            : [];
         // Build maps
         console.time("[Schedule] 5. Build Maps + Response");
-        // Build attendance map
+        // Build attendance map and excused count map
         const attendanceMap = new Map();
+        const excusedMap = new Map();
         for (const a of attendanceRecords) {
             if (!attendanceMap.has(a.enrollmentId)) {
                 attendanceMap.set(a.enrollmentId, new Map());
             }
             attendanceMap.get(a.enrollmentId).set(a.classSessionId, a);
+            if (a.status === "excused") {
+                excusedMap.set(a.classSessionId, (excusedMap.get(a.classSessionId) || 0) + 1);
+            }
         }
-        // Build skip map
+        // Build skip map and skip count map
         const skipMap = new Map();
+        const skipCountMap = new Map();
         for (const skip of skipRecords) {
             if (!skipMap.has(skip.enrollmentId)) {
                 skipMap.set(skip.enrollmentId, new Set());
             }
             skipMap.get(skip.enrollmentId).add(skip.classSessionId);
+            skipCountMap.set(skip.classSessionId, (skipCountMap.get(skip.classSessionId) || 0) + 1);
         }
-        // Build makeup map
+        // Build makeup map and count map
         const makeUpsBySession = new Map();
+        const makeupCountMap = new Map();
         for (const m of makeUpBookings) {
             const arr = makeUpsBySession.get(m.classSessionId) ?? [];
             arr.push(m);
             makeUpsBySession.set(m.classSessionId, arr);
+            makeupCountMap.set(m.classSessionId, (makeupCountMap.get(m.classSessionId) || 0) + 1);
         }
-        // Build trial map
+        // Build trial map and count map
         const trialsBySession = new Map();
+        const trialCountMap = new Map();
         for (const t of trialBookings) {
             const arr = trialsBySession.get(t.classSessionId) ?? [];
             arr.push(t);
             trialsBySession.set(t.classSessionId, arr);
+            if (t.status === "scheduled" || t.status === "attended") {
+                trialCountMap.set(t.classSessionId, (trialCountMap.get(t.classSessionId) || 0) + 1);
+            }
         }
-        // Build count maps
-        const skipCountMap = new Map(skipCounts.map((x) => [x.classSessionId, x._count._all]));
-        const excusedMap = new Map(excusedCounts.map((x) => [x.classSessionId, x._count._all]));
-        const makeupCountMap = new Map(makeupCounts.map((x) => [x.classSessionId, x._count._all]));
-        const trialCountMap = new Map(trialCounts.map((x) => [x.classSessionId, x._count._all]));
         // Build response
         const days = Array.from(sessionsByDate.entries())
             .sort()
             .map(([date, sessionList]) => {
             const rosters = sessionList.map((s) => {
                 const offeringEnrollments = enrollmentsByOffering.get(s.offeringId) ?? [];
-                // OLD Count Logic (replaced by capacity.utils)
-                // const regulars = offeringEnrollments.length;
-                // const skips = skipCountMap.get(s.id) ?? 0;
-                // const makeups = makeupCountMap.get(s.id) ?? 0;
-                // const trials = trialCountMap.get(s.id) ?? 0;
-                // const excused = excusedMap.get(s.id) ?? 0;
-                // const capacity = capacityMap.get(s.offeringId) ?? 0;
-                // const filled = Math.max(0, regulars - skips - excused) + makeups + trials;
-                // const openSeats = Math.max(0, capacity - filled);
-                // NEW LOGIC
                 const instructorCount = s.offering.instructors.length;
                 const capacity = capacityMap.get(s.offeringId) ?? 0;
-                const skips = skipCountMap.get(s.id) ?? 0;
-                const excused = excusedMap.get(s.id) ?? 0;
-                // Calculate usage for ACTIVE students (regulars - skips - excused)
-                // We need to filter enrollments to exclude skips/excused or just subtract counts?
-                // Since weights vary (1:1=3, 3:1=1), we can't just subtract "skips" count if skips are unweighted.
                 // Correct approach: Sum weights of PRESENT students.
                 // PRESENT = All Active Enrollments MINUS Skipped/Excused Enrollments.
+                // Map for next term enrollments for quick lookup
+                const nextTermEnrollmentMap = new Map();
+                for (const nte of nextTermEnrollments) {
+                    nextTermEnrollmentMap.set(nte.studentId, nte);
+                }
                 let regularWeighted = 0;
                 for (const enr of offeringEnrollments) {
                     const isSkipped = skipMap.get(enr.id)?.has(s.id);
@@ -459,15 +486,8 @@ let TermsService = class TermsService {
                             ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
                     }
                 }
-                // Add Makeups/Trials (Assume standard weight 1.0 for now, or check if they have ratios?)
-                // Makeups usually replace a spot. Trials replace a spot.
-                // Assuming m/t = 1.0 weight unless schema allows specifying ratio for them (it doesn't clearly).
-                // User said "1:1 takes up 3". If `MakeUp` has a student, that student has a level...
-                // But `MakeUp` logic is complex. For now, let's treat Makeups/Trials as 1.0 unless we query their student level.
-                // Wait, `makeUpsBySession` includes student info.
-                // `trialsBySession` includes child info.
                 const makeups = makeupCountMap.get(s.id) ?? 0; // Count only?
-                const trials = trialCountMap.get(s.id) ?? 0; // Count only?
+                const trials = trialCountMap.get(s.id) ?? 0;
                 // Let's refine Makeups/Trials if possible, but for MVP of this refactor, simple count + weighted regulars is a huge step.
                 // However, if a 1:1 student is doing a makeup, they should take 3 slots.
                 // The `makeUpBookings` query selected student level.
@@ -533,6 +553,15 @@ let TermsService = class TermsService {
                             ? e.invoiceLineItem.invoice.invoiceNumber
                             : null,
                         classRatio: e.classRatio,
+                        reportCardStatus: e.reportCardStatus,
+                        nextTermStatus: (() => {
+                            const nextEnr = nextTermEnrollments.find((ne) => ne.studentId === e.student.id);
+                            if (!nextEnr)
+                                return "not_registered";
+                            return nextEnr.invoiceLineItem?.invoice.status === "paid"
+                                ? "paid"
+                                : "enrolled";
+                        })(),
                         studentId: e.student.id,
                         studentName: `${e.student.firstName} ${e.student.lastName}`,
                         shortCode: e.student.shortCode,
@@ -544,6 +573,7 @@ let TermsService = class TermsService {
                             ? {
                                 id: attendance.id,
                                 status: attendance.status,
+                                notes: attendance.notes,
                             }
                             : null,
                     };
@@ -591,7 +621,7 @@ let TermsService = class TermsService {
         const [term, offerings] = await Promise.all([
             this.prisma.term.findUnique({
                 where: { id: termId },
-                select: { id: true, name: true },
+                select: { id: true, name: true, startDate: true },
             }),
             this.prisma.classOffering.findMany({
                 where: { termId, weekday: dow },
@@ -617,6 +647,12 @@ let TermsService = class TermsService {
         ]);
         if (!term)
             throw new common_1.NotFoundException("Term not found");
+        // Find chronologically next term
+        const nextTerm = await this.prisma.term.findFirst({
+            where: { startDate: { gt: term.startDate } },
+            orderBy: { startDate: "asc" },
+            select: { id: true },
+        });
         if (offerings.length === 0)
             return { date: dateString, classes: [] };
         const offeringIds = offerings.map((o) => o.id);
@@ -649,6 +685,7 @@ let TermsService = class TermsService {
                 offeringId: true,
                 studentId: true,
                 classRatio: true,
+                reportCardStatus: true,
                 notes: true,
                 student: {
                     select: {
@@ -670,7 +707,7 @@ let TermsService = class TermsService {
             enrollmentsByOffering.set(e.offeringId, arr);
         }
         // Dynamic Data
-        const [attendance, makeups, trials, skips] = await Promise.all([
+        const [attendance, makeups, trials, skips, nextTermEnrollments] = await Promise.all([
             this.prisma.attendance.findMany({
                 where: {
                     classSessionId: { in: sessionIds },
@@ -714,6 +751,23 @@ let TermsService = class TermsService {
                 },
                 select: { enrollmentId: true },
             }),
+            nextTerm
+                ? this.prisma.enrollment.findMany({
+                    where: {
+                        studentId: { in: enrollmentIds.filter((id) => id) }, // Filter nulls just in case, though enrollmentIds are from active enrollments (has studentId)
+                        offering: { termId: nextTerm.id },
+                        status: "active",
+                    },
+                    select: {
+                        studentId: true,
+                        invoiceLineItem: {
+                            select: {
+                                invoice: { select: { status: true } },
+                            },
+                        },
+                    },
+                })
+                : Promise.resolve([]),
         ]);
         console.timeEnd("[DailySchedule] Fetch Data");
         const attendanceMap = new Map(attendance.map((a) => [a.enrollmentId, a]));
@@ -729,6 +783,13 @@ let TermsService = class TermsService {
             const arr = trialsBySession.get(t.classSessionId) ?? [];
             arr.push(t);
             trialsBySession.set(t.classSessionId, arr);
+        }
+        const nextTermMap = new Map(); // studentId -> status
+        for (const ne of nextTermEnrollments) {
+            if (!ne.studentId)
+                continue;
+            const paid = ne.invoiceLineItem?.invoice?.status === "paid";
+            nextTermMap.set(ne.studentId, paid ? "paid" : "enrolled");
         }
         // Transform Data
         const classes = offerings
@@ -777,6 +838,8 @@ let TermsService = class TermsService {
                         ratio: e.classRatio,
                         notes: e.notes,
                         isSkipped,
+                        reportCardStatus: e.reportCardStatus,
+                        nextTermStatus: nextTermMap.get(e.studentId) ?? "not_registered",
                     };
                 }),
                 ...sessionMakeups.map((m) => ({
@@ -792,6 +855,8 @@ let TermsService = class TermsService {
                     ratio: "3:1",
                     notes: "Makeup",
                     isSkipped: false,
+                    reportCardStatus: null,
+                    nextTermStatus: "not_registered",
                 })),
                 ...sessionTrials.map((t) => ({
                     id: t.id, // Trial ID for updates
@@ -804,6 +869,8 @@ let TermsService = class TermsService {
                     ratio: "3:1",
                     notes: t.notes ?? "Trial",
                     isSkipped: false,
+                    reportCardStatus: null,
+                    nextTermStatus: "not_registered",
                 })),
             ].sort((a, b) => a.name.localeCompare(b.name));
             return {

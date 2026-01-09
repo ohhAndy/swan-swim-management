@@ -20,16 +20,17 @@ const supabase_auth_guard_1 = require("../auth/supabase-auth.guard");
 const roles_guard_1 = require("../auth/roles.guard");
 const roles_decorator_1 = require("../auth/roles.decorator");
 const current_user_decorator_1 = require("../auth/current-user.decorator");
+const current_location_decorator_1 = require("../auth/current-location.decorator");
 let TermsController = class TermsController {
     constructor(termsService) {
         this.termsService = termsService;
     }
-    async create(body, user) {
+    async create(body, user, locationId) {
         const input = create_term_dto_1.CreateTermSchema.parse(body);
-        return await this.termsService.createTermWithSchedule(input, user);
+        return await this.termsService.createTermWithSchedule(input, user, locationId);
     }
-    async getAllTerms() {
-        return this.termsService.getAllTerms();
+    async getAllTerms(locationId) {
+        return this.termsService.getAllTerms(locationId);
     }
     async getTermTitle(termId) {
         return this.termsService.getTermTitle(termId);
@@ -56,14 +57,16 @@ __decorate([
     (0, roles_decorator_1.Roles)("admin"),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __param(2, (0, current_location_decorator_1.CurrentLocationId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, Object, String]),
     __metadata("design:returntype", Promise)
 ], TermsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)("all"),
+    __param(0, (0, current_location_decorator_1.CurrentLocationId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], TermsController.prototype, "getAllTerms", null);
 __decorate([

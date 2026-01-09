@@ -9,8 +9,11 @@ export type Row = {
   code: string | null;
   level: string | null;
   marks: Record<string, string>;
+  markMeta: Record<string, { notes: string | null }>;
   skippedSessionIds: string[];
   enrollmentId: string;
   birthdate: string | null;
   remarks: string | null;
+  reportCardStatus: string | null;
+  nextTermStatus: "not_registered" | "enrolled" | "paid";
 };

@@ -1,5 +1,6 @@
 import type { SlotPage, Term } from "@school/shared-types";
 import { createServerSupabaseClient } from "../supabase/server";
+import { cookies } from "next/headers";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
 
@@ -9,10 +10,18 @@ async function getAuthHeaders() {
     data: { session },
   } = await supabase.auth.getSession();
 
-  return {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${session?.access_token}`,
   };
+
+  const cookieStore = await cookies();
+  const locationId = cookieStore.get("swan_location_id")?.value;
+  if (locationId) {
+    headers["x-location-id"] = locationId;
+  }
+
+  return headers;
 }
 
 export async function getSlotPage(

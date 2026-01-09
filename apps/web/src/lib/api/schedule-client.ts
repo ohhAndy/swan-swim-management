@@ -1,19 +1,7 @@
 import type { SlotPage, Term } from "@school/shared-types";
-import { createClient } from "../supabase/client";
+import { getHeaders } from "./headers";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
-
-async function getAuthHeaders() {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${session?.access_token}`,
-  };
-}
 
 export async function getSlotPage(
   termId: string,
@@ -21,7 +9,7 @@ export async function getSlotPage(
   start: string,
   end: string
 ): Promise<SlotPage> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(
     `${API}/terms/${termId}/schedule/weekday/${weekday}/slot/${start}/${end}`,
     { cache: "no-store", headers }
@@ -36,7 +24,7 @@ export async function getTimeSlotsByWeekday(
   termId: string,
   weekday: number
 ): Promise<string[]> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(
     `${API}/terms/${termId}/schedule/weekday/${weekday}/slots`,
     { cache: "no-store", headers }
@@ -48,7 +36,7 @@ export async function getTimeSlotsByWeekday(
 }
 
 export async function getTermTitle(termId: string): Promise<string> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/terms/${termId}`, {
     cache: "no-store",
     headers,
@@ -60,7 +48,7 @@ export async function getTermTitle(termId: string): Promise<string> {
 }
 
 export async function getAllTerms(): Promise<Term[]> {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/terms/all`, { cache: "no-store", headers });
   if (!res.ok) {
     throw new Error("Failed to fetch slot page");
@@ -73,7 +61,7 @@ export async function scheduleMakeUp(payload: {
   classSessionId: string;
   note?: string;
 }) {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/makeups`, {
     method: "POST",
     headers,
@@ -89,7 +77,7 @@ export async function enrollStudentWithSkips(payload: {
   skippedDates: string[];
   classRatio: string;
 }) {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/enrollments/with-skip`, {
     method: "POST",
     headers,
@@ -112,7 +100,7 @@ export async function transferEnrollment(
     transferNotes?: string;
   }
 ) {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/enrollments/${enrollmentId}/transfer`, {
     method: "POST",
     headers,
@@ -142,7 +130,7 @@ export async function getAvailableClassesForTransfer(
   if (level) {
     params.set("level", level);
   }
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(
     `${API}/offerings/available-for-transfer?${params.toString()}`,
     {
@@ -159,7 +147,7 @@ export async function getAvailableClassesForTransfer(
 }
 
 export async function updateOfferingInfo(offeringId: string, title: string) {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/offerings/${offeringId}`, {
     method: "PATCH",
     headers,
@@ -184,7 +172,7 @@ export async function createOffering(payload: {
   duration?: number;
   notes?: string;
 }) {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/offerings`, {
     method: "POST",
     headers,
@@ -200,7 +188,7 @@ export async function createOffering(payload: {
 }
 
 export async function deleteOffering(offeringId: string) {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/offerings/${offeringId}`, {
     method: "DELETE",
     headers,
@@ -245,7 +233,7 @@ export async function getTermAvailability(
   const params = new URLSearchParams();
   if (level) params.set("level", level);
 
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(
     `${API}/terms/${termId}/availability?${params.toString()}`,
     {
@@ -261,7 +249,7 @@ export async function getTermAvailability(
   return res.json();
 }
 export async function deleteEnrollment(enrollmentId: string) {
-  const headers = await getAuthHeaders();
+  const headers = await getHeaders();
   const res = await fetch(`${API}/enrollments/${enrollmentId}`, {
     method: "DELETE",
     headers,
