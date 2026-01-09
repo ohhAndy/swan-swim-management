@@ -176,7 +176,7 @@ export function AssignInstructorDialog({
                 <SelectTrigger id="instructor-select">
                   <SelectValue placeholder="Select an instructor" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[300px]">
                   {filteredInstructors.length === 0 ? (
                     <div className="p-2 text-sm text-muted-foreground">
                       No available instructors
