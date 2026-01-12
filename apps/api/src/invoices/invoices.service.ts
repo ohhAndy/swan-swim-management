@@ -184,16 +184,36 @@ export class InvoicesService {
 
     const where: Prisma.InvoiceWhereInput = {};
 
-    if (validatedLocationId) {
+    const includeAllLocations = query.includeAllLocations === "true";
+
+    if (validatedLocationId && !includeAllLocations) {
       where.locationId = validatedLocationId;
+    } else if (includeAllLocations && staffUser.role !== "admin") {
+      const accessibleLocationIds = staffUser.accessibleLocations.map(
+        (l: any) => l.id
+      );
+      where.locationId = { in: accessibleLocationIds };
     }
 
     // Search by invoice number
+    // Search by invoice number or guardian name
     if (query.search) {
-      where.invoiceNumber = {
-        contains: query.search,
-        mode: "insensitive",
-      };
+      where.OR = [
+        {
+          invoiceNumber: {
+            contains: query.search,
+            mode: "insensitive",
+          },
+        },
+        {
+          guardian: {
+            fullName: {
+              contains: query.search,
+              mode: "insensitive",
+            },
+          },
+        },
+      ];
     }
 
     // Filter by status
@@ -384,7 +404,11 @@ export class InvoicesService {
       };
     }
 
-    if (validatedLocationId) {
+    const includeAllLocations = query.includeAllLocations === "true";
+
+    // Only filter by specific location if NOT including all, or if strictly required by validation
+    // We still run validation to ensure the user isn't spoofing the header if provided
+    if (validatedLocationId && !includeAllLocations) {
       if (where.offering) {
         where.offering = {
           AND: [where.offering, { term: { locationId: validatedLocationId } }],
@@ -393,6 +417,23 @@ export class InvoicesService {
         where.offering = {
           term: { locationId: validatedLocationId },
         };
+      }
+    } else if (includeAllLocations && staffUser.role !== "admin") {
+      // If including all locations but user is NOT admin, restrict to accessible locations
+      const accessibleLocationIds = staffUser.accessibleLocations.map(
+        (l: any) => l.id
+      );
+
+      const locationFilter = {
+        term: { locationId: { in: accessibleLocationIds } },
+      };
+
+      if (where.offering) {
+        where.offering = {
+          AND: [where.offering, locationFilter],
+        };
+      } else {
+        where.offering = locationFilter;
       }
     }
 
@@ -410,7 +451,11 @@ export class InvoicesService {
           },
           offering: {
             include: {
-              term: true,
+              term: {
+                include: {
+                  location: true,
+                },
+              },
             },
           },
           enrollmentSkips: true,

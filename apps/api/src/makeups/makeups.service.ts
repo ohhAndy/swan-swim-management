@@ -1,10 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
-import {
-  countUsedSeatsForSession,
-  hasTimeConflict,
-} from "../sessions/sessions.helpers";
+import { countUsedSeatsForSession } from "../sessions/sessions.helpers";
 
 @Injectable()
 export class MakeupsService {
@@ -48,10 +45,6 @@ export class MakeupsService {
         select: { id: true },
       });
       if (dup) throw new BadRequestException("Already booked a makeup here!");
-
-      if (await hasTimeConflict(tx, studentId, session.date)) {
-        throw new BadRequestException("Has Time Conflict!");
-      }
 
       const { filled, effectiveCapacity } = await countUsedSeatsForSession(
         tx,

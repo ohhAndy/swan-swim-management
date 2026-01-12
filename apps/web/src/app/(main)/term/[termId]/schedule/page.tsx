@@ -38,9 +38,7 @@ export default async function TimeSlotsPage({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-row items-center justify-between">
-        <h1 className="text-xl font-bold text-[#1c82c5]">
-          {termTitle} Classes
-        </h1>
+        <h1 className="text-xl font-bold text-[#1c82c5]">{termTitle}</h1>
         <div className="flex gap-4 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-yellow-600" />

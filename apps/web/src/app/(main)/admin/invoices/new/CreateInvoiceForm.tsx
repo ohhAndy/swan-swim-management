@@ -40,6 +40,9 @@ interface UnInvoicedEnrollment {
     startTime: string;
     term: {
       name: string;
+      location?: {
+        name: string;
+      };
     };
   };
   enrollmentSkips: {
@@ -116,6 +119,7 @@ export default function CreateInvoiceForm() {
       const result = await getUnInvoicedEnrollments({
         guardianId: selectedGuardian.id,
         limit: 100,
+        includeAllLocations: true,
       });
       setEnrollments(result.data || []);
     } catch (error) {
@@ -198,9 +202,11 @@ export default function CreateInvoiceForm() {
             enrollment.student.lastName
           } - ${DAY_LABELS[enrollment.offering.weekday]} ${
             enrollment.offering.startTime
-          } ${enrollment.student.level} - ${enrollment.offering.term.name} (${
-            enrollment.classRatio
-          })`;
+          } ${enrollment.student.level} - ${enrollment.offering.term.name}${
+            enrollment.offering.term.location?.name
+              ? ` (${enrollment.offering.term.location.name})`
+              : ""
+          } (${enrollment.classRatio})`;
           lineItems.push({
             enrollmentId: enrollment.id,
             description: desc,
@@ -368,6 +374,8 @@ export default function CreateInvoiceForm() {
                             {enrollment.offering.startTime} -{" "}
                             {enrollment.student.level} -{" "}
                             {enrollment.offering.term.name}
+                            {enrollment.offering.term.location?.name &&
+                              ` (${enrollment.offering.term.location.name})`}
                           </div>
                           <div className="text-sm">
                             {enrollment.classRatio} •{" "}

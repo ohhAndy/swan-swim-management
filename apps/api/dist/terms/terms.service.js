@@ -175,9 +175,14 @@ let TermsService = class TermsService {
     async getTermTitle(termId) {
         const term = await this.prisma.term.findUnique({
             where: { id: termId },
-            select: { name: true },
+            select: {
+                name: true,
+                location: { select: { name: true } },
+            },
         });
-        return term?.name ?? null;
+        if (!term)
+            return null;
+        return term.location ? `${term.name} (${term.location.name})` : term.name;
     }
     async getDefaultSlots(termId) {
         // run 7 findFirst queries in parallel (Sun..Sat)
@@ -212,7 +217,7 @@ let TermsService = class TermsService {
         const [term, offerings] = await Promise.all([
             this.prisma.term.findUnique({
                 where: { id: termId },
-                select: { id: true, name: true, startDate: true },
+                select: { id: true, name: true, startDate: true, locationId: true },
             }),
             this.prisma.classOffering.findMany({
                 where: { weekday, startTime, endTime, termId },
@@ -397,20 +402,53 @@ let TermsService = class TermsService {
                     notes: true,
                 },
             }),
-            // Query: Next Term (for calculating status)
-            this.prisma.term.findFirst({
-                where: { startDate: { gt: term.startDate } },
-                orderBy: { startDate: "asc" },
-                select: { id: true },
-            }),
+            // Query: Next Term IDs
+            (async () => {
+                const queryTermId = term.id;
+                const currentTerm = await this.prisma.term.findUnique({
+                    where: { id: queryTermId },
+                    select: { startDate: true, locationId: true },
+                });
+                if (!currentTerm)
+                    return [];
+                // Find all future terms (Local OR Global)
+                const futureTerms = await this.prisma.term.findMany({
+                    where: {
+                        startDate: { gt: currentTerm.startDate },
+                        OR: [
+                            { locationId: currentTerm.locationId },
+                            { locationId: null }, // Include global terms
+                        ],
+                    },
+                    orderBy: { startDate: "asc" },
+                    select: { id: true, startDate: true },
+                });
+                if (futureTerms.length === 0)
+                    return [];
+                // Group by Date (YYYY-MM-DD) to handle time variances or exact matches
+                const firstDateStr = futureTerms[0].startDate
+                    .toISOString()
+                    .slice(0, 10);
+                // Filter terms that start on the same day as the first future term
+                const nextTermIds = futureTerms
+                    .filter((t) => t.startDate.toISOString().slice(0, 10) === firstDateStr)
+                    .map((t) => t.id);
+                return nextTermIds.map((id) => ({ id })); // return consistent structure
+            })(),
         ]);
         console.timeEnd("[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)");
-        // Fetch Next Term Enrollments (Sequential as it depends on nextTerm)
-        const nextTermEnrollments = nextTerm
+        // Fetch Next Term Enrollments
+        // nextTerm is now an array of { id: string }
+        // We already destructured the result of the async IIFE above
+        const nextTermIds = nextTerm.map((t) => t.id);
+        const studentIds = enrollments
+            .map((e) => e.studentId)
+            .filter((id) => !!id);
+        const nextTermEnrollments = nextTermIds.length > 0
             ? await this.prisma.enrollment.findMany({
                 where: {
-                    offering: { termId: nextTerm.id },
-                    studentId: { in: enrollmentIds },
+                    offering: { termId: { in: nextTermIds } },
+                    studentId: { in: studentIds },
                     status: "active",
                 },
                 select: {
@@ -629,7 +667,7 @@ let TermsService = class TermsService {
         const [term, offerings] = await Promise.all([
             this.prisma.term.findUnique({
                 where: { id: termId },
-                select: { id: true, name: true, startDate: true },
+                select: { id: true, name: true, startDate: true, locationId: true },
             }),
             this.prisma.classOffering.findMany({
                 where: { termId, weekday: dow },
@@ -654,14 +692,22 @@ let TermsService = class TermsService {
                 orderBy: { startTime: "asc" },
             }),
         ]);
-        if (!term)
-            throw new common_1.NotFoundException("Term not found");
-        // Find chronologically next term
-        const nextTerm = await this.prisma.term.findFirst({
-            where: { startDate: { gt: term.startDate } },
+        // Find chronologically next term(s)
+        const futureTerms = await this.prisma.term.findMany({
+            where: {
+                startDate: { gt: term.startDate },
+                OR: [{ locationId: term.locationId }, { locationId: null }],
+            },
             orderBy: { startDate: "asc" },
-            select: { id: true },
+            select: { id: true, startDate: true },
         });
+        let nextTerms = [];
+        if (futureTerms.length > 0) {
+            const firstDateStr = futureTerms[0].startDate.toISOString().slice(0, 10);
+            nextTerms = futureTerms
+                .filter((t) => t.startDate.toISOString().slice(0, 10) === firstDateStr)
+                .map((t) => ({ id: t.id }));
+        }
         if (offerings.length === 0)
             return { date: dateString, classes: [] };
         const offeringIds = offerings.map((o) => o.id);
@@ -760,11 +806,20 @@ let TermsService = class TermsService {
                 },
                 select: { enrollmentId: true },
             }),
-            nextTerm
-                ? this.prisma.enrollment.findMany({
+            (async () => {
+                if (nextTerms.length === 0)
+                    return [];
+                const studentIds = enrollments
+                    .map((e) => e.studentId)
+                    .filter((id) => !!id);
+                console.log("[DEBUG] getDailySchedule NextTerms:", nextTerms);
+                console.log("[DEBUG] Checking enrollments for studentIds:", studentIds);
+                if (studentIds.length === 0)
+                    return [];
+                const res = await this.prisma.enrollment.findMany({
                     where: {
-                        studentId: { in: enrollmentIds.filter((id) => id) }, // Filter nulls just in case, though enrollmentIds are from active enrollments (has studentId)
-                        offering: { termId: nextTerm.id },
+                        studentId: { in: studentIds },
+                        offering: { termId: { in: nextTerms.map((t) => t.id) } },
                         status: "active",
                     },
                     select: {
@@ -775,8 +830,10 @@ let TermsService = class TermsService {
                             },
                         },
                     },
-                })
-                : Promise.resolve([]),
+                });
+                console.log("[DEBUG] Found nextTermEnrollments:", res.length);
+                return res;
+            })(),
         ]);
         console.timeEnd("[DailySchedule] Fetch Data");
         const attendanceMap = new Map(attendance.map((a) => [a.enrollmentId, a]));

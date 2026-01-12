@@ -28,7 +28,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -572,12 +571,18 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                 open={showPaymentDialog}
                 onOpenChange={setShowPaymentDialog}
               >
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Record Payment
-                  </Button>
-                </DialogTrigger>
+                <Button
+                  onClick={() => {
+                    setPaymentAmount(invoice.balance.toString());
+                    setPaymentDate(
+                      new Date(invoice.createdAt).toISOString().split("T")[0]
+                    );
+                    setShowPaymentDialog(true);
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Record Payment
+                </Button>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Record Payment</DialogTitle>

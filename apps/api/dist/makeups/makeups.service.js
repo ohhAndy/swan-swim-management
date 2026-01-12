@@ -49,9 +49,6 @@ let MakeupsService = class MakeupsService {
             });
             if (dup)
                 throw new common_1.BadRequestException("Already booked a makeup here!");
-            if (await (0, sessions_helpers_1.hasTimeConflict)(tx, studentId, session.date)) {
-                throw new common_1.BadRequestException("Has Time Conflict!");
-            }
             const { filled, effectiveCapacity } = await (0, sessions_helpers_1.countUsedSeatsForSession)(tx, session.offeringId, session.date);
             // Check if adding one more (weight 1.0 assumed for makeup) exceeds capacity
             // However, `filled` is float.
