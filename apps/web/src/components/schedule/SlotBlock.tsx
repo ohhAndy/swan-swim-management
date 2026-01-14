@@ -38,6 +38,7 @@ export function SlotBlock({
   isoDates: string[];
   rosters: RosterResponse[];
   user: CurrentUser;
+  gridHeaderTop?: string | number;
 }) {
   const router = useRouter();
   const [isRefreshing, startTransition] = useTransition();
@@ -202,7 +203,7 @@ export function SlotBlock({
   };
 
   return (
-    <div className="relative group break-inside-avoid print:mb-5">
+    <div className="relative z-0 group break-inside-avoid print:mb-5">
       <Card className="print:break-inside-avoid bg-white shadow-sm">
         <CardHeader className="gap-1 py-2">
           <div className="flex flex-col items-center justify-between gap-2">

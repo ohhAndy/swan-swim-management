@@ -190,7 +190,11 @@ export function StudentRow({
           )}
       </div>
       <div className="px-2 py-1 text-center truncate max-w-[150px] bg-white">
-        <Link className="hover:underline" href={`/students/${row.studentId}`}>
+        <Link
+          className="hover:underline"
+          href={`/students/${row.studentId}`}
+          title={row.name}
+        >
           {row.name}
         </Link>
       </div>

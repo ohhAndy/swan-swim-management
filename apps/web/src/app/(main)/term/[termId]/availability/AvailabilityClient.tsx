@@ -42,19 +42,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
   const [loading, setLoading] = useState(true);
   const [termName, setTermName] = useState("");
 
-  const allLevels = [
-    "PS1",
-    "PS2",
-    "PS3",
-    "PS4",
-    "PS5",
-    "SW1",
-    "SW2",
-    "SW3",
-    "SW4",
-    "SW5",
-    "SW6",
-  ];
+  const allLevels = ["PS", "SW", "Adult"];
 
   useEffect(() => {
     getTermTitle(termId).then(setTermName).catch(console.error);

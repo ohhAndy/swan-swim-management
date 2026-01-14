@@ -76,6 +76,7 @@ export default async function SlotPageView({
             isoDates={isoDates}
             rosters={b.rosters}
             user={user}
+            gridHeaderTop="128px"
           />
         ))}
       </div>
