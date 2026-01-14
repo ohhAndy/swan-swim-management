@@ -1,0 +1,46 @@
+name: Keep Alive
+
+on:
+  schedule:
+    # Weekdays (Mon-Fri) 3 PM EST - 9 PM EST
+    # EST is UTC-5.
+    # 3 PM EST = 20:00 UTC
+    # 9 PM EST = 02:00 UTC (Next Day)
+    # Range: 20:00 - 23:00 (Same Day) AND 00:00 - 02:00 (Next Day)
+    # Mon-Fri EST maps to:
+    # 20:00-23:00 UTC on Mon-Fri
+    # 00:00-02:00 UTC on Tue-Sat
+    - cron: '*/15 20-23 * * 1-5'
+    - cron: '*/15 0-2 * * 2-6'
+
+    # Weekends (Sat-Sun) 9 AM EST - 6 PM EST
+    # 9 AM EST = 14:00 UTC
+    # 6 PM EST = 23:00 UTC
+    # Sat-Sun EST maps to Sat-Sun UTC (no day crossover for this range)
+    - cron: '*/15 14-23 * * 6,0'
+  workflow_dispatch:
+
+jobs:
+  keep_alive:
+    name: Ping Health Endpoint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Health Endpoint
+        run: |
+          # Use secret BACKEND_URL if set, otherwise default to user provided or placeholder.
+          # Here we assume the user will set the secret.
+          URL="${{ secrets.BACKEND_URL }}/health"
+          if [ -z "${{ secrets.BACKEND_URL }}" ]; then
+            echo "BACKEND_URL secret is not set. Please set it in repository secrets."
+            exit 1
+          fi
+          
+          echo "Pinging $URL"
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+          
+          if [ "$response" -eq 200 ]; then
+            echo "Health check passed: $response"
+          else
+            echo "Health check failed: $response"
+            exit 1
+          fi

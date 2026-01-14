@@ -21,6 +21,7 @@ import { StatisticsModule } from "./statistics/statistics.module";
 import { ExportsModule } from "./exports/exports.module";
 import { LocationsModule } from "./locations/locations.module";
 import { TasksModule } from "./tasks/tasks.module";
+import { HealthModule } from "./health/health.module";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { SupabaseAuthGuard } from "./auth/supabase-auth.guard";
@@ -58,7 +59,11 @@ import { RolesGuard } from "./auth/roles.guard";
     StatisticsModule,
     ExportsModule,
     LocationsModule,
+    StatisticsModule,
+    ExportsModule,
+    LocationsModule,
     TasksModule,
+    HealthModule,
   ],
   providers: [
     {
