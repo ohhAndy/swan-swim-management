@@ -64,6 +64,7 @@ export type MakeupLite = {
   level: string | null;
   shortCode: string | null;
   status: "requested" | "scheduled" | "attended" | "cancelled" | "missed";
+  birthDate: string | null;
 };
 
 export type TrialLite = {

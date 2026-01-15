@@ -38,6 +38,7 @@ type AvailabilityData = Record<
 export default function AvailabilityClient({ termId }: { termId: string }) {
   const router = useRouter();
   const [level, setLevel] = useState<string>("all");
+  const [weekday, setWeekday] = useState<string>("all");
   const [data, setData] = useState<AvailabilityData | null>(null);
   const [loading, setLoading] = useState(true);
   const [termName, setTermName] = useState("");
@@ -54,7 +55,8 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
       try {
         const res = await getTermAvailability(
           termId,
-          level === "all" ? undefined : level
+          level === "all" ? undefined : level,
+          weekday === "all" ? undefined : Number(weekday)
         );
         setData(res);
       } catch (error) {
@@ -64,9 +66,11 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
       }
     }
     fetch();
-  }, [termId, level]);
+  }, [termId, level, weekday]);
 
   const weekdays = [0, 1, 2, 3, 4, 5, 6]; // Sun-Sat
+
+  const isSingleDay = weekday !== "all";
 
   return (
     <main className="p-4 md:p-6 pb-20 max-w-7xl mx-auto space-y-6">
@@ -83,6 +87,20 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
         </div>
 
         <div className="flex items-center gap-3">
+          <Select value={weekday} onValueChange={setWeekday}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by Day" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Days</SelectItem>
+              {weekdays.map((wd) => (
+                <SelectItem key={wd} value={wd.toString()}>
+                  {FULL_DAY_LABELS[wd]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Select value={level} onValueChange={setLevel}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Level" />
@@ -108,7 +126,13 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
           <p>No available classes found for the selected usage.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div
+          className={
+            isSingleDay
+              ? "space-y-4"
+              : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          }
+        >
           {weekdays.map((wd) => {
             const dayClasses = data[wd];
             if (!dayClasses || dayClasses.length === 0) return null;
@@ -118,7 +142,13 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
                 <h3 className="font-semibold text-lg bg-muted/50 p-2 rounded text-center">
                   {FULL_DAY_LABELS[wd]}
                 </h3>
-                <div className="space-y-3">
+                <div
+                  className={
+                    isSingleDay
+                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                      : "space-y-3"
+                  }
+                >
                   {dayClasses.map((cls) => (
                     <Card key={cls.offeringId} className="overflow-hidden">
                       <CardHeader className="p-3 bg-blue-50/50 pb-2">

@@ -214,7 +214,8 @@ export async function deleteOffering(offeringId: string) {
 
 export async function getTermAvailability(
   termId: string,
-  level?: string
+  level?: string,
+  weekday?: number
 ): Promise<
   Record<
     number,
@@ -232,6 +233,7 @@ export async function getTermAvailability(
 > {
   const params = new URLSearchParams();
   if (level) params.set("level", level);
+  if (weekday !== undefined) params.set("weekday", weekday.toString());
 
   const headers = await getHeaders();
   const res = await fetch(

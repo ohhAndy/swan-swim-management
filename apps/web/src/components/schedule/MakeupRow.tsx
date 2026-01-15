@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { getMakeUpStatusColour } from "@/lib/utils/student-helpers";
+import { getMakeUpStatusColour, calcAge } from "@/lib/utils/student-helpers";
 
 const MAKEUP_OPTIONS = [
   { value: "", label: "Remove Makeup", shortLabel: "" },
@@ -95,6 +95,10 @@ export function MakeupRow({
                   <div className="truncate">
                     {makeUpStudent.level
                       ? LEVEL_MAP.get(makeUpStudent.level)
+                      : ""}{" "}
+                    -{" "}
+                    {makeUpStudent.birthDate
+                      ? calcAge(makeUpStudent.birthDate) + "y"
                       : ""}
                   </div>
                   <div className="font-bold">{statusMark}</div>

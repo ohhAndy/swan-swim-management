@@ -385,6 +385,7 @@ let TermsService = class TermsService {
                             lastName: true,
                             level: true,
                             shortCode: true,
+                            birthdate: true,
                         },
                     },
                 },
@@ -565,6 +566,7 @@ let TermsService = class TermsService {
                     level: m.student.level,
                     shortCode: m.student.shortCode,
                     status: m.status,
+                    birthDate: m.student.birthdate?.toISOString() ?? null,
                 }));
                 const trialsLite = sessionTrials.map((t) => ({
                     id: t.id,
@@ -964,7 +966,7 @@ let TermsService = class TermsService {
             classes: classes,
         };
     }
-    async getTermAvailability(termId, level) {
+    async getTermAvailability(termId, level, weekday) {
         // 1. Fetch all offerings + sessions + enrollments + makeups in bulk
         // This is a heavy query but necessary to compute accurate availability
         const offerings = await this.prisma.classOffering.findMany({
@@ -978,6 +980,7 @@ let TermsService = class TermsService {
                         ],
                     }
                     : {}),
+                ...(weekday !== undefined ? { weekday } : {}),
             },
             include: {
                 instructors: {
@@ -1017,6 +1020,10 @@ let TermsService = class TermsService {
             orderBy: [{ weekday: "asc" }, { startTime: "asc" }],
         });
         // 2. Process in-memory to find open slots
+        // Calculate cutoff date (Yesterday in UTC to be safe for all timezones)
+        const now = new Date();
+        now.setUTCDate(now.getUTCDate() - 1);
+        const cutoffDate = now.toISOString().split("T")[0];
         // Group by Weekday
         const byWeekday = {};
         for (const off of offerings) {
@@ -1028,6 +1035,8 @@ let TermsService = class TermsService {
             const effectiveCapacity = Math.max(baseCap, dynamicMin);
             for (const sess of off.sessions) {
                 if (sess.status === "canceled")
+                    continue;
+                if (sess.date.toISOString().split("T")[0] < cutoffDate)
                     continue;
                 // Calculate Usage
                 let filled = 0;

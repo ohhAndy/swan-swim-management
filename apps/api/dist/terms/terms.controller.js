@@ -47,8 +47,9 @@ let TermsController = class TermsController {
     async getDailySchedule(termId, date) {
         return this.termsService.getDailySchedule(termId, date);
     }
-    async getTermAvailability(termId, level) {
-        return this.termsService.getTermAvailability(termId, level);
+    async getTermAvailability(termId, level, weekday) {
+        const wd = weekday ? Number(weekday) : undefined;
+        return this.termsService.getTermAvailability(termId, level, wd);
     }
 };
 exports.TermsController = TermsController;
@@ -113,8 +114,9 @@ __decorate([
     (0, common_1.Get)(":termId/availability"),
     __param(0, (0, common_1.Param)("termId")),
     __param(1, (0, common_1.Query)("level")),
+    __param(2, (0, common_1.Query)("weekday")),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], TermsController.prototype, "getTermAvailability", null);
 exports.TermsController = TermsController = __decorate([

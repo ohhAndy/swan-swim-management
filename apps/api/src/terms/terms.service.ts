@@ -460,6 +460,7 @@ export class TermsService {
               lastName: true,
               level: true,
               shortCode: true,
+              birthdate: true,
             },
           },
         },
@@ -703,6 +704,7 @@ export class TermsService {
             level: m.student.level,
             shortCode: m.student.shortCode,
             status: m.status,
+            birthDate: m.student.birthdate?.toISOString() ?? null,
           }));
 
           const trialsLite: TrialLite[] = sessionTrials.map((t) => ({
@@ -1149,7 +1151,7 @@ export class TermsService {
     };
   }
 
-  async getTermAvailability(termId: string, level?: string) {
+  async getTermAvailability(termId: string, level?: string, weekday?: number) {
     // 1. Fetch all offerings + sessions + enrollments + makeups in bulk
     // This is a heavy query but necessary to compute accurate availability
     const offerings = await this.prisma.classOffering.findMany({
@@ -1163,6 +1165,7 @@ export class TermsService {
               ],
             }
           : {}),
+        ...(weekday !== undefined ? { weekday } : {}),
       },
       include: {
         instructors: {
@@ -1203,6 +1206,11 @@ export class TermsService {
     });
 
     // 2. Process in-memory to find open slots
+    // Calculate cutoff date (Yesterday in UTC to be safe for all timezones)
+    const now = new Date();
+    now.setUTCDate(now.getUTCDate() - 1);
+    const cutoffDate = now.toISOString().split("T")[0];
+
     // Group by Weekday
     const byWeekday: Record<
       number,
@@ -1229,6 +1237,7 @@ export class TermsService {
 
       for (const sess of off.sessions) {
         if (sess.status === "canceled") continue;
+        if (sess.date.toISOString().split("T")[0] < cutoffDate) continue;
 
         // Calculate Usage
         let filled = 0;

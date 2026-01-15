@@ -83,8 +83,10 @@ export class TermsController {
   @Get(":termId/availability")
   async getTermAvailability(
     @Param("termId") termId: string,
-    @Query("level") level?: string
+    @Query("level") level?: string,
+    @Query("weekday") weekday?: string
   ) {
-    return this.termsService.getTermAvailability(termId, level);
+    const wd = weekday ? Number(weekday) : undefined;
+    return this.termsService.getTermAvailability(termId, level, wd);
   }
 }
