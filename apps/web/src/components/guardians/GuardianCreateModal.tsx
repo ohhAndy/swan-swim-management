@@ -1,6 +1,7 @@
 "use client";
 
 import { createGuardian } from "@/lib/api/guardian-client";
+import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -164,8 +165,10 @@ export function GuardianCreateModal({
           };
       const g = await createGuardian(payload);
       onCreated(g);
+      toast.success("Guardian created successfully");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to create guardian");
+      console.error(e);
+      toast.error(e instanceof Error ? e.message : "Failed to create guardian");
     } finally {
       setBusy(false);
     }

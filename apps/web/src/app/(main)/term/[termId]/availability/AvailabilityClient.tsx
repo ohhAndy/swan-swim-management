@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { getTermAvailability, getTermTitle } from "@/lib/api/schedule-client";
 import {
   Select,
@@ -61,6 +62,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
         setData(res);
       } catch (error) {
         console.error("Failed to fetch availability", error);
+        toast.error("Failed to fetch availability");
       } finally {
         setLoading(false);
       }

@@ -17,7 +17,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
 import { CheckCircle2, XCircle, Clock, Percent } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -89,7 +88,7 @@ export default function TrialsPage() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Date & Time</TableHead>
+            <TableHead>Date</TableHead>
             <TableHead>Child Name</TableHead>
             <TableHead>Age</TableHead>
             <TableHead>Class Level</TableHead>
@@ -102,10 +101,12 @@ export default function TrialsPage() {
           {trials.map((trial) => (
             <TableRow key={trial.id}>
               <TableCell className="font-medium">
-                {format(
-                  new Date(trial.classSession.date),
-                  "MMM d, yyyy h:mm a"
-                )}
+                {new Date(trial.classSession.date).toLocaleDateString("en-CA", {
+                  timeZone: "UTC",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </TableCell>
               <TableCell>{trial.childName}</TableCell>
               <TableCell>{trial.childAge}</TableCell>

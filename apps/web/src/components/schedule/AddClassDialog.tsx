@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -60,9 +61,10 @@ export function AddClassDialog({
         router.refresh();
       });
       onSuccess?.();
+      toast.success("Class created successfully");
     } catch (error) {
       console.error(error);
-      alert("Failed to create class");
+      toast.error("Failed to create class");
     } finally {
       setLoading(false);
     }

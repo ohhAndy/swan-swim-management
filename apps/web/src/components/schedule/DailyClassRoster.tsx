@@ -18,13 +18,9 @@ import { cn } from "@/lib/utils";
 import { HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 import RemarksDialog from "./RemarksDialog";
-import {
-  CalendarCheck,
-  CalendarClock,
-  CalendarX,
-  FileText,
-} from "lucide-react";
+import { CalendarCheck, CalendarClock, CalendarX } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -75,6 +71,7 @@ export function DailyClassRoster({
       await onLevelUpdate(studentId, newLevel);
     } catch (e) {
       console.error(e);
+      toast.error("Failed to update level");
     } finally {
       setUpdating(null);
     }
@@ -87,6 +84,7 @@ export function DailyClassRoster({
       await onAttendanceUpdate(item, status);
     } catch (e) {
       console.error(e);
+      toast.error("Failed to update status");
     } finally {
       setUpdating(null);
     }

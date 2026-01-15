@@ -4,6 +4,7 @@ import type {
   TrialLite,
 } from "@school/shared-types";
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { StudentRow } from "./StudentRow";
 import { MakeupRow } from "./MakeupRow";
 import { TrialRow } from "./TrialRow";
@@ -193,6 +194,7 @@ export function StudentGrid({
       await onAttendanceUpdate(enrollmentId, sessionId, newStatus);
     } catch (error) {
       console.error("Failed to Update Attendance", error);
+      toast.error("Failed to update attendance");
       setAttnOverrides((m) => {
         const n = { ...m };
         delete n[overrideKey];
@@ -220,6 +222,7 @@ export function StudentGrid({
       await onMakeUpUpdate(makeUpId, newStatus);
     } catch (error) {
       console.error("Failed to update make-up:", error);
+      toast.error("Failed to update make-up");
       setMakeupOverrides((m) => {
         const n = { ...m };
         delete n[makeUpId];
@@ -247,6 +250,7 @@ export function StudentGrid({
       await onTrialUpdate(trialId, newStatus);
     } catch (error) {
       console.error("Failed to update trial:", error);
+      toast.error("Failed to update trial");
       setTrialOverrides((m) => {
         const n = { ...m };
         delete n[trialId];
@@ -267,6 +271,7 @@ export function StudentGrid({
       await onRemarksUpdate(enrollmentId, remarks);
     } catch (error) {
       console.error("Failed to update remarks:", error);
+      toast.error("Failed to update remarks");
     } finally {
       setUpdating(null);
     }

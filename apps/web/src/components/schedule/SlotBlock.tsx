@@ -27,6 +27,7 @@ import { Trash2 } from "lucide-react";
 import { deleteOffering } from "@/lib/api/schedule-client";
 import { useSlotDialogs } from "./useSlotDialogs";
 import { updateReportCardStatus } from "@/lib/api/enrollment-client";
+import { toast } from "sonner";
 
 export function SlotBlock({
   title,
@@ -88,6 +89,7 @@ export function SlotBlock({
       );
     } catch (error) {
       console.error("Failed to upsert attendance:", error);
+      toast.error("Failed to update attendance");
     }
   };
 
@@ -99,6 +101,7 @@ export function SlotBlock({
       );
     } catch (error) {
       console.error("Failed to update makeup status:", error);
+      toast.error("Failed to update makeup status");
     }
   };
 
@@ -116,6 +119,7 @@ export function SlotBlock({
       );
     } catch (error) {
       console.error("Failed to update trial status:", error);
+      toast.error("Failed to update trial status");
     }
   };
 
@@ -266,7 +270,12 @@ export function SlotBlock({
                                 router.refresh();
                               });
                             })
-                            .catch((e) => alert(e.message));
+                            .catch((e) => {
+                              console.error(e);
+                              toast.error(
+                                e.message || "Failed to delete class"
+                              );
+                            });
                         }
                       }}
                     >
