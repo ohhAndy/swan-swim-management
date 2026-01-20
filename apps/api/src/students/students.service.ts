@@ -47,10 +47,10 @@ export class StudentsService {
             enrollments: { some: { status: "active" } },
           }
         : enrollmentStatus === "inactive"
-        ? {
-            enrollments: { none: { status: "active" } },
-          }
-        : {}),
+          ? {
+              enrollments: { none: { status: "active" } },
+            }
+          : {}),
       ...(query
         ? {
             OR: [
@@ -158,6 +158,19 @@ export class StudentsService {
               select: {
                 id: true,
                 status: true,
+                classSessionId: true,
+                classSession: {
+                  select: {
+                    id: true,
+                    date: true,
+                  },
+                },
+              },
+            },
+
+            enrollmentSkips: {
+              select: {
+                id: true,
                 classSessionId: true,
                 classSession: {
                   select: {

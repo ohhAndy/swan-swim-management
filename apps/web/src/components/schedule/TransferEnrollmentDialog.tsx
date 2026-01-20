@@ -77,7 +77,7 @@ export function TransferEnrollmentDialog({
   const router = useRouter();
 
   const [availableClasses, setAvailableClasses] = useState<AvailableClass[]>(
-    []
+    [],
   );
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [levelFilter, setLevelFilter] = useState<string>("all");
@@ -124,7 +124,7 @@ export function TransferEnrollmentDialog({
       const classes = await getAvailableClassesForTransfer(
         enrollment.offering.termId,
         enrollment.offeringId,
-        levelFilter === "all" ? undefined : levelFilter
+        levelFilter === "all" ? undefined : levelFilter,
       );
       setAvailableClasses(classes);
     } catch (e) {
@@ -140,7 +140,7 @@ export function TransferEnrollmentDialog({
     // Suggest skipping the first N sessions (where N = attended sessions count)
     const suggestedSkips = new Set<string>();
     const sortedSessions = [...selectedClass.sessions].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
     );
 
     for (let i = 0; i < Math.min(attendedCount, sortedSessions.length); i++) {
@@ -185,6 +185,12 @@ export function TransferEnrollmentDialog({
     } finally {
       setLoading(false);
     }
+  }
+
+  function formatDateUTC(dateStr: string) {
+    if (!dateStr) return "";
+    // Return YYYY-MM-DD directly from ISO string part
+    return dateStr.split("T")[0];
   }
 
   return (
@@ -297,7 +303,7 @@ export function TransferEnrollmentDialog({
                         className="text-sm p-2 bg-gray-50 rounded"
                       >
                         <div className="font-medium">
-                          {new Date(session.date).toLocaleDateString()}
+                          {formatDateUTC(session.date)}
                         </div>
                         <div className="text-xs text-gray-600">
                           Status:{" "}
@@ -320,7 +326,7 @@ export function TransferEnrollmentDialog({
                       .sort(
                         (a, b) =>
                           new Date(a.date).getTime() -
-                          new Date(b.date).getTime()
+                          new Date(b.date).getTime(),
                       )
                       .map((session, index) => {
                         const isSkipped = selectedSkips.has(session.id);
@@ -342,7 +348,7 @@ export function TransferEnrollmentDialog({
                               htmlFor={`skip-${session.id}`}
                               className="flex-1 text-sm cursor-pointer"
                             >
-                              {new Date(session.date).toLocaleDateString()}
+                              {formatDateUTC(session.date)}
                               {isSuggested && !isSkipped && (
                                 <span className="text-xs text-gray-500 ml-2">
                                   (suggested)

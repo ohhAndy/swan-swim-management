@@ -7,7 +7,9 @@ import {
   Post,
   UseGuards,
   Query,
+  UseInterceptors,
 } from "@nestjs/common";
+import { CacheInterceptor } from "@nestjs/cache-manager";
 import { TermsService } from "./terms.service";
 import type { SlotPage, Term } from "@school/shared-types";
 import { CreateTermSchema } from "./dto/create-term.dto";
@@ -27,13 +29,13 @@ export class TermsController {
   async create(
     @Body() body: unknown,
     @CurrentUser() user: any,
-    @CurrentLocationId() locationId?: string
+    @CurrentLocationId() locationId?: string,
   ) {
     const input = CreateTermSchema.parse(body);
     return await this.termsService.createTermWithSchedule(
       input,
       user,
-      locationId
+      locationId,
     );
   }
 
@@ -50,41 +52,44 @@ export class TermsController {
   @Get(":termId/schedule/weekday/:weekday/slots")
   async getTimeSlotsForWeekday(
     @Param("termId") termId: string,
-    @Param("weekday") weekday: string
+    @Param("weekday") weekday: string,
   ): Promise<string[]> {
     return this.termsService.getSlotsForWeekday(termId, Number(weekday));
   }
 
   @Get(":termId/schedule/weekday/:weekday/slots-default")
   async getDefaultTimeSlots(
-    @Param("termId") termId: string
+    @Param("termId") termId: string,
   ): Promise<(string | null)[]> {
     return this.termsService.getDefaultSlots(termId);
   }
 
   @Get(":termId/schedule/weekday/:weekday/slot/:start/:end")
+  @UseInterceptors(CacheInterceptor)
   async getSlotPage(
     @Param("termId") termId: string,
     @Param("weekday", ParseIntPipe) weekday: number,
     @Param("start") start: string,
-    @Param("end") end: string
+    @Param("end") end: string,
   ): Promise<SlotPage> {
     return this.termsService.slotByWeekdayAndTime(weekday, termId, start, end);
   }
 
   @Get(":termId/schedule/date/:date")
+  @UseInterceptors(CacheInterceptor)
   async getDailySchedule(
     @Param("termId") termId: string,
-    @Param("date") date: string
+    @Param("date") date: string,
   ) {
     return this.termsService.getDailySchedule(termId, date);
   }
 
   @Get(":termId/availability")
+  @UseInterceptors(CacheInterceptor)
   async getTermAvailability(
     @Param("termId") termId: string,
     @Query("level") level?: string,
-    @Query("weekday") weekday?: string
+    @Query("weekday") weekday?: string,
   ) {
     const wd = weekday ? Number(weekday) : undefined;
     return this.termsService.getTermAvailability(termId, level, wd);

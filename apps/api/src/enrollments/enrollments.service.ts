@@ -55,7 +55,7 @@ export class EnrollmentsService {
   async transferEnrollment(
     enrollmentId: string,
     dto: TransferEnrollmentDto,
-    user: any
+    user: any,
   ) {
     const { targetOfferingId, skippedSessionIds, transferNotes } = dto;
 
@@ -127,6 +127,7 @@ export class EnrollmentsService {
           enrollDate: new Date(),
           transferredFromId: enrollmentId,
           createdBy: staffUser.id,
+          classRatio: currEnrollment.classRatio,
         },
       });
 
@@ -139,7 +140,7 @@ export class EnrollmentsService {
         if (!newSession) return;
 
         const att = oldAttendance.find(
-          (a) => a.classSessionId === oldSession.id
+          (a) => a.classSessionId === oldSession.id,
         );
         if (att) {
           // If we have attendance, we transfer it and REMOVE from skips
@@ -307,7 +308,7 @@ export class EnrollmentsService {
 
         if (sessions.length !== skippedDates.length) {
           throw new BadRequestException(
-            "Some skipped dates don't have a class session associated with it"
+            "Some skipped dates don't have a class session associated with it",
           );
         }
 
@@ -353,7 +354,7 @@ export class EnrollmentsService {
   async updateReportCardStatus(
     enrollmentId: string,
     status: string,
-    user: any
+    user: any,
   ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },

@@ -42,6 +42,12 @@ export interface Attendance {
   classSession: ClassSession;
 }
 
+export interface EnrollmentSkip {
+  id: string;
+  classSessionId: string;
+  classSession: ClassSession;
+}
+
 export interface Enrollment {
   id: string;
   offeringId: string;
@@ -50,6 +56,7 @@ export interface Enrollment {
   classRatio: string;
   offering: Offering;
   attendance: Attendance[];
+  enrollmentSkips: EnrollmentSkip[];
   invoiceLineItem: InvoiceLineItem;
   transferredFrom?: {
     offering: {

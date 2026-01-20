@@ -166,7 +166,7 @@ export default function StudentViewClient({
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [enrollmentToDelete, setEnrollmentToDelete] = useState<string | null>(
-    null
+    null,
   );
 
   const {
@@ -254,7 +254,7 @@ export default function StudentViewClient({
     } catch (error) {
       console.error("Failed to update student:", error);
       alert(
-        error instanceof Error ? error.message : "Failed to update student"
+        error instanceof Error ? error.message : "Failed to update student",
       );
     } finally {
       setLoading(false);
@@ -274,7 +274,7 @@ export default function StudentViewClient({
     } catch (error) {
       console.error("Failed to update guardian:", error);
       alert(
-        error instanceof Error ? error.message : "Failed to update guardian"
+        error instanceof Error ? error.message : "Failed to update guardian",
       );
     } finally {
       setLoading(false);
@@ -293,10 +293,10 @@ export default function StudentViewClient({
 
   // Separate current and past enrollments
   const currentEnrollments = student.enrollments.filter(
-    (e) => e.status === "active"
+    (e) => e.status === "active",
   );
   const pastEnrollments = student.enrollments.filter(
-    (e) => e.status !== "active"
+    (e) => e.status !== "active",
   );
 
   const handleTransferClick = (enrollment: (typeof student.enrollments)[0]) => {
@@ -304,12 +304,18 @@ export default function StudentViewClient({
       id: enrollment.id,
       offeringId: enrollment.offeringId,
       offering: enrollment.offering,
-      attendedSessions:
-        enrollment.attendance.map((att) => ({
+      attendedSessions: [
+        ...(enrollment.attendance?.map((att) => ({
           id: att.classSession.id,
           date: att.classSession.date,
           status: att.status,
-        })) ?? [],
+        })) ?? []),
+        ...(enrollment.enrollmentSkips?.map((skip) => ({
+          id: skip.classSession.id,
+          date: skip.classSession.date,
+          status: "skipped",
+        })) ?? []),
+      ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     });
     setTransferDialogOpen(true);
   };
@@ -337,7 +343,7 @@ export default function StudentViewClient({
     } catch (error) {
       console.error("Failed to delete enrollment:", error);
       alert(
-        error instanceof Error ? error.message : "Failed to delete enrollment"
+        error instanceof Error ? error.message : "Failed to delete enrollment",
       );
     } finally {
       setLoading(false);
@@ -437,7 +443,7 @@ export default function StudentViewClient({
                       {student.birthdate
                         ? new Date(student.birthdate).toLocaleDateString(
                             "en-CA",
-                            { timeZone: "UTC" }
+                            { timeZone: "UTC" },
                           )
                         : "—"}
                     </p>
@@ -709,7 +715,7 @@ export default function StudentViewClient({
                       .map((i) =>
                         i.instructor
                           ? `${i.instructor.firstName} ${i.instructor.lastName}`
-                          : i.staffUser?.fullName ?? "Unknown"
+                          : (i.staffUser?.fullName ?? "Unknown"),
                       )
                       .join(", ");
 
@@ -754,7 +760,7 @@ export default function StudentViewClient({
                             )}
                             <p className="text-sm text-gray-500 mt-1">
                               {new Date(
-                                enrollment.enrollDate
+                                enrollment.enrollDate,
                               ).toLocaleDateString("en-CA")}
                             </p>
                             {/* Transfer Info */}
@@ -783,7 +789,7 @@ export default function StudentViewClient({
                               const termMakeups = student.makeUps.filter(
                                 (m) =>
                                   m.classSession.offering.termId ===
-                                  enrollment.offering.termId
+                                  enrollment.offering.termId,
                               );
 
                               if (termMakeups.length === 0) return null;
@@ -804,7 +810,7 @@ export default function StudentViewClient({
                                         <div className="flex flex-col">
                                           <span className="font-medium text-gray-800">
                                             {new Date(
-                                              m.classSession.date
+                                              m.classSession.date,
                                             ).toLocaleDateString("en-CA", {
                                               timeZone: "UTC",
                                               month: "short",
@@ -824,10 +830,10 @@ export default function StudentViewClient({
                                                 m.status === "scheduled"
                                                   ? "bg-blue-100 text-blue-700 border-blue-300"
                                                   : m.status === "attended"
-                                                  ? "bg-green-100 text-green-700 border-green-300"
-                                                  : m.status === "requested"
-                                                  ? "bg-orange-100 text-orange-700 border-orange-300"
-                                                  : "bg-gray-100 text-gray-600"
+                                                    ? "bg-green-100 text-green-700 border-green-300"
+                                                    : m.status === "requested"
+                                                      ? "bg-orange-100 text-orange-700 border-orange-300"
+                                                      : "bg-gray-100 text-gray-600"
                                               }`}
                                         >
                                           {m.status.charAt(0).toUpperCase()}
@@ -880,7 +886,7 @@ export default function StudentViewClient({
                 .map((i) =>
                   i.instructor
                     ? `${i.instructor.firstName} ${i.instructor.lastName}`
-                    : i.staffUser?.fullName ?? "Unknown"
+                    : (i.staffUser?.fullName ?? "Unknown"),
                 )
                 .join(", ");
 
@@ -912,7 +918,7 @@ export default function StudentViewClient({
                       )}
                       <p className="text-sm text-gray-500 mt-1">
                         {new Date(enrollment.enrollDate).toLocaleDateString(
-                          "en-CA"
+                          "en-CA",
                         )}
                       </p>
                       {/* Transfer Info */}
