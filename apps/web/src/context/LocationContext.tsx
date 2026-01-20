@@ -17,13 +17,13 @@ interface LocationContextType {
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [locations, setLocations] = useState<Location[]>([]);
   const [currentLocationId, setCurrentLocationId] = useState<string | null>(
-    null
+    null,
   );
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
@@ -35,6 +35,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
           data: { session },
         } = await supabase.auth.getSession();
         if (!session) {
+          setLocations([]);
+          setCurrentLocationId(null);
           setIsLoading(false);
           return;
         }
@@ -45,7 +47,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
             headers: {
               Authorization: `Bearer ${session.access_token}`,
             },
-          }
+          },
         );
 
         if (res.ok) {
@@ -74,7 +76,24 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Initial fetch
     fetchLocations();
+
+    // Subscribe to auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        fetchLocations();
+      } else if (event === "SIGNED_OUT") {
+        setLocations([]);
+        setCurrentLocationId(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [supabase]);
 
   const handleSetLocation = (id: string) => {
