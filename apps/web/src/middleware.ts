@@ -4,31 +4,26 @@ import { type NextRequest, NextResponse } from "next/server";
 export async function middleware(request: NextRequest) {
   const start = Date.now(); // start timing
 
-  const response = await updateSession(request);
+  const { response, user } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
-  // Check session cookie
-  const sessionCookie = request.cookies
-    .getAll()
-    .find(
-      (cookie) =>
-        cookie.name.startsWith("sb-") && cookie.name.endsWith("-auth-token")
-    );
-
   // Use response for public routes / redirects
-  if (pathname.startsWith("/login") && sessionCookie) {
+  if (pathname.startsWith("/login") && user) {
     const redirectUrl = new URL("/dashboard", request.url);
     return NextResponse.redirect(redirectUrl);
   }
 
-  const publicRoutes = ['/login'];
+  const publicRoutes = ["/login", "/auth/callback"];
 
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
-    console.log(`[Request] GET ${pathname} → 200 (public) - ${Date.now() - start}ms`);
+    console.log(
+      `[Request] GET ${pathname} → 200 (public) - ${Date.now() - start}ms`,
+    );
     return response;
   }
 
-  if (!sessionCookie) {
+  // Redirect if not authenticated
+  if (!user) {
     const redirectUrl = new URL("/login", request.url);
     return NextResponse.redirect(redirectUrl);
   }

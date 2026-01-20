@@ -17,6 +17,7 @@ import {
   CardTitle,
   CardContent,
 } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -43,6 +44,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
   const [data, setData] = useState<AvailabilityData | null>(null);
   const [loading, setLoading] = useState(true);
   const [termName, setTermName] = useState("");
+  const [selectedTime, setSelectedTime] = useState<string>("all");
 
   const allLevels = ["PS", "SW", "Adult"];
 
@@ -51,13 +53,17 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
   }, [termId]);
 
   useEffect(() => {
+    setSelectedTime("all");
+  }, [weekday]);
+
+  useEffect(() => {
     async function fetch() {
       setLoading(true);
       try {
         const res = await getTermAvailability(
           termId,
           level === "all" ? undefined : level,
-          weekday === "all" ? undefined : Number(weekday)
+          weekday === "all" ? undefined : Number(weekday),
         );
         setData(res);
       } catch (error) {
@@ -139,11 +145,43 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
             const dayClasses = data[wd];
             if (!dayClasses || dayClasses.length === 0) return null;
 
+            // Extract unique sorted times if viewing a single day
+            const uniqueTimes = isSingleDay
+              ? Array.from(new Set(dayClasses.map((c) => c.time))).sort(
+                  (a, b) => {
+                    return (
+                      new Date("1970/01/01 " + a).getTime() -
+                      new Date("1970/01/01 " + b).getTime()
+                    );
+                  },
+                )
+              : [];
+
+            const displayedClasses =
+              isSingleDay && selectedTime !== "all"
+                ? dayClasses.filter((c) => c.time === selectedTime)
+                : dayClasses;
+
             return (
               <div key={wd} className="space-y-3">
                 <h3 className="font-semibold text-lg bg-muted/50 p-2 rounded text-center">
                   {FULL_DAY_LABELS[wd]}
                 </h3>
+
+                {isSingleDay && (
+                  <div className="flex justify-center pb-2">
+                    <Tabs value={selectedTime} onValueChange={setSelectedTime}>
+                      <TabsList className="flex flex-wrap h-auto gap-1">
+                        <TabsTrigger value="all">All Times</TabsTrigger>
+                        {uniqueTimes.map((time) => (
+                          <TabsTrigger key={time} value={time}>
+                            {time}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                )}
                 <div
                   className={
                     isSingleDay
@@ -151,7 +189,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
                       : "space-y-3"
                   }
                 >
-                  {dayClasses.map((cls) => (
+                  {displayedClasses.map((cls) => (
                     <Card key={cls.offeringId} className="overflow-hidden">
                       <CardHeader className="p-3 bg-blue-50/50 pb-2">
                         <div className="flex justify-between items-start">
@@ -176,13 +214,13 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
                               className="p-2 flex justify-between items-center hover:bg-muted/50 cursor-pointer transition-colors"
                               onClick={() =>
                                 router.push(
-                                  `/term/${termId}/schedule/weekday/${wd}/slot/${cls.time}`
+                                  `/term/${termId}/schedule/weekday/${wd}/slot/${cls.time}`,
                                 )
                               }
                             >
                               <span>
                                 {new Date(
-                                  sess.date + "T12:00:00Z"
+                                  sess.date + "T12:00:00Z",
                                 ).toLocaleDateString("en-US", {
                                   month: "short",
                                   day: "numeric",
