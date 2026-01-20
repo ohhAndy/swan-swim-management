@@ -40,7 +40,7 @@ export default function TimeSlots({
               className="w-full flex rounded-md hover:bg-muted transition cursor-pointer"
               onClick={() =>
                 router.push(
-                  `/term/${termId}/schedule/weekday/${weekday}/slot/${timeSlots[i]}`
+                  `/term/${termId}/schedule/weekday/${weekday}/slot/${timeSlots[i]}`,
                 )
               }
             >
@@ -48,9 +48,9 @@ export default function TimeSlots({
                 className={`text-center align-middle text-sm ${
                   getDuration(t) === 30
                     ? "text-yellow-600 font-medium"
-                    : getDuration(t) === 120
-                    ? "text-green-600 font-medium"
-                    : "text-[#1c82c5]"
+                    : getDuration(t) === 45
+                      ? "text-[#1c82c5]"
+                      : "text-green-600 font-medium"
                 }`}
               >
                 {t}

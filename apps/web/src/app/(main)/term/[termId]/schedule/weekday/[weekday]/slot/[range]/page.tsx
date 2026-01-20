@@ -3,7 +3,7 @@ import { weekdayName, groupByOffering } from "@/lib/schedule/transform";
 import type { SlotPage } from "@school/shared-types";
 import { SlotHeader } from "@/components/schedule/SlotHeader";
 import { SlotBlock } from "@/components/schedule/SlotBlock";
-import { BackButton } from "@/components/nav/BackButton";
+import PreviousButton from "@/components/nav/PreviousButton";
 import NextButton from "@/components/nav/NextButton";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
@@ -47,7 +47,12 @@ export default async function SlotPageView({
   return (
     <main className="p-6 print:p-0">
       <div className="mb-3 flex items-center justify-between">
-        <BackButton fallbackHref={`/term/${termId}/schedule`} />
+        <PreviousButton
+          baseHref={`/term/${termId}/schedule`}
+          weekday={Number(weekday)}
+          slotTime={decodeURIComponent(range)}
+          termId={termId}
+        />
         <NextButton
           baseHref={`/term/${termId}/schedule`}
           weekday={Number(weekday)}
