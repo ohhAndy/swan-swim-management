@@ -44,10 +44,10 @@ function buildRow(rosters: RosterResponse[]): Row[] {
         s === "present"
           ? "P"
           : s === "absent"
-          ? "A"
-          : s === "excused"
-          ? "E"
-          : "";
+            ? "A"
+            : s === "excused"
+              ? "E"
+              : "";
       if (mark) {
         cur.marks[dayKey] = mark;
         cur.markMeta[dayKey] = { notes: p.attendance?.notes ?? null };
@@ -64,7 +64,7 @@ function buildMakeUps(rosters: RosterResponse[]): Record<string, MakeupLite[]> {
     const dayKey = r.session.date.slice(0, 10) + "T04:00:00.000Z";
     if (r.makeups.length > 0) {
       makeUpsByDate[dayKey] = r.makeups.sort((a, b) =>
-        a.studentName.localeCompare(b.studentName)
+        a.studentName.localeCompare(b.studentName),
       );
     }
   }
@@ -77,7 +77,7 @@ function buildTrials(rosters: RosterResponse[]): Record<string, TrialLite[]> {
     const dayKey = r.session.date.slice(0, 10) + "T04:00:00.000Z";
     if (r.trials && r.trials.length > 0) {
       trialsByDate[dayKey] = r.trials.sort((a, b) =>
-        a.childName.localeCompare(b.childName)
+        a.childName.localeCompare(b.childName),
       );
     }
   }
@@ -102,7 +102,7 @@ export function StudentGrid({
   onAttendanceUpdate?: (
     enrollmentId: string,
     sessionId: string,
-    status: string
+    status: string,
   ) => Promise<void>;
   onMakeUpUpdate?: (makeUpId: string, status: string) => Promise<void>;
   onMakeUpClick?: (date: string) => void;
@@ -128,6 +128,9 @@ export function StudentGrid({
     Record<string, string | undefined>
   >({});
   const [trialOverrides, setTrialOverrides] = useState<
+    Record<string, string | undefined>
+  >({});
+  const [reportCardOverrides, setReportCardOverrides] = useState<
     Record<string, string | undefined>
   >({});
 
@@ -169,17 +172,17 @@ export function StudentGrid({
 
   const maxMakeUpsPerDate = Math.max(
     0,
-    ...Object.values(makeUps).map((m) => m.length)
+    ...Object.values(makeUps).map((m) => m.length),
   );
   const maxTrialsPerDate = Math.max(
     0,
-    ...Object.values(trials).map((t) => t.length)
+    ...Object.values(trials).map((t) => t.length),
   );
 
   const handleAttendanceUpdate = async (
     enrollmentId: string,
     dayKey: string,
-    newStatus: string
+    newStatus: string,
   ) => {
     const sessionId = dateToSessionId.get(dayKey);
     if (!sessionId || !onAttendanceUpdate) return;
@@ -277,6 +280,31 @@ export function StudentGrid({
     }
   };
 
+  const handleReportCardUpdate = async (
+    enrollmentId: string,
+    status: string,
+  ) => {
+    if (!onReportCardUpdate) return;
+
+    setReportCardOverrides((prev) => ({ ...prev, [enrollmentId]: status }));
+    const updateKey = `report-${enrollmentId}`;
+    setUpdating(updateKey);
+
+    try {
+      await onReportCardUpdate(enrollmentId, status);
+    } catch (error) {
+      console.error("Failed to update report card status:", error);
+      toast.error("Failed to update report card status");
+      setReportCardOverrides((prev) => {
+        const next = { ...prev };
+        delete next[enrollmentId];
+        return next;
+      });
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   const canEdit: boolean = hasPermission(user.role, "markAttendance");
 
   return (
@@ -330,7 +358,8 @@ export function StudentGrid({
           canEdit={canEdit}
           onAttendanceUpdate={handleAttendanceUpdate}
           onSaveRemarks={handleSaveRemarks}
-          onReportCardUpdate={onReportCardUpdate}
+          onReportCardUpdate={handleReportCardUpdate}
+          reportCardOverrides={reportCardOverrides}
           userRole={user.role}
         />
       ))}

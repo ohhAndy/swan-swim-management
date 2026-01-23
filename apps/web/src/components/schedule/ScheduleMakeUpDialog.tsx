@@ -1,7 +1,13 @@
-'use client'
+"use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { searchStudents, StudentLite } from "@/lib/api/students-client";
@@ -58,10 +64,10 @@ export function ScheduleMakeupDialog({
     if (!open) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        
-        if (document.activeElement?.tagName === 'INPUT' && q.trim()) {
+
+        if (document.activeElement?.tagName === "INPUT" && q.trim()) {
           doSearch();
         } else if (picked && !loading) {
           submit();
@@ -69,14 +75,14 @@ export function ScheduleMakeupDialog({
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, q, picked, loading]);
 
   async function doSearch() {
     try {
       setErr(null);
-      const r = await searchStudents({ query: q, });
+      const r = await searchStudents({ query: q });
       setResults(r.items);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Search failed");
@@ -91,17 +97,17 @@ export function ScheduleMakeupDialog({
       setErr(null);
 
       // Find the session ID for the selected date
-      const sessionForDate = rosters.find(r => 
-        r.session.date.slice(0, 10) + "T04:00:00.000Z" === selectedDate
+      const sessionForDate = rosters.find(
+        (r) => r.session.date.slice(0, 10) + "T04:00:00.000Z" === selectedDate,
       );
 
       if (!sessionForDate) {
         throw new Error("No session found for selected date");
       }
 
-      await scheduleMakeUp({ 
-        studentId: picked.id, 
-        classSessionId: sessionForDate.session.id 
+      await scheduleMakeUp({
+        studentId: picked.id,
+        classSessionId: sessionForDate.session.id,
       });
 
       onSuccess();
@@ -116,7 +122,7 @@ export function ScheduleMakeupDialog({
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-CA'); 
+    return date.toLocaleDateString("en-CA");
   };
 
   return (
@@ -132,9 +138,9 @@ export function ScheduleMakeupDialog({
           {/* Student Search */}
           <div className="space-y-2">
             <div className="flex gap-2">
-              <Input 
-                placeholder="Search student..." 
-                value={q} 
+              <Input
+                placeholder="Search student..."
+                value={q}
                 onChange={(e) => setQ(e.target.value)}
                 autoFocus
               />
@@ -144,14 +150,18 @@ export function ScheduleMakeupDialog({
             </div>
 
             <div className="max-h-48 overflow-auto rounded border">
-              {results.map(r => (
-                <button 
-                  key={r.id} 
+              {results.map((r) => (
+                <button
+                  key={r.id}
                   className={`flex w-full items-center justify-between border-b px-3 py-2 text-left hover:bg-slate-50 ${picked?.id === r.id ? "bg-slate-100" : ""}`}
                   onClick={() => setPicked(r)}
                 >
-                  <span className="font-medium">{r.firstName} {r.lastName}</span>
-                  <span className="text-sm text-slate-500">{r.level ?? ""} - {r.birthdate ? calcAge(r.birthdate) : ""}</span>
+                  <span className="font-medium">
+                    {r.firstName} {r.lastName}
+                  </span>
+                  <span className="text-sm text-slate-500">
+                    {r.level ?? ""} - {r.birthdate ? calcAge(r.birthdate) : ""}
+                  </span>
                 </button>
               ))}
             </div>

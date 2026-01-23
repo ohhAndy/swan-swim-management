@@ -35,8 +35,8 @@ export class TasksController {
 
   @Get(":id")
   @Roles("admin", "manager", "supervisor")
-  findOne(@Param("id") id: string) {
-    return this.tasksService.findOne(id);
+  findOne(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.tasksService.findOne(id, user);
   }
 
   @Patch(":id")
@@ -44,7 +44,7 @@ export class TasksController {
   update(
     @Param("id") id: string,
     @Body() updateTaskDto: UpdateTaskDto,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ) {
     return this.tasksService.update(id, updateTaskDto, user);
   }

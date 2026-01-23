@@ -88,14 +88,35 @@ export class TasksService {
     });
   }
 
-  async findOne(id: string) {
-    return this.prisma.task.findUnique({
+  async findOne(id: string, user: any) {
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+    if (!staffUser) return null;
+
+    const task = await this.prisma.task.findUnique({
       where: { id },
       include: {
         assignedTo: true,
         createdBy: true,
       },
     });
+
+    if (!task) return null;
+
+    // Access control
+    if (staffUser.role !== "admin" && staffUser.role !== "manager") {
+      if (
+        task.assignedToId !== staffUser.id &&
+        task.createdById !== staffUser.id
+      ) {
+        // Return null or throw ForbiddenException?
+        // Returning null mimics "not found" which is safer for security.
+        return null;
+      }
+    }
+
+    return task;
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto, user: any) {
@@ -113,6 +134,20 @@ export class TasksService {
       where: { authId: user.authId },
     });
     if (!staffUser) return;
+
+    // Check existing task for permission
+    const existingTask = await this.prisma.task.findUnique({ where: { id } });
+    if (!existingTask) return; // or throw
+
+    if (staffUser.role !== "admin" && staffUser.role !== "manager") {
+      if (
+        existingTask.assignedToId !== staffUser.id &&
+        existingTask.createdById !== staffUser.id
+      ) {
+        // User not allowed to update this task
+        throw new Error("Unauthorized to update this task");
+      }
+    }
 
     return this.prisma.$transaction(async (tx) => {
       const task = await tx.task.update({

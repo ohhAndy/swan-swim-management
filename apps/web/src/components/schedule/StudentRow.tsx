@@ -28,7 +28,7 @@ import { calcAge, markClass } from "@/lib/utils/student-helpers";
 function getPaymentStatus(
   status: string | null,
   invoiceNumber: string | null,
-  balance: number | null
+  balance: number | null,
 ) {
   if (!status) {
     return (
@@ -122,10 +122,11 @@ interface StudentRowProps {
   onAttendanceUpdate: (
     enrollmentId: string,
     dayKey: string,
-    status: string
+    status: string,
   ) => Promise<void>;
   onSaveRemarks: (enrollmentId: string, remarks: string) => Promise<void>;
   onReportCardUpdate?: (enrollmentId: string, status: string) => Promise<void>;
+  reportCardOverrides?: Record<string, string | undefined>;
   userRole: string;
 }
 
@@ -139,8 +140,14 @@ export function StudentRow({
   onAttendanceUpdate,
   onSaveRemarks,
   onReportCardUpdate,
+  reportCardOverrides,
   userRole,
 }: StudentRowProps) {
+  const currentReportCardStatus =
+    reportCardOverrides?.[row.enrollmentId] ??
+    row.reportCardStatus ??
+    "not_created";
+
   return (
     <div className="contents">
       <div className="px-2 py-1 flex items-center justify-center gap-1 bg-white">
@@ -212,18 +219,18 @@ export function StudentRow({
           <DropdownMenuTrigger
             disabled={!onReportCardUpdate || !canEdit}
             className={`w-full h-full text-[10px] font-medium flex items-center justify-center transition-colors ${
-              !row.reportCardStatus || row.reportCardStatus === "not_created"
+              currentReportCardStatus === "not_created"
                 ? "bg-white text-gray-400 hover:bg-gray-50"
-                : row.reportCardStatus === "created"
-                ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                : "bg-green-100 text-green-700 hover:bg-green-200"
+                : currentReportCardStatus === "created"
+                  ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                  : "bg-green-100 text-green-700 hover:bg-green-200"
             }`}
           >
-            {row.reportCardStatus === "created"
+            {currentReportCardStatus === "created"
               ? "Created"
-              : row.reportCardStatus === "given"
-              ? "Given"
-              : "None"}
+              : currentReportCardStatus === "given"
+                ? "Given"
+                : "None"}
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem
@@ -260,10 +267,10 @@ export function StudentRow({
           baseMark === "P"
             ? "present"
             : baseMark === "A"
-            ? "absent"
-            : baseMark === "E"
-            ? "excused"
-            : "";
+              ? "absent"
+              : baseMark === "E"
+                ? "excused"
+                : "";
 
         const overrideStatus = attnOverrides[`${row.enrollmentId}|${dayKey}`];
         const currentStatus = overrideStatus ?? baseStatus;
@@ -275,10 +282,10 @@ export function StudentRow({
           currentStatus === "present"
             ? "P"
             : currentStatus === "absent"
-            ? "A"
-            : currentStatus === "excused"
-            ? "E"
-            : "";
+              ? "A"
+              : currentStatus === "excused"
+                ? "E"
+                : "";
 
         if (isSkipped) {
           return (
@@ -296,7 +303,7 @@ export function StudentRow({
             <DropdownMenuTrigger asChild>
               <button
                 className={`content-center relative px-2 py-1 text-center font-semibold rounded transition-all hover:bg-gray-200 ${markClass(
-                  mark
+                  mark,
                 )} ${
                   isUpdating || !canEdit
                     ? "opacity-50 cursor-not-allowed"
@@ -335,7 +342,7 @@ export function StudentRow({
                       onAttendanceUpdate(
                         row.enrollmentId,
                         dayKey,
-                        option.value
+                        option.value,
                       );
                     }
                   }}

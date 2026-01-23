@@ -78,11 +78,12 @@ export function AssignInstructorDialog({
       setLoading(true);
       setError(null);
       await assignInstructor(classOfferingId, selectedInstructorId);
+
       setSelectedInstructorId("");
       onSuccess();
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : "Failed to assign instructor"
+        error instanceof Error ? error.message : "Failed to assign instructor",
       );
       console.error(error);
     } finally {
@@ -98,7 +99,7 @@ export function AssignInstructorDialog({
       onSuccess();
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : "Failed to remove instructor"
+        error instanceof Error ? error.message : "Failed to remove instructor",
       );
       console.error(error);
     } finally {
@@ -109,7 +110,7 @@ export function AssignInstructorDialog({
   // Filter out already assigned instructors from dropdown
   const filteredInstructors = availableInstructors.filter(
     (inst) =>
-      !currentInstructors.some((current) => current.staffUserId === inst.id) // Note: shared-types might still refer to staffUserId which effectively is now instructorId, need to check shared-types if possible, or assume it maps to ID
+      !currentInstructors.some((current) => current.staffUserId === inst.id),
   );
 
   return (

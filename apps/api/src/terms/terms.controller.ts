@@ -7,9 +7,7 @@ import {
   Post,
   UseGuards,
   Query,
-  UseInterceptors,
 } from "@nestjs/common";
-import { CacheInterceptor } from "@nestjs/cache-manager";
 import { TermsService } from "./terms.service";
 import type { SlotPage, Term } from "@school/shared-types";
 import { CreateTermSchema } from "./dto/create-term.dto";
@@ -65,7 +63,6 @@ export class TermsController {
   }
 
   @Get(":termId/schedule/weekday/:weekday/slot/:start/:end")
-  @UseInterceptors(CacheInterceptor)
   async getSlotPage(
     @Param("termId") termId: string,
     @Param("weekday", ParseIntPipe) weekday: number,
@@ -76,7 +73,6 @@ export class TermsController {
   }
 
   @Get(":termId/schedule/date/:date")
-  @UseInterceptors(CacheInterceptor)
   async getDailySchedule(
     @Param("termId") termId: string,
     @Param("date") date: string,
@@ -85,7 +81,6 @@ export class TermsController {
   }
 
   @Get(":termId/availability")
-  @UseInterceptors(CacheInterceptor)
   async getTermAvailability(
     @Param("termId") termId: string,
     @Query("level") level?: string,

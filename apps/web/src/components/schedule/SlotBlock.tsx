@@ -79,13 +79,13 @@ export function SlotBlock({
   const handleAttendanceUpdate = async (
     enrollmentId: string,
     sessionId: string,
-    status: string
+    status: string,
   ) => {
     try {
       await upsertAttendance(
         enrollmentId,
         sessionId,
-        status as "present" | "absent" | "excused" | ""
+        status as "present" | "absent" | "excused" | "",
       );
     } catch (error) {
       console.error("Failed to upsert attendance:", error);
@@ -97,7 +97,7 @@ export function SlotBlock({
     try {
       await updateMakeupStatus(
         makeUpId,
-        status as "scheduled" | "attended" | "cancelled" | "requested" | ""
+        status as "scheduled" | "attended" | "cancelled" | "requested" | "",
       );
     } catch (error) {
       console.error("Failed to update makeup status:", error);
@@ -115,7 +115,7 @@ export function SlotBlock({
           | "noshow"
           | "converted"
           | "cancelled"
-          | ""
+          | "",
       );
     } catch (error) {
       console.error("Failed to update trial status:", error);
@@ -149,13 +149,11 @@ export function SlotBlock({
 
   const handleReportCardUpdate = async (
     enrollmentId: string,
-    status: string
+    status: string,
   ) => {
     try {
       await updateReportCardStatus(enrollmentId, status);
-      startTransition(() => {
-        router.refresh();
-      });
+      router.refresh();
     } catch (error) {
       console.error("Failed to update report card status:", error);
       throw error;
@@ -261,7 +259,7 @@ export function SlotBlock({
                       onClick={() => {
                         if (
                           confirm(
-                            "Are you sure you want to delete this class? This action cannot be undone and will fail if there are active enrollments."
+                            "Are you sure you want to delete this class? This action cannot be undone and will fail if there are active enrollments.",
                           )
                         ) {
                           deleteOffering(fallbackOfferingId!)
@@ -273,7 +271,7 @@ export function SlotBlock({
                             .catch((e) => {
                               console.error(e);
                               toast.error(
-                                e.message || "Failed to delete class"
+                                e.message || "Failed to delete class",
                               );
                             });
                         }
@@ -352,7 +350,7 @@ export function SlotBlock({
       />
 
       {isRefreshing && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100px] flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3 rounded-xl bg-white/90 px-6 py-5 shadow-md border border-gray-200">
             <Loader2 className="h-6 w-6 animate-spin text-gray-700" />
             <p className="text-sm font-medium text-gray-700">Updating…</p>

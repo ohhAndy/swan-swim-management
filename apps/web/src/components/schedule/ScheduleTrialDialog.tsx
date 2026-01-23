@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2 } from 'lucide-react';
-import { createTrialBooking } from '@/lib/api/trial-client';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
+import { createTrialBooking } from "@/lib/api/trial-client";
 
 interface ScheduleTrialDialogProps {
   open: boolean;
@@ -32,24 +32,24 @@ export function ScheduleTrialDialog({
   offeringTitle,
   onSuccess,
 }: ScheduleTrialDialogProps) {
-  const [childName, setChildName] = useState('');
-  const [childAge, setChildAge] = useState('');
-  const [parentPhone, setParentPhone] = useState('');
-  const [notes, setNotes] = useState('');
+  const [childName, setChildName] = useState("");
+  const [childAge, setChildAge] = useState("");
+  const [parentPhone, setParentPhone] = useState("");
+  const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!sessionId || !childName.trim() || !childAge || !parentPhone.trim()) {
-      setError('Please fill in all required fields');
+      setError("Please fill in all required fields");
       return;
     }
 
     const age = parseInt(childAge);
     if (isNaN(age) || age < 0 || age > 18) {
-      setError('Please enter a valid age (0-18)');
+      setError("Please enter a valid age (0-18)");
       return;
     }
 
@@ -61,41 +61,41 @@ export function ScheduleTrialDialog({
         childName: childName.trim(),
         childAge: age,
         parentPhone: parentPhone.trim(),
-        notes: notes.trim() || undefined
-     });
-      
+        notes: notes.trim() || undefined,
+      });
+
       // Reset form
-      setChildName('');
-      setChildAge('');
-      setParentPhone('');
-      setNotes('');
-      
+      setChildName("");
+      setChildAge("");
+      setParentPhone("");
+      setNotes("");
+
       onSuccess();
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to schedule trial');
+      setError(err instanceof Error ? err.message : "Failed to schedule trial");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    setChildName('');
-    setChildAge('');
-    setParentPhone('');
-    setNotes('');
+    setChildName("");
+    setChildAge("");
+    setParentPhone("");
+    setNotes("");
     setError(null);
     onOpenChange(false);
   };
 
   const formattedDate = selectedDate
-    ? new Date(selectedDate).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+    ? new Date(selectedDate).toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       })
-    : '';
+    : "";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
