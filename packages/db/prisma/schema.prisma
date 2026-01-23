@@ -394,18 +394,19 @@ model ClassInstructor {
 }
 
 model Instructor {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   firstName    String
   lastName     String
   email        String?
   phone        String?
   gender       String?
+  startDate    DateTime?
   languages    String[]
   certificates Json[]
   notes        String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   assignments ClassInstructor[]
 

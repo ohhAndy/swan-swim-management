@@ -31,13 +31,14 @@ const formSchema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
   gender: z.string().optional(),
+  startDate: z.string().optional(),
   notes: z.string().optional(),
   certificates: z
     .array(
       z.object({
         name: z.string().min(1, "Certificate name is required"),
         expirationDate: z.string().optional(),
-      })
+      }),
     )
     .optional(),
   isActive: z.boolean().optional(),
@@ -71,6 +72,9 @@ export default function InstructorForm({ instructor }: InstructorFormProps) {
       email: instructor?.email || "",
       phone: instructor?.phone || "",
       gender: instructor?.gender || "",
+      startDate: instructor?.startDate
+        ? new Date(instructor.startDate).toISOString().split("T")[0]
+        : "",
       notes: instructor?.notes || "",
       isActive: instructor?.isActive ?? true,
       certificates: instructor?.certificates
@@ -161,27 +165,39 @@ export default function InstructorForm({ instructor }: InstructorFormProps) {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label>Gender</Label>
-          <Controller
-            control={control}
-            name="gender"
-            render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Gender</Label>
+            <Controller
+              control={control}
+              name="gender"
+              render={({ field }) => (
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.gender && (
+              <p className="text-sm text-red-500">{errors.gender.message}</p>
             )}
-          />
-          {errors.gender && (
-            <p className="text-sm text-red-500">{errors.gender.message}</p>
-          )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="startDate">Start Date</Label>
+            <Input id="startDate" type="date" {...register("startDate")} />
+            {errors.startDate && (
+              <p className="text-sm text-red-500">{errors.startDate.message}</p>
+            )}
+          </div>
         </div>
 
         <div className="space-y-2">

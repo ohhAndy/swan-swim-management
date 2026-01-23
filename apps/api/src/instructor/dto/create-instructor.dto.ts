@@ -7,6 +7,7 @@ export const createInstructorSchema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
   gender: z.string().optional(),
+  startDate: z.coerce.date().optional(),
   languages: z.array(z.string()).optional(),
   certificates: z.array(z.any()).optional(),
   notes: z.string().optional(),

@@ -12,6 +12,7 @@ export interface Instructor {
   email?: string;
   phone?: string;
   gender?: string;
+  startDate?: string;
   languages?: string[];
   certificates?: Certificate[];
   notes?: string;
@@ -26,6 +27,7 @@ export interface CreateInstructorInput {
   email?: string;
   phone?: string;
   gender?: string;
+  startDate?: string;
   languages?: string[];
   certificates?: Certificate[];
   notes?: string;
@@ -54,7 +56,7 @@ export const getInstructors = async (activeOnly = false) => {
     `${API}/instructors${activeOnly ? "?active=true" : ""}`,
     {
       headers,
-    }
+    },
   );
   if (!res.ok) throw new Error("Failed to fetch instructors");
   return res.json() as Promise<Instructor[]>;
@@ -82,7 +84,7 @@ export const createInstructor = async (data: CreateInstructorInput) => {
 
 export const updateInstructor = async (
   id: string,
-  data: UpdateInstructorInput
+  data: UpdateInstructorInput,
 ) => {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API}/instructors/${id}`, {
@@ -111,6 +113,6 @@ export const searchInstructors = async (query: string) => {
   return all.filter(
     (i) =>
       i.firstName.toLowerCase().includes(lowerQuery) ||
-      i.lastName.toLowerCase().includes(lowerQuery)
+      i.lastName.toLowerCase().includes(lowerQuery),
   );
 };
