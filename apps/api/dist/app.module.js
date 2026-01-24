@@ -35,6 +35,7 @@ const core_1 = require("@nestjs/core");
 const throttler_1 = require("@nestjs/throttler");
 const supabase_auth_guard_1 = require("./auth/supabase-auth.guard");
 const roles_guard_1 = require("./auth/roles.guard");
+const cache_manager_1 = require("@nestjs/cache-manager");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -51,6 +52,11 @@ exports.AppModule = AppModule = __decorate([
                     limit: 100,
                 },
             ]),
+            cache_manager_1.CacheModule.register({
+                isGlobal: true,
+                ttl: 20000, // 20 seconds
+                max: 100, // maximum number of items in cache
+            }),
             prisma_module_1.PrismaModule,
             terms_module_1.TermsModule,
             sessions_module_1.SessionsModule,

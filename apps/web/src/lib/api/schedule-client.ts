@@ -7,12 +7,12 @@ export async function getSlotPage(
   termId: string,
   weekday: number,
   start: string,
-  end: string
+  end: string,
 ): Promise<SlotPage> {
   const headers = await getHeaders();
   const res = await fetch(
     `${API}/terms/${termId}/schedule/weekday/${weekday}/slot/${start}/${end}`,
-    { cache: "no-store", headers }
+    { cache: "no-store", headers },
   );
   if (!res.ok) {
     throw new Error("Failed to fetch slot page");
@@ -22,12 +22,12 @@ export async function getSlotPage(
 
 export async function getTimeSlotsByWeekday(
   termId: string,
-  weekday: number
+  weekday: number,
 ): Promise<string[]> {
   const headers = await getHeaders();
   const res = await fetch(
     `${API}/terms/${termId}/schedule/weekday/${weekday}/slots`,
-    { cache: "no-store", headers }
+    { cache: "no-store", headers },
   );
   if (!res.ok) {
     throw new Error("Failed to fetch slot page");
@@ -98,7 +98,7 @@ export async function transferEnrollment(
     targetOfferingId: string;
     skippedSessionIds: string[];
     transferNotes?: string;
-  }
+  },
 ) {
   const headers = await getHeaders();
   const res = await fetch(`${API}/enrollments/${enrollmentId}/transfer`, {
@@ -110,7 +110,7 @@ export async function transferEnrollment(
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(
-      `Failed to transfer enrollment: ${res.status} - ${errorText}`
+      `Failed to transfer enrollment: ${res.status} - ${errorText}`,
     );
   }
 
@@ -120,7 +120,7 @@ export async function transferEnrollment(
 export async function getAvailableClassesForTransfer(
   termId: string,
   currentOfferingId: string,
-  level?: string
+  level?: string,
 ) {
   const params = new URLSearchParams({
     termId,
@@ -136,7 +136,7 @@ export async function getAvailableClassesForTransfer(
     {
       cache: "no-store",
       headers,
-    }
+    },
   );
 
   if (!res.ok) {
@@ -200,11 +200,11 @@ export async function deleteOffering(offeringId: string) {
     try {
       const json = JSON.parse(errorText);
       throw new Error(
-        json.message || `Failed to delete offering: ${res.status}`
+        json.message || `Failed to delete offering: ${res.status}`,
       );
     } catch {
       throw new Error(
-        `Failed to delete offering: ${res.status} - ${errorText}`
+        `Failed to delete offering: ${res.status} - ${errorText}`,
       );
     }
   }
@@ -215,7 +215,7 @@ export async function deleteOffering(offeringId: string) {
 export async function getTermAvailability(
   termId: string,
   level?: string,
-  weekday?: number
+  weekday?: number,
 ): Promise<
   Record<
     number,
@@ -228,6 +228,7 @@ export async function getTermAvailability(
         date: string;
         openSeats: number;
       }>;
+      instructors: string[];
     }>
   >
 > {
@@ -241,7 +242,7 @@ export async function getTermAvailability(
     {
       cache: "no-store",
       headers,
-    }
+    },
   );
 
   if (!res.ok) {
@@ -260,7 +261,7 @@ export async function deleteEnrollment(enrollmentId: string) {
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(
-      `Failed to delete enrollment: ${res.status} - ${errorText}`
+      `Failed to delete enrollment: ${res.status} - ${errorText}`,
     );
   }
 

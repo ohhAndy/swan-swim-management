@@ -26,6 +26,50 @@ export class GuardiansService {
               { email: { contains: query, mode: "insensitive" } },
               { shortCode: { contains: query, mode: "insensitive" } },
               { phone: { contains: query, mode: "insensitive" } },
+              {
+                students: {
+                  some: {
+                    OR: [
+                      {
+                        firstName: {
+                          contains: query.trim(),
+                          mode: "insensitive",
+                        },
+                      },
+                      {
+                        lastName: {
+                          contains: query.trim(),
+                          mode: "insensitive",
+                        },
+                      },
+                      ...(query.trim().indexOf(" ") > 0
+                        ? [
+                            {
+                              AND: [
+                                {
+                                  firstName: {
+                                    contains: query.trim().split(/\s+/)[0],
+                                    mode: "insensitive" as Prisma.QueryMode,
+                                  },
+                                },
+                                {
+                                  lastName: {
+                                    contains: query
+                                      .trim()
+                                      .split(/\s+/)
+                                      .slice(1)
+                                      .join(" "),
+                                    mode: "insensitive" as Prisma.QueryMode,
+                                  },
+                                },
+                              ],
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
+                },
+              },
             ],
           }
         : {}),

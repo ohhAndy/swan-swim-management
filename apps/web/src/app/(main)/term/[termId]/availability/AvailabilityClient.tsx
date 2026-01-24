@@ -34,6 +34,7 @@ type AvailabilityData = Record<
       date: string;
       openSeats: number;
     }>;
+    instructors: string[];
   }>
 >;
 
@@ -41,6 +42,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
   const router = useRouter();
   const [level, setLevel] = useState<string>("all");
   const [weekday, setWeekday] = useState<string>("all");
+  const [selectedInstructor, setSelectedInstructor] = useState<string>("all");
   const [data, setData] = useState<AvailabilityData | null>(null);
   const [loading, setLoading] = useState(true);
   const [termName, setTermName] = useState("");
@@ -54,6 +56,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
 
   useEffect(() => {
     setSelectedTime("all");
+    setSelectedInstructor("all");
   }, [weekday]);
 
   useEffect(() => {
@@ -79,6 +82,17 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
   const weekdays = [0, 1, 2, 3, 4, 5, 6]; // Sun-Sat
 
   const isSingleDay = weekday !== "all";
+
+  // Compute unique instructors from loaded data
+  const allInstructors = new Set<string>();
+  if (data) {
+    Object.values(data).forEach((classes) => {
+      classes.forEach((c) => {
+        c.instructors.forEach((i) => allInstructors.add(i));
+      });
+    });
+  }
+  const uniqueInstructors = Array.from(allInstructors).sort();
 
   return (
     <main className="p-4 md:p-6 pb-20 max-w-7xl mx-auto space-y-6">
@@ -122,6 +136,23 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
               ))}
             </SelectContent>
           </Select>
+
+          <Select
+            value={selectedInstructor}
+            onValueChange={setSelectedInstructor}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Instructor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Instructors</SelectItem>
+              {uniqueInstructors.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -159,8 +190,17 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
 
             const displayedClasses =
               isSingleDay && selectedTime !== "all"
-                ? dayClasses.filter((c) => c.time === selectedTime)
-                : dayClasses;
+                ? dayClasses.filter(
+                    (c) =>
+                      c.time === selectedTime &&
+                      (selectedInstructor === "all" ||
+                        c.instructors.includes(selectedInstructor)),
+                  )
+                : dayClasses.filter(
+                    (c) =>
+                      selectedInstructor === "all" ||
+                      c.instructors.includes(selectedInstructor),
+                  );
 
             return (
               <div key={wd} className="space-y-3">

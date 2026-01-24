@@ -6,12 +6,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@nestjs/core");
 const app_module_1 = require("./app.module");
 const helmet_1 = __importDefault(require("helmet"));
+const compression_1 = __importDefault(require("compression"));
+const prisma_client_exception_filter_1 = require("./common/filters/prisma-client-exception.filter");
 BigInt.prototype.toJSON = function () {
     return this.toString(); // Serialize BigInt IDs as strings
 };
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const httpAdapter = app.get(core_1.HttpAdapterHost);
+    app.useGlobalFilters(new prisma_client_exception_filter_1.PrismaClientExceptionFilter(httpAdapter));
     app.use((0, helmet_1.default)());
+    app.use((0, compression_1.default)());
     app.enableCors({
         origin: process.env.CORS_ORIGIN
             ? process.env.CORS_ORIGIN.split(",")

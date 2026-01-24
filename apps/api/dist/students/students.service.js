@@ -42,9 +42,33 @@ let StudentsService = class StudentsService {
             ...(query
                 ? {
                     OR: [
-                        { firstName: { contains: query, mode: "insensitive" } },
-                        { lastName: { contains: query, mode: "insensitive" } },
-                        { shortCode: { contains: query, mode: "insensitive" } },
+                        { firstName: { contains: query.trim(), mode: "insensitive" } },
+                        { lastName: { contains: query.trim(), mode: "insensitive" } },
+                        { shortCode: { contains: query.trim(), mode: "insensitive" } },
+                        ...(query.trim().indexOf(" ") > 0
+                            ? [
+                                {
+                                    AND: [
+                                        {
+                                            firstName: {
+                                                contains: query.trim().split(/\s+/)[0],
+                                                mode: "insensitive",
+                                            },
+                                        },
+                                        {
+                                            lastName: {
+                                                contains: query
+                                                    .trim()
+                                                    .split(/\s+/)
+                                                    .slice(1)
+                                                    .join(" "),
+                                                mode: "insensitive",
+                                            },
+                                        },
+                                    ],
+                                },
+                            ]
+                            : []),
                     ],
                 }
                 : {}),
@@ -143,6 +167,18 @@ let StudentsService = class StudentsService {
                             select: {
                                 id: true,
                                 status: true,
+                                classSessionId: true,
+                                classSession: {
+                                    select: {
+                                        id: true,
+                                        date: true,
+                                    },
+                                },
+                            },
+                        },
+                        enrollmentSkips: {
+                            select: {
+                                id: true,
                                 classSessionId: true,
                                 classSession: {
                                     select: {

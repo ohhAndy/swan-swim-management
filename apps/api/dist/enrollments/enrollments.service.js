@@ -119,6 +119,7 @@ let EnrollmentsService = class EnrollmentsService {
                     enrollDate: new Date(),
                     transferredFromId: enrollmentId,
                     createdBy: staffUser.id,
+                    classRatio: currEnrollment.classRatio,
                 },
             });
             // Map sessions and identify which new sessions should have attendance vs skips

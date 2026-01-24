@@ -64,19 +64,19 @@ export default function CreateInvoiceForm() {
   const [guardianSearch, setGuardianSearch] = useState("");
   const [guardians, setGuardians] = useState<GuardianLite[]>([]);
   const [selectedGuardian, setSelectedGuardian] = useState<GuardianLite | null>(
-    null
+    null,
   );
 
   const [enrollments, setEnrollments] = useState<UnInvoicedEnrollment[]>([]);
   const [selectedEnrollments, setSelectedEnrollments] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [skipGuardian, setSkipGuardian] = useState(false);
 
   const [customLineItems, setCustomLineItems] = useState<LineItem[]>([]);
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(
-    new Date().toLocaleDateString("en-CA")
+    new Date().toLocaleDateString("en-CA"),
   );
   const [notes, setNotes] = useState("");
   const [enrollmentAmounts, setEnrollmentAmounts] = useState<
@@ -145,7 +145,7 @@ export default function CreateInvoiceForm() {
   function updateCustomLineItem(
     index: number,
     field: string,
-    value: number | string
+    value: number | string,
   ) {
     const updated = [...customLineItems];
     updated[index] = { ...updated[index], [field]: value };
@@ -162,7 +162,7 @@ export default function CreateInvoiceForm() {
       .filter((e) => selectedEnrollments.has(e.id))
       .reduce((sum, e) => {
         const val = parseFloat(
-          enrollmentAmounts[e.id] ?? e.suggestedAmount.toString()
+          enrollmentAmounts[e.id] ?? e.suggestedAmount.toString(),
         );
         return sum + (isNaN(val) ? 0 : val);
       }, 0);
@@ -170,7 +170,7 @@ export default function CreateInvoiceForm() {
     // Sum custom line items
     const customTotal = customLineItems.reduce(
       (sum, item) => sum + item.amount,
-      0
+      0,
     );
 
     return enrollmentTotal + customTotal;
@@ -213,7 +213,7 @@ export default function CreateInvoiceForm() {
             amount:
               parseFloat(
                 enrollmentAmounts[enrollment.id] ??
-                  enrollment.suggestedAmount.toString()
+                  enrollment.suggestedAmount.toString(),
               ) || 0,
           });
         });
@@ -241,7 +241,7 @@ export default function CreateInvoiceForm() {
     } catch (error) {
       console.error("Failed to create invoice:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to create invoice"
+        error instanceof Error ? error.message : "Failed to create invoice",
       );
     } finally {
       setLoading(false);
@@ -298,6 +298,14 @@ export default function CreateInvoiceForm() {
                       {guardian.email && (
                         <div className="text-sm text-muted-foreground">
                           {guardian.email}
+                        </div>
+                      )}
+                      {guardian.students && guardian.students.length > 0 && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Students:{" "}
+                          {guardian.students
+                            .map((s) => `${s.firstName} ${s.lastName}`)
+                            .join(", ")}
                         </div>
                       )}
                     </button>
@@ -430,7 +438,7 @@ export default function CreateInvoiceForm() {
                         updateCustomLineItem(
                           index,
                           "description",
-                          e.target.value
+                          e.target.value,
                         )
                       }
                     />
@@ -445,7 +453,7 @@ export default function CreateInvoiceForm() {
                         updateCustomLineItem(
                           index,
                           "amount",
-                          parseFloat(e.target.value) || 0
+                          parseFloat(e.target.value) || 0,
                         )
                       }
                     />

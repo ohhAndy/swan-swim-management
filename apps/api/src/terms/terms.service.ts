@@ -74,7 +74,7 @@ export class TermsService {
   async createTermWithSchedule(
     input: CreateTermInput,
     user: any,
-    locationId?: string
+    locationId?: string,
   ) {
     const { name, slug, startDate, endDate, weeks = 8, templates } = input;
     const start = new Date(startDate);
@@ -102,16 +102,16 @@ export class TermsService {
           assignedLocationId = staffUser.accessibleLocations[0].id;
         } else {
           throw new BadRequestException(
-            "Location ID required for term creation"
+            "Location ID required for term creation",
           );
         }
       } else {
         const hasAccess = staffUser.accessibleLocations.some(
-          (l) => l.id === locationId
+          (l) => l.id === locationId,
         );
         if (!hasAccess) {
           throw new ForbiddenException(
-            "You do not have access to this location"
+            "You do not have access to this location",
           );
         }
         assignedLocationId = locationId;
@@ -160,8 +160,8 @@ export class TermsService {
                 capacity: t.capacity,
                 notes: t.notes ?? null,
               },
-            })
-          )
+            }),
+          ),
         );
 
         //Create ClassSessions (Individual DATES of the classes)
@@ -189,7 +189,7 @@ export class TermsService {
 
         return newTerm;
       },
-      { maxWait: 10000, timeout: 20000 }
+      { maxWait: 10000, timeout: 20000 },
     );
 
     return term.id;
@@ -229,11 +229,11 @@ export class TermsService {
         where: { termId, weekday: i },
         orderBy: [{ startTime: "asc" }],
         select: { startTime: true, endTime: true },
-      })
+      }),
     );
     const results = await Promise.all(queries);
     const result = results.map((first) =>
-      first ? `${first.startTime}-${first.endTime}` : null
+      first ? `${first.startTime}-${first.endTime}` : null,
     );
     return result;
   }
@@ -253,7 +253,7 @@ export class TermsService {
     weekday: number,
     termId: string,
     startTime: string,
-    endTime: string
+    endTime: string,
   ): Promise<SlotPage> {
     console.time(`[Schedule] Total Query Time`);
 
@@ -410,7 +410,7 @@ export class TermsService {
 
     // Step 4: Fetch all remaining data IN PARALLEL
     console.time(
-      "[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)"
+      "[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)",
     );
     const [
       attendanceRecords,
@@ -513,7 +513,7 @@ export class TermsService {
         // Filter terms that start on the same day as the first future term
         const nextTermIds = futureTerms
           .filter(
-            (t) => t.startDate.toISOString().slice(0, 10) === firstDateStr
+            (t) => t.startDate.toISOString().slice(0, 10) === firstDateStr,
           )
           .map((t) => t.id);
 
@@ -522,7 +522,7 @@ export class TermsService {
     ]);
 
     console.timeEnd(
-      "[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)"
+      "[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)",
     );
 
     // Fetch Next Term Enrollments
@@ -572,7 +572,7 @@ export class TermsService {
       if (a.status === "excused") {
         excusedMap.set(
           a.classSessionId,
-          (excusedMap.get(a.classSessionId) || 0) + 1
+          (excusedMap.get(a.classSessionId) || 0) + 1,
         );
       }
     }
@@ -589,7 +589,7 @@ export class TermsService {
 
       skipCountMap.set(
         skip.classSessionId,
-        (skipCountMap.get(skip.classSessionId) || 0) + 1
+        (skipCountMap.get(skip.classSessionId) || 0) + 1,
       );
     }
 
@@ -604,7 +604,7 @@ export class TermsService {
 
       makeupCountMap.set(
         m.classSessionId,
-        (makeupCountMap.get(m.classSessionId) || 0) + 1
+        (makeupCountMap.get(m.classSessionId) || 0) + 1,
       );
     }
 
@@ -620,7 +620,7 @@ export class TermsService {
       if (t.status === "scheduled" || t.status === "attended") {
         trialCountMap.set(
           t.classSessionId,
-          (trialCountMap.get(t.classSessionId) || 0) + 1
+          (trialCountMap.get(t.classSessionId) || 0) + 1,
         );
       }
     }
@@ -690,7 +690,7 @@ export class TermsService {
           const effectiveCapacity = Math.max(capacity, dynamicMin);
           const openSeats = Math.max(
             0,
-            Math.floor(effectiveCapacity - totalFilled)
+            Math.floor(effectiveCapacity - totalFilled),
           );
 
           // Compatibility variables for return
@@ -745,7 +745,7 @@ export class TermsService {
               reportCardStatus: e.reportCardStatus,
               nextTermStatus: (() => {
                 const nextEnr = nextTermEnrollments.find(
-                  (ne) => ne.studentId === e.student.id
+                  (ne) => ne.studentId === e.student.id,
                 );
                 if (!nextEnr) return "not_registered";
                 return nextEnr.invoiceLineItem?.invoice.status === "paid"
@@ -781,7 +781,7 @@ export class TermsService {
                 staffUserId: i.staffUserId,
                 staffName: i.instructor
                   ? `${i.instructor.firstName} ${i.instructor.lastName}`
-                  : i.staffUser?.fullName ?? "Unknown",
+                  : (i.staffUser?.fullName ?? "Unknown"),
               })),
             },
             roster: rosterRows,
@@ -978,7 +978,7 @@ export class TermsService {
           console.log("[DEBUG] getDailySchedule NextTerms:", nextTerms);
           console.log(
             "[DEBUG] Checking enrollments for studentIds:",
-            studentIds
+            studentIds,
           );
 
           if (studentIds.length === 0) return [];
@@ -1055,7 +1055,7 @@ export class TermsService {
 
         const activeMakeups = sessionMakeups.length;
         const activeTrials = sessionTrials.filter((t) =>
-          ["scheduled", "attended"].includes(t.status)
+          ["scheduled", "attended"].includes(t.status),
         ).length;
 
         // Total filled (float)
@@ -1133,7 +1133,7 @@ export class TermsService {
             staffUserId: i.staffUserId,
             staffName: i.instructor
               ? `${i.instructor.firstName} ${i.instructor.lastName}`
-              : i.staffUser?.fullName ?? "Unknown",
+              : (i.staffUser?.fullName ?? "Unknown"),
           })),
           capacity: offering.capacity,
           filled,
@@ -1169,7 +1169,10 @@ export class TermsService {
       },
       include: {
         instructors: {
-          select: { id: true },
+          select: {
+            id: true,
+            instructor: { select: { firstName: true, lastName: true } },
+          },
           where: { removedAt: null },
         },
         sessions: {
@@ -1223,6 +1226,7 @@ export class TermsService {
           date: string;
           openSeats: number;
         }>;
+        instructors: string[];
       }>
     > = {};
 
@@ -1244,7 +1248,7 @@ export class TermsService {
 
         // Enrollments (exclude skips/excused)
         const skipSet = new Set(
-          sess.enrollmentSkips.map((s) => s.enrollmentId)
+          sess.enrollmentSkips.map((s) => s.enrollmentId),
         );
         const excusedSet = new Set(sess.attendance.map((a) => a.enrollmentId));
 
@@ -1279,6 +1283,13 @@ export class TermsService {
           time: `${off.startTime}-${off.endTime}`,
           capacity: effectiveCapacity, // Return effective capacity
           sessions: availableSessions,
+          instructors: off.instructors
+            .map((i) =>
+              i.instructor
+                ? `${i.instructor.firstName} ${i.instructor.lastName}`
+                : "",
+            )
+            .filter(Boolean),
         });
       }
     }

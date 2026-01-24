@@ -26,7 +26,7 @@ let StaffUsersService = class StaffUsersService {
                 active: true,
             },
             orderBy: {
-                fullName: 'asc',
+                fullName: "asc",
             },
         });
     }
@@ -54,15 +54,19 @@ let StaffUsersService = class StaffUsersService {
                 authId: data.authId,
                 email: data.email,
                 fullName: data.fullName,
-                role: data.role || 'viewer',
+                role: data.role || "viewer",
                 active: true,
+                accessSchedule: data.accessSchedule,
             },
         });
     }
     async updateStaffUser(id, data) {
         return this.prisma.staffUser.update({
             where: { id },
-            data,
+            data: {
+                ...data,
+                accessSchedule: data.accessSchedule,
+            },
         });
     }
 };

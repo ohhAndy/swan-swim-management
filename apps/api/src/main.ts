@@ -1,7 +1,8 @@
-import { NestFactory } from "@nestjs/core";
+import { HttpAdapterHost, NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import helmet from "helmet";
 import compression from "compression";
+import { PrismaClientExceptionFilter } from "./common/filters/prisma-client-exception.filter";
 
 (BigInt.prototype as any).toJSON = function () {
   return this.toString(); // Serialize BigInt IDs as strings
@@ -9,6 +10,10 @@ import compression from "compression";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const httpAdapter = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
+
   app.use(helmet());
   app.use(compression());
   app.enableCors({

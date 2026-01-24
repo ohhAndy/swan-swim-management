@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
 import { AddClassDialog } from "@/components/schedule/AddClassDialog";
 import { PermissionGate } from "@/components/auth/PermissionGate";
+import { SlotNavigator } from "@/components/schedule/SlotNavigator";
 
 function parseRange(range: string) {
   const [start, end] = decodeURIComponent(range).split("-");
@@ -61,6 +62,11 @@ export default async function SlotPageView({
         />
       </div>
       <SlotHeader title={title} subtitle={subtitle}>
+        <SlotNavigator
+          termId={termId}
+          currentWeekday={Number(weekday)}
+          currentSlot={decodeURIComponent(range)}
+        />
         <PermissionGate
           allowedRoles={["admin", "manager"]}
           currentRole={user.role}

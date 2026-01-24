@@ -636,7 +636,7 @@ let TermsService = class TermsService {
                             staffUserId: i.staffUserId,
                             staffName: i.instructor
                                 ? `${i.instructor.firstName} ${i.instructor.lastName}`
-                                : i.staffUser?.fullName ?? "Unknown",
+                                : (i.staffUser?.fullName ?? "Unknown"),
                         })),
                     },
                     roster: rosterRows,
@@ -951,7 +951,7 @@ let TermsService = class TermsService {
                     staffUserId: i.staffUserId,
                     staffName: i.instructor
                         ? `${i.instructor.firstName} ${i.instructor.lastName}`
-                        : i.staffUser?.fullName ?? "Unknown",
+                        : (i.staffUser?.fullName ?? "Unknown"),
                 })),
                 capacity: offering.capacity,
                 filled,
@@ -984,7 +984,10 @@ let TermsService = class TermsService {
             },
             include: {
                 instructors: {
-                    select: { id: true },
+                    select: {
+                        id: true,
+                        instructor: { select: { firstName: true, lastName: true } },
+                    },
                     where: { removedAt: null },
                 },
                 sessions: {
@@ -1074,6 +1077,11 @@ let TermsService = class TermsService {
                     time: `${off.startTime}-${off.endTime}`,
                     capacity: effectiveCapacity, // Return effective capacity
                     sessions: availableSessions,
+                    instructors: off.instructors
+                        .map((i) => i.instructor
+                        ? `${i.instructor.firstName} ${i.instructor.lastName}`
+                        : "")
+                        .filter(Boolean),
                 });
             }
         }
