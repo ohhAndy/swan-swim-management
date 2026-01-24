@@ -8,13 +8,16 @@
 ## 1. Student & Family Management
 
 ### Creating New Students
-1.  Navigate to **Students** > **New Student**.
+1.  Navigate to **Profiles** > **Students** > **New Student**.
 2.  **Guardian Info**: Enter full parent/guardian details including phone and email.
 3.  **Student Info**: Enter name, birthdate, and medical notes.
 4.  **Level**: Select the appropriate swim level (e.g., "Parent & Tot", "Preschool 1").
+Note: If you are missing guardian information, name the email "placeholderxxx@mail.com" so you can find it later and edit it. 
 
 ### Profile Views
 Understanding the layout of Student and Guardian profiles is key to quick management.
+Student profiles are the main interface for managing student information and enrollments.
+Guardian profiles are the main interface for managing guardian information and are useful for tracking multiple children under the same guardian.
 
 #### Student Profile
 - **Information Card**: Displays Level, Birthdate, and Age. Click "Edit" to update levels or personal info.
@@ -56,7 +59,11 @@ Both are scheduled directly from the **Weekly Schedule View**.
 ### Managing Classes
 1.  **Edit Offering**: Click the "Edit" button next to the class title to change the offering name/level.
 2.  **Delete Class**: Click the **Trash Icon** in the class header.
-    - *Note: You cannot delete a class if it has active enrollments.*
+### Quick Navigation (Slot Picker)
+Instead of returning to the full weekly schedule, use the **Slot Picker** dropdowns at the top of the Time Slot view to jump between classes:
+1.  **Weekday Dropdown**: Switch rapidly between days (e.g., jump from Monday to Wednesday).
+2.  **Time Slot Dropdown**: Switch to a different time on the current day.
+    - *Note: If you switch days, the system will attempt to match your current time slot if available.*
 
 ---
 

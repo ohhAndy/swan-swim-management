@@ -75,7 +75,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
   const [editInvoiceNumber, setEditInvoiceNumber] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editStatus, setEditStatus] = useState<"paid" | "partial" | "void">(
-    "partial"
+    "partial",
   );
   const [editDate, setEditDate] = useState("");
 
@@ -88,7 +88,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
   // Payment form state
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(
-    new Date().toLocaleDateString("en-CA")
+    new Date().toLocaleDateString("en-CA"),
   );
   const [paymentMethod, setPaymentMethod] = useState<
     "cash" | "debit" | "visa" | "mastercard" | "etransfer" | "website" | "other"
@@ -114,7 +114,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
         data.lineItems.map((item) => ({
           ...item,
           amount: item.amount.toString(),
-        }))
+        })),
       );
     } catch (error) {
       console.error("Failed to load invoice:", error);
@@ -147,7 +147,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
     } catch (error) {
       console.error("Failed to update invoice:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to update invoice"
+        error instanceof Error ? error.message : "Failed to update invoice",
       );
     }
   }
@@ -164,7 +164,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
 
     if (amount > invoice.balance) {
       toast.error(
-        `Payment cannot exceed balance of $${invoice.balance.toFixed(2)}`
+        `Payment cannot exceed balance of $${invoice.balance.toFixed(2)}`,
       );
       return;
     }
@@ -187,7 +187,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
     } catch (error) {
       console.error("Failed to record payment:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to record payment"
+        error instanceof Error ? error.message : "Failed to record payment",
       );
     } finally {
       setSubmittingPayment(false);
@@ -339,9 +339,9 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                 editMode
                   ? editLineItems.reduce(
                       (sum, i) => sum + (parseFloat(i.amount) || 0),
-                      0
+                      0,
                     )
-                  : invoice.totalAmount
+                  : invoice.totalAmount,
               )}
             </div>
           </CardContent>
@@ -357,13 +357,13 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                 editMode
                   ? editLineItems.reduce(
                       (sum, i) => sum + (parseFloat(i.amount) || 0),
-                      0
+                      0,
                     ) -
                       (invoice.amountPaid || 0) <
                     0 // Handle potentially negative balance display logic if needed (paid > total)
                     ? invoice.amountPaid // Keep paid consistent
                     : invoice.amountPaid
-                  : invoice.amountPaid
+                  : invoice.amountPaid,
               )}
             </div>
           </CardContent>
@@ -380,10 +380,10 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                       0,
                       editLineItems.reduce(
                         (sum, i) => sum + (parseFloat(i.amount) || 0),
-                        0
-                      ) - invoice.amountPaid
+                        0,
+                      ) - invoice.amountPaid,
                     )
-                  : invoice.balance
+                  : invoice.balance,
               )}
             </div>
           </CardContent>
@@ -508,7 +508,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                         formatCurrency(
                           typeof item.amount === "string"
                             ? parseFloat(item.amount)
-                            : item.amount
+                            : item.amount,
                         )
                       )}
                     </TableCell>
@@ -519,7 +519,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                           size="sm"
                           onClick={() => {
                             setEditLineItems(
-                              editLineItems.filter((_, i) => i !== idx)
+                              editLineItems.filter((_, i) => i !== idx),
                             );
                           }}
                         >
@@ -528,7 +528,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                       </TableCell>
                     )}
                   </TableRow>
-                )
+                ),
               )}
             </TableBody>
           </Table>
@@ -575,7 +575,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                   onClick={() => {
                     setPaymentAmount(invoice.balance.toString());
                     setPaymentDate(
-                      new Date(invoice.createdAt).toISOString().split("T")[0]
+                      new Date(invoice.createdAt).toISOString().split("T")[0],
                     );
                     setShowPaymentDialog(true);
                   }}
@@ -626,7 +626,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                               | "mastercard"
                               | "etransfer"
                               | "website"
-                              | "other"
+                              | "other",
                           )
                         }
                       >

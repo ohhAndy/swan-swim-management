@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
+import { AddClassDialog } from "@/components/schedule/AddClassDialog";
 
 import { useRouter } from "next/navigation";
 
@@ -57,6 +58,7 @@ export default function TimeSlots({
               </span>
             </Button>
           ))}
+          <AddClassDialog termId={termId} weekday={weekday} />
         </div>
       </CardContent>
     </Card>

@@ -22,7 +22,7 @@ import { useTransition } from "react";
 interface AddClassDialogProps {
   termId: string;
   weekday: number;
-  startTime: string; // HH:MM
+  startTime?: string; // HH:MM
   duration?: number;
   onSuccess?: () => void;
 }
@@ -40,23 +40,30 @@ export function AddClassDialog({
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
   const [capacity, setCapacity] = useState("3");
+  const [customTime, setCustomTime] = useState("09:00");
+  const [durationMinutes, setDurationMinutes] = useState(
+    duration?.toString() || "30",
+  );
 
   async function handleCreate() {
     if (!title) return;
+    const timeToUse = startTime || customTime;
+    if (!timeToUse) return;
 
     setLoading(true);
     try {
       await createOffering({
         termId,
         weekday,
-        startTime,
+        startTime: timeToUse,
         title,
         capacity: parseInt(capacity) || 3,
-        duration,
+        duration: parseInt(durationMinutes) || 30,
       });
       setOpen(false);
       setTitle("");
       setCapacity("3");
+      setDurationMinutes("30");
       startTransition(() => {
         router.refresh();
       });
@@ -73,19 +80,48 @@ export function AddClassDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
+        <Button
+          size="sm"
+          variant={startTime ? "default" : "outline"}
+          className={startTime ? "gap-2" : "gap-2 w-full mt-2 border-dashed"}
+        >
           <Plus className="h-4 w-4" />
-          Add Class
+          {startTime ? "Add Class" : "Add Slot"}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Class - {startTime}</DialogTitle>
+          <DialogTitle>
+            {startTime ? `Add Class - ${startTime}` : "Add New Time Slot"}
+          </DialogTitle>
           <DialogDescription>
             Create a new class offering for this time slot.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          {!startTime && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="customTime">Time</Label>
+                <Input
+                  id="customTime"
+                  type="time"
+                  value={customTime}
+                  onChange={(e) => setCustomTime(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="duration">Duration (mins)</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  step="5"
+                  value={durationMinutes}
+                  onChange={(e) => setDurationMinutes(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
           <div className="grid gap-2">
             <Label htmlFor="title">Title (Level)</Label>
             <Input
