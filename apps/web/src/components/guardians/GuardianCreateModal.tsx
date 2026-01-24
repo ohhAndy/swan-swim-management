@@ -10,6 +10,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+/*
 import {
   Select,
   SelectTrigger,
@@ -17,6 +18,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+*/
 import { Checkbox } from "@/components/ui/checkbox";
 import { Controller } from "react-hook-form";
 
@@ -86,7 +88,7 @@ const guardianSchema = z.object({
     .string()
     .regex(
       phoneRegex,
-      "Phone number must be in the format 416-416-4166 or 416 416 4166"
+      "Phone number must be in the format 416-416-4166 or 416 416 4166",
     ),
   shortCode: z
     .string()
@@ -127,7 +129,7 @@ export function GuardianCreateModal({
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
+    // setValue,
   } = useForm<FormInput>({
     resolver: zodResolver(guardianSchema),
     defaultValues: {
@@ -254,7 +256,7 @@ export function GuardianCreateModal({
       </div>
 
       <div className="rounded-md border p-3">
-        <div className="mb-2 text-sm font-medium">Billing Address</div>
+        {/* <div className="mb-2 text-sm font-medium">Billing Address</div>
         <div className="grid gap-3 sm:grid-cols-6">
           <div className="sm:col-span-2 space-y-1">
             <Label>Street No.</Label>
@@ -354,7 +356,7 @@ export function GuardianCreateModal({
               </p>
             )}
           </div>
-        </div>
+        </div> */}
 
         <div className="mt-4 space-y-1">
           <Label>Notes (optional)</Label>
