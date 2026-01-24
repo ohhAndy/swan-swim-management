@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class StaffUsersService {
@@ -15,7 +15,7 @@ export class StaffUsersService {
         active: true,
       },
       orderBy: {
-        fullName: 'asc',
+        fullName: "asc",
       },
     });
   }
@@ -44,27 +44,37 @@ export class StaffUsersService {
     authId: string;
     email: string;
     fullName: string;
-    role?: 'admin' | 'manager' | 'supervisor' | 'viewer';
+    role?: "admin" | "manager" | "supervisor" | "viewer";
+    accessSchedule?: Record<string, { start: string; end: string }[]>;
   }) {
     return this.prisma.staffUser.create({
       data: {
         authId: data.authId,
         email: data.email,
         fullName: data.fullName,
-        role: data.role || 'viewer',
+        role: data.role || "viewer",
         active: true,
+        accessSchedule: data.accessSchedule as any,
       },
     });
   }
 
-  async updateStaffUser(id: string, data: {
-    fullName?: string;
-    role?: 'admin' | 'manager' | 'supervisor' | 'viewer';
-    active?: boolean;
-  }) {
+  async updateStaffUser(
+    id: string,
+    data: {
+      fullName?: string;
+      role?: "admin" | "manager" | "supervisor" | "viewer";
+      active?: boolean;
+      accessSchedule?: Record<string, { start: string; end: string }[]>;
+    },
+  ) {
     return this.prisma.staffUser.update({
       where: { id },
-      data,
+
+      data: {
+        ...data,
+        accessSchedule: data.accessSchedule as any,
+      },
     });
   }
 }

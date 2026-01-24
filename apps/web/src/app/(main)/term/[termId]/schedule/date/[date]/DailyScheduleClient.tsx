@@ -1,14 +1,24 @@
 "use client";
 
 import { BackButton } from "@/components/nav/BackButton";
-import { format } from "date-fns";
+import { format, addDays, subDays } from "date-fns";
 import { updateRemarks, updateStudent } from "@/lib/api/students-client";
+import { updateOfferingInfo } from "@/lib/api/schedule-client";
+import { Input } from "@/components/ui/input";
 import { updateReportCardStatus } from "@/lib/api/enrollment-client";
 import { useRouter } from "next/navigation";
 import type { RosterItem } from "@/components/schedule/DailyClassRoster";
 import { DailyClassRoster } from "@/components/schedule/DailyClassRoster";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Calendar, Clock } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  X,
+  Pencil,
+} from "lucide-react";
 import {
   updateMakeupStatus,
   upsertAttendance,
@@ -52,8 +62,12 @@ export default function DailyScheduleClient({
   const router = useRouter();
 
   const [editingClass, setEditingClass] = useState<DailyClass | null>(null);
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [titleInput, setTitleInput] = useState("");
 
   const canEditLevel = userRole === "admin" || userRole === "manager";
+  const canEditTitle =
+    userRole === "admin" || userRole === "manager" || userRole === "supervisor";
 
   const handleLevelUpdate = async (studentId: string, level: string) => {
     await updateStudent(studentId, { level });
@@ -65,9 +79,39 @@ export default function DailyScheduleClient({
       <div className="flex items-center gap-4">
         <BackButton fallbackHref={`/term/${termId}/schedule`} />
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {format(new Date(date + "T00:00:00"), "EEEE, MMMM do, yyyy")}
-          </h1>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => {
+                const prevDate = format(
+                  subDays(new Date(date + "T00:00:00"), 1),
+                  "yyyy-MM-dd",
+                );
+                router.push(`/term/${termId}/schedule/date/${prevDate}`);
+              }}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {format(new Date(date + "T00:00:00"), "EEEE, MMMM do, yyyy")}
+            </h1>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => {
+                const nextDate = format(
+                  addDays(new Date(date + "T00:00:00"), 1),
+                  "yyyy-MM-dd",
+                );
+                router.push(`/term/${termId}/schedule/date/${nextDate}`);
+              }}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
           <p className="text-muted-foreground">{data.termName}</p>
         </div>
       </div>
@@ -87,7 +131,7 @@ export default function DailyScheduleClient({
                     <TabsTrigger key={time} value={time}>
                       {time}
                     </TabsTrigger>
-                  )
+                  ),
                 )}
               </TabsList>
             </div>
@@ -102,9 +146,63 @@ export default function DailyScheduleClient({
                         <CardHeader className="bg-muted/40 py-3 border-b">
                           <div className="flex justify-between items-center">
                             <div>
-                              <CardTitle className="text-lg">
-                                {cls.title}
-                              </CardTitle>
+                              <div className="flex items-center gap-2">
+                                {editingTitleId === cls.offeringId ? (
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      value={titleInput}
+                                      onChange={(e) =>
+                                        setTitleInput(e.target.value)
+                                      }
+                                      className="h-8 w-[200px]"
+                                      autoFocus
+                                    />
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-8 w-8 text-green-600 hover:text-green-700"
+                                      onClick={async () => {
+                                        if (!titleInput.trim()) return;
+                                        await updateOfferingInfo(
+                                          cls.offeringId,
+                                          titleInput,
+                                        );
+                                        setEditingTitleId(null);
+                                        router.refresh();
+                                      }}
+                                    >
+                                      <Check className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-8 w-8 text-red-600 hover:text-red-700"
+                                      onClick={() => setEditingTitleId(null)}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <CardTitle className="text-lg">
+                                      {cls.title}
+                                    </CardTitle>
+                                    {canEditTitle && (
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-6 w-6 text-muted-foreground hover:text-primary"
+                                        onClick={() => {
+                                          setEditingTitleId(cls.offeringId);
+                                          setTitleInput(cls.title);
+                                        }}
+                                      >
+                                        <Pencil className="h-3 w-3" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                               <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                                 <Clock className="w-4 h-4" />
                                 {cls.time}
@@ -153,7 +251,7 @@ export default function DailyScheduleClient({
                                     | "present"
                                     | "absent"
                                     | "excused"
-                                    | ""
+                                    | "",
                                 );
                               } else if (item.type === "makeup") {
                                 await updateMakeupStatus(
@@ -164,12 +262,12 @@ export default function DailyScheduleClient({
                                     | "cancelled"
                                     | "attended"
                                     | "missed"
-                                    | ""
+                                    | "",
                                 ); // item.id is makeupId
                               } else if (item.type === "trial") {
                                 await updateTrialStatus(
                                   item.id,
-                                  status as TrialStatus | ""
+                                  status as TrialStatus | "",
                                 ); // item.id is bookingId
                               }
                               router.refresh();
@@ -182,11 +280,11 @@ export default function DailyScheduleClient({
                             }}
                             onReportCardUpdate={async (
                               enrollmentId,
-                              status
+                              status,
                             ) => {
                               await updateReportCardStatus(
                                 enrollmentId,
-                                status
+                                status,
                               );
                               router.refresh();
                             }}
@@ -196,7 +294,7 @@ export default function DailyScheduleClient({
                       </Card>
                     ))}
                 </TabsContent>
-              )
+              ),
             )}
           </Tabs>
         )}

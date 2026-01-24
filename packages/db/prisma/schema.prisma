@@ -81,6 +81,7 @@ model StaffUser {
   accessibleLocations          Location[]
   tasksAssigned                Task[]            @relation("TaskAssignedTo")
   tasksCreated                 Task[]            @relation("TaskCreatedBy")
+  accessSchedule               Json? // Stores weekly access rules e.g. { "Friday": [{ start: "15:00", end: "21:00" }] }
 }
 
 model AuditLog {

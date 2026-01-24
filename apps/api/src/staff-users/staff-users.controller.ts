@@ -25,7 +25,8 @@ export class StaffUsersController {
       email: string;
       fullName: string;
       role?: "admin" | "manager" | "supervisor" | "viewer";
-    }
+      accessSchedule?: Record<string, { start: string; end: string }[]>;
+    },
   ) {
     return this.staffUsersService.createStaffUser(body);
   }
@@ -38,7 +39,8 @@ export class StaffUsersController {
       fullName?: string;
       role?: "admin" | "manager" | "supervisor" | "viewer";
       active?: boolean;
-    }
+      accessSchedule?: Record<string, { start: string; end: string }[]>;
+    },
   ) {
     return this.staffUsersService.updateStaffUser(id, body);
   }
