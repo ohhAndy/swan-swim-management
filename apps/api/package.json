@@ -17,7 +17,7 @@
     "@nestjs/throttler": "^6.5.0",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
-    "cache-manager": "^7.2.8",
+    "cache-manager": "^6.4.0",
     "compression": "^1.8.1",
     "exceljs": "^4.4.0",
     "helmet": "^8.1.0",

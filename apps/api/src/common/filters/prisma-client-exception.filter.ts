@@ -9,8 +9,6 @@ import { Prisma } from "@prisma/client";
 
 @Catch(Prisma.PrismaClientKnownRequestError)
 export class PrismaClientExceptionFilter extends BaseExceptionFilter {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
   constructor(protected readonly httpAdapterHost: HttpAdapterHost) {
     super(httpAdapterHost.httpAdapter);
   }

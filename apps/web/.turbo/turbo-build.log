@@ -14,33 +14,8 @@
    - Environments: .env.local
 
  [37m[1m [22m[39m Creating an optimized production build ...
-<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (130kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
- ⚠ Compiled with warnings in 524ms
-
-../../node_modules/@supabase/realtime-js/dist/module/lib/websocket-factory.js
-A Node.js API is used (process.versions at line: 39) which is not supported in the Edge Runtime.
-Learn more: https://nextjs.org/docs/api-reference/edge-runtime
-
-Import trace for requested module:
-../../node_modules/@supabase/realtime-js/dist/module/lib/websocket-factory.js
-../../node_modules/@supabase/realtime-js/dist/module/index.js
-../../node_modules/@supabase/supabase-js/dist/index.mjs
-../../node_modules/@supabase/ssr/dist/module/createBrowserClient.js
-../../node_modules/@supabase/ssr/dist/module/index.js
-./src/lib/supabase/middleware.ts
-
-../../node_modules/@supabase/supabase-js/dist/index.mjs
-A Node.js API is used (process.version at line: 395) which is not supported in the Edge Runtime.
-Learn more: https://nextjs.org/docs/api-reference/edge-runtime
-
-Import trace for requested module:
-../../node_modules/@supabase/supabase-js/dist/index.mjs
-../../node_modules/@supabase/ssr/dist/module/createBrowserClient.js
-../../node_modules/@supabase/ssr/dist/module/index.js
-./src/lib/supabase/middleware.ts
-
- [32m[1m✓[22m[39m Compiled successfully in 3.6s
-[?25l [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G[?25h
+ [32m[1m✓[22m[39m Compiled successfully in 2.7s
+[?25l [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G[1A[2K[1G[?25h
 ./src/app/(main)/admin/invoices/new/CreateInvoiceForm.tsx
 106:6  Warning: React Hook useEffect has a missing dependency: 'loadEnrollments'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
 
@@ -51,7 +26,7 @@ Import trace for requested module:
 95:6  Warning: React Hook useEffect has missing dependencies: 'doSearch' and 'submit'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
 
 ./src/components/schedule/ScheduleMakeUpDialog.tsx
-74:6  Warning: React Hook useEffect has missing dependencies: 'doSearch' and 'submit'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+80:6  Warning: React Hook useEffect has missing dependencies: 'doSearch' and 'submit'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
 
 ./src/components/schedule/TransferEnrollmentDialog.tsx
 105:6  Warning: React Hook useEffect has a missing dependency: 'fetchAvailableClasses'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
@@ -62,53 +37,53 @@ Import trace for requested module:
 85:49  Warning: 'session' is defined but never used.  @typescript-eslint/no-unused-vars
 
 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
-[?25l [36m.[39m [2K[1G [36m..[39m [2K[1G [36m...[39m [2K[1G [36m.[39m [2K[1G [36m..[39m [2K[1G[?25h    [32m[1m✓[22m[39m Linting and checking validity of types 
+[?25l [36m.[39m [2K[1G [36m..[39m [2K[1G [36m...[39m [2K[1G [36m.[39m [2K[1G [36m..[39m [2K[1G [36m...[39m [2K[1G[?25h    [32m[1m✓[22m[39m Linting and checking validity of types 
 [?25l [37m[1m [22m[39m Collecting page data  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Collecting page data  [36m..[39m[2K[1G[1A[2K[1G[?25h [37m[1m [22m[39m Collecting page data     [32m[1m✓[22m[39m Collecting page data 
-[?25l [37m[1m [22m[39m Generating static pages (0/14)  [36m[    ][39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Generating static pages (1/14)  [36m[=   ][39m[2K[1G[1A[2K[1G[?25hError getting current user: Error: Dynamic server usage: Route /term couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+[?25l [37m[1m [22m[39m Generating static pages (0/14)  [36m[    ][39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Generating static pages (8/14)  [36m[=   ][39m[2K[1G[1A[2K[1G[?25hError getting current user: Error: Dynamic server usage: Route /tasks couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at s (.next/server/chunks/4635.js:19:21222)
     at n (.next/server/chunks/7529.js:45:3717)
     at f (.next/server/app/api/auth/me/route.js:1:7159)
-    at e (.next/server/chunks/1020.js:1:23550)
-    at n (.next/server/chunks/1020.js:1:10899)
-    at stringify (<anonymous>) {
-  description: "Route /term couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
-Error getting current user: Error: Dynamic server usage: Route /tasks couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at s (.next/server/chunks/4635.js:19:21222)
-    at n (.next/server/chunks/7529.js:45:3717)
-    at f (.next/server/app/api/auth/me/route.js:1:7159)
-    at e (.next/server/chunks/1020.js:1:23550)
+    at e (.next/server/chunks/1020.js:1:23560)
     at n (.next/server/chunks/1020.js:1:10899)
     at stringify (<anonymous>) {
   description: "Route /tasks couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
-Error getting current user: Error: Dynamic server usage: Route /trials couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at s (.next/server/chunks/4635.js:19:21222)
-    at n (.next/server/chunks/7529.js:45:3717)
-    at f (.next/server/app/api/auth/me/route.js:1:7159)
-    at e (.next/server/chunks/1020.js:1:23550)
-    at n (.next/server/chunks/1020.js:1:10899)
-    at stringify (<anonymous>) {
-  description: "Route /trials couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
 Error getting current user: Error: Dynamic server usage: Route /forbidden couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at s (.next/server/chunks/4635.js:19:21222)
     at n (.next/server/chunks/7529.js:45:3717)
     at f (.next/server/app/api/auth/me/route.js:1:7159)
-    at e (.next/server/chunks/1020.js:1:23550)
+    at e (.next/server/chunks/1020.js:1:23560)
     at n (.next/server/chunks/1020.js:1:10899)
     at stringify (<anonymous>) {
   description: "Route /forbidden couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /term couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (.next/server/chunks/4635.js:19:21222)
+    at n (.next/server/chunks/7529.js:45:3717)
+    at f (.next/server/app/api/auth/me/route.js:1:7159)
+    at e (.next/server/chunks/1020.js:1:23560)
+    at n (.next/server/chunks/1020.js:1:10899)
+    at stringify (<anonymous>) {
+  description: "Route /term couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /trials couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (.next/server/chunks/4635.js:19:21222)
+    at n (.next/server/chunks/7529.js:45:3717)
+    at f (.next/server/app/api/auth/me/route.js:1:7159)
+    at e (.next/server/chunks/1020.js:1:23560)
+    at n (.next/server/chunks/1020.js:1:10899)
+    at stringify (<anonymous>) {
+  description: "Route /trials couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
 Error getting current user: Error: Dynamic server usage: Route /admin/instructors/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at s (.next/server/chunks/4635.js:19:21222)
     at n (.next/server/chunks/7529.js:45:3717)
     at f (.next/server/app/api/auth/me/route.js:1:7159)
-    at e (.next/server/chunks/1020.js:1:23550)
+    at e (.next/server/chunks/1020.js:1:23560)
     at n (.next/server/chunks/1020.js:1:10899)
     at stringify (<anonymous>) {
   description: "Route /admin/instructors/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
@@ -124,8 +99,8 @@ Error getting current user: Error: Dynamic server usage: Route /admin/instructor
 ├ ƒ /admin/instructors                                      3.46 kB         [37m[1m169 kB[22m[39m
 ├ ƒ /admin/instructors/[id]                                   502 B         [37m[1m250 kB[22m[39m
 ├ ƒ /admin/instructors/new                                    188 B         [37m[1m250 kB[22m[39m
-├ ƒ /admin/invoices/new                                        9 kB         [37m[1m184 kB[22m[39m
-├ ƒ /admin/students/new                                     2.78 kB         [37m[1m256 kB[22m[39m
+├ ƒ /admin/invoices/new                                     9.06 kB         [37m[1m184 kB[22m[39m
+├ ƒ /admin/students/new                                     2.77 kB         [37m[1m256 kB[22m[39m
 ├ ƒ /admin/terms/new                                         5.8 kB         [37m[1m240 kB[22m[39m
 ├ ƒ /api/auth/logout                                          152 B         [37m[1m102 kB[22m[39m
 ├ ƒ /api/auth/me                                              152 B         [37m[1m102 kB[22m[39m
@@ -143,10 +118,10 @@ Error getting current user: Error: Dynamic server usage: Route /admin/instructor
 ├ ƒ /students/[studentId]                                   5.17 kB         [37m[1m257 kB[22m[39m
 ├ ƒ /tasks                                                  6.68 kB         [37m[1m251 kB[22m[39m
 ├ ƒ /term                                                   2.59 kB         [37m[1m113 kB[22m[39m
-├ ƒ /term/[termId]/availability                             8.05 kB         [37m[1m210 kB[22m[39m
+├ ƒ /term/[termId]/availability                             8.19 kB         [37m[1m211 kB[22m[39m
 ├ ƒ /term/[termId]/schedule                                 2.89 kB         [37m[1m113 kB[22m[39m
-├ ƒ /term/[termId]/schedule/date/[date]                     13.6 kB         [37m[1m238 kB[22m[39m
-├ ƒ /term/[termId]/schedule/weekday/[weekday]/slot/[range]  13.1 kB         [37m[1m241 kB[22m[39m
+├ ƒ /term/[termId]/schedule/date/[date]                     15.1 kB         [37m[1m239 kB[22m[39m
+├ ƒ /term/[termId]/schedule/weekday/[weekday]/slot/[range]  13.5 kB         [37m[1m242 kB[22m[39m
 └ ƒ /trials                                                  6.8 kB         [37m[1m175 kB[22m[39m
 + First Load JS shared by all                                [37m[1m102 kB[22m[39m
   ├ chunks/18-1d63ee0134f9e01b.js                             46 kB
