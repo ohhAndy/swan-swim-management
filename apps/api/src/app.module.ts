@@ -26,7 +26,6 @@ import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { SupabaseAuthGuard } from "./auth/supabase-auth.guard";
 import { RolesGuard } from "./auth/roles.guard";
-import { CacheModule } from "@nestjs/cache-manager";
 
 @Module({
   imports: [
@@ -40,11 +39,6 @@ import { CacheModule } from "@nestjs/cache-manager";
         limit: 100,
       },
     ]),
-    CacheModule.register({
-      isGlobal: true,
-      ttl: 20000, // 20 seconds
-      max: 100, // maximum number of items in cache
-    }),
     PrismaModule,
     TermsModule,
     SessionsModule,
