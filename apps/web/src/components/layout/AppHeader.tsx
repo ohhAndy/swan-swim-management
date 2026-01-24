@@ -49,7 +49,7 @@ export async function AppHeader() {
                   <Link href="/guardians">Guardians</Link>
                 </DropdownMenuItem>
                 <PermissionGate
-                  allowedRoles={["admin"]}
+                  allowedRoles={["admin", "manager"]}
                   currentRole={user.role}
                 >
                   <DropdownMenuItem asChild>
