@@ -23,16 +23,14 @@ export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Get()
-  @Roles("admin", "manager")
-  @Get()
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   findAll(
     @Query("page", new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query("limit", new DefaultValuePipe(50), ParseIntPipe) limit: number,
     @Query("startDate") startDate?: string,
     @Query("endDate") endDate?: string,
     @Query("method") method?: string,
-    @Query("query") query?: string
+    @Query("query") query?: string,
   ) {
     return this.paymentsService.findAll(
       page,
@@ -40,38 +38,38 @@ export class PaymentsController {
       startDate,
       endDate,
       method,
-      query
+      query,
     );
   }
 
   // Record payment - Admin & Manager only
   @Post()
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   create(
     @Body() createPaymentDto: CreatePaymentDto,
-    @CurrentUser() staffUser: any
+    @CurrentUser() staffUser: any,
   ) {
     return this.paymentsService.create(createPaymentDto, staffUser);
   }
 
   // Get all payments for an invoice - Admin & Manager only
   @Get("invoice/:invoiceId")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   findByInvoice(@Param("invoiceId") invoiceId: string) {
     return this.paymentsService.findByInvoice(invoiceId);
   }
 
   // Get single payment - Admin & Manager only
   @Get(":id")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   findOne(@Param("id") id: string) {
     return this.paymentsService.findOne(id);
   }
 
   // Delete payment - Admin only
   @Delete(":id")
-  @Roles("admin")
-  remove(@Param("id") id: string) {
-    return this.paymentsService.remove(id);
+  @Roles("super_admin", "admin")
+  remove(@Param("id") id: string, @CurrentUser() staffUser: any) {
+    return this.paymentsService.remove(id, staffUser);
   }
 }

@@ -35,7 +35,7 @@ let AttendanceController = class AttendanceController {
 exports.AttendanceController = AttendanceController;
 __decorate([
     (0, common_1.Put)(),
-    (0, roles_decorator_1.Roles)('admin', 'manager', 'supervisor'),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager", "supervisor"),
     __param(0, (0, common_1.Body)(new nestjs_zod_1.ZodValidationPipe(attendance_dto_1.UpsertAttendanceSchema))),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -44,7 +44,7 @@ __decorate([
 ], AttendanceController.prototype, "upsert", null);
 __decorate([
     (0, common_1.Patch)("makeup"),
-    (0, roles_decorator_1.Roles)('admin', 'manager', 'supervisor'),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager", "supervisor"),
     __param(0, (0, common_1.Body)(new nestjs_zod_1.ZodValidationPipe(attendance_dto_1.UpdateMakeupAttendanceSchema))),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),

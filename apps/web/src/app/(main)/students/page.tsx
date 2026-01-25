@@ -20,7 +20,11 @@ export default async function StudentsPage({
     redirect("/login");
   }
 
-  if (user.role !== "admin" && user.role !== "manager") {
+  if (
+    user.role !== "super_admin" &&
+    user.role !== "admin" &&
+    user.role !== "manager"
+  ) {
     redirect("/");
   }
 

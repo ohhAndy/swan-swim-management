@@ -1,9 +1,14 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
 @Injectable()
 export class StaffUsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auditLogsService: AuditLogsService,
+  ) {}
 
   async findAll() {
     return this.prisma.staffUser.findMany({
@@ -40,14 +45,17 @@ export class StaffUsersService {
     });
   }
 
-  async createStaffUser(data: {
-    authId: string;
-    email: string;
-    fullName: string;
-    role?: "admin" | "manager" | "supervisor" | "viewer";
-    accessSchedule?: Record<string, { start: string; end: string }[]>;
-  }) {
-    return this.prisma.staffUser.create({
+  async createStaffUser(
+    data: {
+      authId: string;
+      email: string;
+      fullName: string;
+      role?: "admin" | "manager" | "supervisor" | "viewer";
+      accessSchedule?: Record<string, { start: string; end: string }[]>;
+    },
+    adminUser: any,
+  ) {
+    const newUser = await this.prisma.staffUser.create({
       data: {
         authId: data.authId,
         email: data.email,
@@ -57,6 +65,25 @@ export class StaffUsersService {
         accessSchedule: data.accessSchedule as any,
       },
     });
+
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: adminUser.authId },
+    });
+    if (staffUser) {
+      await this.auditLogsService.create({
+        staffId: staffUser.id,
+        action: "create",
+        entityType: "staff_user",
+        entityId: newUser.id,
+        changes: {
+          email: newUser.email,
+          role: newUser.role,
+          fullName: newUser.fullName,
+        },
+      });
+    }
+
+    return newUser;
   }
 
   async updateStaffUser(
@@ -67,14 +94,29 @@ export class StaffUsersService {
       active?: boolean;
       accessSchedule?: Record<string, { start: string; end: string }[]>;
     },
+    adminUser: any,
   ) {
-    return this.prisma.staffUser.update({
+    const updatedUser = await this.prisma.staffUser.update({
       where: { id },
-
       data: {
         ...data,
         accessSchedule: data.accessSchedule as any,
       },
     });
+
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: adminUser.authId },
+    });
+    if (staffUser) {
+      await this.auditLogsService.create({
+        staffId: staffUser.id,
+        action: "update",
+        entityType: "staff_user",
+        entityId: id,
+        changes: data as any,
+      });
+    }
+
+    return updatedUser;
   }
 }

@@ -2,7 +2,7 @@ export interface CurrentUser {
   authId: string;
   email: string;
   fullName: string;
-  role: "admin" | "manager" | "supervisor" | "viewer";
+  role: "super_admin" | "admin" | "manager" | "supervisor" | "viewer";
   active: boolean;
   staffUserId: string;
 }

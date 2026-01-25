@@ -6,9 +6,14 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { CreatePaymentDto } from "./dto/create-payment.dto";
 
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
 @Injectable()
 export class PaymentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auditLogsService: AuditLogsService,
+  ) {}
 
   // Get all payments with pagination and filters
   async findAll(
@@ -17,7 +22,7 @@ export class PaymentsService {
     startDate?: string,
     endDate?: string,
     method?: string,
-    query?: string
+    query?: string,
   ) {
     const skip = (page - 1) * limit;
 
@@ -96,7 +101,7 @@ export class PaymentsService {
 
     if (!invoice) {
       throw new NotFoundException(
-        `Invoice with ID ${createPaymentDto.invoiceId} not found`
+        `Invoice with ID ${createPaymentDto.invoiceId} not found`,
       );
     }
 
@@ -108,7 +113,7 @@ export class PaymentsService {
     // Calculate current amount paid
     const currentAmountPaid = invoice.payments.reduce(
       (sum, payment) => sum + Number(payment.amount),
-      0
+      0,
     );
 
     // Check if payment would exceed total
@@ -119,7 +124,7 @@ export class PaymentsService {
           createPaymentDto.amount
         } would exceed invoice total. Balance remaining: $${
           Number(invoice.totalAmount) - currentAmountPaid
-        }`
+        }`,
       );
     }
 
@@ -206,7 +211,7 @@ export class PaymentsService {
   }
 
   // Delete payment (admin only, recalculates invoice status)
-  async remove(id: string) {
+  async remove(id: string, user?: any) {
     const payment = await this.prisma.payment.findUnique({
       where: { id },
       include: { invoice: { include: { payments: true } } },
@@ -223,11 +228,11 @@ export class PaymentsService {
 
     // Recalculate invoice status
     const remainingPayments = payment.invoice.payments.filter(
-      (p) => p.id !== id
+      (p) => p.id !== id,
     );
     const totalPaid = remainingPayments.reduce(
       (sum, p) => sum + Number(p.amount),
-      0
+      0,
     );
 
     let newStatus: "paid" | "partial" | "void" = "partial";
@@ -243,6 +248,27 @@ export class PaymentsService {
       where: { id: payment.invoiceId },
       data: { status: newStatus },
     });
+
+    // Log the deletion
+    // Payment is deleted, but we can log that it happened.
+    // We need user context for this.
+    if (user) {
+      const staffUser = await this.prisma.staffUser.findUnique({
+        where: { authId: user.authId },
+      });
+      if (staffUser) {
+        await this.auditLogsService.create({
+          staffId: staffUser.id,
+          action: "delete",
+          entityType: "payment",
+          entityId: id,
+          metadata: {
+            amount: payment.amount,
+            invoiceId: payment.invoiceId,
+          },
+        });
+      }
+    }
 
     return { message: "Payment deleted successfully" };
   }

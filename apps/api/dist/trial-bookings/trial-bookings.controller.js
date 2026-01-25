@@ -49,28 +49,28 @@ let TrialBookingsController = class TrialBookingsController {
 exports.TrialBookingsController = TrialBookingsController;
 __decorate([
     (0, common_1.Get)("upcoming"),
-    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager", "supervisor"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], TrialBookingsController.prototype, "getUpcoming", null);
 __decorate([
     (0, common_1.Get)("past"),
-    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager", "supervisor"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], TrialBookingsController.prototype, "getPast", null);
 __decorate([
     (0, common_1.Get)("stats"),
-    (0, roles_decorator_1.Roles)("admin", "manager"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], TrialBookingsController.prototype, "getStats", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)("admin", "manager"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -79,7 +79,7 @@ __decorate([
 ], TrialBookingsController.prototype, "createTrialBooking", null);
 __decorate([
     (0, common_1.Patch)(":id/status"),
-    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager", "supervisor"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -89,7 +89,7 @@ __decorate([
 ], TrialBookingsController.prototype, "updateStatus", null);
 __decorate([
     (0, common_1.Patch)(":id/convert"),
-    (0, roles_decorator_1.Roles)("admin", "manager"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -99,7 +99,7 @@ __decorate([
 ], TrialBookingsController.prototype, "convertToStudent", null);
 __decorate([
     (0, common_1.Delete)(":id"),
-    (0, roles_decorator_1.Roles)("admin", "manager"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),

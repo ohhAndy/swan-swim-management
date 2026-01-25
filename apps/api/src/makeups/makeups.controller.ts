@@ -11,10 +11,10 @@ export class MakeupsController {
   constructor(private readonly makeupsService: MakeupsService) {}
 
   @Post()
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async create(
     @Body() body: { studentId: string; classSessionId: string; notes?: string },
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ) {
     return this.makeupsService.scheduleMakeUp(body, user);
   }

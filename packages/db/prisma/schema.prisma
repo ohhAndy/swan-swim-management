@@ -457,6 +457,7 @@ enum MakeUpStatus {
 }
 
 enum StaffRole {
+  super_admin
   admin
   manager
   supervisor

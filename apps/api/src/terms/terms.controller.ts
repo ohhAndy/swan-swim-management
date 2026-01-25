@@ -23,7 +23,7 @@ export class TermsController {
   constructor(private readonly termsService: TermsService) {}
 
   @Post()
-  @Roles("admin")
+  @Roles("super_admin", "admin")
   async create(
     @Body() body: unknown,
     @CurrentUser() user: any,

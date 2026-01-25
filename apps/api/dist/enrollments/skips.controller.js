@@ -17,35 +17,45 @@ const common_1 = require("@nestjs/common");
 const nestjs_zod_1 = require("nestjs-zod");
 const skips_service_1 = require("./skips.service");
 const skips_dto_1 = require("./dto/skips.dto");
+const supabase_auth_guard_1 = require("../auth/supabase-auth.guard");
+const roles_guard_1 = require("../auth/roles.guard");
+const roles_decorator_1 = require("../auth/roles.decorator");
+const common_2 = require("@nestjs/common");
+const current_user_decorator_1 = require("../auth/current-user.decorator");
 let SkipsController = class SkipsController {
     constructor(skipsService) {
         this.skipsService = skipsService;
     }
-    async add(enrollmentId, body) {
-        return this.skipsService.addSkip(enrollmentId, body);
+    async add(enrollmentId, body, user) {
+        return this.skipsService.addSkip(enrollmentId, body, user);
     }
-    async delete(enrollmentId, classSessionId) {
-        return this.skipsService.deleteSkip(enrollmentId, classSessionId);
+    async delete(enrollmentId, classSessionId, user) {
+        return this.skipsService.deleteSkip(enrollmentId, classSessionId, user);
     }
 };
 exports.SkipsController = SkipsController;
 __decorate([
     (0, common_1.Post)(),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Param)("enrollmentId")),
     __param(1, (0, common_1.Body)(new nestjs_zod_1.ZodValidationPipe(skips_dto_1.addSkipSchema))),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], SkipsController.prototype, "add", null);
 __decorate([
     (0, common_1.Delete)(":classSessionId"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Param)("enrollmentId")),
     __param(1, (0, common_1.Param)("classSessionId")),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], SkipsController.prototype, "delete", null);
 exports.SkipsController = SkipsController = __decorate([
     (0, common_1.Controller)("enrollments/:enrollmentId/skips"),
+    (0, common_2.UseGuards)(supabase_auth_guard_1.SupabaseAuthGuard, roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [skips_service_1.SkipsService])
 ], SkipsController);

@@ -20,8 +20,11 @@ export default async function GuardiansPage({
     redirect("/login");
   }
 
-  // Consistent with StudentsPage, restrict access to admin/manager for now
-  if (user.role !== "admin" && user.role !== "manager") {
+  if (
+    user.role !== "super_admin" &&
+    user.role !== "admin" &&
+    user.role !== "manager"
+  ) {
     redirect("/");
   }
 

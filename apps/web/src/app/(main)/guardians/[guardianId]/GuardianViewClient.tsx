@@ -155,7 +155,7 @@ function getInvoiceStatusBadge(enrollment: EnrollmentData) {
   if (invoice.status === "partial") {
     const paid = invoice.payments.reduce(
       (acc, payment) => acc + Number(payment.amount),
-      0
+      0,
     );
     const balance = Number(invoice.totalAmount) - paid;
     return (
@@ -201,7 +201,7 @@ export default function GuardianViewClient({
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [enrollmentToDelete, setEnrollmentToDelete] = useState<string | null>(
-    null
+    null,
   );
 
   const {
@@ -231,7 +231,7 @@ export default function GuardianViewClient({
     } catch (error) {
       console.error("Failed to update guardian:", error);
       alert(
-        error instanceof Error ? error.message : "Failed to update guardian"
+        error instanceof Error ? error.message : "Failed to update guardian",
       );
     } finally {
       setLoading(false);
@@ -261,7 +261,7 @@ export default function GuardianViewClient({
   // Transfer Handlers
   const handleTransferClick = (
     enrollment: EnrollmentData,
-    student: { id: string; firstName: string; lastName: string }
+    student: { id: string; firstName: string; lastName: string },
   ) => {
     // We need to shape the data for the TransferDialog
     // Ideally, we fetch attendance or just pass empty if checking isn't strict here
@@ -308,7 +308,7 @@ export default function GuardianViewClient({
     } catch (error) {
       console.error("Failed to delete enrollment:", error);
       alert(
-        error instanceof Error ? error.message : "Failed to delete enrollment"
+        error instanceof Error ? error.message : "Failed to delete enrollment",
       );
     } finally {
       setLoading(false);
@@ -340,7 +340,7 @@ export default function GuardianViewClient({
               </CardTitle>
               {!isEditing ? (
                 <PermissionGate
-                  allowedRoles={["admin", "manager"]}
+                  allowedRoles={["super_admin", "admin", "manager"]}
                   currentRole={user.role}
                 >
                   <Button
@@ -523,10 +523,10 @@ export default function GuardianViewClient({
 
           {guardian.students.map((student) => {
             const activeEnrollments = student.enrollments.filter(
-              (e) => e.status === "active"
+              (e) => e.status === "active",
             );
             const otherEnrollments = student.enrollments.filter(
-              (e) => e.status !== "active"
+              (e) => e.status !== "active",
             );
 
             return (
@@ -592,7 +592,7 @@ export default function GuardianViewClient({
                             .map((i) =>
                               i.instructor
                                 ? `${i.instructor.firstName} ${i.instructor.lastName}`
-                                : i.staffUser?.fullName ?? "Unknown"
+                                : (i.staffUser?.fullName ?? "Unknown"),
                             )
                             .join(", ");
                           const invoiceBadge =
@@ -636,7 +636,11 @@ export default function GuardianViewClient({
 
                               <div className="flex items-center gap-2">
                                 <PermissionGate
-                                  allowedRoles={["admin", "manager"]}
+                                  allowedRoles={[
+                                    "super_admin",
+                                    "admin",
+                                    "manager",
+                                  ]}
                                   currentRole={user.role}
                                 >
                                   <Button
@@ -682,7 +686,7 @@ export default function GuardianViewClient({
                             .map((i) =>
                               i.instructor
                                 ? `${i.instructor.firstName} ${i.instructor.lastName}`
-                                : i.staffUser?.fullName ?? "Unknown"
+                                : (i.staffUser?.fullName ?? "Unknown"),
                             )
                             .join(", ");
 

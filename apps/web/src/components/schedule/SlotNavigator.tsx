@@ -48,22 +48,9 @@ export function SlotNavigator({
   }, [termId, currentWeekday]);
 
   const handleWeekdayChange = (val: string) => {
-    // When weekday changes, we can't keep the slot.
-    // We ideally want to find a comparable slot or default to the first one?
-    // But easier: just go to the weekday view (which might not exist as a page itself if the route is /slot/[range])
-    // The current page is /term/.../slot/[range].
-    // If we change weekday, we MUST pick a slot.
-    // So let's fetch slots for that weekday and pick the first one?
-    // OR, we can just fetch links.
-    // Actually, the UX is better if we just update the weekday and wait for the user to pick a slot?
-    // But we are on a page that REQUIRES a slot.
-    // So let's try to match the current time.
     const newWeekday = Number(val);
     if (newWeekday === currentWeekday) return;
 
-    // Check if current start-end exists in new weekday
-    // We need to fetch slots for the new weekday.
-    // This is async.
     // UX: Redirect to the closest matching slot or first available.
     setLoadingSlots(true);
     getTimeSlotsByWeekday(termId, newWeekday)
@@ -76,7 +63,6 @@ export function SlotNavigator({
             `/term/${termId}/schedule/weekday/${newWeekday}/slot/${s}-${e}`,
           );
         } else {
-          // No slots? maybe just go to daily schedule?
           router.push(`/term/${termId}/schedule/weekday/${newWeekday}`);
         }
       })
@@ -84,7 +70,6 @@ export function SlotNavigator({
   };
 
   const handleSlotChange = (val: string) => {
-    // val is "HH:MM-HH:MM"
     const [s, e] = val.split("-");
     router.push(
       `/term/${termId}/schedule/weekday/${currentWeekday}/slot/${s}-${e}`,

@@ -63,7 +63,7 @@ export async function updateStudent(
     shortCode?: string | null;
     level?: string | null;
     birthdate?: string | null;
-  }
+  },
 ) {
   const headers = await getHeaders();
   const res = await fetch(`${API}/students/${studentId}`, {
@@ -106,6 +106,21 @@ export async function updateRemarks(enrollmentId: string, remarks: string) {
     const errorText = await res.text();
     console.error("API Error:", res.status, res.statusText, errorText);
     throw new Error(`Failed to enroll student: ${res.status} - ${errorText}`);
+  }
+
+  return res.json();
+}
+
+export async function deleteStudent(studentId: string) {
+  const headers = await getHeaders();
+  const res = await fetch(`${API}/students/${studentId}`, {
+    method: "DELETE",
+    headers,
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to delete student: ${res.status} - ${errorText}`);
   }
 
   return res.json();

@@ -34,7 +34,7 @@ export async function AppHeader() {
         {/* spacer */}
         <nav className="ml-auto flex items-center gap-3">
           <PermissionGate
-            allowedRoles={["admin", "manager"]}
+            allowedRoles={["super_admin", "admin", "manager"]}
             currentRole={user.role}
           >
             <DropdownMenu>
@@ -49,7 +49,7 @@ export async function AppHeader() {
                   <Link href="/guardians">Guardians</Link>
                 </DropdownMenuItem>
                 <PermissionGate
-                  allowedRoles={["admin", "manager"]}
+                  allowedRoles={["super_admin", "admin", "manager"]}
                   currentRole={user.role}
                 >
                   <DropdownMenuItem asChild>
@@ -60,7 +60,7 @@ export async function AppHeader() {
             </DropdownMenu>
           </PermissionGate>
           <PermissionGate
-            allowedRoles={["admin", "manager"]}
+            allowedRoles={["super_admin", "admin", "manager"]}
             currentRole={user.role}
           >
             <DropdownMenu>
@@ -69,7 +69,7 @@ export async function AppHeader() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <PermissionGate
-                  allowedRoles={["admin"]}
+                  allowedRoles={["super_admin", "admin"]}
                   currentRole={user.role}
                 >
                   <DropdownMenuItem asChild>
@@ -86,7 +86,7 @@ export async function AppHeader() {
             </DropdownMenu>
           </PermissionGate>
           <PermissionGate
-            allowedRoles={["admin", "manager"]}
+            allowedRoles={["super_admin", "admin", "manager"]}
             currentRole={user.role}
           >
             <Link
@@ -97,7 +97,7 @@ export async function AppHeader() {
             </Link>
           </PermissionGate>
           <PermissionGate
-            allowedRoles={["admin", "manager", "supervisor"]}
+            allowedRoles={["super_admin", "admin", "manager", "supervisor"]}
             currentRole={user.role}
           >
             <Link

@@ -75,7 +75,7 @@ export default function StudentsListClient({
   const [data, setData] = useState(initialData);
   const [query, setQuery] = useState(initialQuery);
   const [enrollmentStatus, setEnrollmentStatus] = useState(
-    initialEnrollmentStatus
+    initialEnrollmentStatus,
   );
   const [level, setLevel] = useState(initialLevel);
   const [loading, setLoading] = useState(false);
@@ -103,7 +103,7 @@ export default function StudentsListClient({
     newQuery?: string,
     newPage?: number,
     newEnrollmentStatus?: string,
-    newLevel?: string
+    newLevel?: string,
   ) => {
     const params = new URLSearchParams(searchParams);
 
@@ -180,7 +180,7 @@ export default function StudentsListClient({
           </p>
         </div>
         <PermissionGate
-          allowedRoles={["admin", "manager"]}
+          allowedRoles={["super_admin", "admin", "manager"]}
           currentRole={user.role}
         >
           <Button onClick={() => router.push("/admin/students/new")}>
@@ -356,7 +356,7 @@ export default function StudentsListClient({
                             </Link>
                           </div>
                           <PermissionGate
-                            allowedRoles={["admin", "manager"]}
+                            allowedRoles={["super_admin", "admin", "manager"]}
                             currentRole={user.role}
                           >
                             <div className="text-sm text-gray-500 hover:text-blue-600 hover:underline">
@@ -369,7 +369,7 @@ export default function StudentsListClient({
                             </div>
                           </PermissionGate>
                           <PermissionGate
-                            allowedRoles={["admin", "manager"]}
+                            allowedRoles={["super_admin", "admin", "manager"]}
                             currentRole={user.role}
                           >
                             <div className="text-sm text-gray-500 hover:text-blue-600 hover:underline">
@@ -384,7 +384,7 @@ export default function StudentsListClient({
                         </td>
                         <td className="p-4 text-gray-600">
                           {new Date(student.createdAt).toLocaleDateString(
-                            "en-CA"
+                            "en-CA",
                           )}
                         </td>
                       </tr>
@@ -427,7 +427,7 @@ export default function StudentsListClient({
                       <div>
                         Enrolled:{" "}
                         {new Date(student.createdAt).toLocaleDateString(
-                          "en-CA"
+                          "en-CA",
                         )}
                       </div>
                     </div>

@@ -11,28 +11,28 @@ export class ExportsController {
   constructor(private readonly exportsService: ExportsService) {}
 
   @Get("payments")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async exportPayments(
     @Query("startDate") startDate: string,
     @Query("endDate") endDate: string,
     @Query("method") method: string,
     @Query("query") query: string,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     const workbook = await this.exportsService.generatePaymentsSheet(
       startDate,
       endDate,
       method,
-      query
+      query,
     );
 
     res.setHeader(
       "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=" + "payments.xlsx"
+      "attachment; filename=" + "payments.xlsx",
     );
 
     await workbook.xlsx.write(res);
@@ -40,28 +40,28 @@ export class ExportsController {
   }
 
   @Get("invoices")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async exportInvoices(
     @Query("startDate") startDate: string,
     @Query("endDate") endDate: string,
     @Query("status") status: string,
     @Query("query") query: string,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     const workbook = await this.exportsService.generateInvoicesSheet(
       startDate,
       endDate,
       status,
-      query
+      query,
     );
 
     res.setHeader(
       "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=" + "invoices.xlsx"
+      "attachment; filename=" + "invoices.xlsx",
     );
 
     await workbook.xlsx.write(res);

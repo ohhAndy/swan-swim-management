@@ -58,7 +58,7 @@ __decorate([
 ], GuardiansController.prototype, "getById", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)('admin', 'manager'),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Body)(new nestjs_zod_1.ZodValidationPipe(schemas_dto_1.createGuardianSchema))),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -67,7 +67,7 @@ __decorate([
 ], GuardiansController.prototype, "create", null);
 __decorate([
     (0, common_1.Patch)(":id"),
-    (0, roles_decorator_1.Roles)('admin', 'manager'),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)(new nestjs_zod_1.ZodValidationPipe(schemas_dto_1.updateGuardianSchema))),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -77,7 +77,7 @@ __decorate([
 ], GuardiansController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(":id"),
-    (0, roles_decorator_1.Roles)('admin', 'manager'),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),

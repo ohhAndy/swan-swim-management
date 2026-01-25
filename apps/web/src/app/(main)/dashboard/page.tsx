@@ -51,9 +51,10 @@ export default async function DashboardPage() {
         <CardContent className="text-gray-600 mt-4 space-y-4">
           <p className="text-center">Here’s your dashboard overview.</p>
 
-          {termToUse && ["admin", "manager"].includes(user?.role || "") && (
-            <StatsOverview termId={termToUse.id} />
-          )}
+          {termToUse &&
+            ["super_admin", "admin", "manager"].includes(user?.role || "") && (
+              <StatsOverview termId={termToUse.id} />
+            )}
 
           {termToUse && (
             <div className="pt-4 border-t">
@@ -67,7 +68,7 @@ export default async function DashboardPage() {
                 </Link>
               </Button>
               <PermissionGate
-                allowedRoles={["admin", "manager"]}
+                allowedRoles={["super_admin", "admin", "manager"]}
                 currentRole={user.role}
               >
                 <Button

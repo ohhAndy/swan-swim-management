@@ -25,27 +25,27 @@ export class OfferingsController {
   async getAvailableForTransfer(
     @Query("termId") termId: string,
     @Query("excludeOfferingId") excludeOfferingId: string,
-    @Query("level") level?: string
+    @Query("level") level?: string,
   ) {
     return this.offeringsService.getOfferingsForTransfer(
       termId,
       excludeOfferingId,
-      level
+      level,
     );
   }
 
   @Patch(":offeringId")
-  @Roles("admin", "manager", "supervisor")
+  @Roles("super_admin", "admin", "manager", "supervisor")
   async updateOfferingInfo(
     @Param("offeringId") offeringId: string,
     @Body() body: { title: string },
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ) {
     return this.offeringsService.updateOfferingInfo(offeringId, body, user);
   }
 
   @Post()
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async createOffering(
     @Body()
     body: {
@@ -57,16 +57,16 @@ export class OfferingsController {
       duration?: number;
       notes?: string;
     },
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ) {
     return this.offeringsService.createOffering(body, user);
   }
 
   @Delete(":offeringId")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async deleteOffering(
     @Param("offeringId") offeringId: string,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ) {
     return this.offeringsService.deleteOffering(offeringId, user);
   }

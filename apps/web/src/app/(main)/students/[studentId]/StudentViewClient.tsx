@@ -40,7 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { updateStudent } from "@/lib/api/students-client";
+import { updateStudent, deleteStudent } from "@/lib/api/students-client";
 import { deleteEnrollment } from "@/lib/api/schedule-client";
 import { updateGuardian } from "@/lib/api/guardian-client";
 
@@ -349,6 +349,28 @@ export default function StudentViewClient({
       setLoading(false);
     }
   };
+  const [deleteStudentDialogOpen, setDeleteStudentDialogOpen] = useState(false);
+
+  const handleDeleteStudentClick = () => {
+    setDeleteStudentDialogOpen(true);
+  };
+
+  const handleDeleteStudentConfirm = async () => {
+    try {
+      setLoading(true);
+      await deleteStudent(student.id);
+      setDeleteStudentDialogOpen(false);
+      // Redirect to guardian page or students list
+      router.push(`/guardians/${student.guardian.id}`);
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to delete student:", error);
+      alert(
+        error instanceof Error ? error.message : "Failed to delete student",
+      );
+      setLoading(false); // Only stop loading on error, otherwise we redirect
+    }
+  };
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-4xl">
@@ -377,13 +399,28 @@ export default function StudentViewClient({
               </CardTitle>
               {!isEditing ? (
                 <PermissionGate
-                  allowedRoles={["admin", "manager"]}
+                  allowedRoles={["super_admin", "admin", "manager"]}
                   currentRole={user.role}
                 >
-                  <Button variant="outline" size="sm" onClick={handleEdit}>
-                    <Edit2 className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
+                  <div className="flex gap-2">
+                    <PermissionGate
+                      allowedRoles={["super_admin", "admin"]}
+                      currentRole={user.role}
+                    >
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleDeleteStudentClick}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </Button>
+                    </PermissionGate>
+                    <Button variant="outline" size="sm" onClick={handleEdit}>
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  </div>
                 </PermissionGate>
               ) : (
                 <div className="flex gap-2">
@@ -567,7 +604,7 @@ export default function StudentViewClient({
 
         {/* Guardian Information Card */}
         <PermissionGate
-          allowedRoles={["admin", "manager"]}
+          allowedRoles={["super_admin", "admin", "manager"]}
           currentRole={user.role}
         >
           <div>
@@ -975,20 +1012,46 @@ export default function StudentViewClient({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
+              This action cannot be undone. This will permanently remove the
               enrollment record.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={loading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {loading ? "Deleting..." : "Delete"}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={deleteStudentDialogOpen}
+        onOpenChange={setDeleteStudentDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Student?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete{" "}
+              <span className="font-medium text-foreground">
+                {student.firstName} {student.lastName}
+              </span>{" "}
+              and all their enrollment history will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteStudentConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Student
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

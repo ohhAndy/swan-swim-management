@@ -48,14 +48,14 @@ let EnrollmentsController = class EnrollmentsController {
 exports.EnrollmentsController = EnrollmentsController;
 __decorate([
     (0, common_1.Get)("uninvoiced"),
-    (0, roles_decorator_1.Roles)("admin", "manager"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], EnrollmentsController.prototype, "findUninvoiced", null);
 __decorate([
     (0, common_1.Post)("with-skip"),
-    (0, roles_decorator_1.Roles)("admin", "manager"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Body)(new nestjs_zod_1.ZodValidationPipe(enrollment_dto_1.EnrollWithSkipSchema))),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -64,7 +64,7 @@ __decorate([
 ], EnrollmentsController.prototype, "enrollWithSkips", null);
 __decorate([
     (0, common_1.Post)(":id/transfer"),
-    (0, roles_decorator_1.Roles)("admin", "manager"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)(new nestjs_zod_1.ZodValidationPipe(transfer_dto_1.transferEnrollmentSchema))),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -74,7 +74,7 @@ __decorate([
 ], EnrollmentsController.prototype, "transferEnrollment", null);
 __decorate([
     (0, common_1.Put)(":id/remarks"),
-    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager", "supervisor"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -84,7 +84,7 @@ __decorate([
 ], EnrollmentsController.prototype, "updateRemarks", null);
 __decorate([
     (0, common_1.Put)(":id/report-card-status"),
-    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager", "supervisor"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -94,7 +94,7 @@ __decorate([
 ], EnrollmentsController.prototype, "updateReportCardStatus", null);
 __decorate([
     (0, common_1.Delete)(":id"),
-    (0, roles_decorator_1.Roles)("admin", "manager"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),

@@ -26,38 +26,38 @@ export class InstructorsController {
   constructor(private readonly instructorsService: InstructorsService) {}
 
   @Post()
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   create(
     @Body() createInstructorDto: CreateInstructorDto,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ) {
     return this.instructorsService.create(createInstructorDto, user);
   }
 
   @Get()
-  @Roles("admin", "manager", "supervisor", "viewer")
+  @Roles("super_admin", "admin", "manager", "supervisor", "viewer")
   findAll(@Query("active") active?: string) {
     return this.instructorsService.findAll(active === "true");
   }
 
   @Get(":id")
-  @Roles("admin", "manager", "supervisor", "viewer")
+  @Roles("super_admin", "admin", "manager", "supervisor", "viewer")
   findOne(@Param("id") id: string) {
     return this.instructorsService.findOne(id);
   }
 
   @Patch(":id")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   update(
     @Param("id") id: string,
     @Body() updateInstructorDto: UpdateInstructorDto,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ) {
     return this.instructorsService.update(id, updateInstructorDto, user);
   }
 
   @Delete(":id")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   remove(@Param("id") id: string, @CurrentUser() user: any) {
     return this.instructorsService.remove(id, user);
   }

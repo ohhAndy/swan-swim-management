@@ -1,11 +1,13 @@
 import { Module } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
 import { SkipsService } from "./skips.service";
 import { SkipsController } from "./skips.controller";
+import { PrismaModule } from "../prisma/prisma.module";
+import { AuditLogsModule } from "../audit-logs/audit-logs.module";
 
 @Module({
-    controllers: [SkipsController],
-    providers: [SkipsService, PrismaService],
-    exports: [SkipsService],
+  imports: [PrismaModule, AuditLogsModule],
+  controllers: [SkipsController],
+  providers: [SkipsService],
+  exports: [SkipsService],
 })
 export class SkipsModule {}

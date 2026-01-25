@@ -19,38 +19,38 @@ export class ClassInstructorsController {
   constructor(private readonly service: ClassInstructorsService) {}
 
   @Post()
-  @Roles("admin", "manager", "supervisor")
+  @Roles("super_admin", "admin", "manager", "supervisor")
   async assignInstructor(
     @Body() body: { classOfferingId: string; instructorId: string },
-    @CurrentUser() staffUser: any
+    @CurrentUser() staffUser: any,
   ) {
     return this.service.assignInstructor(
       body.classOfferingId,
       body.instructorId,
-      staffUser
+      staffUser,
     );
   }
 
   @Delete(":id")
-  @Roles("admin", "manager", "supervisor")
+  @Roles("super_admin", "admin", "manager", "supervisor")
   async removeInstructor(
     @Param("id") id: string,
-    @CurrentUser() staffUser: any
+    @CurrentUser() staffUser: any,
   ) {
     return this.service.removeInstructor(id, staffUser);
   }
 
   @Get("class/:classOfferingId")
-  @Roles("admin", "manager", "supervisor", "viewer")
+  @Roles("super_admin", "admin", "manager", "supervisor", "viewer")
   async getActiveInstructors(
-    @Param("classOfferingId") classOfferingId: string
+    @Param("classOfferingId") classOfferingId: string,
   ) {
     return this.service.getActiveInstructorsForClass(classOfferingId);
   }
 
   @Get("class/:classOfferingId/history")
   async getInstructorHistory(
-    @Param("classOfferingId") classOfferingId: string
+    @Param("classOfferingId") classOfferingId: string,
   ) {
     return this.service.getInstructorHistory(classOfferingId);
   }

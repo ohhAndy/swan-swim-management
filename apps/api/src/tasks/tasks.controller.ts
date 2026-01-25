@@ -22,25 +22,25 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Post()
-  @Roles("admin", "manager", "supervisor")
+  @Roles("super_admin", "admin", "manager", "supervisor")
   create(@Body() createTaskDto: CreateTaskDto, @CurrentUser() user: any) {
     return this.tasksService.create(createTaskDto, user);
   }
 
   @Get()
-  @Roles("admin", "manager", "supervisor")
+  @Roles("super_admin", "admin", "manager", "supervisor")
   findAll(@CurrentUser() user: any) {
     return this.tasksService.findAll(user);
   }
 
   @Get(":id")
-  @Roles("admin", "manager", "supervisor")
+  @Roles("super_admin", "admin", "manager", "supervisor")
   findOne(@Param("id") id: string, @CurrentUser() user: any) {
     return this.tasksService.findOne(id, user);
   }
 
   @Patch(":id")
-  @Roles("admin", "manager", "supervisor")
+  @Roles("super_admin", "admin", "manager", "supervisor")
   update(
     @Param("id") id: string,
     @Body() updateTaskDto: UpdateTaskDto,
@@ -50,7 +50,7 @@ export class TasksController {
   }
 
   @Delete(":id")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   remove(@Param("id") id: string, @CurrentUser() user: any) {
     return this.tasksService.remove(id, user);
   }

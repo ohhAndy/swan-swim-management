@@ -42,7 +42,7 @@ let ClassInstructorsController = class ClassInstructorsController {
 exports.ClassInstructorsController = ClassInstructorsController;
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager", "supervisor"),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -51,7 +51,7 @@ __decorate([
 ], ClassInstructorsController.prototype, "assignInstructor", null);
 __decorate([
     (0, common_1.Delete)(":id"),
-    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager", "supervisor"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -60,7 +60,7 @@ __decorate([
 ], ClassInstructorsController.prototype, "removeInstructor", null);
 __decorate([
     (0, common_1.Get)("class/:classOfferingId"),
-    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor", "viewer"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager", "supervisor", "viewer"),
     __param(0, (0, common_1.Param)("classOfferingId")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

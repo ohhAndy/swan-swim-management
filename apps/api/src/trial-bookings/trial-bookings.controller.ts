@@ -22,25 +22,25 @@ export class TrialBookingsController {
   constructor(private readonly service: TrialBookingsService) {}
 
   @Get("upcoming")
-  @Roles("admin", "manager", "supervisor")
+  @Roles("super_admin", "admin", "manager", "supervisor")
   async getUpcoming() {
     return this.service.findUpcoming();
   }
 
   @Get("past")
-  @Roles("admin", "manager", "supervisor")
+  @Roles("super_admin", "admin", "manager", "supervisor")
   async getPast() {
     return this.service.findPast();
   }
 
   @Get("stats")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async getStats() {
     return this.service.getStats();
   }
 
   @Post()
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async createTrialBooking(
     @Body()
     body: {
@@ -50,7 +50,7 @@ export class TrialBookingsController {
       parentPhone: string;
       notes?: string;
     },
-    @CurrentUser() staffUser: any
+    @CurrentUser() staffUser: any,
   ) {
     return this.service.createTrialBooking(
       body.classSessionId,
@@ -58,35 +58,35 @@ export class TrialBookingsController {
       body.childAge,
       body.parentPhone,
       body.notes || null,
-      staffUser
+      staffUser,
     );
   }
 
   @Patch(":id/status")
-  @Roles("admin", "manager", "supervisor")
+  @Roles("super_admin", "admin", "manager", "supervisor")
   async updateStatus(
     @Param("id") id: string,
     @Body() body: { status: TrialStatus },
-    @CurrentUser() staffUser: any
+    @CurrentUser() staffUser: any,
   ) {
     return this.service.updateTrialStatus(id, body.status, staffUser);
   }
 
   @Patch(":id/convert")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async convertToStudent(
     @Param("id") id: string,
     @Body() body: { studentId: string },
-    @CurrentUser() staffUser: any
+    @CurrentUser() staffUser: any,
   ) {
     return this.service.convertToStudent(id, body.studentId, staffUser);
   }
 
   @Delete(":id")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async deleteTrialBooking(
     @Param("id") id: string,
-    @CurrentUser() staffUser: any
+    @CurrentUser() staffUser: any,
   ) {
     return this.service.deleteTrialBooking(id, staffUser);
   }

@@ -48,7 +48,7 @@ __decorate([
 ], OfferingsController.prototype, "getAvailableForTransfer", null);
 __decorate([
     (0, common_1.Patch)(":offeringId"),
-    (0, roles_decorator_1.Roles)("admin", "manager", "supervisor"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager", "supervisor"),
     __param(0, (0, common_1.Param)("offeringId")),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -58,7 +58,7 @@ __decorate([
 ], OfferingsController.prototype, "updateOfferingInfo", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)("admin", "manager"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -67,7 +67,7 @@ __decorate([
 ], OfferingsController.prototype, "createOffering", null);
 __decorate([
     (0, common_1.Delete)(":offeringId"),
-    (0, roles_decorator_1.Roles)("admin", "manager"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
     __param(0, (0, common_1.Param)("offeringId")),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),

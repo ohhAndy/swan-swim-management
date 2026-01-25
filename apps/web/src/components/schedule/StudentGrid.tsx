@@ -419,7 +419,7 @@ export function StudentGrid({
               className="px-2 py-1 text-center bg-gray-50 group-hover:bg-gray-100 transition-colors"
             >
               <PermissionGate
-                allowedRoles={["admin", "manager"]}
+                allowedRoles={["super_admin", "admin", "manager"]}
                 currentRole={user.role}
               >
                 <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -13,9 +13,14 @@ import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-quer
 import { Prisma } from "@prisma/client";
 import { CreateInvoiceLineItemDto } from "./dto/create-invoice.dto";
 
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
 @Injectable()
 export class InvoicesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auditLogsService: AuditLogsService,
+  ) {}
 
   // Calculate suggested amount for an enrollment based on class ratio and skips
   calculateEnrollmentAmount(enrollment: any): number {
@@ -37,7 +42,7 @@ export class InvoicesService {
   async create(
     createInvoiceDto: CreateInvoiceDto,
     user: any,
-    locationId?: string
+    locationId?: string,
   ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
@@ -76,7 +81,7 @@ export class InvoicesService {
           .map((item) => item.invoice.invoiceNumber || item.invoice.id)
           .join(", ");
         throw new BadRequestException(
-          `Some enrollments are already on invoices: ${invoiceNumbers}`
+          `Some enrollments are already on invoices: ${invoiceNumbers}`,
         );
       }
     }
@@ -119,6 +124,18 @@ export class InvoicesService {
         },
         guardian: true,
         payments: true,
+      },
+    });
+
+    await this.auditLogsService.create({
+      staffId: staffUser.id,
+      action: "create",
+      entityType: "invoice",
+      entityId: invoice.id,
+      changes: {
+        guardianId: invoice.guardianId,
+        totalAmount: invoice.totalAmount,
+        invoiceNumber: invoice.invoiceNumber,
       },
     });
 
@@ -190,7 +207,7 @@ export class InvoicesService {
       where.locationId = validatedLocationId;
     } else if (includeAllLocations && staffUser.role !== "admin") {
       const accessibleLocationIds = staffUser.accessibleLocations.map(
-        (l: any) => l.id
+        (l: any) => l.id,
       );
       where.locationId = { in: accessibleLocationIds };
     }
@@ -367,6 +384,18 @@ export class InvoicesService {
       });
     });
 
+    // Log the update
+    await this.auditLogsService.create({
+      staffId: staffUser.id,
+      action: "update",
+      entityType: "invoice",
+      entityId: invoice.id,
+      changes: {
+        updateData,
+        newTotal: invoice.totalAmount,
+      },
+    });
+
     return this.enrichInvoice(invoice);
   }
 
@@ -374,7 +403,7 @@ export class InvoicesService {
   async getUnInvoicedEnrollments(
     query: UnInvoicedEnrollmentsQueryDto,
     user: any,
-    locationId?: string
+    locationId?: string,
   ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
@@ -421,7 +450,7 @@ export class InvoicesService {
     } else if (includeAllLocations && staffUser.role !== "admin") {
       // If including all locations but user is NOT admin, restrict to accessible locations
       const accessibleLocationIds = staffUser.accessibleLocations.map(
-        (l: any) => l.id
+        (l: any) => l.id,
       );
 
       const locationFilter = {
@@ -482,10 +511,38 @@ export class InvoicesService {
   }
 
   // Delete invoice (admin only, cascades to line items and payments)
-  async remove(id: string) {
+  async remove(id: string, user?: any) {
+    // We need user context for audit logs.
+    // If not provided (legacy calls?), we might skip or fail?
+    // Assuming controller will be updated to pass it.
+
+    // First get the invoice to know who we are deleting
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { id },
+    });
+
     await this.prisma.invoice.delete({
       where: { id },
     });
+
+    if (user && invoice) {
+      const staffUser = await this.prisma.staffUser.findUnique({
+        where: { authId: user.authId },
+      });
+      if (staffUser) {
+        await this.auditLogsService.create({
+          staffId: staffUser.id,
+          action: "delete",
+          entityType: "invoice",
+          entityId: id,
+          metadata: {
+            invoiceNumber: invoice.invoiceNumber,
+            totalAmount: invoice.totalAmount,
+          },
+        });
+      }
+    }
+
     return { message: "Invoice deleted successfully" };
   }
 
@@ -495,7 +552,7 @@ export class InvoicesService {
       invoice.payments?.reduce(
         (sum: number, payment: { amount: number | Prisma.Decimal }) =>
           sum + Number(payment.amount),
-        0
+        0,
       ) ?? 0;
 
     const balance = Number(invoice.totalAmount) - amountPaid;

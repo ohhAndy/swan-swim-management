@@ -27,63 +27,63 @@ export class InvoicesController {
 
   // Create invoice - Admin & Manager only
   @Post()
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async create(
     @Body() createInvoiceDto: CreateInvoiceDto,
     @CurrentUser() staffUser: any,
-    @CurrentLocationId() locationId?: string
+    @CurrentLocationId() locationId?: string,
   ) {
     return this.invoicesService.create(createInvoiceDto, staffUser, locationId);
   }
 
   // List invoices with filters - Admin & Manager only
   @Get()
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async findAll(
     @Query() query: InvoiceQueryDto,
     @CurrentUser() staffUser: any,
-    @CurrentLocationId() locationId?: string
+    @CurrentLocationId() locationId?: string,
   ) {
     return this.invoicesService.findAll(query, staffUser, locationId);
   }
 
   // Get un-invoiced enrollments - Admin & Manager only
   @Get("un-invoiced-enrollments")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async getUnInvoicedEnrollments(
     @Query() query: UnInvoicedEnrollmentsQueryDto,
     @CurrentUser() staffUser: any,
-    @CurrentLocationId() locationId?: string
+    @CurrentLocationId() locationId?: string,
   ) {
     return this.invoicesService.getUnInvoicedEnrollments(
       query,
       staffUser,
-      locationId
+      locationId,
     );
   }
 
   // Get single invoice - Admin & Manager only
   @Get(":id")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async findOne(@Param("id") id: string) {
     return this.invoicesService.findOne(id);
   }
 
   // Update invoice - Admin & Manager only
   @Patch(":id")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async update(
     @Param("id") id: string,
     @Body() updateInvoiceDto: UpdateInvoiceDto,
-    @CurrentUser() staffUser: any
+    @CurrentUser() staffUser: any,
   ) {
     return this.invoicesService.update(id, updateInvoiceDto, staffUser);
   }
 
   // Delete invoice - Admin only
   @Delete(":id")
-  @Roles("admin")
-  async remove(@Param("id") id: string) {
-    return this.invoicesService.remove(id);
+  @Roles("super_admin", "admin")
+  async remove(@Param("id") id: string, @CurrentUser() staffUser: any) {
+    return this.invoicesService.remove(id, staffUser);
   }
 }

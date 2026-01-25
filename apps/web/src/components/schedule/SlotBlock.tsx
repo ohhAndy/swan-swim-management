@@ -220,7 +220,7 @@ export function SlotBlock({
               </div>
 
               <PermissionGate
-                allowedRoles={["admin", "manager"]}
+                allowedRoles={["super_admin", "admin", "manager"]}
                 currentRole={user.role}
               >
                 <Button
@@ -236,7 +236,7 @@ export function SlotBlock({
             <Separator className="bg-black" />
             <div className="flex items-center gap-5 w-full">
               <PermissionGate
-                allowedRoles={["admin", "manager", "supervisor"]}
+                allowedRoles={["super_admin", "admin", "manager", "supervisor"]}
                 currentRole={user.role}
               >
                 <div className="flex items-center gap-2">
@@ -251,7 +251,9 @@ export function SlotBlock({
                     {instructorNames || "No Instructor Assigned"}
                   </Button>
 
-                  {(user.role === "admin" || user.role === "manager") && (
+                  {(user.role === "super_admin" ||
+                    user.role === "admin" ||
+                    user.role === "manager") && (
                     <Button
                       variant="ghost"
                       size="sm"

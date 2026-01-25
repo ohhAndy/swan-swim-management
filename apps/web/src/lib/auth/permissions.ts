@@ -1,4 +1,9 @@
-export type StaffRole = "admin" | "manager" | "supervisor" | "viewer";
+export type StaffRole =
+  | "super_admin"
+  | "admin"
+  | "manager"
+  | "supervisor"
+  | "viewer";
 
 // Permission checking functions
 export function canViewStudents(): boolean {
@@ -6,47 +11,52 @@ export function canViewStudents(): boolean {
 }
 
 export function canEditStudents(role: StaffRole): boolean {
-  return role === "admin" || role === "manager";
+  return role === "super_admin" || role === "admin" || role === "manager";
 }
 
 export function canCreateStudents(role: StaffRole): boolean {
-  return role === "admin" || role === "manager";
+  return role === "super_admin" || role === "admin" || role === "manager";
 }
 
 export function canDeleteStudents(role: StaffRole): boolean {
-  return role === "admin" || role === "manager";
+  return role === "super_admin" || role === "admin" || role === "manager";
 }
 
 export function canEnrollStudents(role: StaffRole): boolean {
-  return role === "admin" || role === "manager";
+  return role === "super_admin" || role === "admin" || role === "manager";
 }
 
 export function canTransferEnrollments(role: StaffRole): boolean {
-  return role === "admin" || role === "manager";
+  return role === "super_admin" || role === "admin" || role === "manager";
 }
 
 export function canScheduleMakeups(role: StaffRole): boolean {
-  return role === "admin" || role === "manager";
+  return role === "super_admin" || role === "admin" || role === "manager";
 }
 
 export function canMarkAttendance(role: StaffRole): boolean {
-  return role === "admin" || role === "manager" || role === "supervisor";
+  return (
+    role === "super_admin" ||
+    role === "admin" ||
+    role === "manager" ||
+    role === "supervisor"
+  );
 }
 
 export function canManageTerms(role: StaffRole): boolean {
-  return role === "admin";
+  return role === "super_admin" || role === "admin";
 }
 
 export function canViewInvoices(role: StaffRole): boolean {
-  return role === "admin" || role === "manager";
+  return role === "super_admin" || role === "admin" || role === "manager";
 }
 
 export function canManageInvoices(role: StaffRole): boolean {
-  return role === "admin";
+  return role === "super_admin" || role === "admin";
 }
 
 export function canManageStaff(role: StaffRole): boolean {
-  return role === "admin";
+  return role === "super_admin" || role === "admin";
 }
 
 // Helper to check if user has permission
@@ -64,7 +74,7 @@ export function hasPermission(
     | "manageTerms"
     | "viewInvoices"
     | "manageInvoices"
-    | "manageStaff"
+    | "manageStaff",
 ): boolean {
   const permissionMap = {
     viewStudents: canViewStudents,

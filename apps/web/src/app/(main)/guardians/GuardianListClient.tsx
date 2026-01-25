@@ -64,7 +64,7 @@ export default function GuardianListClient({
   const updateFilters = async (
     newQuery?: string,
     newPage?: number,
-    newWaiverStatus?: "signed" | "pending" | "all"
+    newWaiverStatus?: "signed" | "pending" | "all",
   ) => {
     const params = new URLSearchParams(searchParams);
 
@@ -87,13 +87,15 @@ export default function GuardianListClient({
     try {
       setLoading(true);
       const effectiveWaiverStatus =
-        newWaiverStatus === "all" ? undefined : newWaiverStatus ?? waiverStatus;
+        newWaiverStatus === "all"
+          ? undefined
+          : (newWaiverStatus ?? waiverStatus);
 
       const newData = await searchGuardiansPage(
         newQuery ?? query,
         newPage ?? initialPage,
         20,
-        { waiverStatus: effectiveWaiverStatus }
+        { waiverStatus: effectiveWaiverStatus },
       );
       setData(newData);
     } catch (error) {
@@ -158,7 +160,7 @@ export default function GuardianListClient({
           </p>
         </div>
         <PermissionGate
-          allowedRoles={["admin", "manager"]}
+          allowedRoles={["super_admin", "admin", "manager"]}
           currentRole={user.role}
         >
           <Button onClick={() => setIsCreateOpen(true)}>

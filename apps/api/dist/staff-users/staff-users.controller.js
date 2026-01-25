@@ -16,6 +16,11 @@ exports.StaffUsersController = void 0;
 const common_1 = require("@nestjs/common");
 const staff_users_service_1 = require("./staff-users.service");
 const public_decorator_1 = require("../auth/public.decorator");
+const roles_decorator_1 = require("../auth/roles.decorator");
+const current_user_decorator_1 = require("../auth/current-user.decorator");
+const common_2 = require("@nestjs/common");
+const supabase_auth_guard_1 = require("../auth/supabase-auth.guard");
+const roles_guard_1 = require("../auth/roles.guard");
 let StaffUsersController = class StaffUsersController {
     constructor(staffUsersService) {
         this.staffUsersService = staffUsersService;
@@ -26,16 +31,17 @@ let StaffUsersController = class StaffUsersController {
     async getByAuthId(authId) {
         return this.staffUsersService.findByAuthId(authId);
     }
-    async createStaffUser(body) {
-        return this.staffUsersService.createStaffUser(body);
+    async createStaffUser(body, user) {
+        return this.staffUsersService.createStaffUser(body, user);
     }
-    async updateStaffUser(id, body) {
-        return this.staffUsersService.updateStaffUser(id, body);
+    async updateStaffUser(id, body, user) {
+        return this.staffUsersService.updateStaffUser(id, body, user);
     }
 };
 exports.StaffUsersController = StaffUsersController;
 __decorate([
     (0, common_1.Get)(),
+    (0, roles_decorator_1.Roles)("super_admin", "admin"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
@@ -50,20 +56,25 @@ __decorate([
 ], StaffUsersController.prototype, "getByAuthId", null);
 __decorate([
     (0, common_1.Post)(),
+    (0, roles_decorator_1.Roles)("super_admin", "admin"),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], StaffUsersController.prototype, "createStaffUser", null);
 __decorate([
     (0, common_1.Patch)(":id"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], StaffUsersController.prototype, "updateStaffUser", null);
 exports.StaffUsersController = StaffUsersController = __decorate([
     (0, common_1.Controller)("staff-users"),
+    (0, common_2.UseGuards)(supabase_auth_guard_1.SupabaseAuthGuard, roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [staff_users_service_1.StaffUsersService])
 ], StaffUsersController);

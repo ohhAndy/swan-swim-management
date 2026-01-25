@@ -15,13 +15,18 @@ export default async function TimeSlotsPage({
   if (!user) redirect("/login");
 
   // Only admin and manager can see the full weekly schedule grid
-  if (user.role !== "admin" && user.role !== "manager") {
+  // Only admin and manager can see the full weekly schedule grid
+  if (
+    user.role !== "super_admin" &&
+    user.role !== "admin" &&
+    user.role !== "manager"
+  ) {
     const today = new Date().toISOString().split("T")[0];
     redirect(`/term/${termId}/schedule/date/${today}`);
   }
 
   const weekdayPromises = Array.from({ length: 7 }).map((_, weekday) =>
-    getTimeSlotsByWeekday(termId, weekday)
+    getTimeSlotsByWeekday(termId, weekday),
   );
 
   const [fetchTitle, ...weeklySlots] = await Promise.all([

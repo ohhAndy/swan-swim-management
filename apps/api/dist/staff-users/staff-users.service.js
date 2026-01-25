@@ -12,9 +12,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StaffUsersService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const audit_logs_service_1 = require("../audit-logs/audit-logs.service");
 let StaffUsersService = class StaffUsersService {
-    constructor(prisma) {
+    constructor(prisma, auditLogsService) {
         this.prisma = prisma;
+        this.auditLogsService = auditLogsService;
     }
     async findAll() {
         return this.prisma.staffUser.findMany({
@@ -48,8 +50,8 @@ let StaffUsersService = class StaffUsersService {
             where: { email },
         });
     }
-    async createStaffUser(data) {
-        return this.prisma.staffUser.create({
+    async createStaffUser(data, adminUser) {
+        const newUser = await this.prisma.staffUser.create({
             data: {
                 authId: data.authId,
                 email: data.email,
@@ -59,19 +61,50 @@ let StaffUsersService = class StaffUsersService {
                 accessSchedule: data.accessSchedule,
             },
         });
+        const staffUser = await this.prisma.staffUser.findUnique({
+            where: { authId: adminUser.authId },
+        });
+        if (staffUser) {
+            await this.auditLogsService.create({
+                staffId: staffUser.id,
+                action: "create",
+                entityType: "staff_user",
+                entityId: newUser.id,
+                changes: {
+                    email: newUser.email,
+                    role: newUser.role,
+                    fullName: newUser.fullName,
+                },
+            });
+        }
+        return newUser;
     }
-    async updateStaffUser(id, data) {
-        return this.prisma.staffUser.update({
+    async updateStaffUser(id, data, adminUser) {
+        const updatedUser = await this.prisma.staffUser.update({
             where: { id },
             data: {
                 ...data,
                 accessSchedule: data.accessSchedule,
             },
         });
+        const staffUser = await this.prisma.staffUser.findUnique({
+            where: { authId: adminUser.authId },
+        });
+        if (staffUser) {
+            await this.auditLogsService.create({
+                staffId: staffUser.id,
+                action: "update",
+                entityType: "staff_user",
+                entityId: id,
+                changes: data,
+            });
+        }
+        return updatedUser;
     }
 };
 exports.StaffUsersService = StaffUsersService;
 exports.StaffUsersService = StaffUsersService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        audit_logs_service_1.AuditLogsService])
 ], StaffUsersService);

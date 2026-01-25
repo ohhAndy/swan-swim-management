@@ -55,7 +55,7 @@ let TermsController = class TermsController {
 exports.TermsController = TermsController;
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)("admin"),
+    (0, roles_decorator_1.Roles)("super_admin", "admin"),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __param(2, (0, current_location_decorator_1.CurrentLocationId)()),

@@ -29,57 +29,57 @@ export class EnrollmentsController {
   constructor(private readonly enrollmentsService: EnrollmentsService) {}
 
   @Get("uninvoiced")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async findUninvoiced() {
     return this.enrollmentsService.findUninvoiced();
   }
 
   @Post("with-skip")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async enrollWithSkips(
     @Body(new ZodValidationPipe(EnrollWithSkipSchema))
     body: EnrollWithSkipInput,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ) {
     return this.enrollmentsService.enrollWithSkips(body, user);
   }
 
   @Post(":id/transfer")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async transferEnrollment(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(transferEnrollmentSchema))
     body: TransferEnrollmentDto,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ) {
     return this.enrollmentsService.transferEnrollment(id, body, user);
   }
 
   @Put(":id/remarks")
-  @Roles("admin", "manager", "supervisor")
+  @Roles("super_admin", "admin", "manager", "supervisor")
   async updateRemarks(
     @Param("id") id: string,
     @Body() body: any,
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ) {
     return this.enrollmentsService.updateRemarks(id, body, user);
   }
 
   @Put(":id/report-card-status")
-  @Roles("admin", "manager", "supervisor")
+  @Roles("super_admin", "admin", "manager", "supervisor")
   async updateReportCardStatus(
     @Param("id") id: string,
     @Body() body: { status: string },
-    @CurrentUser() user: any
+    @CurrentUser() user: any,
   ) {
     return this.enrollmentsService.updateReportCardStatus(
       id,
       body.status,
-      user
+      user,
     );
   }
   @Delete(":id")
-  @Roles("admin", "manager")
+  @Roles("super_admin", "admin", "manager")
   async deleteEnrollment(@Param("id") id: string, @CurrentUser() user: any) {
     return this.enrollmentsService.deleteEnrollment(id, user);
   }

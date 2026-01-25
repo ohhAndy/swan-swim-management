@@ -31,6 +31,7 @@ const exports_module_1 = require("./exports/exports.module");
 const locations_module_1 = require("./locations/locations.module");
 const tasks_module_1 = require("./tasks/tasks.module");
 const health_module_1 = require("./health/health.module");
+const audit_logs_module_1 = require("./audit-logs/audit-logs.module");
 const core_1 = require("@nestjs/core");
 const throttler_1 = require("@nestjs/throttler");
 const supabase_auth_guard_1 = require("./auth/supabase-auth.guard");
@@ -63,7 +64,7 @@ exports.AppModule = AppModule = __decorate([
             offerings_module_1.OfferingsModule,
             staff_user_module_1.StaffUsersModule,
             auth_module_1.AuthModule,
-            instructor_module_1.InstructorsModule, // New Module
+            instructor_module_1.InstructorsModule,
             class_instructors_module_1.ClassInstructorsModule,
             trial_bookings_module_1.TrialBookingsModule,
             invoices_module_1.InvoicesModule,
@@ -76,6 +77,7 @@ exports.AppModule = AppModule = __decorate([
             locations_module_1.LocationsModule,
             tasks_module_1.TasksModule,
             health_module_1.HealthModule,
+            audit_logs_module_1.AuditLogsModule,
         ],
         providers: [
             {
