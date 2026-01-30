@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const CreateInvoiceLineSchema = z.object({
   enrollmentId: z.string().optional(),
+  inventoryItemId: z.string().optional(),
   description: z.string(),
   amount: z.number().min(0),
 });

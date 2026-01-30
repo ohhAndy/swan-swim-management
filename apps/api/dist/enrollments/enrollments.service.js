@@ -388,12 +388,23 @@ let EnrollmentsService = class EnrollmentsService {
         });
         return { success: true };
     }
-    async findUninvoiced() {
+    async findUninvoiced(query) {
+        const where = {
+            status: "active",
+            invoiceLineItem: null,
+        };
+        const offeringWhere = {};
+        if (query?.termId) {
+            offeringWhere.termId = query.termId;
+        }
+        if (query?.locationId) {
+            offeringWhere.term = { locationId: query.locationId };
+        }
+        if (Object.keys(offeringWhere).length > 0) {
+            where.offering = offeringWhere;
+        }
         return this.prisma.enrollment.findMany({
-            where: {
-                status: "active",
-                invoiceLineItem: null,
-            },
+            where,
             include: {
                 student: {
                     include: {
@@ -402,7 +413,11 @@ let EnrollmentsService = class EnrollmentsService {
                 },
                 offering: {
                     include: {
-                        term: true,
+                        term: {
+                            include: {
+                                location: true,
+                            },
+                        },
                     },
                 },
             },

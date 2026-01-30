@@ -65,9 +65,15 @@ export default function DailyScheduleClient({
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [titleInput, setTitleInput] = useState("");
 
-  const canEditLevel = userRole === "admin" || userRole === "manager";
+  const canEditLevel =
+    userRole === "admin" ||
+    userRole === "manager" ||
+    userRole === "super_admin";
   const canEditTitle =
-    userRole === "admin" || userRole === "manager" || userRole === "supervisor";
+    userRole === "admin" ||
+    userRole === "manager" ||
+    userRole === "supervisor" ||
+    userRole === "super_admin";
 
   const handleLevelUpdate = async (studentId: string, level: string) => {
     await updateStudent(studentId, { level });

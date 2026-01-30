@@ -196,7 +196,9 @@ export class TermsService {
   }
 
   async getAllTerms(locationId?: string): Promise<Term[]> {
-    const where = locationId ? { locationId } : {};
+    const where: Prisma.TermWhereInput = locationId
+      ? { OR: [{ locationId }, { locationId: null }] }
+      : {};
     const terms = await this.prisma.term.findMany({
       where,
       select: {
@@ -204,6 +206,8 @@ export class TermsService {
         name: true,
         startDate: true,
         endDate: true,
+        locationId: true,
+        location: { select: { name: true } },
       },
     });
     return terms;
@@ -454,6 +458,7 @@ export class TermsService {
           classSessionId: true,
           studentId: true,
           status: true,
+          classRatio: true,
           student: {
             select: {
               firstName: true,
@@ -476,6 +481,7 @@ export class TermsService {
           childAge: true,
           parentPhone: true,
           status: true,
+          classRatio: true,
           notes: true,
         },
       }),
@@ -669,10 +675,8 @@ export class TermsService {
           const sessionMakeUps = makeUpsBySession.get(s.id) ?? [];
           let makeupWeighted = 0;
           for (const m of sessionMakeUps) {
-            // We don't have ratio on student, only level. We can't infer ratio from level easily without map.
-            // But existing enrollments have `classRatio`.
-            // For now, let's stick to 1.0 for makeups/trials to be safe, or 1.0 per person.
-            makeupWeighted += 1;
+            const ratio = m.classRatio || "3:1";
+            makeupWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
           }
 
           // Trials
@@ -680,7 +684,8 @@ export class TermsService {
           let trialsWeighted = 0;
           for (const t of sessionTrials) {
             if (t.status === "scheduled" || t.status === "attended") {
-              trialsWeighted += 1;
+              const ratio = t.classRatio || "3:1";
+              trialsWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
             }
           }
 
@@ -704,6 +709,7 @@ export class TermsService {
             level: m.student.level,
             shortCode: m.student.shortCode,
             status: m.status,
+            classRatio: m.classRatio,
             birthDate: m.student.birthdate?.toISOString() ?? null,
           }));
 
@@ -713,6 +719,7 @@ export class TermsService {
             childAge: t.childAge,
             parentPhone: t.parentPhone,
             status: t.status,
+            classRatio: t.classRatio,
             notes: t.notes,
           }));
 

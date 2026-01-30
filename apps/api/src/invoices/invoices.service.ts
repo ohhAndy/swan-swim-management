@@ -31,7 +31,10 @@ export class InvoicesService {
     };
 
     const rate = rates[enrollment.classRatio as keyof typeof rates] || 50; // Default to 3:1 if unknown
-    const totalWeeks = 8; // Standard term length
+    const totalWeeks =
+      (enrollment.offering as any)?.sessions?.length ||
+      (enrollment as any).totalSessions ||
+      8; // Fallback to 8 if not found
     const skippedWeeks = enrollment.enrollmentSkips?.length || 0;
     const attendingWeeks = totalWeeks - skippedWeeks;
 
@@ -54,18 +57,9 @@ export class InvoicesService {
     const assignedLocationId =
       validateLocationAccess(staffUser, locationId) ?? undefined;
 
-    // Additional check if user tries to create generically but fails helper logic?
-    // Actually helper returns locationId or throws. If null returned (admin global), assignedLocationId is null.
-    // However, Prisma might expect null or string.
-
-    // Original logic had some "assignedLocationId = locationId ?? null" for admin.
-    // And inferred single location for others.
-    // Helper does: return locationId (if passed), return inferred (if not passed), return null (if admin and not passed).
-
-    // So `assignedLocationId` can be string or null.
-
-    // Validate that enrollments aren't already invoiced
     const lineItems: CreateInvoiceLineItemDto[] = createInvoiceDto.lineItems;
+
+    // Enrollments Validation
     const enrollmentIds: string[] = lineItems
       .filter((item) => item.enrollmentId)
       .map((item) => item.enrollmentId!);
@@ -86,45 +80,83 @@ export class InvoicesService {
       }
     }
 
-    // Create invoice with line items
-    const invoice = await this.prisma.invoice.create({
-      data: {
-        invoiceNumber: createInvoiceDto.invoiceNumber,
-        guardianId: createInvoiceDto.guardianId || null,
-        locationId: assignedLocationId,
-        totalAmount: createInvoiceDto.totalAmount,
-        notes: createInvoiceDto.notes,
-        createdAt: createInvoiceDto.createdAt
-          ? new Date(createInvoiceDto.createdAt)
-          : undefined,
-        createdBy: staffUser.id,
-        status: "partial",
-        lineItems: {
-          create: lineItems.map((item) => ({
-            enrollmentId: item.enrollmentId,
-            description: item.description,
-            amount: item.amount,
-          })),
+    // Invoice Number Logic
+    let finalInvoiceNumber = createInvoiceDto.invoiceNumber;
+    if (!finalInvoiceNumber) {
+      // Auto-generate POS number
+      const now = new Date();
+      const yymmdd = now.toISOString().slice(2, 10).replace(/-/g, "");
+      const hhmmss = now.toISOString().slice(11, 19).replace(/:/g, "");
+      finalInvoiceNumber = `POS-${yymmdd}-${hhmmss}`;
+    }
+
+    // Prepare Invoice Data
+    const invoice = await this.prisma.$transaction(async (tx) => {
+      // Decrement Stock for Inventory Items
+      for (const item of lineItems) {
+        if (item.inventoryItemId) {
+          // Check stock
+          const inventoryItem = await tx.inventoryItem.findUnique({
+            where: { id: item.inventoryItemId },
+          });
+
+          if (!inventoryItem)
+            throw new NotFoundException(
+              `Inventory Item ${item.inventoryItemId} not found`,
+            );
+          if (inventoryItem.stock < 1)
+            throw new BadRequestException(
+              `Item ${inventoryItem.name} is out of stock`,
+            );
+
+          // Decrement
+          await tx.inventoryItem.update({
+            where: { id: item.inventoryItemId },
+            data: { stock: { decrement: 1 } },
+          });
+        }
+      }
+
+      return tx.invoice.create({
+        data: {
+          invoiceNumber: finalInvoiceNumber,
+          guardianId: createInvoiceDto.guardianId || null,
+          locationId: assignedLocationId,
+          totalAmount: createInvoiceDto.totalAmount,
+          notes: createInvoiceDto.notes,
+          createdAt: createInvoiceDto.createdAt
+            ? new Date(createInvoiceDto.createdAt)
+            : undefined,
+          createdBy: staffUser.id,
+          status: "partial",
+          lineItems: {
+            create: lineItems.map((item) => ({
+              enrollmentId: item.enrollmentId,
+              inventoryItemId: item.inventoryItemId,
+              description: item.description,
+              amount: item.amount,
+            })),
+          },
         },
-      },
-      include: {
-        lineItems: {
-          include: {
-            enrollment: {
-              include: {
-                student: true,
-                offering: {
-                  include: {
-                    term: true,
+        include: {
+          lineItems: {
+            include: {
+              enrollment: {
+                include: {
+                  student: true,
+                  offering: {
+                    include: {
+                      term: true,
+                    },
                   },
                 },
               },
             },
           },
+          guardian: true,
+          payments: true,
         },
-        guardian: true,
-        payments: true,
-      },
+      });
     });
 
     await this.auditLogsService.create({
@@ -136,6 +168,7 @@ export class InvoicesService {
         guardianId: invoice.guardianId,
         totalAmount: invoice.totalAmount,
         invoiceNumber: invoice.invoiceNumber,
+        isAutoGeneratedNumber: !createInvoiceDto.invoiceNumber,
       },
     });
 
@@ -243,7 +276,6 @@ export class InvoicesService {
       where.guardianId = query.guardianId;
     }
 
-    // Filter by date range
     if (query.startDate || query.endDate) {
       where.createdAt = {};
       if (query.startDate) {
@@ -252,6 +284,13 @@ export class InvoicesService {
       if (query.endDate) {
         where.createdAt.lte = new Date(query.endDate);
       }
+    }
+
+    // Filter by needsRecovery
+    if (query.needsRecovery === "true") {
+      where.lineItems = { none: {} };
+      where.totalAmount = { gt: 0 };
+      where.status = { not: "void" };
     }
 
     const [invoices, total] = await Promise.all([
@@ -485,6 +524,9 @@ export class InvoicesService {
                   location: true,
                 },
               },
+              sessions: {
+                select: { id: true },
+              },
             },
           },
           enrollmentSkips: true,
@@ -494,10 +536,17 @@ export class InvoicesService {
     ]);
 
     // Enrich with suggested amounts
-    const enrichedEnrollments = enrollments.map((enrollment) => ({
-      ...enrollment,
-      suggestedAmount: this.calculateEnrollmentAmount(enrollment),
-    }));
+    const enrichedEnrollments = enrollments.map((enrollment) => {
+      const totalSessions = enrollment.offering.sessions.length;
+      return {
+        ...enrollment,
+        totalSessions,
+        suggestedAmount: this.calculateEnrollmentAmount({
+          ...enrollment,
+          totalSessions,
+        }),
+      };
+    });
 
     return {
       data: enrichedEnrollments,

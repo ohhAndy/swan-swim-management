@@ -60,6 +60,7 @@ export async function scheduleMakeUp(payload: {
   studentId: string;
   classSessionId: string;
   note?: string;
+  classRatio?: string;
 }) {
   const headers = await getHeaders();
   const res = await fetch(`${API}/makeups`, {

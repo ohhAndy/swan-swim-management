@@ -13,7 +13,7 @@ export class LocationsService {
 
     if (!staffUser) return [];
 
-    if (staffUser.role === "admin") {
+    if (staffUser.role === "admin" || staffUser.role === "super_admin") {
       return this.prisma.location.findMany({
         orderBy: { name: "asc" },
       });

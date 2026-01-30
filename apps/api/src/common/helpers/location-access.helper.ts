@@ -2,10 +2,10 @@ import { ForbiddenException, BadRequestException } from "@nestjs/common";
 
 export function validateLocationAccess(
   staffUser: any, // Typed as any to match current usage, refine if StaffUser type available
-  locationId?: string
+  locationId?: string,
 ): string | null {
   // 1. Admin Bypass
-  if (staffUser.role === "admin") {
+  if (staffUser.role === "admin" || staffUser.role === "super_admin") {
     return locationId ?? null;
   }
 
@@ -19,7 +19,7 @@ export function validateLocationAccess(
 
   // 3. Validate Access
   const hasAccess = staffUser.accessibleLocations?.some(
-    (l: any) => l.id === locationId
+    (l: any) => l.id === locationId,
   );
 
   if (!hasAccess) {

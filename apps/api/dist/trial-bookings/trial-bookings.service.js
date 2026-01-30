@@ -16,7 +16,7 @@ let TrialBookingsService = class TrialBookingsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async createTrialBooking(classSessionId, childName, childAge, parentPhone, notes, createdBy) {
+    async createTrialBooking(classSessionId, childName, childAge, parentPhone, notes, classRatio, createdBy) {
         const user = await this.prisma.staffUser.findUnique({
             where: { authId: createdBy.authId },
         });
@@ -43,6 +43,7 @@ let TrialBookingsService = class TrialBookingsService {
                     notes,
                     status: "scheduled",
                     createdBy: user.id,
+                    classRatio: classRatio || "3:1",
                 },
                 include: {
                     classSession: {

@@ -8,8 +8,13 @@ export class MakeupsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async scheduleMakeUp(
-    input: { studentId: string; classSessionId: string; notes?: string },
-    user: any
+    input: {
+      studentId: string;
+      classSessionId: string;
+      notes?: string;
+      classRatio?: string;
+    },
+    user: any,
   ) {
     const { studentId, classSessionId, notes } = input;
 
@@ -37,7 +42,7 @@ export class MakeupsService {
       // Validate Location Access
       validateLocationAccess(
         staffUser,
-        session.offering.term.locationId ?? undefined
+        session.offering.term.locationId ?? undefined,
       );
 
       const dup = await tx.makeUpBooking.findUnique({
@@ -49,7 +54,7 @@ export class MakeupsService {
       const { filled, effectiveCapacity } = await countUsedSeatsForSession(
         tx,
         session.offeringId,
-        session.date
+        session.date,
       );
 
       // Check if adding one more (weight 1.0 assumed for makeup) exceeds capacity
@@ -66,6 +71,7 @@ export class MakeupsService {
           status: "scheduled",
           notes: notes ?? null,
           createdBy: staffUser?.id ?? null,
+          classRatio: input.classRatio ?? "3:1",
         },
         select: { id: true, status: true, student: true, classSession: true },
       });

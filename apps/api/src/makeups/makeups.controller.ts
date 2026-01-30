@@ -13,7 +13,13 @@ export class MakeupsController {
   @Post()
   @Roles("super_admin", "admin", "manager")
   async create(
-    @Body() body: { studentId: string; classSessionId: string; notes?: string },
+    @Body()
+    body: {
+      studentId: string;
+      classSessionId: string;
+      notes?: string;
+      classRatio?: string;
+    },
     @CurrentUser() user: any,
   ) {
     return this.makeupsService.scheduleMakeUp(body, user);

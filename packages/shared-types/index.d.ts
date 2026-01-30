@@ -35,6 +35,7 @@ export type Term = {
   name: string;
   startDate?: string | Date;
   endDate?: string | Date;
+  locationId?: string | null;
 };
 
 export type SessionSummary = {
@@ -65,6 +66,7 @@ export type MakeupLite = {
   shortCode: string | null;
   status: "requested" | "scheduled" | "attended" | "cancelled" | "missed";
   birthDate: string | null;
+  classRatio: string;
 };
 
 export type TrialLite = {
@@ -73,6 +75,7 @@ export type TrialLite = {
   childAge: number;
   parentPhone: string;
   status: TrialStatus;
+  classRatio: string;
   notes: string | null;
 };
 

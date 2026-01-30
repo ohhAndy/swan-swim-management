@@ -73,14 +73,14 @@ export function TrialRow({
             effectiveStatus === "attended"
               ? "P"
               : effectiveStatus === "scheduled"
-              ? "S"
-              : effectiveStatus === "noshow"
-              ? "A"
-              : effectiveStatus === "converted"
-              ? "C"
-              : effectiveStatus === "cancelled"
-              ? "X"
-              : "";
+                ? "S"
+                : effectiveStatus === "noshow"
+                  ? "A"
+                  : effectiveStatus === "converted"
+                    ? "C"
+                    : effectiveStatus === "cancelled"
+                      ? "X"
+                      : "";
 
           const statusClass = getTrialStatusColour(effectiveStatus);
           const updateKey = `trial-${trialStudent.id}`;
@@ -97,7 +97,7 @@ export function TrialRow({
                   disabled={isUpdating}
                   title={`${trialStudent.childName} (Age ${
                     trialStudent.childAge
-                  }) ${
+                  }) - Ratio: ${trialStudent.classRatio || "3:1"} ${
                     isConverted
                       ? "(Converted - No further action)"
                       : `(${trialStudent.status}) - Click to change`

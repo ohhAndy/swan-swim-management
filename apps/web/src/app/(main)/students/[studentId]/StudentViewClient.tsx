@@ -404,7 +404,7 @@ export default function StudentViewClient({
                 >
                   <div className="flex gap-2">
                     <PermissionGate
-                      allowedRoles={["super_admin", "admin"]}
+                      allowedRoles={["super_admin", "admin", "manager"]}
                       currentRole={user.role}
                     >
                       <Button
@@ -886,7 +886,7 @@ export default function StudentViewClient({
                             {badge}
 
                             <PermissionGate
-                              allowedRoles={["admin", "manager"]}
+                              allowedRoles={["admin", "manager", "super_admin"]}
                               currentRole={user.role}
                             >
                               <Button

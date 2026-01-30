@@ -16,7 +16,8 @@ export class TrialBookingsService {
     childAge: number,
     parentPhone: string,
     notes: string | null,
-    createdBy: any
+    classRatio: string,
+    createdBy: any,
   ) {
     const user = await this.prisma.staffUser.findUnique({
       where: { authId: createdBy.authId },
@@ -47,6 +48,7 @@ export class TrialBookingsService {
           notes,
           status: "scheduled",
           createdBy: user.id,
+          classRatio: classRatio || "3:1",
         },
         include: {
           classSession: {
@@ -92,7 +94,7 @@ export class TrialBookingsService {
   async updateTrialStatus(
     trialId: string,
     status: TrialStatus,
-    updatedBy: any
+    updatedBy: any,
   ) {
     const user = await this.prisma.staffUser.findUnique({
       where: { authId: updatedBy.authId },

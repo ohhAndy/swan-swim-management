@@ -63,6 +63,7 @@ let MakeupsService = class MakeupsService {
                     status: "scheduled",
                     notes: notes ?? null,
                     createdBy: staffUser?.id ?? null,
+                    classRatio: input.classRatio ?? "3:1",
                 },
                 select: { id: true, status: true, student: true, classSession: true },
             });

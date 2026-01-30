@@ -70,6 +70,28 @@ export async function getAllPayments({
   return res.json();
 }
 
+export async function createPayment(data: {
+  invoiceId: string;
+  amount: number;
+  paymentDate: string;
+  paymentMethod: string;
+  notes?: string;
+}) {
+  const headers = await getHeaders();
+  const res = await fetch(`${API}/payments`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to create payment: ${errorText}`);
+  }
+
+  return res.json();
+}
+
 export async function exportPayments({
   startDate,
   endDate,

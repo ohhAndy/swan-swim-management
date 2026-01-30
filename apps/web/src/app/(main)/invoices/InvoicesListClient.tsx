@@ -33,7 +33,7 @@ export default function InvoicesListClient() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState<"createdAt" | "invoiceNumber">(
-    "createdAt"
+    "createdAt",
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
@@ -140,6 +140,7 @@ export default function InvoicesListClient() {
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="paid">Paid</SelectItem>
             <SelectItem value="void">Void</SelectItem>
+            <SelectItem value="partial">Partial</SelectItem>
           </SelectContent>
         </Select>
 
@@ -148,7 +149,7 @@ export default function InvoicesListClient() {
           onValueChange={(value) => {
             const [field, order] = value.split("-") as [
               "createdAt" | "invoiceNumber",
-              "asc" | "desc"
+              "asc" | "desc",
             ];
             setSortBy(field);
             setSortOrder(order);
@@ -220,45 +221,76 @@ export default function InvoicesListClient() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow
-                    key={invoice.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => router.push(`/invoices/${invoice.id}`)}
-                  >
-                    <TableCell className="font-medium">
-                      {invoice.invoiceNumber || (
-                        <span className="text-muted-foreground italic">
-                          No number
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {invoice.guardian?.fullName || (
-                        <span className="text-muted-foreground italic">
-                          No Guardian
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{formatDate(invoice.createdAt)}</TableCell>
-                    <TableCell>{formatCurrency(invoice.totalAmount)}</TableCell>
-                    <TableCell>{formatCurrency(invoice.amountPaid)}</TableCell>
-                    <TableCell>{formatCurrency(invoice.balance)}</TableCell>
-                    <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/invoices/${invoice.id}`);
-                        }}
+                {invoices.map((invoice) => {
+                  const isMismatch =
+                    invoice.status === "paid" &&
+                    Math.abs(invoice.amountPaid - invoice.totalAmount) > 0.01;
+                  return (
+                    <TableRow
+                      key={invoice.id}
+                      className={`cursor-pointer hover:bg-muted/50 ${
+                        isMismatch
+                          ? "bg-yellow-50 border-l-4 border-l-yellow-500"
+                          : ""
+                      }`}
+                      onClick={() => router.push(`/invoices/${invoice.id}`)}
+                    >
+                      <TableCell className="font-medium">
+                        {invoice.invoiceNumber || (
+                          <span className="text-muted-foreground italic">
+                            No number
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {invoice.guardian?.fullName || (
+                          <span className="text-muted-foreground italic">
+                            No Guardian
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>{formatDate(invoice.createdAt)}</TableCell>
+                      <TableCell>
+                        {formatCurrency(invoice.totalAmount)}
+                      </TableCell>
+                      <TableCell
+                        className={
+                          isMismatch ? "font-bold text-yellow-700" : ""
+                        }
                       >
-                        View
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                        {formatCurrency(invoice.amountPaid)}
+                        {isMismatch && (
+                          <Badge
+                            variant="outline"
+                            className="ml-2 text-xs border-yellow-500 text-yellow-700"
+                          >
+                            MISMATCH
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell
+                        className={
+                          isMismatch ? "font-bold text-yellow-700" : ""
+                        }
+                      >
+                        {formatCurrency(invoice.balance)}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/invoices/${invoice.id}`);
+                          }}
+                        >
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
@@ -273,8 +305,25 @@ export default function InvoicesListClient() {
               >
                 Previous
               </Button>
+              <Select
+                value={page.toString()}
+                onValueChange={(value) => setPage(parseInt(value))}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Page" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (pageNum) => (
+                      <SelectItem key={pageNum} value={pageNum.toString()}>
+                        Page {pageNum}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
               <span className="text-sm text-muted-foreground">
-                Page {page} of {totalPages}
+                of {totalPages}
               </span>
               <Button
                 variant="outline"

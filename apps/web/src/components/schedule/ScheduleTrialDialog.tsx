@@ -12,6 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { createTrialBooking } from "@/lib/api/trial-client";
 
@@ -36,6 +43,7 @@ export function ScheduleTrialDialog({
   const [childAge, setChildAge] = useState("");
   const [parentPhone, setParentPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [classRatio, setClassRatio] = useState("3:1");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +70,7 @@ export function ScheduleTrialDialog({
         childAge: age,
         parentPhone: parentPhone.trim(),
         notes: notes.trim() || undefined,
+        classRatio,
       });
 
       // Reset form
@@ -69,6 +78,7 @@ export function ScheduleTrialDialog({
       setChildAge("");
       setParentPhone("");
       setNotes("");
+      setClassRatio("3:1");
 
       onSuccess();
       onOpenChange(false);
@@ -84,6 +94,7 @@ export function ScheduleTrialDialog({
     setChildAge("");
     setParentPhone("");
     setNotes("");
+    setClassRatio("3:1");
     setError(null);
     onOpenChange(false);
   };
@@ -159,6 +170,20 @@ export function ScheduleTrialDialog({
               disabled={loading}
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Class Ratio</Label>
+            <Select value={classRatio} onValueChange={setClassRatio}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select ratio" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3:1">3:1</SelectItem>
+                <SelectItem value="2:1">2:1</SelectItem>
+                <SelectItem value="1:1">1:1</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

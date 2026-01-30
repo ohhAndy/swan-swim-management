@@ -6,6 +6,8 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { EnrollWithSkipInput } from "./dto/enrollment.dto";
 import { TransferEnrollmentDto } from "./dto/transfer.dto";
+import { UnInvoicedEnrollmentsQueryDto } from "../invoices/dto/uninvoiced-enrollments-query.dto";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class EnrollmentsService {
@@ -430,12 +432,28 @@ export class EnrollmentsService {
 
     return { success: true };
   }
-  async findUninvoiced() {
+  async findUninvoiced(query?: UnInvoicedEnrollmentsQueryDto) {
+    const where: Prisma.EnrollmentWhereInput = {
+      status: "active",
+      invoiceLineItem: null,
+    };
+
+    const offeringWhere: Prisma.ClassOfferingWhereInput = {};
+
+    if (query?.termId) {
+      offeringWhere.termId = query.termId;
+    }
+
+    if (query?.locationId) {
+      offeringWhere.term = { locationId: query.locationId };
+    }
+
+    if (Object.keys(offeringWhere).length > 0) {
+      where.offering = offeringWhere;
+    }
+
     return this.prisma.enrollment.findMany({
-      where: {
-        status: "active",
-        invoiceLineItem: null,
-      },
+      where,
       include: {
         student: {
           include: {
@@ -444,7 +462,11 @@ export class EnrollmentsService {
         },
         offering: {
           include: {
-            term: true,
+            term: {
+              include: {
+                location: true,
+              },
+            },
           },
         },
       },

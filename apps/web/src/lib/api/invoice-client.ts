@@ -28,9 +28,9 @@ export interface Term {
 
 export interface ClassOffering {
   id: string;
-  dayOfWeek: string;
+  weekday: number;
   startTime: string;
-  level: string;
+  title: string;
   capacity: number;
   term: Term;
 }
@@ -49,8 +49,9 @@ export interface Enrollment {
   classRatio: string;
   status: string;
   student: Student;
-  classOffering: ClassOffering;
+  offering: ClassOffering;
   skips?: EnrollmentSkip[];
+  suggestedAmount?: number;
 }
 
 export interface InvoiceLineItem {
@@ -153,6 +154,7 @@ export async function getInvoices(params?: {
   sortBy?: "createdAt" | "invoiceNumber";
   sortOrder?: "asc" | "desc";
   includeAllLocations?: boolean;
+  needsRecovery?: boolean;
 }) {
   const headers = await getHeaders();
   const queryParams = new URLSearchParams();
@@ -168,6 +170,7 @@ export async function getInvoices(params?: {
   if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
   if (params?.includeAllLocations)
     queryParams.append("includeAllLocations", "true");
+  if (params?.needsRecovery) queryParams.append("needsRecovery", "true");
 
   const res = await fetch(`${API}/invoices?${queryParams}`, {
     headers,
@@ -176,7 +179,7 @@ export async function getInvoices(params?: {
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(
-      `Failed to fetch invoices (${res.status} ${res.statusText}): ${errorText}`
+      `Failed to fetch invoices (${res.status} ${res.statusText}): ${errorText}`,
     );
   }
 
@@ -211,7 +214,7 @@ export async function updateInvoice(
       description?: string;
       amount?: number;
     }[];
-  }
+  },
 ): Promise<Invoice> {
   const headers = await getHeaders();
   const res = await fetch(`${API}/invoices/${id}`, {
@@ -259,11 +262,14 @@ export async function getUnInvoicedEnrollments(params?: {
 
   const res = await fetch(
     `${API}/invoices/un-invoiced-enrollments?${queryParams}`,
-    { headers }
+    { headers },
   );
 
   if (!res.ok) {
-    throw new Error("Failed to fetch un-invoiced enrollments");
+    const errorText = await res.text();
+    throw new Error(
+      `Failed to fetch un-invoiced enrollments (${res.status} ${res.statusText}): ${errorText}`,
+    );
   }
 
   return res.json();
@@ -286,7 +292,7 @@ export async function createPayment(data: CreatePaymentData): Promise<Payment> {
 }
 
 export async function getPaymentsByInvoice(
-  invoiceId: string
+  invoiceId: string,
 ): Promise<Payment[]> {
   const headers = await getHeaders();
   const res = await fetch(`${API}/payments/invoice/${invoiceId}`, {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LocationProvider } from "@/context/LocationContext";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import { Fredoka } from "next/font/google";
 import { Toaster } from "sonner";
 const fredoka = Fredoka({ subsets: ["latin"], weight: "400" });
@@ -21,8 +22,10 @@ export default function RootLayout({
         className={`${fredoka.className} min-h-screen bg-slate-100 text-slate-900`}
       >
         <LocationProvider>
-          <main className="mx-auto max-w-5xl p-6">{children}</main>
-          <Toaster richColors position="top-center" />
+          <QueryProvider>
+            <main className="mx-auto max-w-5xl p-6">{children}</main>
+            <Toaster richColors position="top-center" />
+          </QueryProvider>
         </LocationProvider>
       </body>
     </html>

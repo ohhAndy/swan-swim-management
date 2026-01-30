@@ -28,6 +28,7 @@ model TrialBooking {
   childAge             Int
   parentPhone          String
   status               TrialStatus  @default(scheduled)
+  classRatio           String       @default("3:1") // "3:1", "2:1", "1:1"
   notes                String?
   createdAt            DateTime     @default(now())
   createdBy            String?
@@ -316,20 +317,23 @@ model Invoice {
 }
 
 model InvoiceLineItem {
-  id           String  @id @default(uuid())
-  invoiceId    String
-  enrollmentId String? @unique // Nullable for custom line items, unique so enrollment can only be on one invoice
-  description  String // Auto-generated for enrollments, manual for custom items
-  amount       Decimal @db.Decimal(10, 2)
+  id              String  @id @default(uuid())
+  invoiceId       String
+  enrollmentId    String? @unique // Nullable for custom line items, unique so enrollment can only be on one invoice
+  inventoryItemId String?
+  description     String // Auto-generated for enrollments, manual for custom items
+  amount          Decimal @db.Decimal(10, 2)
 
   createdAt DateTime @default(now())
 
   // Relations
-  invoice    Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  invoice       Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  enrollment    Enrollment?    @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  inventoryItem InventoryItem? @relation(fields: [inventoryItemId], references: [id])
 
   @@index([invoiceId])
   @@index([enrollmentId])
+  @@index([inventoryItemId])
 }
 
 model Payment {
@@ -356,6 +360,7 @@ model MakeUpBooking {
   studentId      String
   classSessionId String
   status         MakeUpStatus @default(requested)
+  classRatio     String       @default("3:1") // "3:1", "2:1", "1:1"
   notes          String?
   createdBy      String?
   createdAt      DateTime     @default(now())
@@ -371,6 +376,22 @@ model MakeUpBooking {
   @@index([createdBy])
   @@index([classSessionId, status])
   @@index([studentId])
+}
+
+model InventoryItem {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  sku         String?  @unique
+  stock       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  invoiceLineItems InvoiceLineItem[]
+
+  @@map("inventory_items")
 }
 
 model ClassInstructor {

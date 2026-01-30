@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getAuditLogs, AuditLog } from "@/lib/api/audit-logs-client";
 import { getCurrentUserClient } from "@/lib/auth/user-client";
 import { useRouter } from "next/navigation";
@@ -13,10 +13,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getAllStaffUsers, StaffUser } from "@/lib/api/staff-client";
 
 export default function AuditLogsPage() {
   const router = useRouter();
@@ -24,6 +31,38 @@ export default function AuditLogsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+
+  const [staffList, setStaffList] = useState<StaffUser[]>([]);
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("all");
+
+  useEffect(() => {
+    async function loadStaff() {
+      try {
+        const users = await getAllStaffUsers();
+        setStaffList(users);
+      } catch (error) {
+        console.error("Failed to load staff users", error);
+      }
+    }
+    loadStaff();
+  }, []);
+
+  const fetchLogs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, total } = await getAuditLogs(
+        page,
+        20,
+        selectedStaffId !== "all" ? { staffId: selectedStaffId } : undefined,
+      );
+      setLogs(data);
+      setTotal(total);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, selectedStaffId]);
 
   useEffect(() => {
     async function checkAccess() {
@@ -35,20 +74,7 @@ export default function AuditLogsPage() {
       }
     }
     checkAccess();
-  }, [page]);
-
-  async function fetchLogs() {
-    setLoading(true);
-    try {
-      const { data, total } = await getAuditLogs(page);
-      setLogs(data);
-      setTotal(total);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [fetchLogs, router]);
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -56,9 +82,24 @@ export default function AuditLogsPage() {
         <h1 className="text-3xl font-bold font-fredoka text-[#2d334a]">
           System Audit Logs
         </h1>
-        <Button variant="outline" onClick={() => fetchLogs()}>
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by Staff" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Staff</SelectItem>
+              {staffList.map((staff) => (
+                <SelectItem key={staff.id} value={staff.id}>
+                  {staff.fullName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" onClick={() => fetchLogs()}>
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow border overflow-hidden">

@@ -28,6 +28,7 @@ interface UnInvoicedEnrollment {
   id: string;
   classRatio: string;
   suggestedAmount: number;
+  totalSessions: number;
   student: {
     id: string;
     firstName: string;
@@ -387,7 +388,7 @@ export default function CreateInvoiceForm() {
                           </div>
                           <div className="text-sm">
                             {enrollment.classRatio} •{" "}
-                            {8 -
+                            {enrollment.totalSessions -
                               (enrollment.enrollmentSkips
                                 ? enrollment.enrollmentSkips.length
                                 : 0)}{" "}

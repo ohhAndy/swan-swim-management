@@ -34,7 +34,7 @@ let TrialBookingsController = class TrialBookingsController {
         return this.service.getStats();
     }
     async createTrialBooking(body, staffUser) {
-        return this.service.createTrialBooking(body.classSessionId, body.childName, body.childAge, body.parentPhone, body.notes || null, staffUser);
+        return this.service.createTrialBooking(body.classSessionId, body.childName, body.childAge, body.parentPhone, body.notes || null, body.classRatio || "3:1", staffUser);
     }
     async updateStatus(id, body, staffUser) {
         return this.service.updateTrialStatus(id, body.status, staffUser);

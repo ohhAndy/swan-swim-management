@@ -9,6 +9,7 @@ export async function createTrialBooking(payload: {
   childAge: number;
   parentPhone: string;
   notes?: string;
+  classRatio?: string;
 }) {
   const headers = await getHeaders();
   const res = await fetch(`${API}/trial-bookings`, {
@@ -27,7 +28,7 @@ export async function createTrialBooking(payload: {
 
 export async function updateTrialStatus(
   trialId: string,
-  status: TrialStatus | ""
+  status: TrialStatus | "",
 ) {
   const headers = await getHeaders();
   const res = await fetch(`${API}/trial-bookings/${trialId}/status`, {
@@ -40,7 +41,7 @@ export async function updateTrialStatus(
     const errorText = await res.text();
     console.error("API Error:", res.status, res.statusText, errorText);
     throw new Error(
-      `Failed to update trial status: ${res.status} - ${errorText}`
+      `Failed to update trial status: ${res.status} - ${errorText}`,
     );
   }
 
@@ -49,7 +50,7 @@ export async function updateTrialStatus(
 
 export async function convertTrialToStudent(
   trialId: string,
-  studentId: string
+  studentId: string,
 ) {
   const headers = await getHeaders();
   const res = await fetch(`${API}/trial-bookings/${trialId}/convert`, {

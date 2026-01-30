@@ -66,14 +66,14 @@ export function MakeupRow({
             effectiveStatus === "attended"
               ? "P"
               : effectiveStatus === "scheduled"
-              ? "S"
-              : effectiveStatus === "requested"
-              ? "R"
-              : effectiveStatus === "cancelled"
-              ? "X"
-              : effectiveStatus === "missed"
-              ? "A"
-              : "";
+                ? "S"
+                : effectiveStatus === "requested"
+                  ? "R"
+                  : effectiveStatus === "cancelled"
+                    ? "X"
+                    : effectiveStatus === "missed"
+                      ? "A"
+                      : "";
 
           const statusClass = getMakeUpStatusColour(effectiveStatus);
           const updateKey = `makeup-${makeUpStudent.id}`;
@@ -87,7 +87,7 @@ export function MakeupRow({
                     isUpdating ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                   disabled={isUpdating}
-                  title={`${makeUpStudent.studentName} (${makeUpStudent.level}) (${makeUpStudent.status}) - Click to change`}
+                  title={`${makeUpStudent.studentName} (${makeUpStudent.level}) - Ratio: ${makeUpStudent.classRatio || "3:1"} (${makeUpStudent.status}) - Click to change`}
                 >
                   <div className="truncate">
                     {makeUpStudent.studentName.split(" ")[0]}

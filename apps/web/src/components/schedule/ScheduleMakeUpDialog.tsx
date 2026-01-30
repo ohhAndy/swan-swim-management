@@ -10,6 +10,14 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { searchStudents, StudentLite } from "@/lib/api/students-client";
 import { scheduleMakeUp } from "@/lib/api/schedule-client";
 import type { RosterResponse } from "@school/shared-types";
@@ -48,6 +56,7 @@ export function ScheduleMakeupDialog({
   const [q, setQ] = useState("");
   const [results, setResults] = useState<StudentLite[]>([]);
   const [picked, setPicked] = useState<StudentLite | null>(null);
+  const [classRatio, setClassRatio] = useState("3:1");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -56,6 +65,7 @@ export function ScheduleMakeupDialog({
       setQ("");
       setResults([]);
       setPicked(null);
+      setClassRatio("3:1");
       setErr(null);
     }
   }, [open]);
@@ -108,6 +118,7 @@ export function ScheduleMakeupDialog({
       await scheduleMakeUp({
         studentId: picked.id,
         classSessionId: sessionForDate.session.id,
+        classRatio,
       });
 
       onSuccess();
@@ -165,6 +176,20 @@ export function ScheduleMakeupDialog({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Class Ratio</Label>
+            <Select value={classRatio} onValueChange={setClassRatio}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select ratio" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3:1">3:1</SelectItem>
+                <SelectItem value="2:1">2:1</SelectItem>
+                <SelectItem value="1:1">1:1</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {err && <p className="text-sm text-red-600">{err}</p>}

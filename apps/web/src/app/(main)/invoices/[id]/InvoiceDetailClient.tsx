@@ -299,31 +299,32 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
               Edit
             </Button>
           )}
-          {userRole === "admin" && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Invoice?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete the invoice and all associated
-                    payments. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteInvoice}>
+          {userRole === "admin" ||
+            (userRole === "super_admin" && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="w-4 h-4 mr-2" />
                     Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Invoice?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete the invoice and all
+                      associated payments. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteInvoice}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ))}
         </div>
       </div>
 
@@ -685,7 +686,9 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                   <TableHead>Amount</TableHead>
                   <TableHead>Method</TableHead>
                   <TableHead>Notes</TableHead>
-                  {userRole === "admin" && <TableHead></TableHead>}
+                  {(userRole === "admin" || userRole === "super_admin") && (
+                    <TableHead></TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -699,7 +702,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                       {payment.paymentMethod}
                     </TableCell>
                     <TableCell>{payment.notes || "-"}</TableCell>
-                    {userRole === "admin" && (
+                    {(userRole === "admin" || userRole === "super_admin") && (
                       <TableCell>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>

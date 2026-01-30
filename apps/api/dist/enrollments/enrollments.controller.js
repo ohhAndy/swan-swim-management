@@ -26,8 +26,8 @@ let EnrollmentsController = class EnrollmentsController {
     constructor(enrollmentsService) {
         this.enrollmentsService = enrollmentsService;
     }
-    async findUninvoiced() {
-        return this.enrollmentsService.findUninvoiced();
+    async findUninvoiced(query) {
+        return this.enrollmentsService.findUninvoiced(query);
     }
     async enrollWithSkips(body, user) {
         return this.enrollmentsService.enrollWithSkips(body, user);
@@ -49,8 +49,9 @@ exports.EnrollmentsController = EnrollmentsController;
 __decorate([
     (0, common_1.Get)("uninvoiced"),
     (0, roles_decorator_1.Roles)("super_admin", "admin", "manager"),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EnrollmentsController.prototype, "findUninvoiced", null);
 __decorate([

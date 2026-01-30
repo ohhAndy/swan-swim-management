@@ -1,7 +1,12 @@
-import { getTimeSlotsByWeekday, getTermTitle } from "@/lib/api/schedule";
+import {
+  getTimeSlotsByWeekday,
+  getTermTitle,
+  getAllTerms,
+} from "@/lib/api/schedule";
 import TimeSlots from "./TimeSlotClient";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 export default async function TimeSlotsPage({
   params,
@@ -10,6 +15,23 @@ export default async function TimeSlotsPage({
 }) {
   const resolvedParams = await params;
   const { termId } = resolvedParams;
+
+  // Location Guard
+  const cookieStore = await cookies();
+  const locationId = cookieStore.get("swan_location_id")?.value;
+
+  if (locationId) {
+    const allTerms = await getAllTerms();
+    const currentTerm = allTerms.find((t) => t.id === termId);
+
+    if (!currentTerm) {
+      redirect("/term");
+    }
+
+    if (currentTerm.locationId && currentTerm.locationId !== locationId) {
+      redirect("/term");
+    }
+  }
 
   const user = await getCurrentUser();
   if (!user) redirect("/login");

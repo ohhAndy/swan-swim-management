@@ -49,6 +49,7 @@ export class TrialBookingsController {
       childAge: number;
       parentPhone: string;
       notes?: string;
+      classRatio?: string;
     },
     @CurrentUser() staffUser: any,
   ) {
@@ -58,6 +59,7 @@ export class TrialBookingsController {
       body.childAge,
       body.parentPhone,
       body.notes || null,
+      body.classRatio || "3:1",
       staffUser,
     );
   }

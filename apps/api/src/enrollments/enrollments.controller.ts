@@ -7,8 +7,10 @@ import {
   UseGuards,
   Delete,
   Get,
+  Query,
 } from "@nestjs/common";
 import { EnrollmentsService } from "./enrollments.service";
+import { UnInvoicedEnrollmentsQueryDto } from "../invoices/dto/uninvoiced-enrollments-query.dto";
 import {
   EnrollWithSkipInput,
   EnrollWithSkipSchema,
@@ -30,8 +32,8 @@ export class EnrollmentsController {
 
   @Get("uninvoiced")
   @Roles("super_admin", "admin", "manager")
-  async findUninvoiced() {
-    return this.enrollmentsService.findUninvoiced();
+  async findUninvoiced(@Query() query: UnInvoicedEnrollmentsQueryDto) {
+    return this.enrollmentsService.findUninvoiced(query);
   }
 
   @Post("with-skip")

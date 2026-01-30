@@ -32,6 +32,7 @@ const locations_module_1 = require("./locations/locations.module");
 const tasks_module_1 = require("./tasks/tasks.module");
 const health_module_1 = require("./health/health.module");
 const audit_logs_module_1 = require("./audit-logs/audit-logs.module");
+const inventory_module_1 = require("./inventory/inventory.module");
 const core_1 = require("@nestjs/core");
 const throttler_1 = require("@nestjs/throttler");
 const supabase_auth_guard_1 = require("./auth/supabase-auth.guard");
@@ -78,6 +79,7 @@ exports.AppModule = AppModule = __decorate([
             tasks_module_1.TasksModule,
             health_module_1.HealthModule,
             audit_logs_module_1.AuditLogsModule,
+            inventory_module_1.InventoryModule,
         ],
         providers: [
             {
