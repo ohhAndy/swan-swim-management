@@ -238,7 +238,10 @@ export class InvoicesService {
 
     if (validatedLocationId && !includeAllLocations) {
       where.locationId = validatedLocationId;
-    } else if (includeAllLocations && staffUser.role !== "admin") {
+    } else if (
+      includeAllLocations &&
+      !["admin", "super_admin"].includes(staffUser.role)
+    ) {
       const accessibleLocationIds = staffUser.accessibleLocations.map(
         (l: any) => l.id,
       );
@@ -486,8 +489,11 @@ export class InvoicesService {
           term: { locationId: validatedLocationId },
         };
       }
-    } else if (includeAllLocations && staffUser.role !== "admin") {
-      // If including all locations but user is NOT admin, restrict to accessible locations
+    } else if (
+      includeAllLocations &&
+      !["admin", "super_admin"].includes(staffUser.role)
+    ) {
+      // If including all locations but user is NOT admin/super_admin, restrict to accessible locations
       const accessibleLocationIds = staffUser.accessibleLocations.map(
         (l: any) => l.id,
       );

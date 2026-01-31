@@ -1189,8 +1189,11 @@ export class TermsService {
             date: true,
             status: true,
             makeUps: {
-              select: { id: true }, // Count only
+              select: { id: true, classRatio: true },
               where: { status: { not: "cancelled" } },
+            },
+            trialBookings: {
+              select: { id: true, status: true, classRatio: true },
             },
             enrollmentSkips: {
               select: { enrollmentId: true },
@@ -1268,8 +1271,23 @@ export class TermsService {
           else filled += 1;
         }
 
-        // Add Makeups (Assume 1.0 weight)
-        filled += sess.makeUps.length;
+        // Add Makeups (Weighted)
+        for (const m of sess.makeUps) {
+          const ratio = m.classRatio || "3:1";
+          if (ratio === "1:1") filled += 3;
+          else if (ratio === "2:1") filled += 1.5;
+          else filled += 1;
+        }
+
+        // Add Trials (Weighted)
+        for (const t of sess.trialBookings) {
+          if (["scheduled", "attended"].includes(t.status)) {
+            const ratio = t.classRatio || "3:1";
+            if (ratio === "1:1") filled += 3;
+            else if (ratio === "2:1") filled += 1.5;
+            else filled += 1;
+          }
+        }
 
         const openSeats = Math.max(0, Math.floor(effectiveCapacity - filled));
 
