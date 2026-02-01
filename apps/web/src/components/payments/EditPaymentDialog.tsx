@@ -57,8 +57,10 @@ export default function EditPaymentDialog({
       toast.success("Payment updated successfully");
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update payment");
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update payment",
+      );
       console.error(error);
     } finally {
       setLoading(false);

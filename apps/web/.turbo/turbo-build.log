@@ -14,10 +14,11 @@
    - Environments: .env.local
 
  [37m[1m [22m[39m Creating an optimized production build ...
- [32m[1m✓[22m[39m Compiled successfully in 2.7s
-[?25l [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G[1A[2K[1G[?25h
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (130kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ [32m[1m✓[22m[39m Compiled successfully in 5.5s
+[?25l [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m...[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Linting and checking validity of types  [36m.[39m[2K[1G[1A[2K[1G[?25h
 ./src/app/(main)/admin/invoices/new/CreateInvoiceForm.tsx
-106:6  Warning: React Hook useEffect has a missing dependency: 'loadEnrollments'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+107:6  Warning: React Hook useEffect has a missing dependency: 'loadEnrollments'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
 
 ./src/components/LocationSwitcher.tsx
 52:30  Warning: 'currentValue' is defined but never used.  @typescript-eslint/no-unused-vars
@@ -25,8 +26,11 @@
 ./src/components/schedule/EnrollStudentDialog.tsx
 95:6  Warning: React Hook useEffect has missing dependencies: 'doSearch' and 'submit'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
 
+./src/components/schedule/ManageSkipsDialog.tsx
+19:10  Warning: 'FULL_DAY_LABELS' is defined but never used.  @typescript-eslint/no-unused-vars
+
 ./src/components/schedule/ScheduleMakeUpDialog.tsx
-80:6  Warning: React Hook useEffect has missing dependencies: 'doSearch' and 'submit'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+90:6  Warning: React Hook useEffect has missing dependencies: 'doSearch' and 'submit'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
 
 ./src/components/schedule/TransferEnrollmentDialog.tsx
 105:6  Warning: React Hook useEffect has a missing dependency: 'fetchAvailableClasses'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
@@ -36,25 +40,38 @@
 ./src/context/LocationContext.tsx
 85:49  Warning: 'session' is defined but never used.  @typescript-eslint/no-unused-vars
 
+./src/lib/api/inventory-client.ts
+89:35  Warning: '_' is defined but never used.  @typescript-eslint/no-unused-vars
+
 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
-[?25l [36m.[39m [2K[1G [36m..[39m [2K[1G [36m...[39m [2K[1G [36m.[39m [2K[1G [36m..[39m [2K[1G [36m...[39m [2K[1G[?25h    [32m[1m✓[22m[39m Linting and checking validity of types 
+[?25l [36m.[39m [2K[1G [36m..[39m [2K[1G [36m...[39m [2K[1G [36m.[39m [2K[1G [36m..[39m [2K[1G [36m...[39m [2K[1G [36m.[39m [2K[1G[?25h    [32m[1m✓[22m[39m Linting and checking validity of types 
 [?25l [37m[1m [22m[39m Collecting page data  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Collecting page data  [36m..[39m[2K[1G[1A[2K[1G[?25h [37m[1m [22m[39m Collecting page data     [32m[1m✓[22m[39m Collecting page data 
-[?25l [37m[1m [22m[39m Generating static pages (0/14)  [36m[    ][39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Generating static pages (8/14)  [36m[=   ][39m[2K[1G[1A[2K[1G[?25hError getting current user: Error: Dynamic server usage: Route /tasks couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+[?25l [37m[1m [22m[39m Generating static pages (0/19)  [36m[    ][39m[2K[1G[1A[2K[1G[?25hError getting current user: Error: Dynamic server usage: Route /admin/audit-logs couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at s (.next/server/chunks/4635.js:19:21222)
     at n (.next/server/chunks/7529.js:45:3717)
-    at f (.next/server/app/api/auth/me/route.js:1:7159)
-    at e (.next/server/chunks/1020.js:1:23560)
-    at n (.next/server/chunks/1020.js:1:10899)
+    at f (.next/server/app/api/auth/logout/route.js:1:6596)
+    at e (.next/server/chunks/9524.js:1:25071)
+    at n (.next/server/chunks/9524.js:1:11699)
     at stringify (<anonymous>) {
-  description: "Route /tasks couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  description: "Route /admin/audit-logs couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /admin/instructors/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (.next/server/chunks/4635.js:19:21222)
+    at n (.next/server/chunks/7529.js:45:3717)
+    at f (.next/server/app/api/auth/logout/route.js:1:6596)
+    at e (.next/server/chunks/9524.js:1:25071)
+    at n (.next/server/chunks/9524.js:1:11699)
+    at stringify (<anonymous>) {
+  description: "Route /admin/instructors/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
 Error getting current user: Error: Dynamic server usage: Route /forbidden couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at s (.next/server/chunks/4635.js:19:21222)
     at n (.next/server/chunks/7529.js:45:3717)
-    at f (.next/server/app/api/auth/me/route.js:1:7159)
-    at e (.next/server/chunks/1020.js:1:23560)
-    at n (.next/server/chunks/1020.js:1:10899)
+    at f (.next/server/app/api/auth/logout/route.js:1:6596)
+    at e (.next/server/chunks/9524.js:1:25071)
+    at n (.next/server/chunks/9524.js:1:11699)
     at stringify (<anonymous>) {
   description: "Route /forbidden couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
@@ -62,71 +79,116 @@ Error getting current user: Error: Dynamic server usage: Route /forbidden couldn
 Error getting current user: Error: Dynamic server usage: Route /term couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at s (.next/server/chunks/4635.js:19:21222)
     at n (.next/server/chunks/7529.js:45:3717)
-    at f (.next/server/app/api/auth/me/route.js:1:7159)
-    at e (.next/server/chunks/1020.js:1:23560)
-    at n (.next/server/chunks/1020.js:1:10899)
+    at f (.next/server/app/api/auth/logout/route.js:1:6596)
+    at e (.next/server/chunks/9524.js:1:25071)
+    at n (.next/server/chunks/9524.js:1:11699)
     at stringify (<anonymous>) {
   description: "Route /term couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /admin/financials couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (.next/server/chunks/4635.js:19:21222)
+    at n (.next/server/chunks/7529.js:45:3717)
+    at f (.next/server/app/api/auth/logout/route.js:1:6596)
+    at e (.next/server/chunks/9524.js:1:25071)
+    at n (.next/server/chunks/9524.js:1:11699)
+    at stringify (<anonymous>) {
+  description: "Route /admin/financials couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /admin/financials couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (.next/server/chunks/4635.js:19:21222)
+    at n (.next/server/chunks/7529.js:45:3717)
+    at f (.next/server/app/api/auth/logout/route.js:1:6596)
+    at e (.next/server/chunks/9524.js:1:25071)
+    at h (.next/server/app/(main)/admin/financials/page.js:2:10037)
+    at stringify (<anonymous>) {
+  description: "Route /admin/financials couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /admin/pos couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (.next/server/chunks/4635.js:19:21222)
+    at n (.next/server/chunks/7529.js:45:3717)
+    at f (.next/server/app/api/auth/logout/route.js:1:6596)
+    at e (.next/server/chunks/9524.js:1:25071)
+    at n (.next/server/chunks/9524.js:1:11699)
+    at stringify (<anonymous>) {
+  description: "Route /admin/pos couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /admin/inventory couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (.next/server/chunks/4635.js:19:21222)
+    at n (.next/server/chunks/7529.js:45:3717)
+    at f (.next/server/app/api/auth/logout/route.js:1:6596)
+    at e (.next/server/chunks/9524.js:1:25071)
+    at n (.next/server/chunks/9524.js:1:11699)
+    at stringify (<anonymous>) {
+  description: "Route /admin/inventory couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error getting current user: Error: Dynamic server usage: Route /tasks couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at s (.next/server/chunks/4635.js:19:21222)
+    at n (.next/server/chunks/7529.js:45:3717)
+    at f (.next/server/app/api/auth/logout/route.js:1:6596)
+    at e (.next/server/chunks/9524.js:1:25071)
+    at n (.next/server/chunks/9524.js:1:11699)
+    at stringify (<anonymous>) {
+  description: "Route /tasks couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
 Error getting current user: Error: Dynamic server usage: Route /trials couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at s (.next/server/chunks/4635.js:19:21222)
     at n (.next/server/chunks/7529.js:45:3717)
-    at f (.next/server/app/api/auth/me/route.js:1:7159)
-    at e (.next/server/chunks/1020.js:1:23560)
-    at n (.next/server/chunks/1020.js:1:10899)
+    at f (.next/server/app/api/auth/logout/route.js:1:6596)
+    at e (.next/server/chunks/9524.js:1:25071)
+    at n (.next/server/chunks/9524.js:1:11699)
     at stringify (<anonymous>) {
   description: "Route /trials couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
   digest: 'DYNAMIC_SERVER_USAGE'
 }
-Error getting current user: Error: Dynamic server usage: Route /admin/instructors/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
-    at s (.next/server/chunks/4635.js:19:21222)
-    at n (.next/server/chunks/7529.js:45:3717)
-    at f (.next/server/app/api/auth/me/route.js:1:7159)
-    at e (.next/server/chunks/1020.js:1:23560)
-    at n (.next/server/chunks/1020.js:1:10899)
-    at stringify (<anonymous>) {
-  description: "Route /admin/instructors/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
-  digest: 'DYNAMIC_SERVER_USAGE'
-}
-[?25h [32m[1m✓[22m[39m Generating static pages (14/14)
+[?25h [32m[1m✓[22m[39m Generating static pages (19/19)
 [?25l [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[?25l [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m...[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Collecting build traces  [36m...[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Collecting build traces  [36m.[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Finalizing page optimization  [36m..[39m[2K[1G[1A[2K[1G [37m[1m [22m[39m Collecting build traces  [36m..[39m[2K[1G[1A[2K[1G[?25h [37m[1m [22m[39m Collecting build traces     [32m[1m✓[22m[39m Collecting build traces 
 [2K[1G[1A[2K[1G[?25h [37m[1m [22m[39m Finalizing page optimization     [32m[1m✓[22m[39m Finalizing page optimization 
 
 [4mRoute (app)[24m                                                    [4mSize[24m  [4mFirst Load JS[24m  [4m[24m  [4m[24m
-┌ ○ /                                                         287 B         [37m[1m102 kB[22m[39m
-├ ○ /_not-found                                               989 B         [37m[1m103 kB[22m[39m
-├ ƒ /admin/instructors                                      3.46 kB         [37m[1m169 kB[22m[39m
-├ ƒ /admin/instructors/[id]                                   502 B         [37m[1m250 kB[22m[39m
-├ ƒ /admin/instructors/new                                    188 B         [37m[1m250 kB[22m[39m
-├ ƒ /admin/invoices/new                                     9.06 kB         [37m[1m184 kB[22m[39m
-├ ƒ /admin/students/new                                     2.77 kB         [37m[1m256 kB[22m[39m
-├ ƒ /admin/terms/new                                         5.8 kB         [37m[1m240 kB[22m[39m
-├ ƒ /api/auth/logout                                          152 B         [37m[1m102 kB[22m[39m
-├ ƒ /api/auth/me                                              152 B         [37m[1m102 kB[22m[39m
+┌ ○ /                                                         289 B         [37m[1m103 kB[22m[39m
+├ ○ /_not-found                                               994 B         [37m[1m104 kB[22m[39m
+├ ○ /access-denied                                            164 B         [37m[1m106 kB[22m[39m
+├ ƒ /admin/audit-logs                                       5.03 kB         [37m[1m204 kB[22m[39m
+├ ƒ /admin/financials                                        109 kB         [37m[1m272 kB[22m[39m
+├ ƒ /admin/instructors                                      3.45 kB         [37m[1m170 kB[22m[39m
+├ ƒ /admin/instructors/[id]                                   512 B         [37m[1m252 kB[22m[39m
+├ ƒ /admin/instructors/new                                    195 B         [37m[1m251 kB[22m[39m
+├ ƒ /admin/inventory                                        4.75 kB         [37m[1m201 kB[22m[39m
+├ ƒ /admin/invoices/new                                     9.57 kB         [37m[1m184 kB[22m[39m
+├ ƒ /admin/pos                                              12.1 kB         [37m[1m225 kB[22m[39m
+├ ƒ /admin/students/new                                     2.83 kB         [37m[1m256 kB[22m[39m
+├ ƒ /admin/terms/new                                        6.93 kB         [37m[1m241 kB[22m[39m
+├ ƒ /api/auth/logout                                          152 B         [37m[1m103 kB[22m[39m
+├ ƒ /api/auth/me                                              152 B         [37m[1m103 kB[22m[39m
 ├ ƒ /dashboard                                              5.93 kB         [37m[1m172 kB[22m[39m
-├ ƒ /enrollments/uninvoiced                                 2.54 kB         [37m[1m165 kB[22m[39m
-├ ƒ /forbidden                                                152 B         [37m[1m102 kB[22m[39m
-├ ƒ /guardians                                              3.04 kB         [37m[1m256 kB[22m[39m
-├ ƒ /guardians/[guardianId]                                 4.11 kB         [37m[1m256 kB[22m[39m
+├ ƒ /enrollments/uninvoiced                                 3.94 kB         [37m[1m197 kB[22m[39m
+├ ƒ /forbidden                                                152 B         [37m[1m103 kB[22m[39m
+├ ƒ /guardians                                              3.06 kB         [37m[1m257 kB[22m[39m
+├ ƒ /guardians/[guardianId]                                 4.25 kB         [37m[1m267 kB[22m[39m
 ├ ○ /icon.svg                                                   0 B            [37m[1m0 B[22m[39m
-├ ƒ /invoices                                                5.5 kB         [37m[1m198 kB[22m[39m
-├ ƒ /invoices/[id]                                          9.04 kB         [37m[1m215 kB[22m[39m
-├ ○ /login                                                  3.58 kB         [37m[1m166 kB[22m[39m
-├ ƒ /payments                                                  5 kB         [37m[1m198 kB[22m[39m
-├ ƒ /students                                               5.59 kB         [37m[1m202 kB[22m[39m
-├ ƒ /students/[studentId]                                   5.17 kB         [37m[1m257 kB[22m[39m
-├ ƒ /tasks                                                  6.68 kB         [37m[1m251 kB[22m[39m
-├ ƒ /term                                                   2.59 kB         [37m[1m113 kB[22m[39m
-├ ƒ /term/[termId]/availability                             8.19 kB         [37m[1m211 kB[22m[39m
-├ ƒ /term/[termId]/schedule                                 2.89 kB         [37m[1m113 kB[22m[39m
-├ ƒ /term/[termId]/schedule/date/[date]                     15.1 kB         [37m[1m239 kB[22m[39m
-├ ƒ /term/[termId]/schedule/weekday/[weekday]/slot/[range]  13.5 kB         [37m[1m242 kB[22m[39m
-└ ƒ /trials                                                  6.8 kB         [37m[1m175 kB[22m[39m
-+ First Load JS shared by all                                [37m[1m102 kB[22m[39m
-  ├ chunks/18-1d63ee0134f9e01b.js                             46 kB
-  ├ chunks/87c73c54-24122e7b92478d00.js                     54.2 kB
-  └ other shared chunks (total)                             1.94 kB
+├ ƒ /invoices                                               2.65 kB         [37m[1m214 kB[22m[39m
+├ ƒ /invoices/[id]                                          10.1 kB         [37m[1m216 kB[22m[39m
+├ ○ /login                                                  3.61 kB         [37m[1m166 kB[22m[39m
+├ ƒ /payments                                               2.62 kB         [37m[1m214 kB[22m[39m
+├ ƒ /students                                               6.66 kB         [37m[1m203 kB[22m[39m
+├ ƒ /students/[studentId]                                   5.64 kB         [37m[1m269 kB[22m[39m
+├ ƒ /tasks                                                  6.69 kB         [37m[1m252 kB[22m[39m
+├ ƒ /term                                                   2.58 kB         [37m[1m113 kB[22m[39m
+├ ƒ /term/[termId]/availability                             9.39 kB         [37m[1m212 kB[22m[39m
+├ ƒ /term/[termId]/schedule                                 5.14 kB         [37m[1m191 kB[22m[39m
+├ ƒ /term/[termId]/schedule/date/[date]                     6.29 kB         [37m[1m241 kB[22m[39m
+├ ƒ /term/[termId]/schedule/weekday/[weekday]/slot/[range]  14.5 kB         [37m[1m243 kB[22m[39m
+└ ƒ /trials                                                  7.3 kB         [37m[1m175 kB[22m[39m
++ First Load JS shared by all                                [37m[1m103 kB[22m[39m
+  ├ chunks/18-f90a2cd1d449c47a.js                           46.3 kB
+  ├ chunks/87c73c54-09e1ba5c70e60a51.js                     54.2 kB
+  └ other shared chunks (total)                             1.95 kB
 
 
 ƒ Middleware                                                [37m[1m79.6 kB[22m[39m
