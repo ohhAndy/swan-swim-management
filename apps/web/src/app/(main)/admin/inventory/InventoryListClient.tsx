@@ -196,7 +196,7 @@ export default function InventoryListClient() {
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : inventoryData?.length === 0 ? (
+            ) : inventoryData?.data.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={6}
@@ -206,7 +206,7 @@ export default function InventoryListClient() {
                 </TableCell>
               </TableRow>
             ) : (
-              inventoryData?.map((item: InventoryItem) => (
+              inventoryData?.data.map((item: InventoryItem) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">
                     <div>{item.name}</div>
@@ -243,6 +243,39 @@ export default function InventoryListClient() {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+          {inventoryData?.meta.total
+            ? `Page ${page} of ${Math.ceil(inventoryData.meta.total / (inventoryData.meta.limit || 20))}`
+            : ""}
+        </div>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(page - 1)}
+            disabled={page === 1 || isLoading}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(page + 1)}
+            disabled={
+              !inventoryData ||
+              page >=
+                Math.ceil(
+                  inventoryData.meta.total / (inventoryData.meta.limit || 20),
+                ) ||
+              isLoading
+            }
+          >
+            Next
+          </Button>
+        </div>
       </div>
 
       {/* Edit Dialog */}

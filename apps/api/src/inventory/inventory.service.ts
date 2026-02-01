@@ -18,13 +18,27 @@ export class InventoryService {
     orderBy?: Prisma.InventoryItemOrderByWithRelationInput;
   }) {
     const { skip, take, cursor, where, orderBy } = params;
-    return this.prisma.inventoryItem.findMany({
+
+    // Get total count (for pagination)
+    const total = await this.prisma.inventoryItem.count({ where });
+
+    // Get data
+    const data = await this.prisma.inventoryItem.findMany({
       skip,
       take,
       cursor,
       where,
       orderBy,
     });
+
+    return {
+      data,
+      meta: {
+        total,
+        page: skip !== undefined && take ? Math.floor(skip / take) + 1 : 1,
+        limit: take || total,
+      },
+    };
   }
 
   async findOne(id: string) {

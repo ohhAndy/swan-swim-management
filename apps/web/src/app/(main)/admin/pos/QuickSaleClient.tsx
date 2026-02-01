@@ -40,10 +40,12 @@ export default function QuickSaleClient() {
   const [customerName, setCustomerName] = useState("");
   const queryClient = useQueryClient();
 
-  const { data: inventoryData, isLoading } = useQuery<InventoryItem[]>({
+  const { data: inventoryResponse, isLoading } = useQuery({
     queryKey: ["inventory", search],
     queryFn: () => getInventoryItems({ search, active: true, limit: 50 }),
   });
+
+  const inventoryData = inventoryResponse?.data || [];
 
   const createSaleMutation = useMutation({
     mutationFn: async (): Promise<{

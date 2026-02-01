@@ -54,7 +54,10 @@ export async function getInventoryItems(query?: InventoryQuery) {
   });
 
   if (!res.ok) throw new Error("Failed to fetch inventory");
-  return res.json();
+  return res.json() as Promise<{
+    data: InventoryItem[];
+    meta: { total: number; page: number; limit: number };
+  }>;
 }
 
 export async function getInventoryItem(id: string) {
