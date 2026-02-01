@@ -7,13 +7,7 @@ import { createInvoice, Invoice } from "@/lib/api/invoice-client";
 import { createPayment } from "@/lib/api/payments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Search,
   ShoppingCart,
@@ -73,21 +67,6 @@ export default function QuickSaleClient() {
       // Then I create payment immediately.
 
       // Step 1: Create Invoice
-      const lineItems = cart.map((item) => ({
-        inventoryItemId: item.id,
-        description: item.name,
-        amount: Number(item.price), // Price per unit
-        // Wait, duplicate items? Or quantity?
-        // InvoiceLineItem structure is 1 row per item usually? Or 1 row per SKU with quantity?
-        // InvoiceLineItem has `amount` (decimal). It doesn't have `quantity` field in schema!
-        // Schema: `amount Decimal`. Usually total amount for line.
-        // But `inventoryItemId` links to 1 item.
-        // If I sell 2 caps, do I create 2 line items? Or 1 line item with double price?
-        // If I create 1 line item with double price, I only link 1 inventoryItemId.
-        // The `InvoicesService` loop: `for (const item of lineItems) { if (item.inventoryItemId) { decrement 1 } }`
-        // So I MUST send 1 line item PER UNIT sold.
-      }));
-
       // Flatten cart into individual unit lines
       const flatLineItems = [];
       for (const item of cart) {
@@ -100,10 +79,22 @@ export default function QuickSaleClient() {
         }
       }
 
-      const totalAmount = flatLineItems.reduce(
+      const subtotal = flatLineItems.reduce(
         (sum, item) => sum + item.amount,
         0,
       );
+
+      const taxRate = paymentMethod === "cash" ? 0 : 0.13;
+      const taxAmount = subtotal * taxRate;
+      const totalAmount = subtotal + taxAmount;
+
+      if (taxAmount > 0) {
+        flatLineItems.push({
+          inventoryItemId: undefined, // Tax is not an inventory item
+          description: "HST (13%)",
+          amount: taxAmount,
+        });
+      }
 
       const invoice = await createInvoice({
         lineItems: flatLineItems,
@@ -352,9 +343,31 @@ export default function QuickSaleClient() {
 
             <Separator />
 
-            <div className="flex justify-between items-center text-lg font-bold">
-              <span>Total</span>
-              <span>${cartTotal.toFixed(2)}</span>
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span>${cartTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Tax {paymentMethod !== "cash" && "(13%)"}
+                </span>
+                <span>
+                  $
+                  {(paymentMethod === "cash" ? 0 : cartTotal * 0.13).toFixed(2)}
+                </span>
+              </div>
+              <Separator className="my-2" />
+              <div className="flex justify-between items-center text-lg font-bold">
+                <span>Total</span>
+                <span>
+                  $
+                  {(paymentMethod === "cash"
+                    ? cartTotal
+                    : cartTotal * 1.13
+                  ).toFixed(2)}
+                </span>
+              </div>
             </div>
 
             <Button
