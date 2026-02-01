@@ -18,7 +18,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
+import { FULL_DAY_LABELS, formatTimeRange } from "@/lib/schedule/slots";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { BackButton } from "@/components/nav/BackButton";
@@ -215,7 +215,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
                         <TabsTrigger value="all">All Times</TabsTrigger>
                         {uniqueTimes.map((time) => (
                           <TabsTrigger key={time} value={time}>
-                            {time}
+                            {formatTimeRange(time)}
                           </TabsTrigger>
                         ))}
                       </TabsList>
@@ -238,7 +238,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
                               {cls.title}
                             </CardTitle>
                             <CardDescription className="text-xs mt-1 font-mono">
-                              {cls.time}
+                              {formatTimeRange(cls.time)}
                             </CardDescription>
                           </div>
                           <div className="text-xs bg-white px-1.5 py-0.5 rounded border shadow-sm">

@@ -92,6 +92,10 @@ export interface Invoice {
   createdAt: string;
   updatedAt: string;
   guardian?: Guardian;
+  location?: {
+    id: string;
+    name: string;
+  };
   lineItems: InvoiceLineItem[];
   payments: Payment[];
   amountPaid: number;
@@ -204,6 +208,7 @@ export async function updateInvoice(
   id: string,
   data: {
     invoiceNumber?: string;
+    locationId?: string;
     totalAmount?: number;
     status?: "paid" | "partial" | "void";
     notes?: string;

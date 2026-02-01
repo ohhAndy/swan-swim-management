@@ -45,6 +45,7 @@ import { deleteEnrollment } from "@/lib/api/schedule-client";
 import { updateGuardian } from "@/lib/api/guardian-client";
 
 import { TransferEnrollmentDialog } from "@/components/schedule/TransferEnrollmentDialog";
+import { ManageSkipsDialog } from "@/components/schedule/ManageSkipsDialog";
 
 import {
   PRESCHOOL_LEVELS,
@@ -168,6 +169,23 @@ export default function StudentViewClient({
   const [enrollmentToDelete, setEnrollmentToDelete] = useState<string | null>(
     null,
   );
+
+  const [manageSkipsDialogOpen, setManageSkipsDialogOpen] = useState(false);
+  const [selectedEnrollmentForSkips, setSelectedEnrollmentForSkips] = useState<{
+    id: string;
+    studentName: string;
+    offering: {
+      id: string;
+      title: string;
+      weekday: number;
+      startTime: string;
+      endTime: string;
+      term: { name: string };
+      sessions: Array<{ id: string; date: string }>;
+    };
+    attendedSessions: Array<{ id: string; status: string; date: string }>;
+    skippedSessionIds: string[];
+  } | null>(null);
 
   const {
     register,
@@ -882,30 +900,69 @@ export default function StudentViewClient({
                               );
                             })()}
                           </div>
-                          <div className="flex flex-col justify-between h-30 mt-6 lg:mt-0">
+
+                          <div className="flex flex-col gap-2 mt-4 lg:mt-0 lg:ml-4 min-w-[120px]">
                             {badge}
 
                             <PermissionGate
-                              allowedRoles={["admin", "manager", "super_admin"]}
+                              allowedRoles={["super_admin", "admin", "manager"]}
                               currentRole={user.role}
                             >
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleTransferClick(enrollment)}
-                                className="bg-yellow-100 text-black mb-2"
-                              >
-                                Transfer
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteClick(enrollment.id)}
-                                className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </Button>
+                              <div className="flex flex-col gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleTransferClick(enrollment)
+                                  }
+                                  className="bg-white"
+                                >
+                                  Transfer
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    // Access sessions directly from offering
+                                    const sessions =
+                                      enrollment.offering.sessions;
+
+                                    setSelectedEnrollmentForSkips({
+                                      id: enrollment.id,
+                                      studentName: `${student.firstName} ${student.lastName}`,
+                                      offering: {
+                                        ...enrollment.offering,
+                                        sessions: sessions || [],
+                                      },
+                                      attendedSessions:
+                                        enrollment.attendance?.map((a) => ({
+                                          id: a.classSession.id,
+                                          status: a.status,
+                                          date: a.classSession.date,
+                                        })) || [],
+                                      skippedSessionIds:
+                                        enrollment.enrollmentSkips?.map(
+                                          (s) => s.classSessionId,
+                                        ) || [],
+                                    });
+                                    setManageSkipsDialogOpen(true);
+                                  }}
+                                  className="bg-white"
+                                >
+                                  Skips
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleDeleteClick(enrollment.id)
+                                  }
+                                  className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100 hover:text-red-700 border"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </Button>
+                              </div>
                             </PermissionGate>
                           </div>
                         </div>
@@ -915,74 +972,47 @@ export default function StudentViewClient({
                 </div>
               </div>
             )}
+            {pastEnrollments.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                  Past Enrollments
+                </h3>
+                <div className="space-y-4 opacity-75">
+                  {pastEnrollments.map((enrollment) => {
+                    const badge = getInvoiceStatusBadge(enrollment);
 
-            {/* Past Enrollments */}
-            {pastEnrollments.map((enrollment) => {
-              const instructors = enrollment.offering.instructors || [];
-              const instructorNames = instructors
-                .map((i) =>
-                  i.instructor
-                    ? `${i.instructor.firstName} ${i.instructor.lastName}`
-                    : (i.staffUser?.fullName ?? "Unknown"),
-                )
-                .join(", ");
-
-              return (
-                <div
-                  key={enrollment.id}
-                  className="p-4 border rounded-lg bg-gray-50 opacity-75"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-medium">
-                        {enrollment.offering.title}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {FULL_DAY_LABELS[enrollment.offering.weekday]}{" "}
-                        {enrollment.offering.startTime}-
-                        {enrollment.offering.endTime} ({enrollment.classRatio})
-                      </p>
-                      {/* ADD INSTRUCTOR DISPLAY HERE TOO */}
-                      {instructors.length > 0 ? (
-                        <p className="text-sm text-gray-600 mt-1">
-                          <span className="font-medium">Instructor:</span>{" "}
-                          {instructorNames}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-gray-500 italic mt-1">
-                          No instructor assigned
-                        </p>
-                      )}
-                      <p className="text-sm text-gray-500 mt-1">
-                        {new Date(enrollment.enrollDate).toLocaleDateString(
-                          "en-CA",
-                        )}
-                      </p>
-                      {/* Transfer Info */}
-                      {enrollment.transferredFrom && (
-                        <p className="text-sm text-amber-600 mt-1">
-                          Transferred from:{" "}
-                          <span className="font-medium">
-                            {enrollment.transferredFrom.offering.title}
-                          </span>{" "}
-                          ({enrollment.transferredFrom.offering.term.name})
-                        </p>
-                      )}
-                      {enrollment.transferredTo && (
-                        <p className="text-sm text-blue-600 mt-1">
-                          Transferred to:{" "}
-                          <span className="font-medium">
-                            {enrollment.transferredTo.offering.title}
-                          </span>{" "}
-                          ({enrollment.transferredTo.offering.term.name})
-                        </p>
-                      )}
-                    </div>
-                    {getInvoiceStatusBadge(enrollment)}
-                  </div>
+                    return (
+                      <Card key={enrollment.id}>
+                        <CardContent className="p-4 flex flex-col sm:flex-row justify-between">
+                          <div>
+                            <h4 className="font-medium text-gray-700">
+                              {enrollment.offering.title}
+                            </h4>
+                            <p className="text-sm text-gray-500">
+                              {enrollment.offering.term.name} •{" "}
+                              {enrollment.offering.term.location?.name ??
+                                "Unknown Location"}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Status:{" "}
+                              <span className="capitalize text-gray-900 font-medium">
+                                {enrollment.status}
+                              </span>
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {new Date(
+                                enrollment.enrollDate,
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div>{badge}</div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+            )}
             {student.enrollments.length === 0 && (
               <p className="text-gray-500 text-center py-8">
                 No enrollment history found.
@@ -998,33 +1028,45 @@ export default function StudentViewClient({
           open={transferDialogOpen}
           onOpenChange={setTransferDialogOpen}
           enrollment={{
-            id: selectedEnrollment.id,
+            ...selectedEnrollment,
             studentId: student.id,
             studentName: `${student.firstName} ${student.lastName}`,
-            offeringId: selectedEnrollment.offeringId,
-            offering: selectedEnrollment.offering,
           }}
           attendedSessions={selectedEnrollment.attendedSessions}
           onSuccess={handleTransferSuccess}
         />
       )}
 
+      {selectedEnrollmentForSkips && (
+        <ManageSkipsDialog
+          open={manageSkipsDialogOpen}
+          onOpenChange={setManageSkipsDialogOpen}
+          enrollment={selectedEnrollmentForSkips}
+          onSuccess={() => {
+            setManageSkipsDialogOpen(false);
+            setSelectedEnrollmentForSkips(null);
+            router.refresh();
+          }}
+        />
+      )}
+
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently remove the
-              enrollment record.
+              This action cannot be undone. This will permanently delete the
+              enrollment and remove the student from the class.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 hover:bg-red-700"
+              disabled={loading}
             >
-              Delete
+              {loading ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

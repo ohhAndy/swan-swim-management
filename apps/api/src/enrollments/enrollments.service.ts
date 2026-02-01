@@ -388,6 +388,82 @@ export class EnrollmentsService {
     return { success: true, status };
   }
 
+  async updateSkips(
+    enrollmentId: string,
+    skippedSessionIds: string[],
+    user: any,
+  ) {
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+    if (!staffUser) return;
+
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: { id: enrollmentId },
+      include: {
+        student: true,
+        offering: {
+          include: {
+            sessions: true,
+          },
+        },
+      },
+    });
+
+    if (!enrollment) throw new NotFoundException("Enrollment not found");
+    if (enrollment.status !== "active")
+      throw new BadRequestException("Enrollment is not active");
+
+    // Verify all skippedSessionIds belong to the offering
+    const offeringSessionIds = new Set(
+      enrollment.offering.sessions.map((s) => s.id),
+    );
+    for (const id of skippedSessionIds) {
+      if (!offeringSessionIds.has(id)) {
+        throw new BadRequestException(
+          `Session ${id} does not belong to this offering`,
+        );
+      }
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      // 1. Delete existing skips
+      await tx.enrollmentSkip.deleteMany({
+        where: { enrollmentId },
+      });
+
+      // 2. Create new skips
+      if (skippedSessionIds.length > 0) {
+        await tx.enrollmentSkip.createMany({
+          data: skippedSessionIds.map((sessionId) => ({
+            enrollmentId,
+            classSessionId: sessionId,
+          })),
+        });
+      }
+
+      // 3. Audit Log
+      await tx.auditLog.create({
+        data: {
+          staffId: staffUser.id,
+          action: "Update Enrollment Skips",
+          entityType: "Enrollment",
+          entityId: enrollmentId,
+          changes: {},
+          metadata: {
+            studentId: enrollment.studentId,
+            studentName: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+            offeringId: enrollment.offeringId,
+            skippedSessionIds,
+            count: skippedSessionIds.length,
+          },
+        },
+      });
+    });
+
+    return { success: true };
+  }
+
   async deleteEnrollment(id: string, user: any) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },

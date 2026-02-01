@@ -11,6 +11,7 @@ export const CreateInvoiceSchema = z.object({
   invoiceNumber: z.string().optional(),
   guardianId: z.string().optional(),
   totalAmount: z.number().min(0),
+  locationId: z.string().optional(),
   notes: z.string().optional(),
   lineItems: z.array(CreateInvoiceLineSchema),
   createdAt: z.string().optional(),

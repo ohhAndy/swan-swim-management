@@ -11,6 +11,8 @@ import {
   type Invoice,
   type InvoiceLineItem,
 } from "@/lib/api/invoice-client";
+import { Payment } from "@/lib/api/payments";
+import EditPaymentDialog from "@/components/payments/EditPaymentDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,7 +58,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Plus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -95,6 +97,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
   >("cash");
   const [paymentNotes, setPaymentNotes] = useState("");
   const [submittingPayment, setSubmittingPayment] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
 
   useEffect(() => {
     loadInvoice();
@@ -702,34 +705,54 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                       {payment.paymentMethod}
                     </TableCell>
                     <TableCell>{payment.notes || "-"}</TableCell>
-                    {(userRole === "admin" || userRole === "super_admin") && (
-                      <TableCell>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Delete Payment?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will remove this payment record and update
-                                the invoice balance.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeletePayment(payment.id)}
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                    {(userRole === "admin" ||
+                      userRole === "super_admin" ||
+                      userRole === "manager") && (
+                      <TableCell className="flex justify-end gap-2">
+                        {(userRole === "admin" ||
+                          userRole === "super_admin" ||
+                          userRole === "manager") && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setEditingPayment(payment as unknown as Payment)
+                            }
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {(userRole === "admin" ||
+                          userRole === "super_admin") && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Delete Payment?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will remove this payment record and
+                                  update the invoice balance.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    handleDeletePayment(payment.id)
+                                  }
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </TableCell>
                     )}
                   </TableRow>
@@ -739,6 +762,19 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
           )}
         </CardContent>
       </Card>
+
+      {editingPayment && (
+        <EditPaymentDialog
+          open={!!editingPayment}
+          onOpenChange={(open) => {
+            if (!open) setEditingPayment(null);
+          }}
+          payment={editingPayment}
+          onSuccess={() => {
+            loadInvoice();
+          }}
+        />
+      )}
 
       {/* Invoice Metadata */}
       <Card>

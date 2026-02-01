@@ -29,6 +29,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { updateGuardian } from "@/lib/api/guardian-client";
 import { deleteEnrollment } from "@/lib/api/schedule-client";
 import { TransferEnrollmentDialog } from "@/components/schedule/TransferEnrollmentDialog";
+import { ManageSkipsDialog } from "@/components/schedule/ManageSkipsDialog";
 import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
 import { z } from "zod";
 import { PermissionGate } from "@/components/auth/PermissionGate";
@@ -65,6 +66,7 @@ type AttendanceData = {
   notes?: string | null;
   markedAt: string; // JSON date string
   classSession: {
+    id: string; // Added to match usage
     date: string; // JSON date string
   };
 };
@@ -89,6 +91,7 @@ type OfferingData = {
       lastName: string;
     };
   }>;
+  sessions: Array<{ id: string; date: string }>; // Added for skips
 };
 
 type EnrollmentData = {
@@ -108,6 +111,7 @@ type EnrollmentData = {
     };
   };
   attendance: AttendanceData[];
+  enrollmentSkips: Array<{ classSessionId: string }>;
 };
 
 type GuardianData = {
@@ -203,6 +207,23 @@ export default function GuardianViewClient({
   const [enrollmentToDelete, setEnrollmentToDelete] = useState<string | null>(
     null,
   );
+
+  const [manageSkipsDialogOpen, setManageSkipsDialogOpen] = useState(false);
+  const [selectedEnrollmentForSkips, setSelectedEnrollmentForSkips] = useState<{
+    id: string;
+    studentName: string;
+    offering: {
+      id: string;
+      title: string;
+      weekday: number;
+      startTime: string;
+      endTime: string;
+      term: { name: string };
+      sessions: Array<{ id: string; date: string }>;
+    };
+    attendedSessions: Array<{ id: string; status: string; date: string }>;
+    skippedSessionIds: string[];
+  } | null>(null);
 
   const {
     register,
@@ -655,6 +676,31 @@ export default function GuardianViewClient({
                                   </Button>
                                   <Button
                                     size="sm"
+                                    variant="outline"
+                                    className="h-8 bg-white"
+                                    onClick={() => {
+                                      setSelectedEnrollmentForSkips({
+                                        id: enrollment.id,
+                                        studentName: `${student.firstName} ${student.lastName}`,
+                                        offering: enrollment.offering,
+                                        attendedSessions:
+                                          enrollment.attendance?.map((a) => ({
+                                            id: a.classSession.id, // Use session ID for matching
+                                            status: a.status,
+                                            date: a.classSession.date,
+                                          })) || [],
+                                        skippedSessionIds:
+                                          enrollment.enrollmentSkips?.map(
+                                            (s) => s.classSessionId,
+                                          ) || [],
+                                      });
+                                      setManageSkipsDialogOpen(true);
+                                    }}
+                                  >
+                                    Skips
+                                  </Button>
+                                  <Button
+                                    size="sm"
                                     variant="ghost"
                                     className="h-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                                     onClick={() =>
@@ -775,6 +821,19 @@ export default function GuardianViewClient({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {selectedEnrollmentForSkips && (
+        <ManageSkipsDialog
+          open={manageSkipsDialogOpen}
+          onOpenChange={setManageSkipsDialogOpen}
+          enrollment={selectedEnrollmentForSkips}
+          onSuccess={() => {
+            setManageSkipsDialogOpen(false);
+            setSelectedEnrollmentForSkips(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }

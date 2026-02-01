@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Param,
   Delete,
@@ -12,6 +13,7 @@ import {
 } from "@nestjs/common";
 import { PaymentsService } from "./payments.service";
 import { CreatePaymentDto } from "./dto/create-payment.dto";
+import { UpdatePaymentDto } from "./dto/update-payment.dto";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
@@ -71,5 +73,16 @@ export class PaymentsController {
   @Roles("super_admin", "admin")
   remove(@Param("id") id: string, @CurrentUser() staffUser: any) {
     return this.paymentsService.remove(id, staffUser);
+  }
+
+  // Update payment - Admin & Manager only
+  @Patch(":id")
+  @Roles("super_admin", "admin", "manager")
+  update(
+    @Param("id") id: string,
+    @Body() updatePaymentDto: UpdatePaymentDto,
+    @CurrentUser() staffUser: any,
+  ) {
+    return this.paymentsService.update(id, updatePaymentDto, staffUser);
   }
 }

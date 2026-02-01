@@ -155,6 +155,7 @@ export class InvoicesService {
           },
           guardian: true,
           payments: true,
+          location: true,
         },
       });
     });
@@ -209,6 +210,7 @@ export class InvoicesService {
         updatedByUser: {
           select: { id: true, fullName: true },
         },
+        location: true,
       },
     });
 
@@ -308,6 +310,7 @@ export class InvoicesService {
           guardian: true,
           lineItems: true,
           payments: true,
+          location: true,
         },
       }),
       this.prisma.invoice.count({ where }),
@@ -340,6 +343,7 @@ export class InvoicesService {
         where: { id },
         data: {
           ...updateData,
+          locationId: updateData.locationId,
           createdAt: updateData.createdAt
             ? new Date(updateData.createdAt)
             : undefined,
@@ -422,6 +426,7 @@ export class InvoicesService {
           },
           guardian: true,
           payments: true,
+          location: true,
         },
       });
     });

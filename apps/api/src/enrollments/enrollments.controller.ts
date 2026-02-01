@@ -80,6 +80,20 @@ export class EnrollmentsController {
       user,
     );
   }
+
+  @Put(":id/skips")
+  @Roles("super_admin", "admin", "manager")
+  async updateSkips(
+    @Param("id") id: string,
+    @Body() body: { skippedSessionIds: string[] },
+    @CurrentUser() user: any,
+  ) {
+    return this.enrollmentsService.updateSkips(
+      id,
+      body.skippedSessionIds,
+      user,
+    );
+  }
   @Delete(":id")
   @Roles("super_admin", "admin", "manager")
   async deleteEnrollment(@Param("id") id: string, @CurrentUser() user: any) {

@@ -11,8 +11,13 @@ export type Payment = {
   invoice: {
     id: string;
     invoiceNumber: string | null;
+    notes: string | null;
     guardian?: {
       fullName: string;
+    };
+    location?: {
+      id: string;
+      name: string;
     };
   };
   createdByUser: {
@@ -87,6 +92,30 @@ export async function createPayment(data: {
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(`Failed to create payment: ${errorText}`);
+  }
+
+  return res.json();
+}
+
+export async function updatePayment(
+  id: string,
+  data: {
+    amount?: number;
+    paymentDate?: string;
+    paymentMethod?: string;
+    notes?: string;
+  },
+) {
+  const headers = await getHeaders();
+  const res = await fetch(`${API}/payments/${id}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to update payment: ${errorText}`);
   }
 
   return res.json();

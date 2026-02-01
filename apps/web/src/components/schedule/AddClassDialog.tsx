@@ -18,6 +18,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { createOffering } from "@/lib/api/schedule-client";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { formatTime } from "@/lib/schedule/slots";
 
 interface AddClassDialogProps {
   termId: string;
@@ -92,7 +93,9 @@ export function AddClassDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {startTime ? `Add Class - ${startTime}` : "Add New Time Slot"}
+            {startTime
+              ? `Add Class - ${formatTime(startTime)}`
+              : "Add New Time Slot"}
           </DialogTitle>
           <DialogDescription>
             Create a new class offering for this time slot.

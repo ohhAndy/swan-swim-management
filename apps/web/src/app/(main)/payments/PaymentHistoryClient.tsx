@@ -23,6 +23,7 @@ import {
   ChevronRight,
   X,
   FileSpreadsheet,
+  Pencil,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -33,12 +34,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { getLocations, Location } from "@/lib/api/location-client";
+import EditInvoiceDialog from "@/components/invoices/EditInvoiceDialog";
+import { Invoice } from "@/lib/api/invoice-client";
 
 export default function PaymentHistoryClient() {
   const [data, setData] = useState<PaginatedResponse<Payment> | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const limit = 20;
+
+  // Location & Edit state
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [editingPaymentInvoice, setEditingPaymentInvoice] =
+    useState<Invoice | null>(null);
+
+  useEffect(() => {
+    getLocations().then(setLocations).catch(console.error);
+  }, []);
 
   // Filters
   const [startDate, setStartDate] = useState<string>("");
@@ -213,9 +226,12 @@ export default function PaymentHistoryClient() {
                     <TableHead>Date</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Method</TableHead>
+                    <TableHead>Location</TableHead>
                     <TableHead>Guardian</TableHead>
                     <TableHead>Invoice #</TableHead>
                     <TableHead>Notes</TableHead>
+
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -229,6 +245,13 @@ export default function PaymentHistoryClient() {
                       </TableCell>
                       <TableCell className="capitalize">
                         <Badge variant="outline">{payment.paymentMethod}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {payment.invoice.location?.name || (
+                          <span className="text-muted-foreground italic">
+                            All Locations
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {payment.invoice.guardian?.fullName || (
@@ -250,6 +273,37 @@ export default function PaymentHistoryClient() {
                         title={payment.notes || ""}
                       >
                         {payment.notes || "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            // Cast the partial invoice to full Invoice for the dialog
+                            // The dialog only uses id, invoiceNumber, location, and notes
+                            const partialInvoice = {
+                              id: payment.invoice.id,
+                              invoiceNumber:
+                                payment.invoice.invoiceNumber || undefined,
+                              location: payment.invoice.location,
+                              notes: payment.invoice.notes || undefined,
+                              // Add dummy values for required fields not used by dialog
+                              totalAmount: 0,
+                              status: "paid" as const,
+                              createdAt: new Date().toISOString(),
+                              updatedAt: new Date().toISOString(),
+                              lineItems: [],
+                              payments: [],
+                              amountPaid: 0,
+                              balance: 0,
+                              calculatedStatus: "paid" as const,
+                            };
+                            setEditingPaymentInvoice(partialInvoice as Invoice);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -287,6 +341,20 @@ export default function PaymentHistoryClient() {
           </div>
         )}
       </CardContent>
+      {editingPaymentInvoice && (
+        <EditInvoiceDialog
+          open={!!editingPaymentInvoice}
+          onOpenChange={(open) => !open && setEditingPaymentInvoice(null)}
+          invoice={editingPaymentInvoice}
+          locations={locations}
+          onSuccess={() => {
+            // Refresh payments to show updated location
+            setPage((p) => (p === 1 ? 1.0001 : 1)); // Hack to trigger effect
+            // Actually better to just refetch directly or extract fetch function
+            window.location.reload(); // Simplest way to ensure everything updates
+          }}
+        />
+      )}
     </Card>
   );
 }

@@ -66,6 +66,7 @@ export class PaymentsService {
           invoice: {
             include: {
               guardian: true,
+              location: true,
             },
           },
           createdByUser: {
@@ -96,7 +97,7 @@ export class PaymentsService {
     // Check if invoice exists
     const invoice = await this.prisma.invoice.findUnique({
       where: { id: createPaymentDto.invoiceId },
-      include: { payments: true },
+      include: { payments: true, location: true },
     });
 
     if (!invoice) {
@@ -142,6 +143,7 @@ export class PaymentsService {
         invoice: {
           include: {
             guardian: true,
+            location: true,
             payments: true,
           },
         },
@@ -195,6 +197,7 @@ export class PaymentsService {
         invoice: {
           include: {
             guardian: true,
+            location: true,
           },
         },
         createdByUser: {
@@ -271,5 +274,99 @@ export class PaymentsService {
     }
 
     return { message: "Payment deleted successfully" };
+  }
+
+  // Update payment
+  async update(id: string, updatePaymentDto: any, user: any) {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id },
+      include: { invoice: { include: { payments: true } } },
+    });
+
+    if (!payment) {
+      throw new NotFoundException(`Payment with ID ${id} not found`);
+    }
+
+    // Check if invoice is void
+    if (payment.invoice.status === "void") {
+      throw new BadRequestException(
+        "Cannot update payment of a voided invoice",
+      );
+    }
+
+    // Calculate generic total paid EXCLUDING this payment
+    const otherPaymentsTotal = payment.invoice.payments
+      .filter((p) => p.id !== id)
+      .reduce((sum, p) => sum + Number(p.amount), 0);
+
+    // New amount?
+    const newAmount =
+      updatePaymentDto.amount !== undefined
+        ? updatePaymentDto.amount
+        : Number(payment.amount);
+
+    // Validate if new amount exceeds invoice total
+    // NOTE: If the user explicitly wants to overpay, we might need a flag.
+    // For now, sticking to the rule: cannot exceed total.
+    if (otherPaymentsTotal + newAmount > Number(payment.invoice.totalAmount)) {
+      throw new BadRequestException(
+        `Payment update would exceed invoice total. Maximum allowed: $${
+          Number(payment.invoice.totalAmount) - otherPaymentsTotal
+        }`,
+      );
+    }
+
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+
+    // Update the payment
+    const updatedPayment = await this.prisma.payment.update({
+      where: { id },
+      data: {
+        amount: updatePaymentDto.amount,
+        paymentDate: updatePaymentDto.paymentDate
+          ? new Date(updatePaymentDto.paymentDate)
+          : undefined,
+        paymentMethod: updatePaymentDto.paymentMethod,
+        notes: updatePaymentDto.notes,
+        // We generally don't change 'createdBy' on update, but we could track 'updatedBy' if schema supported it
+      },
+      include: {
+        invoice: true,
+        createdByUser: {
+          select: { id: true, fullName: true },
+        },
+      },
+    });
+
+    // Recalculate Invoice Status
+    const totalPaid = otherPaymentsTotal + newAmount;
+    const newStatus =
+      totalPaid >= Number(payment.invoice.totalAmount) ? "paid" : "partial";
+
+    if (newStatus !== payment.invoice.status) {
+      await this.prisma.invoice.update({
+        where: { id: payment.invoiceId },
+        data: { status: newStatus },
+      });
+    }
+
+    // Log Audit
+    if (staffUser) {
+      await this.auditLogsService.create({
+        staffId: staffUser.id,
+        action: "update",
+        entityType: "payment",
+        entityId: id,
+        metadata: {
+          previousAmount: payment.amount,
+          newAmount: newAmount,
+          invoiceId: payment.invoiceId,
+        },
+      });
+    }
+
+    return updatedPayment;
   }
 }

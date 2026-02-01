@@ -158,6 +158,13 @@ export class GuardiansService {
                         },
                       },
                     },
+                    sessions: {
+                      select: {
+                        id: true,
+                        date: true,
+                      },
+                      orderBy: { date: "asc" },
+                    },
                   },
                 },
                 invoiceLineItem: {

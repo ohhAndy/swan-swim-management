@@ -173,6 +173,13 @@ export class StudentsService {
                   },
                   orderBy: { assignedAt: "asc" },
                 },
+                sessions: {
+                  select: {
+                    id: true,
+                    date: true,
+                  },
+                  orderBy: { date: "asc" },
+                },
               },
             },
             attendance: {

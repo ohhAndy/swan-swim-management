@@ -84,6 +84,9 @@ export async function AppHeader() {
                   <DropdownMenuItem asChild>
                     <Link href="/admin/pos">Point of Sale</Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/financials">Financial Insights</Link>
+                  </DropdownMenuItem>
                 </PermissionGate>
                 <DropdownMenuItem asChild>
                   <Link href="/enrollments/uninvoiced">Uninvoiced</Link>

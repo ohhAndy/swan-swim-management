@@ -28,6 +28,10 @@ export interface Offering {
   termId: string;
   term: Term;
   instructors: Instructor[];
+  sessions?: {
+    id: string;
+    date: string;
+  }[];
 }
 
 export interface ClassSession {

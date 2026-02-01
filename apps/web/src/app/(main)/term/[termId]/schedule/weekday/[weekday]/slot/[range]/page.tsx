@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 import { AddClassDialog } from "@/components/schedule/AddClassDialog";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { SlotNavigator } from "@/components/schedule/SlotNavigator";
+import { formatTimeRange } from "@/lib/schedule/slots";
 
 function parseRange(range: string) {
   const [start, end] = decodeURIComponent(range).split("-");
@@ -37,9 +38,9 @@ export default async function SlotPageView({
 
   const data: SlotPage = await getSlotPage(termId, Number(weekday), start, end);
 
-  const title = `${weekdayName(data.meta.weekday)} - ${data.meta.startTime} - ${
-    data.meta.endTime
-  }`;
+  const title = `${weekdayName(data.meta.weekday)} - ${formatTimeRange(
+    `${data.meta.startTime}-${data.meta.endTime}`,
+  )}`;
   const subtitle = data.meta.term?.name ?? null;
 
   const isoDates = data.days.map((d) => d.date);

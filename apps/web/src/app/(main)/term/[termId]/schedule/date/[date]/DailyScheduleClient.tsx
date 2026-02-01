@@ -30,6 +30,7 @@ import { Edit } from "lucide-react";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { InstructorInfo, TrialStatus } from "@school/shared-types";
+import { formatTimeRange } from "@/lib/schedule/slots";
 
 export interface DailyClass {
   id: string; // Session ID
@@ -135,7 +136,7 @@ export default function DailyScheduleClient({
                 {Array.from(new Set(data.classes.map((c) => c.time))).map(
                   (time) => (
                     <TabsTrigger key={time} value={time}>
-                      {time}
+                      {formatTimeRange(time)}
                     </TabsTrigger>
                   ),
                 )}
@@ -211,7 +212,7 @@ export default function DailyScheduleClient({
                               </div>
                               <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                                 <Clock className="w-4 h-4" />
-                                {cls.time}
+                                {formatTimeRange(cls.time)}
                                 <span className="mx-1">•</span>
                                 {cls.instructors.length > 0
                                   ? cls.instructors

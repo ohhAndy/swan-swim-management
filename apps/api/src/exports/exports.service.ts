@@ -10,7 +10,7 @@ export class ExportsService {
     startDate?: string,
     endDate?: string,
     method?: string,
-    query?: string
+    query?: string,
   ) {
     const where: any = {};
 
@@ -49,6 +49,7 @@ export class ExportsService {
         invoice: {
           include: {
             guardian: true,
+            location: true,
           },
         },
         createdByUser: {
@@ -65,6 +66,7 @@ export class ExportsService {
       { header: "Amount", key: "amount", width: 10 },
       { header: "Method", key: "method", width: 15 },
       { header: "Guardian", key: "guardian", width: 25 },
+      { header: "Location", key: "location", width: 20 },
       { header: "Invoice #", key: "invoiceNumber", width: 15 },
       { header: "Notes", key: "notes", width: 30 },
     ];
@@ -75,6 +77,7 @@ export class ExportsService {
         amount: Number(p.amount),
         method: p.paymentMethod,
         guardian: p.invoice.guardian?.fullName || "No Guardian",
+        location: p.invoice.location?.name || "-",
         invoiceNumber: p.invoice.invoiceNumber || "N/A",
         notes: p.notes,
       });
@@ -87,7 +90,7 @@ export class ExportsService {
     startDate?: string,
     endDate?: string,
     status?: string,
-    query?: string
+    query?: string,
   ) {
     const where: any = {};
 
@@ -122,6 +125,7 @@ export class ExportsService {
       orderBy: { createdAt: "desc" },
       include: {
         guardian: true,
+        location: true,
         createdByUser: {
           select: { fullName: true },
         },
@@ -135,6 +139,7 @@ export class ExportsService {
       { header: "Date", key: "date", width: 12 },
       { header: "Invoice #", key: "invoiceNumber", width: 15 },
       { header: "Guardian", key: "guardian", width: 25 },
+      { header: "Location", key: "location", width: 20 },
       { header: "Total Amount", key: "total", width: 15 },
       { header: "Status", key: "status", width: 10 },
       { header: "Notes", key: "notes", width: 30 },
@@ -145,6 +150,7 @@ export class ExportsService {
         date: inv.createdAt,
         invoiceNumber: inv.invoiceNumber || "Draft",
         guardian: inv.guardian?.fullName || "No Guardian",
+        location: inv.location?.name || "-",
         total: Number(inv.totalAmount),
         status: inv.status,
         notes: inv.notes,

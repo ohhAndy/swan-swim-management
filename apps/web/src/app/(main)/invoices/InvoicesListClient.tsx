@@ -21,8 +21,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, FileSpreadsheet, ArrowUpDown } from "lucide-react";
+import {
+  Plus,
+  Search,
+  FileSpreadsheet,
+  ArrowUpDown,
+  Pencil,
+} from "lucide-react";
 import { exportInvoices } from "@/lib/api/payments";
+import { getLocations, Location } from "@/lib/api/location-client";
+import EditInvoiceDialog from "@/components/invoices/EditInvoiceDialog";
 
 export default function InvoicesListClient() {
   const router = useRouter();
@@ -36,6 +44,14 @@ export default function InvoicesListClient() {
     "createdAt",
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Location & Edit state
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+
+  useEffect(() => {
+    getLocations().then(setLocations).catch(console.error);
+  }, []);
 
   const loadInvoices = useCallback(async () => {
     try {
@@ -211,13 +227,14 @@ export default function InvoicesListClient() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Invoice #</TableHead>
+                  <TableHead>Location</TableHead>
                   <TableHead>Guardian</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Paid</TableHead>
                   <TableHead>Balance</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -239,6 +256,13 @@ export default function InvoicesListClient() {
                         {invoice.invoiceNumber || (
                           <span className="text-muted-foreground italic">
                             No number
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {invoice.location?.name || (
+                          <span className="text-muted-foreground italic">
+                            All Locations
                           </span>
                         )}
                       </TableCell>
@@ -279,13 +303,14 @@ export default function InvoicesListClient() {
                       <TableCell>
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
+                          className="h-8 w-8"
                           onClick={(e) => {
                             e.stopPropagation();
-                            router.push(`/invoices/${invoice.id}`);
+                            setEditingInvoice(invoice);
                           }}
                         >
-                          View
+                          <Pencil className="h-4 w-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -335,6 +360,16 @@ export default function InvoicesListClient() {
             </div>
           )}
         </>
+      )}
+
+      {editingInvoice && (
+        <EditInvoiceDialog
+          open={!!editingInvoice}
+          onOpenChange={(open) => !open && setEditingInvoice(null)}
+          invoice={editingInvoice}
+          locations={locations}
+          onSuccess={loadInvoices}
+        />
       )}
     </div>
   );

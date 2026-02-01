@@ -9,7 +9,7 @@ import type { FormInput } from "@/lib/zod/term";
 import { Button } from "@/components/ui/button";
 import OfferingRow from "./OfferingRow";
 import { useCallback, useMemo, useState } from "react";
-import { DAY_LABELS } from "@/lib/schedule/slots";
+import { DAY_LABELS, formatTime } from "@/lib/schedule/slots";
 
 export default function OfferingList({
   form,
@@ -22,7 +22,7 @@ export default function OfferingList({
 
   const [collapsedDay, setCollapsedDay] = useState<Record<number, boolean>>({});
   const [collapsedTime, setCollapsedTime] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
 
   const toggleAllDays = (collapse: boolean) => {
@@ -85,7 +85,7 @@ export default function OfferingList({
         notes: defaults?.notes ?? "",
       });
     },
-    [append]
+    [append],
   );
 
   const addForDay = (weekday: number) => addOne({ weekday });
@@ -198,7 +198,7 @@ export default function OfferingList({
                       }}
                     >
                       <div className="text-sm font-medium">
-                        {DAY_LABELS[day]} {startTime}{" "}
+                        {DAY_LABELS[day]} {formatTime(startTime)}{" "}
                         <span className="text-slate-500">({rows.length})</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -211,7 +211,7 @@ export default function OfferingList({
                             addForDayTime(day, startTime);
                           }}
                         >
-                          + Add {startTime}
+                          + Add {formatTime(startTime)}
                         </Button>
                       </div>
                     </summary>
