@@ -104,7 +104,7 @@ export function DailyClassRoster({
             key={item.id}
             className={cn(
               "flex flex-col gap-2 p-3 rounded-lg border bg-card text-card-foreground shadow-sm",
-              item.isSkipped && "opacity-60 bg-muted"
+              item.isSkipped && "opacity-60 bg-muted",
             )}
           >
             <div className="flex justify-between items-start">
@@ -135,12 +135,16 @@ export function DailyClassRoster({
                   )}
                   {/* Next Term Status Icons (Mobile) */}
                   {item.type === "student" &&
-                    userRole !== "supervisor" &&
+                    (userRole === "super_admin" ||
+                      userRole === "admin" ||
+                      userRole === "manager") &&
                     item.nextTermStatus === "paid" && (
                       <CalendarCheck className="w-4 h-4 text-green-600 ml-1" />
                     )}
                   {item.type === "student" &&
-                    userRole !== "supervisor" &&
+                    (userRole === "super_admin" ||
+                      userRole === "admin" ||
+                      userRole === "manager") &&
                     item.nextTermStatus === "enrolled" && (
                       <CalendarClock className="w-4 h-4 text-orange-500 ml-1" />
                     )}
@@ -158,15 +162,15 @@ export function DailyClassRoster({
                               item.reportCardStatus === "given"
                                 ? "bg-green-100 text-green-700 border-green-200"
                                 : item.reportCardStatus === "created"
-                                ? "bg-blue-100 text-blue-700 border-blue-200"
-                                : "bg-gray-100 text-gray-500"
+                                  ? "bg-blue-100 text-blue-700 border-blue-200"
+                                  : "bg-gray-100 text-gray-500",
                             )}
                           >
                             {item.reportCardStatus === "given"
                               ? "RC Given"
                               : item.reportCardStatus === "created"
-                              ? "RC Created"
-                              : "No RC"}
+                                ? "RC Created"
+                                : "No RC"}
                           </Badge>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -213,7 +217,7 @@ export function DailyClassRoster({
                     variant={item.level ? "default" : "outline"}
                     className={cn(
                       "cursor-pointer hover:bg-primary/90 transition-colors",
-                      !item.level && "text-muted-foreground"
+                      !item.level && "text-muted-foreground",
                     )}
                   >
                     {item.level
@@ -232,7 +236,7 @@ export function DailyClassRoster({
                       <span
                         className={cn(
                           "mr-2",
-                          item.level === lvl && "font-bold"
+                          item.level === lvl && "font-bold",
                         )}
                       >
                         {lvl}
@@ -314,7 +318,7 @@ export function DailyClassRoster({
                 key={item.id}
                 className={cn(
                   "hover:bg-muted/50 transition-colors",
-                  item.isSkipped && "bg-gray-50 opacity-60"
+                  item.isSkipped && "bg-gray-50 opacity-60",
                 )}
               >
                 <td className="p-3">
@@ -347,7 +351,9 @@ export function DailyClassRoster({
                         </Badge>
                       )}
                       {item.type === "student" &&
-                        userRole !== "supervisor" &&
+                        (userRole === "super_admin" ||
+                          userRole === "admin" ||
+                          userRole === "manager") &&
                         item.nextTermStatus === "paid" && (
                           <TooltipProvider>
                             <Tooltip>
@@ -363,7 +369,9 @@ export function DailyClassRoster({
                           </TooltipProvider>
                         )}
                       {item.type === "student" &&
-                        userRole !== "supervisor" &&
+                        (userRole === "super_admin" ||
+                          userRole === "admin" ||
+                          userRole === "manager") &&
                         item.nextTermStatus === "enrolled" && (
                           <TooltipProvider>
                             <Tooltip>
@@ -379,7 +387,9 @@ export function DailyClassRoster({
                           </TooltipProvider>
                         )}
                       {item.type === "student" &&
-                        userRole !== "supervisor" &&
+                        (userRole === "super_admin" ||
+                          userRole === "admin" ||
+                          userRole === "manager") &&
                         (!item.nextTermStatus ||
                           item.nextTermStatus === "not_registered") && (
                           <TooltipProvider>
@@ -434,7 +444,7 @@ export function DailyClassRoster({
                           <span
                             className={cn(
                               "mr-2",
-                              item.level === lvl && "font-bold"
+                              item.level === lvl && "font-bold",
                             )}
                           >
                             {lvl}
@@ -459,15 +469,15 @@ export function DailyClassRoster({
                             item.reportCardStatus === "not_created"
                             ? "bg-gray-50 border-gray-200 text-gray-500"
                             : item.reportCardStatus === "created"
-                            ? "bg-blue-50 border-blue-200 text-blue-700"
-                            : "bg-green-50 border-green-200 text-green-700"
+                              ? "bg-blue-50 border-blue-200 text-blue-700"
+                              : "bg-green-50 border-green-200 text-green-700",
                         )}
                       >
                         {item.reportCardStatus === "given"
                           ? "Given"
                           : item.reportCardStatus === "created"
-                          ? "Created"
-                          : "None"}
+                            ? "Created"
+                            : "None"}
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem
@@ -673,7 +683,7 @@ function AttendanceButton({
           size="sm"
           className={cn(
             "w-24 h-8 text-xs font-semibold shadow-sm transition-all",
-            className
+            className,
           )}
         >
           {label}
