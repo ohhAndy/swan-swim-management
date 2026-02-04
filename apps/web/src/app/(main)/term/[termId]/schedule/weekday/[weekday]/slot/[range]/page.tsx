@@ -11,6 +11,11 @@ import { AddClassDialog } from "@/components/schedule/AddClassDialog";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { SlotNavigator } from "@/components/schedule/SlotNavigator";
 import { formatTimeRange } from "@/lib/schedule/slots";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Class Slot | Swan Swim Management",
+};
 
 function parseRange(range: string) {
   const [start, end] = decodeURIComponent(range).split("-");

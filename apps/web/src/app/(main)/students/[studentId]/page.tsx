@@ -2,6 +2,11 @@ import { notFound, redirect } from "next/navigation";
 import { getStudentById } from "@/lib/api/students";
 import StudentViewClient from "./StudentViewClient";
 import { getCurrentUser } from "@/lib/auth/user";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Student Details | Swan Swim Management",
+};
 
 export default async function StudentPage({
   params,

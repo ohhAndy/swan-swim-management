@@ -3,6 +3,11 @@ import GuardianListClient from "./GuardianListClient";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
 import { getServerAuthHeaders } from "@/lib/api/server-headers";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Guardians | Swan Swim Management",
+};
 
 export const dynamic = "force-dynamic";
 

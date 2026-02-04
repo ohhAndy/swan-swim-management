@@ -5,6 +5,11 @@ import DailyScheduleClient from "./DailyScheduleClient";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Daily Schedule | Swan Swim Management",
+};
 
 export default async function DailySchedulePage({
   params,

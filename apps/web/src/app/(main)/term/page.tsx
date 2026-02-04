@@ -1,5 +1,10 @@
 import { getAllTerms } from "@/lib/api/schedule";
 import type { Term } from "@school/shared-types";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms | Swan Swim Management",
+};
 
 import TermSlot from "./TermClientPage";
 
@@ -7,24 +12,27 @@ export default async function TermPage() {
   const terms: Term[] = await getAllTerms();
 
   // Dynamically group terms by year based on startDate
-  const groupByYear = terms.reduce((acc, term) => {
-    let year = "Other";
-    if (term.startDate) {
-      year = new Date(term.startDate).getFullYear().toString();
-    } else {
-      // Fallback to name parsing if startDate is missing
-      const match = term.name.match(/\d{4}/);
-      if (match) {
-        year = match[0];
+  const groupByYear = terms.reduce(
+    (acc, term) => {
+      let year = "Other";
+      if (term.startDate) {
+        year = new Date(term.startDate).getFullYear().toString();
+      } else {
+        // Fallback to name parsing if startDate is missing
+        const match = term.name.match(/\d{4}/);
+        if (match) {
+          year = match[0];
+        }
       }
-    }
 
-    if (!acc[year]) {
-      acc[year] = [];
-    }
-    acc[year].push(term);
-    return acc;
-  }, {} as Record<string, Term[]>);
+      if (!acc[year]) {
+        acc[year] = [];
+      }
+      acc[year].push(term);
+      return acc;
+    },
+    {} as Record<string, Term[]>,
+  );
 
   // Sort years ascending (oldest first)
   const sortedYears = Object.keys(groupByYear).sort((a, b) => {

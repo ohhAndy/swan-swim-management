@@ -2,6 +2,11 @@ import { searchStudents } from "@/lib/api/students";
 import StudentsListClient from "./StudentListClient";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Students | Swan Swim Management",
+};
 
 export const dynamic = "force-dynamic";
 

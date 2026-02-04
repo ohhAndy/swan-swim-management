@@ -79,7 +79,7 @@ const EditGuardianSchema = z.object({
 
 type EditGuardianInput = z.infer<typeof EditGuardianSchema>;
 
-function getInvoiceStatusBadge(enrollment: Enrollment) {
+function getInvoiceStatusBadge(enrollment: Enrollment, userRole: string) {
   if (!enrollment.invoiceLineItem) {
     // Not invoiced yet
     return (
@@ -97,37 +97,51 @@ function getInvoiceStatusBadge(enrollment: Enrollment) {
     return null;
   }
 
+  const isAdminOrSuperAdmin =
+    userRole === "super_admin" || userRole === "admin";
+
+  let badgeContent: React.ReactNode = null;
+
   if (invoice.status === "paid") {
-    return (
+    badgeContent = (
       <Badge variant="default" className="flex items-center gap-1">
         <CheckCircle className="w-3 h-3 shrink-0" />
         Paid
       </Badge>
     );
-  }
-
-  if (invoice.status === "partial") {
+  } else if (invoice.status === "partial") {
     const paid = invoice.payments.reduce((acc, payment) => {
       return acc + payment.amount;
     }, 0);
     const balance = invoice.totalAmount - paid;
-    return (
+    badgeContent = (
       <Badge variant="outline" className="flex items-center gap-1">
         <DollarSign className="w-3 h-3 shrink-0" />
         Partial (${balance.toFixed(2)} due)
       </Badge>
     );
-  }
-
-  if (invoice.status === "void") {
-    return (
+  } else if (invoice.status === "void") {
+    badgeContent = (
       <Badge variant="outline" className="flex items-center gap-1">
         <AlertCircle className="w-3 h-3 shrink-0" />
         Void
       </Badge>
     );
   }
-  return null;
+
+  // Wrap with Link for admins and super admins
+  if (badgeContent && isAdminOrSuperAdmin) {
+    return (
+      <Link
+        href={`/invoices/${invoice.id}`}
+        className="hover:opacity-80 transition-opacity"
+      >
+        {badgeContent}
+      </Link>
+    );
+  }
+
+  return badgeContent;
 }
 
 export default function StudentViewClient({
@@ -774,7 +788,7 @@ export default function StudentViewClient({
                       )
                       .join(", ");
 
-                    const badge = getInvoiceStatusBadge(enrollment);
+                    const badge = getInvoiceStatusBadge(enrollment, user.role);
 
                     return (
                       <div
@@ -979,7 +993,7 @@ export default function StudentViewClient({
                 </h3>
                 <div className="space-y-4 opacity-75">
                   {pastEnrollments.map((enrollment) => {
-                    const badge = getInvoiceStatusBadge(enrollment);
+                    const badge = getInvoiceStatusBadge(enrollment, user.role);
 
                     return (
                       <Card key={enrollment.id}>

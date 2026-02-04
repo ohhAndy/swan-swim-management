@@ -2,6 +2,11 @@ import { getCurrentUser } from "@/lib/auth/user";
 import NewStudentForm from "./NewStudentForm";
 import { hasPermission } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "New Student | Swan Swim Management",
+};
 
 export const dynamic = "force-dynamic";
 

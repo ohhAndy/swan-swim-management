@@ -1,4 +1,9 @@
 import InstructorForm from "../InstructorForm";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "New Instructor | Swan Swim Management",
+};
 
 export default function NewInstructorPage() {
   return (

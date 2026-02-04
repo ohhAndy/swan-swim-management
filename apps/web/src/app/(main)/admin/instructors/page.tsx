@@ -3,6 +3,11 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import InstructorsList from "./InstructorsList";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Instructors | Swan Swim Management",
+};
 
 export const dynamic = "force-dynamic";
 

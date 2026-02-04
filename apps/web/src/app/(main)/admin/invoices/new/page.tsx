@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import CreateInvoiceForm from "./CreateInvoiceForm";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "New Invoice | Swan Swim Management",
+};
 
 export const dynamic = "force-dynamic";
 

@@ -7,6 +7,11 @@ import TimeSlots from "./TimeSlotClient";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Schedule | Swan Swim Management",
+};
 
 export default async function TimeSlotsPage({
   params,

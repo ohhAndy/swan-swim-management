@@ -1,3 +1,10 @@
+import { Metadata } from "next";
+import AvailabilityClientWrapper from "./AvailabilityClient";
+
+export const metadata: Metadata = {
+  title: "Availability | Swan Swim Management",
+};
+
 export default async function AvailabilityPage({
   params,
 }: {
@@ -13,6 +20,3 @@ export default async function AvailabilityPage({
     </>
   );
 }
-
-// Lazy load or import
-import AvailabilityClientWrapper from "./AvailabilityClient";

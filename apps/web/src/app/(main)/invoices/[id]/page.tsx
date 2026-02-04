@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import InvoiceDetailClient from "./InvoiceDetailClient";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Invoice Details | Swan Swim Management",
+};
 
 export default async function InvoiceDetailPage({
   params,

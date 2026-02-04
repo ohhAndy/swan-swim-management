@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import InvoicesListClient from "./InvoicesListClient";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Invoices | Swan Swim Management",
+};
 
 export const dynamic = "force-dynamic";
 

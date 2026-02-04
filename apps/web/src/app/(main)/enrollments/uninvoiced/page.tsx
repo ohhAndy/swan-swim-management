@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import UninvoicedList from "./UninvoicedList";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Uninvoiced Enrollments | Swan Swim Management",
+};
 
 export const dynamic = "force-dynamic";
 

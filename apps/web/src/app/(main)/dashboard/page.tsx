@@ -7,6 +7,11 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { redirect } from "next/navigation";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Dashboard | Swan Swim Management",
+};
 
 export const dynamic = "force-dynamic";
 

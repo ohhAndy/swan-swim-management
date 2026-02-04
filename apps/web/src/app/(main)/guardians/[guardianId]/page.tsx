@@ -2,6 +2,11 @@ import { notFound, redirect } from "next/navigation";
 import { getGuardianById } from "@/lib/api/guardians";
 import GuardianViewClient from "./GuardianViewClient";
 import { getCurrentUser } from "@/lib/auth/user";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Guardian Details | Swan Swim Management",
+};
 
 export default async function GuardianPage({
   params,
