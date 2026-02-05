@@ -54,11 +54,19 @@ export default function DailyScheduleClient({
   termId,
   date,
   userRole,
+  nextTermId,
+  nextTermStartDate,
+  prevTermId,
+  prevTermStartDate,
 }: {
   data: DailyScheduleResponse;
   termId: string;
   date: string;
   userRole: string;
+  nextTermId?: string;
+  nextTermStartDate?: string;
+  prevTermId?: string;
+  prevTermStartDate?: string;
 }) {
   const router = useRouter();
 
@@ -83,43 +91,77 @@ export default function DailyScheduleClient({
 
   return (
     <main className="p-4 md:p-6 pb-20 max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <BackButton fallbackHref={`/term/${termId}/schedule`} />
-        <div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => {
-                const prevDate = format(
-                  subDays(new Date(date + "T00:00:00"), 1),
-                  "yyyy-MM-dd",
-                );
-                router.push(`/term/${termId}/schedule/date/${prevDate}`);
-              }}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-2xl font-bold tracking-tight">
-              {format(new Date(date + "T00:00:00"), "EEEE, MMMM do, yyyy")}
-            </h1>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => {
-                const nextDate = format(
-                  addDays(new Date(date + "T00:00:00"), 1),
-                  "yyyy-MM-dd",
-                );
-                router.push(`/term/${termId}/schedule/date/${nextDate}`);
-              }}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <BackButton fallbackHref={`/term/${termId}/schedule`} />
+          <div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  const prevDate = format(
+                    subDays(new Date(date + "T00:00:00"), 1),
+                    "yyyy-MM-dd",
+                  );
+                  router.push(`/term/${termId}/schedule/date/${prevDate}`);
+                }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <h1 className="text-2xl font-bold tracking-tight">
+                {format(new Date(date + "T00:00:00"), "EEEE, MMMM do, yyyy")}
+              </h1>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  const nextDate = format(
+                    addDays(new Date(date + "T00:00:00"), 1),
+                    "yyyy-MM-dd",
+                  );
+                  router.push(`/term/${termId}/schedule/date/${nextDate}`);
+                }}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-muted-foreground">{data.termName}</p>
           </div>
-          <p className="text-muted-foreground">{data.termName}</p>
+        </div>
+
+        <div className="flex gap-2">
+          {prevTermId && prevTermStartDate && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                router.push(
+                  `/term/${prevTermId}/schedule/date/${prevTermStartDate}`,
+                );
+              }}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Prev Term
+            </Button>
+          )}
+
+          {nextTermId && nextTermStartDate && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                router.push(
+                  `/term/${nextTermId}/schedule/date/${nextTermStartDate}`,
+                );
+              }}
+            >
+              Next Term
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          )}
         </div>
       </div>
 

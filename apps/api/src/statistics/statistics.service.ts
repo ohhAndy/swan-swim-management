@@ -23,10 +23,6 @@ export class StatisticsService {
 
       const validatedLocationId = validateLocationAccess(staffUser, locationId);
 
-      console.log(
-        `[Stats] Calculating stats for term ${termId} (Location: ${validatedLocationId || "Global"})`,
-      );
-
       // 1. Enrollment Capacity
       // Fetch all offerings for the term
       const offerings = await this.prisma.classOffering.findMany({
@@ -129,16 +125,6 @@ export class StatisticsService {
               : {}),
           },
         },
-      });
-
-      console.log("[Stats] Dashboard stats calculated:", {
-        termId,
-        locationId: validatedLocationId,
-        activeStudents,
-        totalCapacity,
-        totalEnrollments,
-        pendingMakeups,
-        upcomingTrials,
       });
 
       return {

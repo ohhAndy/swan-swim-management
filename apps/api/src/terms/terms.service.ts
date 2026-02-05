@@ -259,8 +259,6 @@ export class TermsService {
     startTime: string,
     endTime: string,
   ): Promise<SlotPage> {
-    console.time(`[Schedule] Total Query Time`);
-
     if (weekday < 0 || weekday > 6) {
       throw new BadRequestException("Not a real weekday");
     }
@@ -270,7 +268,6 @@ export class TermsService {
     }
 
     // Step 1: Get term and offerings in parallel
-    console.time("[Schedule] 1. Get Term + Offerings");
     const [term, offerings] = await Promise.all([
       this.prisma.term.findUnique({
         where: { id: termId },
@@ -285,7 +282,6 @@ export class TermsService {
         },
       }),
     ]);
-    console.timeEnd("[Schedule] 1. Get Term + Offerings");
 
     if (!term) {
       throw new NotFoundException("Term Does Not Exist");
@@ -297,7 +293,6 @@ export class TermsService {
     };
 
     if (offerings.length === 0) {
-      console.timeEnd(`[Schedule] Total Query Time`);
       return {
         meta: { weekday, startTime, endTime, term: termMeta },
         days: [],
@@ -308,7 +303,6 @@ export class TermsService {
     const capacityMap = new Map(offerings.map((o) => [o.id, o.capacity]));
 
     // Step 2: Get sessions
-    console.time("[Schedule] 2. Get Sessions");
     const sessions = await this.prisma.classSession.findMany({
       where: { offeringId: { in: offeringIds } },
       select: {
@@ -344,10 +338,8 @@ export class TermsService {
       },
       orderBy: { date: "asc" },
     });
-    console.timeEnd("[Schedule] 2. Get Sessions");
 
     if (sessions.length === 0) {
-      console.timeEnd(`[Schedule] Total Query Time`);
       return {
         meta: { weekday, startTime, endTime, term: termMeta },
         days: [],
@@ -366,7 +358,6 @@ export class TermsService {
     }
 
     // Step 3: Get enrollments first to get enrollment IDs
-    console.time("[Schedule] 3. Get Enrollments");
     const enrollments = await this.prisma.enrollment.findMany({
       where: { offeringId: { in: offeringIds }, status: "active" },
       select: {
@@ -401,7 +392,6 @@ export class TermsService {
         },
       },
     });
-    console.timeEnd("[Schedule] 3. Get Enrollments");
 
     const enrollmentsByOffering = new Map<string, typeof enrollments>();
     for (const e of enrollments) {
@@ -413,9 +403,6 @@ export class TermsService {
     const enrollmentIds = enrollments.map((e) => e.id);
 
     // Step 4: Fetch all remaining data IN PARALLEL
-    console.time(
-      "[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)",
-    );
     const [
       attendanceRecords,
       skipRecords,
@@ -527,10 +514,6 @@ export class TermsService {
       })(),
     ]);
 
-    console.timeEnd(
-      "[Schedule] 4. Parallel Fetch (Attendance/Skips/Makeups/Counts)",
-    );
-
     // Fetch Next Term Enrollments
     // nextTerm is now an array of { id: string }
     // We already destructured the result of the async IIFE above
@@ -560,7 +543,6 @@ export class TermsService {
         : [];
 
     // Build maps
-    console.time("[Schedule] 5. Build Maps + Response");
 
     // Build attendance map and excused count map
     const attendanceMap = new Map<
@@ -804,9 +786,6 @@ export class TermsService {
         return { date: `${date}T04:00:00.000Z`, rosters };
       });
 
-    console.timeEnd("[Schedule] 5. Build Maps + Response");
-    console.timeEnd(`[Schedule] Total Query Time`);
-
     return {
       meta: { weekday, startTime, endTime, term: termMeta },
       days,
@@ -814,8 +793,6 @@ export class TermsService {
   }
 
   async getDailySchedule(termId: string, dateString: string) {
-    console.time("[DailySchedule] Total Time");
-
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       throw new BadRequestException("Invalid date format YYYY-MM-DD");
     }
@@ -823,7 +800,6 @@ export class TermsService {
     // Use UTC Day
     const dow = targetDate.getUTCDay();
 
-    console.time("[DailySchedule] Fetch Data");
     const [term, offerings] = await Promise.all([
       this.prisma.term.findUnique({
         where: { id: termId },
@@ -982,12 +958,6 @@ export class TermsService {
             .map((e) => e.studentId)
             .filter((id): id is string => !!id);
 
-          console.log("[DEBUG] getDailySchedule NextTerms:", nextTerms);
-          console.log(
-            "[DEBUG] Checking enrollments for studentIds:",
-            studentIds,
-          );
-
           if (studentIds.length === 0) return [];
 
           const res = await this.prisma.enrollment.findMany({
@@ -1005,11 +975,9 @@ export class TermsService {
               },
             },
           });
-          console.log("[DEBUG] Found nextTermEnrollments:", res.length);
           return res;
         })(),
       ]);
-    console.timeEnd("[DailySchedule] Fetch Data");
 
     const attendanceMap = new Map(attendance.map((a) => [a.enrollmentId, a]));
     const skipSet = new Set(skips.map((s) => s.enrollmentId));
@@ -1148,8 +1116,6 @@ export class TermsService {
         };
       })
       .filter(Boolean);
-
-    console.timeEnd("[DailySchedule] Total Time");
 
     return {
       date: dateString,

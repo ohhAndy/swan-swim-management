@@ -77,8 +77,6 @@ export class RolesGuard implements CanActivate {
         timeZone: "America/Toronto",
       });
 
-      // console.log("Access Check Debug:", { dayName, timeString, schedule });
-
       const dayRules = schedule[dayName];
 
       if (dayRules && dayRules.length > 0) {
@@ -95,7 +93,6 @@ export class RolesGuard implements CanActivate {
         schedule[dayName] === undefined &&
         Object.keys(schedule).length > 0
       ) {
-        // console.log("Access Denied: No rules for today", dayName);
         throw new ForbiddenException(
           `Access denied. No schedule found for today (${dayName}).`,
         );
