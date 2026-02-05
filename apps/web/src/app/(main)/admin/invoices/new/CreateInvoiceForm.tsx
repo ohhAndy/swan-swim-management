@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   createInvoice,
   getUnInvoicedEnrollments,
+  getInvoices,
 } from "@/lib/api/invoice-client";
 import { searchGuardians } from "@/lib/api/guardian-client";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,44 @@ export default function CreateInvoiceForm() {
       setGuardians([]);
     }
   }, [guardianSearch]);
+
+  // Auto-populate invoice number
+  useEffect(() => {
+    async function getNextInvoiceNumber() {
+      try {
+        const result = await getInvoices({
+          limit: 1,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+          includeAllLocations: true,
+        });
+
+        if (result.data && result.data.length > 0) {
+          const lastInvoice = result.data[0];
+          if (lastInvoice.invoiceNumber) {
+            // Try to parse prefix and number
+            const match = lastInvoice.invoiceNumber.match(/^([A-Za-z]+)(\d+)$/);
+            if (match) {
+              const prefix = match[1];
+              const number = parseInt(match[2]);
+              const nextNumber = number + 1;
+              const paddedNumber = nextNumber
+                .toString()
+                .padStart(match[2].length, "0");
+              setInvoiceNumber(`${prefix}${paddedNumber}`);
+            }
+          }
+        } else {
+          // Default start if no invoices exist
+          setInvoiceNumber("N0001");
+        }
+      } catch (error) {
+        console.error("Failed to fetch latest invoice number:", error);
+      }
+    }
+
+    getNextInvoiceNumber();
+  }, []);
 
   // Load enrollments when guardian selected
   useEffect(() => {
