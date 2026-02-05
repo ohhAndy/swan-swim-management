@@ -137,14 +137,16 @@ export function DailyClassRoster({
                   {item.type === "student" &&
                     (userRole === "super_admin" ||
                       userRole === "admin" ||
-                      userRole === "manager") &&
+                      userRole === "manager" ||
+                      userRole === "supervisor") &&
                     item.nextTermStatus === "paid" && (
                       <CalendarCheck className="w-4 h-4 text-green-600 ml-1" />
                     )}
                   {item.type === "student" &&
                     (userRole === "super_admin" ||
                       userRole === "admin" ||
-                      userRole === "manager") &&
+                      userRole === "manager" ||
+                      userRole === "supervisor") &&
                     item.nextTermStatus === "enrolled" && (
                       <CalendarClock className="w-4 h-4 text-orange-500 ml-1" />
                     )}
@@ -353,7 +355,8 @@ export function DailyClassRoster({
                       {item.type === "student" &&
                         (userRole === "super_admin" ||
                           userRole === "admin" ||
-                          userRole === "manager") &&
+                          userRole === "manager" ||
+                          userRole === "supervisor") &&
                         item.nextTermStatus === "paid" && (
                           <TooltipProvider>
                             <Tooltip>
@@ -371,7 +374,8 @@ export function DailyClassRoster({
                       {item.type === "student" &&
                         (userRole === "super_admin" ||
                           userRole === "admin" ||
-                          userRole === "manager") &&
+                          userRole === "manager" ||
+                          userRole === "supervisor") &&
                         item.nextTermStatus === "enrolled" && (
                           <TooltipProvider>
                             <Tooltip>
@@ -389,7 +393,8 @@ export function DailyClassRoster({
                       {item.type === "student" &&
                         (userRole === "super_admin" ||
                           userRole === "admin" ||
-                          userRole === "manager") &&
+                          userRole === "manager" ||
+                          userRole === "supervisor") &&
                         (!item.nextTermStatus ||
                           item.nextTermStatus === "not_registered") && (
                           <TooltipProvider>
