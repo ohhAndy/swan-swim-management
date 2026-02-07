@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { HOLIDAYS } from "@/lib/schedule/slots";
 
 interface EnrollStudentDialogProps {
   open: boolean;
@@ -67,7 +68,11 @@ export function EnrollStudentDialog({
 
   useEffect(() => {
     if (open) {
-      setSelectedDates(new Set(isoDates));
+      // Filter out holidays by default
+      const enabledDates = isoDates.filter(
+        (d) => !HOLIDAYS.includes(d.slice(0, 10)),
+      );
+      setSelectedDates(new Set(enabledDates));
       setQ("");
       setResults([]);
       setPicked(null);
@@ -143,11 +148,18 @@ export function EnrollStudentDialog({
     if (selectedDates.size === isoDates.length) {
       setSelectedDates(new Set());
     } else {
-      setSelectedDates(new Set(isoDates));
+      // Select all non-holiday dates
+      const enabledDates = isoDates.filter(
+        (d) => !HOLIDAYS.includes(d.slice(0, 10)),
+      );
+      setSelectedDates(new Set(enabledDates));
     }
   };
 
   const selectedCount = selectedDates.size;
+  const skippedHolidaysCount = isoDates.filter((d) =>
+    HOLIDAYS.includes(d.slice(0, 10)),
+  ).length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -271,9 +283,18 @@ export function EnrollStudentDialog({
             </div>
 
             {selectedCount < isoDates.length && (
-              <p className="text-xs text-slate-600">
-                Unchecked dates will be marked as enrollment skips
-              </p>
+              <div className="space-y-1">
+                <p className="text-xs text-slate-600">
+                  Unchecked dates will be marked as enrollment skips
+                </p>
+                {skippedHolidaysCount > 0 && (
+                  <p className="text-xs text-amber-600 font-medium">
+                    Note: {skippedHolidaysCount} date
+                    {skippedHolidaysCount > 1 ? "s" : ""} falling on holidays
+                    were automatically unchecked.
+                  </p>
+                )}
+              </div>
             )}
           </div>
 

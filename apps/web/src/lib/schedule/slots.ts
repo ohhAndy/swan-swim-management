@@ -29,6 +29,16 @@ export const WEEKEND_SLOTS = [
 export const laneLetter = (i: number) => String.fromCharCode(65 + i);
 export const YEARS = ["2026", "2027", "2028", "2029", "2030", "2031"];
 
+// Add holidays here in YYYY-MM-DD format
+export const HOLIDAYS = [
+  "2026-02-16", // Family Day
+  "2026-04-03", // Good Friday
+  "2026-05-18", // Victoria Day
+  "2026-07-01", // Canada Day
+  "2026-09-07", // Labour Day
+  "2026-10-12", // Thanksgiving
+];
+
 export function formatTime(time: string): string {
   if (!time) return "";
   const [h, m] = time.split(":");
