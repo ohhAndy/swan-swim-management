@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
+import { FULL_DAY_LABELS, formatTimeRange } from "@/lib/schedule/slots";
 import { getTimeSlotsByWeekday } from "@/lib/api/schedule-client";
 import { Loader2 } from "lucide-react";
 
@@ -110,7 +110,7 @@ export function SlotNavigator({
         <SelectContent>
           {availableSlots.map((slot) => (
             <SelectItem key={slot} value={slot}>
-              {slot}
+              {formatTimeRange(slot)}
             </SelectItem>
           ))}
         </SelectContent>

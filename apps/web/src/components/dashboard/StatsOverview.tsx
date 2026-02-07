@@ -8,7 +8,19 @@ import { DashboardStats, getDashboardStats } from "@/lib/api/stats";
 import { Users, AlertCircle, CalendarClock, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function StatsOverview({ termId }: { termId: string }) {
+import { Button } from "@/components/ui/button";
+
+export function StatsOverview({
+  termId,
+  termName,
+  prevTermId,
+  nextTermId,
+}: {
+  termId: string;
+  termName: string;
+  prevTermId?: string;
+  nextTermId?: string;
+}) {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -40,7 +52,25 @@ export function StatsOverview({ termId }: { termId: string }) {
 
   return (
     <div className="space-y-6 mb-8 w-full text-left">
-      <h2 className="text-xl font-semibold text-gray-800">Term Overview</h2>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h2 className="text-xl font-semibold text-gray-800">
+          {termName} Overview
+        </h2>
+        <div className="flex items-center gap-2">
+          {prevTermId && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/dashboard?termId=${prevTermId}`}>
+                Previous Term
+              </Link>
+            </Button>
+          )}
+          {nextTermId && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/dashboard?termId=${nextTermId}`}>Next Term</Link>
+            </Button>
+          )}
+        </div>
+      </div>
 
       {/* Top Metrics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -101,7 +131,7 @@ export function StatsOverview({ termId }: { termId: string }) {
           <CardContent>
             <div className="text-xl font-bold truncate">
               {Object.entries(stats.levels).sort(
-                (a, b) => b[1] - a[1]
+                (a, b) => b[1] - a[1],
               )[0]?.[0] || "N/A"}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -161,7 +191,7 @@ export function StatsOverview({ termId }: { termId: string }) {
                 const count = stats.studentsPerDay[dayIndex];
                 const heightPercentage = Math.max(
                   (count / maxStudentsPerDay) * 100,
-                  4
+                  4,
                 ); // min height for visibility
                 return (
                   <div

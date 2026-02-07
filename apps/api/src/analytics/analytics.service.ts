@@ -6,71 +6,84 @@ export class AnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getRevenueByLocation() {
-    // Group invoices by location and sum totalAmount
-    // Filtering for paid or partial status to reflect actual/expected revenue
-    const data = await this.prisma.invoice.groupBy({
-      by: ["locationId"],
-      _sum: {
-        totalAmount: true,
+    // Fetch all payments with invoice location
+    const payments = await this.prisma.payment.findMany({
+      select: {
+        amount: true,
+        invoice: {
+          select: {
+            locationId: true,
+          },
+        },
       },
       where: {
-        status: { in: ["paid", "partial"] },
-        locationId: { not: null },
+        // Optional: filter out voided checks or unrelated payments if needed?
+        // Currently assuming all payments in DB are valid revenue
       },
     });
 
-    // We need location names, so we fetch them and map
+    // Aggregate in memory
+    const revenueByLocation: Record<string, number> = {};
+
+    for (const payment of payments) {
+      const locationId = payment.invoice?.locationId || "unknown"; // Use string "unknown" for null key
+      const amount = Number(payment.amount);
+
+      revenueByLocation[locationId] =
+        (revenueByLocation[locationId] || 0) + amount;
+    }
+
+    // Fetch location names
     const locations = await this.prisma.location.findMany({
       select: { id: true, name: true },
     });
 
-    return data.map((item) => {
-      const location = locations.find((l) => l.id === item.locationId);
+    return Object.entries(revenueByLocation).map(([locationId, revenue]) => {
+      if (locationId === "unknown") {
+        return {
+          locationId: null,
+          locationName: "Unknown Location",
+          revenue,
+        };
+      }
+
+      const location = locations.find((l) => l.id === locationId);
       return {
-        locationId: item.locationId,
+        locationId,
         locationName: location?.name || "Unknown Location",
-        revenue: item._sum.totalAmount || 0,
+        revenue,
       };
     });
   }
 
   async getRevenueByTerm() {
-    // This is more complex because Invoice doesn't directly map to Term for all line items.
-    // We'll rely on InvoiceLineItem -> Enrollment -> Offering -> Term
-
-    // 1. Fetch all paid/partial invoices
-    // 2. Aggregate line item amounts by term
-
-    // Ideally we'd use groupBy, but deep relation aggregation is tricky in Prisma groupBy.
-    // We'll fetch relevant line items and aggregate in memory or use raw query if performance dictates later.
-    // For now, let's try a finding line items with enrollment relations.
-
-    const lineItems = await this.prisma.invoiceLineItem.findMany({
-      where: {
-        invoice: {
-          status: { in: ["paid", "partial"] },
-        },
-        enrollmentId: { not: null },
-      },
+    // 1. Fetch all payments with deep relations to Term
+    const payments = await this.prisma.payment.findMany({
       select: {
         amount: true,
         invoice: {
           select: {
+            totalAmount: true,
             location: {
               select: { name: true },
             },
-          },
-        },
-        enrollment: {
-          select: {
-            offering: {
+            lineItems: {
               select: {
-                term: {
+                amount: true,
+                enrollment: {
                   select: {
-                    id: true,
-                    name: true,
-                    location: {
-                      select: { name: true },
+                    offering: {
+                      select: {
+                        term: {
+                          select: {
+                            id: true,
+                            name: true,
+                            location: {
+                              select: { name: true },
+                            },
+                          },
+                        },
+                      },
                     },
                   },
                 },
@@ -84,43 +97,54 @@ export class AnalyticsService {
     const revenueByTerm: Record<string, { termName: string; revenue: number }> =
       {};
 
-    for (const item of lineItems) {
-      if (!item.enrollment?.offering?.term) continue;
-      const term = item.enrollment.offering.term;
+    for (const payment of payments) {
+      const invoice = payment.invoice;
+      if (!invoice) continue;
 
-      // Prioritize Term Location (if specific), fall back to Invoice Location (if term is global)
-      const locationName =
-        term.location?.name ||
-        item.invoice?.location?.name ||
-        "Unknown Location";
+      const invoiceTotal = Number(invoice.totalAmount);
+      const paymentAmount = Number(payment.amount);
 
-      // Abbreviate location name: "Markham" -> "M", "Angus Glen" -> "AG"
-      const locationCode = locationName
-        .split(" ")
-        .map((word) => word[0])
-        .join("")
-        .toUpperCase();
+      if (invoiceTotal === 0 || !invoice.lineItems.length) continue;
 
-      // Use Name + Location as key to merge duplicate terms (same name/location but different IDs)
-      // This solves the issue where multiple terms with the same name/location were showing as duplicates
-      const compositeKey = `${term.name}_${locationCode}`;
-      const termName = `${term.name} (${locationCode})`;
+      // Distribute payment amount to line items
+      for (const lineItem of invoice.lineItems) {
+        // Only care about line items linked to a Term (via Enrollment -> Offering)
+        const term = lineItem.enrollment?.offering?.term;
+        if (!term) continue;
 
-      const amount = Number(item.amount); // Decimal to number
+        const lineItemAmount = Number(lineItem.amount);
 
-      if (!revenueByTerm[compositeKey]) {
-        revenueByTerm[compositeKey] = { termName, revenue: 0 };
+        // Calculate weight: How much of the invoice does this line item represent?
+        const weight = lineItemAmount / invoiceTotal;
+
+        // Attribute proportional payment
+        const attributedAmount = paymentAmount * weight;
+
+        // Generate key and name for aggregation
+        const locationName =
+          term.location?.name || invoice.location?.name || "Unknown Location";
+        const locationCode = locationName
+          .split(" ")
+          .map((word) => word[0])
+          .join("")
+          .toUpperCase();
+
+        const compositeKey = `${term.name}_${locationCode}`;
+        const termName = `${term.name} (${locationCode})`;
+
+        if (!revenueByTerm[compositeKey]) {
+          revenueByTerm[compositeKey] = { termName, revenue: 0 };
+        }
+        revenueByTerm[compositeKey].revenue += attributedAmount;
       }
-      revenueByTerm[compositeKey].revenue += amount;
     }
 
     return Object.entries(revenueByTerm)
       .map(([_, data]) => ({
-        // We don't really use the ID on frontend for display, so composite key is fine or just omit
-        termId: _,
+        termId: _, // Composite key
         termName: data.termName,
         revenue: data.revenue,
       }))
-      .sort((a, b) => b.revenue - a.revenue); // Sort by revenue desc
+      .sort((a, b) => b.revenue - a.revenue);
   }
 }

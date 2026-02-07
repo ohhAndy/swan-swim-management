@@ -15,33 +15,54 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+// Define types for page props
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function DashboardPage({ searchParams }: Props) {
   const user = await getCurrentUser();
   if (!user) {
     redirect("/login");
   }
   const terms = await getAllTerms();
+  const resolvedSearchParams = await searchParams;
+  const requestedTermId = resolvedSearchParams?.termId as string | undefined;
 
   const now = new Date();
 
-  // 1. Try to find the *current* term (where today is within range)
-  const currentTerm = terms.find((t) => {
-    if (!t.startDate || !t.endDate) return false;
-    const start = new Date(t.startDate);
-    const end = new Date(t.endDate);
-    // Include end date fully
-    end.setHours(23, 59, 59, 999);
-    return now >= start && now <= end;
+  // Sort terms by startDate descending (newest first)
+  const sortedTerms = [...terms].sort((a, b) => {
+    const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
+    const dateB = b.startDate ? new Date(b.startDate).getTime() : 0;
+    return dateB - dateA;
   });
 
-  // 2. Fallback to newest term if no current term
-  const newestTerm = [...terms].sort((a, b) => {
-    const dateA = a.endDate ? new Date(a.endDate).getTime() : 0;
-    const dateB = b.endDate ? new Date(b.endDate).getTime() : 0;
-    return dateB - dateA;
-  })[0];
+  // 1. Determine which term to show
+  let termToUse = requestedTermId
+    ? sortedTerms.find((t) => t.id === requestedTermId)
+    : undefined;
 
-  const termToUse = currentTerm || newestTerm;
+  // 2. Fallback if no requested term or not found: Current term -> Newest term
+  if (!termToUse) {
+    const currentTerm = sortedTerms.find((t) => {
+      if (!t.startDate || !t.endDate) return false;
+      const start = new Date(t.startDate);
+      const end = new Date(t.endDate);
+      end.setHours(23, 59, 59, 999);
+      return now >= start && now <= end;
+    });
+
+    termToUse = currentTerm || sortedTerms[0]; // sortedTerms[0] is newest because of sort
+  }
+
+  // 3. Find next and previous terms
+  const currentIndex = sortedTerms.findIndex((t) => t.id === termToUse?.id);
+  const nextTerm = currentIndex > 0 ? sortedTerms[currentIndex - 1] : null; // Newer term (lower index)
+  const prevTerm =
+    currentIndex < sortedTerms.length - 1
+      ? sortedTerms[currentIndex + 1]
+      : null; // Older term (higher index)
 
   const today = format(new Date(), "yyyy-MM-dd");
 
@@ -58,7 +79,12 @@ export default async function DashboardPage() {
 
           {termToUse &&
             ["super_admin", "admin", "manager"].includes(user?.role || "") && (
-              <StatsOverview termId={termToUse.id} />
+              <StatsOverview
+                termId={termToUse.id}
+                termName={termToUse.name}
+                prevTermId={prevTerm?.id}
+                nextTermId={nextTerm?.id}
+              />
             )}
 
           {termToUse && (

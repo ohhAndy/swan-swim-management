@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FULL_DAY_LABELS, formatTimeRange } from "@/lib/schedule/slots";
 import { AddClassDialog } from "@/components/schedule/AddClassDialog";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function TimeSlots({
   timeSlots,
@@ -16,8 +16,6 @@ export default function TimeSlots({
   weekday: number;
   termId: string;
 }) {
-  const router = useRouter();
-
   const getDuration = (timeSlot: string) => {
     const [start, end] = timeSlot.split("-");
     if (!start || !end) return 0;
@@ -36,26 +34,25 @@ export default function TimeSlots({
           {timeSlots.map((t, i) => (
             <Button
               key={i}
-              type="button"
+              asChild
               variant="ghost"
               className="w-full flex rounded-md hover:bg-muted transition cursor-pointer"
-              onClick={() =>
-                router.push(
-                  `/term/${termId}/schedule/weekday/${weekday}/slot/${timeSlots[i]}`,
-                )
-              }
             >
-              <span
-                className={`text-center align-middle text-sm ${
-                  getDuration(t) === 30
-                    ? "text-yellow-600 font-medium"
-                    : getDuration(t) === 45
-                      ? "text-[#1c82c5]"
-                      : "text-green-600 font-medium"
-                }`}
+              <Link
+                href={`/term/${termId}/schedule/weekday/${weekday}/slot/${timeSlots[i]}`}
               >
-                {formatTimeRange(t)}
-              </span>
+                <span
+                  className={`text-center align-middle text-sm ${
+                    getDuration(t) === 30
+                      ? "text-yellow-600 font-medium"
+                      : getDuration(t) === 45
+                        ? "text-[#1c82c5]"
+                        : "text-green-600 font-medium"
+                  }`}
+                >
+                  {formatTimeRange(t)}
+                </span>
+              </Link>
             </Button>
           ))}
           <AddClassDialog termId={termId} weekday={weekday} />

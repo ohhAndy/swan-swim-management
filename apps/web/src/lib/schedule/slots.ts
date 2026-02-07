@@ -47,12 +47,9 @@ export function formatTimeRange(range: string): string {
   const startFmt = formatTime(start);
   const endFmt = formatTime(end);
 
-  const startSuffix = startFmt.slice(-2);
-  const endSuffix = endFmt.slice(-2);
+  // Always strip the suffix from start time as requested
+  // "11:45 AM - 12:30 PM" -> "11:45 - 12:30 PM"
+  const startWithoutSuffix = startFmt.replace(/ (AM|PM)$/, "");
 
-  if (startSuffix === endSuffix) {
-    return `${startFmt.replace(" " + startSuffix, "")} - ${endFmt}`;
-  }
-
-  return `${startFmt} - ${endFmt}`;
+  return `${startWithoutSuffix} - ${endFmt}`;
 }

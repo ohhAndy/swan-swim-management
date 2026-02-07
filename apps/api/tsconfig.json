@@ -11,7 +11,7 @@
     "noImplicitAny": false,       // Stops "implicitly has any type" errors
     "strict": false,              // Disables strict type checking
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node", "jest"]
   },
   "include": ["src"]
 }
