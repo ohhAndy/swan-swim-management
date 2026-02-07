@@ -38,6 +38,23 @@ type AvailabilityData = Record<
   }>
 >;
 
+const getSeatsColor = (seats: number) => {
+  if (seats >= 3) return "text-green-600 bg-green-50";
+  if (seats === 2) return "text-blue-600 bg-blue-50";
+  if (seats === 1) return "text-red-600 bg-red-50";
+  return "text-gray-600 bg-gray-50";
+};
+
+// Add holidays here in YYYY-MM-DD format
+const HOLIDAYS = [
+  "2026-02-16", // Family Day
+  "2026-04-03", // Good Friday
+  "2026-05-18", // Victoria Day
+  "2026-07-01", // Canada Day
+  "2026-09-07", // Labour Day
+  "2026-10-12", // Thanksgiving
+];
+
 export default function AvailabilityClient({ termId }: { termId: string }) {
   const router = useRouter();
   const [level, setLevel] = useState<string>("all");
@@ -248,29 +265,35 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
                       </CardHeader>
                       <CardContent className="p-0">
                         <div className="divide-y text-sm max-h-48 overflow-y-auto">
-                          {cls.sessions.map((sess) => (
-                            <div
-                              key={sess.date}
-                              className="p-2 flex justify-between items-center hover:bg-muted/50 cursor-pointer transition-colors"
-                              onClick={() =>
-                                router.push(
-                                  `/term/${termId}/schedule/weekday/${wd}/slot/${cls.time}`,
-                                )
-                              }
-                            >
-                              <span>
-                                {new Date(
-                                  sess.date + "T12:00:00Z",
-                                ).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                })}
-                              </span>
-                              <span className="font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full text-xs">
-                                {sess.openSeats} left
-                              </span>
-                            </div>
-                          ))}
+                          {cls.sessions
+                            .filter((sess) => !HOLIDAYS.includes(sess.date))
+                            .map((sess) => (
+                              <div
+                                key={sess.date}
+                                className="p-2 flex justify-between items-center hover:bg-muted/50 cursor-pointer transition-colors"
+                                onClick={() =>
+                                  router.push(
+                                    `/term/${termId}/schedule/weekday/${wd}/slot/${cls.time}`,
+                                  )
+                                }
+                              >
+                                <span>
+                                  {new Date(
+                                    sess.date + "T12:00:00Z",
+                                  ).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                  })}
+                                </span>
+                                <span
+                                  className={`font-medium px-2 py-0.5 rounded-full text-xs ${getSeatsColor(
+                                    sess.openSeats,
+                                  )}`}
+                                >
+                                  {sess.openSeats} left
+                                </span>
+                              </div>
+                            ))}
                         </div>
                       </CardContent>
                     </Card>
