@@ -129,22 +129,159 @@ export class AnalyticsService {
           .join("")
           .toUpperCase();
 
-        const compositeKey = `${term.name}_${locationCode}`;
         const termName = `${term.name} (${locationCode})`;
 
-        if (!revenueByTerm[compositeKey]) {
-          revenueByTerm[compositeKey] = { termName, revenue: 0 };
+        if (!revenueByTerm[term.id]) {
+          revenueByTerm[term.id] = { termName, revenue: 0 };
         }
-        revenueByTerm[compositeKey].revenue += attributedAmount;
+        revenueByTerm[term.id].revenue += attributedAmount;
       }
     }
 
     return Object.entries(revenueByTerm)
-      .map(([_, data]) => ({
-        termId: _, // Composite key
+      .map(([termId, data]) => ({
+        termId,
         termName: data.termName,
         revenue: data.revenue,
       }))
       .sort((a, b) => b.revenue - a.revenue);
+  }
+
+  async getTermFinancialDetails(
+    termId: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    const whereClause: any = {
+      invoice: {
+        lineItems: {
+          some: {
+            enrollment: {
+              offering: {
+                termId: termId,
+              },
+            },
+          },
+        },
+      },
+    };
+
+    console.log("getTermFinancialDetails", { termId, startDate, endDate });
+
+    if (startDate) {
+      whereClause.paymentDate = {
+        ...whereClause.paymentDate,
+        gte: new Date(startDate),
+      };
+    }
+    if (endDate) {
+      whereClause.paymentDate = {
+        ...whereClause.paymentDate,
+        lte: new Date(endDate),
+      };
+    }
+
+    // 1. Fetch payments for this term
+    // Since payments are linked to invoices, we need to find payments for invoices that have line items for this term.
+    const payments = await this.prisma.payment.findMany({
+      where: whereClause,
+      select: {
+        amount: true,
+        paymentDate: true,
+        invoice: {
+          select: {
+            totalAmount: true,
+            lineItems: {
+              select: {
+                amount: true,
+                enrollment: {
+                  select: {
+                    offering: {
+                      select: {
+                        title: true,
+                        termId: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    console.log(`Found ${payments.length} payments for term ${termId}`);
+
+    const revenueByWeekday: Record<string, number> = {
+      Monday: 0,
+      Tuesday: 0,
+      Wednesday: 0,
+      Thursday: 0,
+      Friday: 0,
+      Saturday: 0,
+      Sunday: 0,
+    };
+    const revenueByProgram: Record<string, number> = {};
+    let totalRevenue = 0;
+
+    for (const payment of payments) {
+      const invoice = payment.invoice;
+      if (!invoice) continue;
+
+      const invoiceTotal = Number(invoice.totalAmount);
+      const paymentAmount = Number(payment.amount);
+
+      if (invoiceTotal === 0 || !invoice.lineItems.length) continue;
+
+      // Get weekday name (e.g., "Monday")
+      const dayName = payment.paymentDate.toLocaleDateString("en-US", {
+        weekday: "long",
+      });
+
+      // Distribute payment amount to line items
+      for (const lineItem of invoice.lineItems) {
+        // Only care about line items linked to THIS Term
+        const offering = lineItem.enrollment?.offering;
+        if (offering?.termId !== termId) continue;
+
+        const lineItemAmount = Number(lineItem.amount);
+        const weight = lineItemAmount / invoiceTotal;
+        const attributedAmount = paymentAmount * weight;
+
+        // Weekday Revenue
+        if (revenueByWeekday[dayName] !== undefined) {
+          revenueByWeekday[dayName] += attributedAmount;
+        }
+
+        // Program/Offering Revenue
+        const programName = offering.title || "Unknown Class";
+        revenueByProgram[programName] =
+          (revenueByProgram[programName] || 0) + attributedAmount;
+
+        totalRevenue += attributedAmount;
+      }
+    }
+
+    const weekOrder = [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ];
+
+    return {
+      totalRevenue,
+      revenueByWeekday: weekOrder.map((day) => ({
+        day,
+        revenue: revenueByWeekday[day],
+      })),
+      revenueByProgram: Object.entries(revenueByProgram)
+        .map(([name, revenue]) => ({ name, revenue }))
+        .sort((a, b) => b.revenue - a.revenue),
+    };
   }
 }

@@ -18,9 +18,13 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FULL_DAY_LABELS, formatTimeRange } from "@/lib/schedule/slots";
+import {
+  FULL_DAY_LABELS,
+  formatTimeRange,
+  HOLIDAYS,
+} from "@/lib/schedule/slots";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { BackButton } from "@/components/nav/BackButton";
 
 type AvailabilityData = Record<
@@ -45,18 +49,7 @@ const getSeatsColor = (seats: number) => {
   return "text-gray-600 bg-gray-50";
 };
 
-// Add holidays here in YYYY-MM-DD format
-const HOLIDAYS = [
-  "2026-02-16", // Family Day
-  "2026-04-03", // Good Friday
-  "2026-05-18", // Victoria Day
-  "2026-07-01", // Canada Day
-  "2026-09-07", // Labour Day
-  "2026-10-12", // Thanksgiving
-];
-
 export default function AvailabilityClient({ termId }: { termId: string }) {
-  const router = useRouter();
   const [level, setLevel] = useState<string>("all");
   const [weekday, setWeekday] = useState<string>("all");
   const [selectedInstructor, setSelectedInstructor] = useState<string>("all");
@@ -268,14 +261,10 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
                           {cls.sessions
                             .filter((sess) => !HOLIDAYS.includes(sess.date))
                             .map((sess) => (
-                              <div
+                              <Link
                                 key={sess.date}
+                                href={`/term/${termId}/schedule/weekday/${wd}/slot/${cls.time}`}
                                 className="p-2 flex justify-between items-center hover:bg-muted/50 cursor-pointer transition-colors"
-                                onClick={() =>
-                                  router.push(
-                                    `/term/${termId}/schedule/weekday/${wd}/slot/${cls.time}`,
-                                  )
-                                }
                               >
                                 <span>
                                   {new Date(
@@ -292,7 +281,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
                                 >
                                   {sess.openSeats} left
                                 </span>
-                              </div>
+                              </Link>
                             ))}
                         </div>
                       </CardContent>

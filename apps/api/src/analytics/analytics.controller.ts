@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from "@nestjs/common";
+import { Controller, Get, UseGuards, Param, Query } from "@nestjs/common";
 import { AnalyticsService } from "./analytics.service";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
@@ -19,5 +19,18 @@ export class AnalyticsController {
   @Roles("super_admin", "admin")
   async getRevenueByTerm() {
     return this.analyticsService.getRevenueByTerm();
+  }
+  @Get("financial/term/:id")
+  @Roles("super_admin", "admin")
+  async getTermFinancialDetails(
+    @Param("id") id: string,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
+  ) {
+    return this.analyticsService.getTermFinancialDetails(
+      id,
+      startDate,
+      endDate,
+    );
   }
 }

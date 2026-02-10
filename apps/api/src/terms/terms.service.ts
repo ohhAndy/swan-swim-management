@@ -1003,6 +1003,17 @@ export class TermsService {
       nextTermMap.set(ne.studentId, paid ? "paid" : "enrolled");
     }
 
+    // Helper for age
+    const getAge = (birthdate: Date) => {
+      const today = new Date();
+      let age = today.getFullYear() - birthdate.getFullYear();
+      const m = today.getMonth() - birthdate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
+        age--;
+      }
+      return age;
+    };
+
     // Transform Data
     const classes = offerings
       .map((offering) => {
@@ -1051,9 +1062,7 @@ export class TermsService {
               name: `${e.student.firstName} ${e.student.lastName}`,
               studentId: e.student.id,
               level: e.student.level,
-              age: e.student.birthdate
-                ? new Date().getFullYear() - e.student.birthdate.getFullYear()
-                : null,
+              age: e.student.birthdate ? getAge(e.student.birthdate) : null,
               status: att?.status ?? (isSkipped ? "skipped" : null),
               ratio: e.classRatio,
               notes: e.notes,
@@ -1072,9 +1081,7 @@ export class TermsService {
             name: `${m.student.firstName} ${m.student.lastName}`,
             studentId: m.student.id,
             level: m.student.level,
-            age: m.student.birthdate
-              ? new Date().getFullYear() - m.student.birthdate.getFullYear()
-              : null,
+            age: m.student.birthdate ? getAge(m.student.birthdate) : null,
             status: m.status,
             ratio: "3:1",
             notes: "Makeup",

@@ -684,7 +684,14 @@ export default function StudentViewClient({
                       <Label className="text-sm font-medium text-gray-600">
                         Name
                       </Label>
-                      <p className="text-lg">{student.guardian.fullName}</p>
+                      <p className="text-lg">
+                        <Link
+                          href={`/guardians/${student.guardian.id}`}
+                          className="hover:underline text-blue-600"
+                        >
+                          {student.guardian.fullName}
+                        </Link>
+                      </p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium text-gray-600">

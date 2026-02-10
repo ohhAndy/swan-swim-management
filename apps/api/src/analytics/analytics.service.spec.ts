@@ -191,4 +191,67 @@ describe("AnalyticsService", () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe("getTermFinancialDetails", () => {
+    it("should aggregate revenue by weekday", async () => {
+      // Monday, Jan 1, 2024
+      const mondayDate = new Date("2024-01-01T12:00:00Z");
+      // Wednesday, Jan 3, 2024
+      const wednesdayDate = new Date("2024-01-03T12:00:00Z");
+
+      const mockPayments = [
+        {
+          amount: 100,
+          paymentDate: mondayDate,
+          invoice: {
+            totalAmount: 100,
+            lineItems: [
+              {
+                amount: 100,
+                enrollment: {
+                  offering: {
+                    title: "Program A",
+                    termId: "term1",
+                  },
+                },
+              },
+            ],
+          },
+        },
+        {
+          amount: 50,
+          paymentDate: wednesdayDate,
+          invoice: {
+            totalAmount: 50,
+            lineItems: [
+              {
+                amount: 50,
+                enrollment: {
+                  offering: {
+                    title: "Program A",
+                    termId: "term1",
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ];
+
+      mockPrismaService.payment.findMany.mockResolvedValue(mockPayments);
+
+      const result = await service.getTermFinancialDetails("term1");
+
+      const monday = result.revenueByWeekday.find((d) => d.day === "Monday");
+      const wednesday = result.revenueByWeekday.find(
+        (d) => d.day === "Wednesday",
+      );
+      const tuesday = result.revenueByWeekday.find((d) => d.day === "Tuesday");
+
+      expect(monday?.revenue).toBe(100);
+      expect(wednesday?.revenue).toBe(50);
+      expect(tuesday?.revenue).toBe(0);
+      expect(result.totalRevenue).toBe(150);
+    });
+  });
 });

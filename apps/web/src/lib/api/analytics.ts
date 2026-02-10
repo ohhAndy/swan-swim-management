@@ -41,3 +41,34 @@ export async function getRevenueByTerm(): Promise<RevenueByTerm[]> {
 
   return res.json();
 }
+
+export type TermFinancialDetails = {
+  totalRevenue: number;
+  revenueByWeekday: { day: string; revenue: number }[];
+  revenueByProgram: { name: string; revenue: number }[];
+};
+
+export async function getTermFinancialDetails(
+  termId: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<TermFinancialDetails> {
+  const headers = await getHeaders();
+  const searchParams = new URLSearchParams();
+  if (startDate) searchParams.set("startDate", startDate);
+  if (endDate) searchParams.set("endDate", endDate);
+
+  const res = await fetch(
+    `${API}/analytics/financial/term/${termId}?${searchParams.toString()}`,
+    {
+      headers,
+      cache: "no-store",
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch term financial details");
+  }
+
+  return res.json();
+}

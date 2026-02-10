@@ -18,10 +18,12 @@ import {
   ResponsiveContainer,
   Rectangle,
 } from "recharts";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function FinancialsClient() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [revenueByLocation, setRevenueByLocation] = useState<
     RevenueByLocation[]
@@ -145,6 +147,13 @@ export default function FinancialsClient() {
                     name="Revenue"
                     fill="#232F50"
                     radius={[0, 4, 4, 0]}
+                    onClick={(data) => {
+                      const item = data as unknown as RevenueByTerm;
+                      if (item && item.termId) {
+                        router.push(`/admin/financials/term/${item.termId}`);
+                      }
+                    }}
+                    cursor="pointer"
                   />
                 </BarChart>
               </ResponsiveContainer>
