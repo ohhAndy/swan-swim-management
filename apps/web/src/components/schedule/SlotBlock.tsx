@@ -8,7 +8,7 @@ import {
   upsertAttendance,
   updateMakeupStatus,
 } from "@/lib/api/attendance-client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Button } from "../ui/button";
 import { EnrollStudentDialog } from "./EnrollStudentDialog";
@@ -42,6 +42,8 @@ export function SlotBlock({
   gridHeaderTop?: string | number;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("highlight");
   const [isRefreshing, startTransition] = useTransition();
   const dialogs = useSlotDialogs();
   const [rostersState, setRostersState] = useState(rosters);
@@ -49,6 +51,19 @@ export function SlotBlock({
   useEffect(() => {
     setRostersState(rosters);
   }, [rosters]);
+
+  useEffect(() => {
+    if (highlightId) {
+      // Small timeout to ensure DOM is ready and tabs are rendered
+      const timeoutId = setTimeout(() => {
+        const element = document.getElementById(`offering-${highlightId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [highlightId, rosters]);
 
   const byDate: Record<
     string,
@@ -71,7 +86,6 @@ export function SlotBlock({
   }
 
   const fallbackOfferingId = rosters[0]?.session.offeringId;
-
   // Get instructors from first roster (all rosters have same offering/instructors)
   const instructors = rosters[0]?.session.instructors || [];
   const instructorNames = instructors.map((i) => i.staffName).join(", ");
@@ -205,8 +219,17 @@ export function SlotBlock({
   };
 
   return (
-    <div className="relative z-0 group break-inside-avoid print:mb-5">
-      <Card className="print:break-inside-avoid bg-white shadow-sm">
+    <div
+      className="relative z-0 group break-inside-avoid print:mb-5"
+      id={fallbackOfferingId ? `offering-${fallbackOfferingId}` : undefined}
+    >
+      <Card
+        className={`print:break-inside-avoid shadow-sm transition-all duration-500 ${
+          highlightId === fallbackOfferingId
+            ? "ring-2 ring-blue-500 shadow-lg scale-[1.01] bg-blue-100"
+            : "bg-white"
+        }`}
+      >
         <CardHeader className="gap-1 py-2">
           <div className="flex flex-col items-center justify-between gap-2">
             <div className="flex items-center justify-between w-full p-2">

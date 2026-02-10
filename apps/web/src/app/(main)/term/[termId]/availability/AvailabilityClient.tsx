@@ -263,7 +263,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
                             .map((sess) => (
                               <Link
                                 key={sess.date}
-                                href={`/term/${termId}/schedule/weekday/${wd}/slot/${cls.time}`}
+                                href={`/term/${termId}/schedule/weekday/${wd}/slot/${cls.time}?highlight=${cls.offeringId}`}
                                 className="p-2 flex justify-between items-center hover:bg-muted/50 cursor-pointer transition-colors"
                               >
                                 <span>
