@@ -1,4 +1,5 @@
 import { getHeaders } from "./headers";
+import { ApiError } from "./error";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
 
@@ -16,7 +17,7 @@ export async function getLocations(): Promise<Location[]> {
   });
 
   if (!res.ok) {
-    throw new Error("Failed to fetch locations");
+    throw new ApiError(res.status, res.statusText, "Failed to fetch locations");
   }
 
   return res.json();

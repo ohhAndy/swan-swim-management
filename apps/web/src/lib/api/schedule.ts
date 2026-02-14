@@ -1,6 +1,8 @@
 import type { SlotPage, Term } from "@school/shared-types";
 import { createServerSupabaseClient } from "../supabase/server";
 import { cookies } from "next/headers";
+import { ApiError } from "./error";
+import { forbidden } from "next/navigation";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
 
@@ -28,30 +30,36 @@ export async function getSlotPage(
   termId: string,
   weekday: number,
   start: string,
-  end: string
+  end: string,
 ): Promise<SlotPage> {
   const headers = await getAuthHeaders();
   const res = await fetch(
     `${API}/terms/${termId}/schedule/weekday/${weekday}/slot/${start}/${end}`,
-    { cache: "no-store", headers }
+    { cache: "no-store", headers },
   );
+  if (res.status === 403) forbidden();
   if (!res.ok) {
-    throw new Error("Failed to fetch slot page");
+    throw new ApiError(res.status, res.statusText, "Failed to fetch slot page");
   }
   return res.json();
 }
 
 export async function getTimeSlotsByWeekday(
   termId: string,
-  weekday: number
+  weekday: number,
 ): Promise<string[]> {
   const headers = await getAuthHeaders();
   const res = await fetch(
     `${API}/terms/${termId}/schedule/weekday/${weekday}/slots`,
-    { cache: "no-store", headers }
+    { cache: "no-store", headers },
   );
+  if (res.status === 403) forbidden();
   if (!res.ok) {
-    throw new Error("Failed to fetch slot page");
+    throw new ApiError(
+      res.status,
+      res.statusText,
+      "Failed to fetch time slots",
+    );
   }
   return res.json();
 }
@@ -62,8 +70,13 @@ export async function getTermTitle(termId: string): Promise<string> {
     cache: "no-store",
     headers,
   });
+  if (res.status === 403) forbidden();
   if (!res.ok) {
-    throw new Error("Failed to fetch slot page");
+    throw new ApiError(
+      res.status,
+      res.statusText,
+      `Failed to fetch term title for ${termId}`,
+    );
   }
   return res.text();
 }
@@ -71,8 +84,9 @@ export async function getTermTitle(termId: string): Promise<string> {
 export async function getAllTerms(): Promise<Term[]> {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API}/terms/all`, { cache: "no-store", headers });
+  if (res.status === 403) forbidden();
   if (!res.ok) {
-    throw new Error("Failed to fetch slot page");
+    throw new ApiError(res.status, res.statusText, "Failed to fetch terms");
   }
   return res.json();
 }
@@ -88,7 +102,13 @@ export async function scheduleMakeUp(payload: {
     headers,
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(await res.text().catch(() => "Make-up failed"));
+  if (res.status === 403) forbidden();
+  if (!res.ok)
+    throw new ApiError(
+      res.status,
+      res.statusText,
+      await res.text().catch(() => "Make-up failed"),
+    );
   return res.json();
 }
 
@@ -103,10 +123,15 @@ export async function enrollStudentWithSkips(payload: {
     headers,
     body: JSON.stringify(payload),
   });
+  if (res.status === 403) forbidden();
   if (!res.ok) {
     const errorText = await res.text();
     console.error("API Error:", res.status, res.statusText, errorText);
-    throw new Error(`Failed to enroll student: ${res.status} - ${errorText}`);
+    throw new ApiError(
+      res.status,
+      res.statusText,
+      `Failed to enroll student: ${res.status} - ${errorText}`,
+    );
   }
 
   return res.json();
@@ -118,7 +143,7 @@ export async function transferEnrollment(
     targetOfferingId: string;
     skippedSessionIds: string[];
     transferNotes?: string;
-  }
+  },
 ) {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API}/enrollments/${enrollmentId}/transfer`, {
@@ -127,10 +152,13 @@ export async function transferEnrollment(
     body: JSON.stringify(data),
   });
 
+  if (res.status === 403) forbidden();
   if (!res.ok) {
     const errorText = await res.text();
-    throw new Error(
-      `Failed to transfer enrollment: ${res.status} - ${errorText}`
+    throw new ApiError(
+      res.status,
+      res.statusText,
+      `Failed to transfer enrollment: ${res.status} - ${errorText}`,
     );
   }
 
@@ -140,7 +168,7 @@ export async function transferEnrollment(
 export async function getAvailableClassesForTransfer(
   termId: string,
   currentOfferingId: string,
-  level?: string
+  level?: string,
 ) {
   const params = new URLSearchParams({
     termId,
@@ -156,11 +184,16 @@ export async function getAvailableClassesForTransfer(
     {
       cache: "no-store",
       headers,
-    }
+    },
   );
 
+  if (res.status === 403) forbidden();
   if (!res.ok) {
-    throw new Error(`Failed to fetch available classes: ${res.status}`);
+    throw new ApiError(
+      res.status,
+      res.statusText,
+      `Failed to fetch available classes: ${res.status}`,
+    );
   }
 
   return res.json();
@@ -173,8 +206,13 @@ export async function getDailySchedule(termId: string, date: string) {
     headers,
   });
 
+  if (res.status === 403) forbidden();
   if (!res.ok) {
-    throw new Error(`Failed to fetch daily schedule: ${res.status}`);
+    throw new ApiError(
+      res.status,
+      res.statusText,
+      `Failed to fetch daily schedule: ${res.status}`,
+    );
   }
 
   return res.json();

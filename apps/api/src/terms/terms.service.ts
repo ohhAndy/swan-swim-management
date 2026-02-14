@@ -638,34 +638,34 @@ export class TermsService {
           let regularWeighted = 0;
           for (const enr of offeringEnrollments) {
             const isSkipped = skipMap.get(enr.id)?.has(s.id);
-            const isExcused =
-              attendanceMap.get(enr.id)?.get(s.id)?.status === "excused";
+            const attendanceStatus = attendanceMap
+              .get(enr.id)
+              ?.get(s.id)?.status;
+            const isExcused = attendanceStatus === "excused";
+            const isAbsent = attendanceStatus === "absent";
 
-            if (!isSkipped && !isExcused) {
+            if (!isSkipped && !isExcused && !isAbsent) {
               const ratio = enr.classRatio || "3:1";
               regularWeighted +=
                 ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
             }
           }
 
-          const makeups = makeupCountMap.get(s.id) ?? 0; // Count only?
-          const trials = trialCountMap.get(s.id) ?? 0;
-
-          // Let's refine Makeups/Trials if possible, but for MVP of this refactor, simple count + weighted regulars is a huge step.
-          // However, if a 1:1 student is doing a makeup, they should take 3 slots.
-          // The `makeUpBookings` query selected student level.
+          // Makeups (Weighted & Status filtered)
           const sessionMakeUps = makeUpsBySession.get(s.id) ?? [];
           let makeupWeighted = 0;
           for (const m of sessionMakeUps) {
-            const ratio = m.classRatio || "3:1";
-            makeupWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
+            if (["scheduled", "attended"].includes(m.status)) {
+              const ratio = m.classRatio || "3:1";
+              makeupWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
+            }
           }
 
-          // Trials
+          // Trials (Weighted & Status filtered)
           const sessionTrials = trialsBySession.get(s.id) ?? [];
           let trialsWeighted = 0;
           for (const t of sessionTrials) {
-            if (t.status === "scheduled" || t.status === "attended") {
+            if (["scheduled", "attended"].includes(t.status)) {
               const ratio = t.classRatio || "3:1";
               trialsWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
             }
@@ -921,6 +921,7 @@ export class TermsService {
             id: true,
             classSessionId: true,
             status: true,
+            classRatio: true,
             student: {
               select: {
                 id: true,
@@ -941,6 +942,7 @@ export class TermsService {
             childName: true,
             childAge: true,
             status: true,
+            classRatio: true,
             notes: true,
           },
         }),
@@ -1024,28 +1026,40 @@ export class TermsService {
         const sessionTrials = trialsBySession.get(session.id) ?? [];
         const sessionEnrollments = enrollmentsByOffering.get(offering.id) ?? [];
 
-        // Count logic matching SlotBlock
-        // WEIGHTED LOGIC
+        // COUNT LOGIC matching SlotBlock (Weighted)
         let regularWeighted = 0;
         for (const enr of sessionEnrollments) {
           const isSkipped = skipSet.has(enr.id);
-          // check attendance for excused? (attendanceMap stores by enrollmentId)
           const attendance = attendanceMap.get(enr.id);
-          const isExcused = attendance && attendance.status === "excused"; // Note: attendanceMap value type check needed
+          const isExcused = attendance && attendance.status === "excused";
+          const isAbsent = attendance && attendance.status === "absent";
 
-          if (!isSkipped && !isExcused) {
+          if (!isSkipped && !isExcused && !isAbsent) {
             const ratio = enr.classRatio || "3:1";
             regularWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
           }
         }
 
-        const activeMakeups = sessionMakeups.length;
-        const activeTrials = sessionTrials.filter((t) =>
-          ["scheduled", "attended"].includes(t.status),
-        ).length;
+        // Active Makeups (Weighted)
+        let makeupWeighted = 0;
+        for (const m of sessionMakeups) {
+          if (["scheduled", "attended"].includes(m.status)) {
+            const ratio = m.classRatio || "3:1";
+            makeupWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
+          }
+        }
+
+        // Active Trials (Weighted)
+        let trialsWeighted = 0;
+        for (const t of sessionTrials) {
+          if (["scheduled", "attended"].includes(t.status)) {
+            const ratio = t.classRatio || "3:1";
+            trialsWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
+          }
+        }
 
         // Total filled (float)
-        const filled = regularWeighted + activeMakeups + activeTrials;
+        const filled = regularWeighted + makeupWeighted + trialsWeighted;
 
         // Dynamic Capacity
         const instructorCount = offering.instructors.length;
