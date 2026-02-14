@@ -105,6 +105,7 @@ export function ScheduleTrialDialog({
         year: "numeric",
         month: "long",
         day: "numeric",
+        timeZone: "UTC",
       })
     : "";
 

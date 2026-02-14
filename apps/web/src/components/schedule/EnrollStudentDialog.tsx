@@ -64,7 +64,7 @@ export function EnrollStudentDialog({
   const [err, setErr] = useState<string | null>(null);
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
 
-  const [classRatio, setClassRatio] = useState<string>("3.1");
+  const [classRatio, setClassRatio] = useState<string>("3:1");
 
   useEffect(() => {
     if (open) {

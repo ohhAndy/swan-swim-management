@@ -133,7 +133,7 @@ export function ScheduleMakeupDialog({
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    return date.toLocaleDateString("en-CA");
+    return date.toLocaleDateString("en-CA", { timeZone: "UTC" });
   };
 
   return (
