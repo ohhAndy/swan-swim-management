@@ -25,6 +25,7 @@ import { HealthModule } from "./health/health.module";
 import { AuditLogsModule } from "./audit-logs/audit-logs.module";
 import { InventoryModule } from "./inventory/inventory.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
+import { CommunicationsModule } from "./communications/communications.module";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { SupabaseAuthGuard } from "./auth/supabase-auth.guard";
@@ -70,6 +71,7 @@ import { RolesGuard } from "./auth/roles.guard";
     AuditLogsModule,
     InventoryModule,
     AnalyticsModule,
+    CommunicationsModule,
   ],
   providers: [
     {

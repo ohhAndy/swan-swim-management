@@ -112,6 +112,19 @@ export default async function DashboardPage({ searchParams }: Props) {
                   </Link>
                 </Button>
               </PermissionGate>
+
+              <PermissionGate
+                allowedRoles={["super_admin", "admin", "manager", "supervisor"]}
+                currentRole={user.role}
+              >
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full bg-[#1c82c5] hover:bg-[#156a9e] text-white mt-2"
+                >
+                  <Link href="/tasks">View Tasks</Link>
+                </Button>
+              </PermissionGate>
             </div>
           )}
         </CardContent>

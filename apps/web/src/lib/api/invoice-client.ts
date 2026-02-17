@@ -30,6 +30,7 @@ export interface ClassOffering {
   id: string;
   weekday: number;
   startTime: string;
+  endTime: string;
   title: string;
   capacity: number;
   term: Term;

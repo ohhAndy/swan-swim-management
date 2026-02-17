@@ -1,0 +1,72 @@
+# Cron Job Configuration for Database Backups
+
+## Installation Instructions
+
+1. Open your crontab for editing:
+   ```bash
+   crontab -e
+   ```
+
+2. Add one of the following lines based on your preference:
+
+### Option 1: Daily at 2:00 AM (Recommended)
+```
+0 2 * * * cd /Users/andyhu/swan-swim-management && DATABASE_URL="your_database_url_here" ./scripts/backup-db.sh
+```
+
+### Option 2: Daily at 3:00 AM
+```
+0 3 * * * cd /Users/andyhu/swan-swim-management && DATABASE_URL="your_database_url_here" ./scripts/backup-db.sh
+```
+
+### Option 3: Twice daily (2 AM and 2 PM)
+```
+0 2,14 * * * cd /Users/andyhu/swan-swim-management && DATABASE_URL="your_database_url_here" ./scripts/backup-db.sh
+```
+
+### Option 4: Every 6 hours
+```
+0 */6 * * * cd /Users/andyhu/swan-swim-management && DATABASE_URL="your_database_url_here" ./scripts/backup-db.sh
+```
+
+## Important Notes
+
+1. **Replace `your_database_url_here`** with your actual PostgreSQL connection string
+   - Format: `postgresql://username:password@host:port/database`
+   - Example: `postgresql://user:pass@localhost:5432/swanswim`
+
+2. **Cron Format Explanation**:
+   ```
+   * * * * * command
+   │ │ │ │ │
+   │ │ │ │ └─── Day of week (0-7, Sunday = 0 or 7)
+   │ │ │ └───── Month (1-12)
+   │ │ └─────── Day of month (1-31)
+   │ └───────── Hour (0-23)
+   └─────────── Minute (0-59)
+   ```
+
+3. **Verify Cron Job**:
+   ```bash
+   crontab -l
+   ```
+
+4. **Check Logs**:
+   ```bash
+   cat /Users/andyhu/swan-swim-management/backups/backup.log
+   ```
+
+5. **Alternative: Use Environment Variable**
+   If you prefer not to include DATABASE_URL in the cron command, you can:
+   - Set it in your shell profile (`~/.zshrc` or `~/.bash_profile`)
+   - Or modify the backup script to hardcode the connection string
+
+## Testing
+
+Before setting up the cron job, test the script manually:
+```bash
+cd /Users/andyhu/swan-swim-management
+DATABASE_URL="your_database_url_here" ./scripts/backup-db.sh
+```
+
+Check that a backup file was created in the `backups/` directory.

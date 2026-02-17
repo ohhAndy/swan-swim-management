@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   getInvoice,
   updateInvoice,
@@ -488,6 +489,13 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                             setEditLineItems(updated);
                           }}
                         />
+                      ) : item.enrollment ? (
+                        <Link
+                          href={`/term/${item.enrollment.offering.term.id}/schedule/weekday/${item.enrollment.offering.weekday}/slot/${item.enrollment.offering.startTime}-${item.enrollment.offering.endTime}?highlight=${item.enrollment.offering.id}`}
+                          className="flex items-center gap-1 hover:underline text-blue-600"
+                        >
+                          {item.description}
+                        </Link>
                       ) : (
                         item.description
                       )}

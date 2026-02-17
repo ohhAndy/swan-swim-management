@@ -44,6 +44,7 @@ import { updateStudent, deleteStudent } from "@/lib/api/students-client";
 import { deleteEnrollment } from "@/lib/api/schedule-client";
 import { updateGuardian } from "@/lib/api/guardian-client";
 
+import { EmailGuardianDialog } from "@/components/guardians/EmailGuardianDialog";
 import { TransferEnrollmentDialog } from "@/components/schedule/TransferEnrollmentDialog";
 import { ManageSkipsDialog } from "@/components/schedule/ManageSkipsDialog";
 
@@ -155,6 +156,7 @@ export default function StudentViewClient({
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingGuardian, setIsEditingGuardian] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [selectedEnrollment, setSelectedEnrollment] = useState<{
@@ -701,10 +703,19 @@ export default function StudentViewClient({
                         <Mail className="h-4 w-4 text-gray-500 shrink-0" />
                         <a
                           href={`mailto:${student.guardian.email}`}
-                          className="text-blue-600 hover:underline break-all"
+                          className="text-blue-600 hover:underline truncate"
                         >
                           {student.guardian.email}
                         </a>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 ml-2 text-gray-400 hover:text-blue-600"
+                          onClick={() => setEmailDialogOpen(true)}
+                          title="Send Email"
+                        >
+                          <Mail className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                     <div>
@@ -1119,6 +1130,12 @@ export default function StudentViewClient({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <EmailGuardianDialog
+        guardianName={student.guardian.fullName}
+        guardianEmail={student.guardian.email}
+        open={emailDialogOpen}
+        onOpenChange={setEmailDialogOpen}
+      />
     </div>
   );
 }

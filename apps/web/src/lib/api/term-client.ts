@@ -39,3 +39,17 @@ export async function createTerm(values: FormOutput) {
 
   await res.json();
 }
+
+export interface Term {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+}
+
+export async function getTerms(): Promise<Term[]> {
+  const headers = await getHeaders();
+  const res = await fetch(`${API}/terms/all`, { headers });
+  if (!res.ok) throw new Error("Failed to fetch terms");
+  return res.json();
+}

@@ -106,14 +106,14 @@ export async function AppHeader() {
             </Link>
           </PermissionGate>
           <PermissionGate
-            allowedRoles={["super_admin", "admin", "manager", "supervisor"]}
+            allowedRoles={["super_admin", "admin"]}
             currentRole={user.role}
           >
             <Link
-              href="/tasks"
+              href="/admin/communications"
               className="text-sm font-medium hover:text-blue-600"
             >
-              Tasks
+              Email
             </Link>
           </PermissionGate>
           <LocationSwitcher />

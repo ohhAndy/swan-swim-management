@@ -45,6 +45,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { EmailGuardianDialog } from "@/components/guardians/EmailGuardianDialog";
 
 const EditGuardianSchema = z.object({
   fullName: z.string().min(1, "Name is required"),
@@ -191,6 +192,7 @@ export default function GuardianViewClient({
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
   // Enrollment Actions State
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
@@ -364,13 +366,22 @@ export default function GuardianViewClient({
                   allowedRoles={["super_admin", "admin", "manager"]}
                   currentRole={user.role}
                 >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setEmailDialogOpen(true)}
+                    >
+                      <Mail className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </PermissionGate>
               ) : (
                 <div className="flex gap-1">
@@ -799,6 +810,13 @@ export default function GuardianViewClient({
           onSuccess={handleTransferSuccess}
         />
       )}
+
+      <EmailGuardianDialog
+        guardianName={guardian.fullName}
+        guardianEmail={guardian.email}
+        open={emailDialogOpen}
+        onOpenChange={setEmailDialogOpen}
+      />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
