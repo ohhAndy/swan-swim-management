@@ -85,6 +85,14 @@ export default function CreateInvoiceForm() {
     Record<string, string>
   >({});
 
+  // Restore last used invoice date
+  useEffect(() => {
+    const lastDate = sessionStorage.getItem("lastInvoiceDate");
+    if (lastDate) {
+      setInvoiceDate(lastDate);
+    }
+  }, []);
+
   // Search guardians
   useEffect(() => {
     if (guardianSearch.length >= 2) {
@@ -100,31 +108,54 @@ export default function CreateInvoiceForm() {
   useEffect(() => {
     async function getNextInvoiceNumber() {
       try {
+        const savedNumber = sessionStorage.getItem("lastInvoiceNumber");
+        if (savedNumber) {
+          const match = savedNumber.match(/^([^0-9]*)(\d+)$/);
+          if (match) {
+            const prefix = match[1] || "";
+            const number = parseInt(match[2]);
+            const nextNumber = number + 1;
+            const paddedNumber = nextNumber
+              .toString()
+              .padStart(match[2].length, "0");
+            setInvoiceNumber(`${prefix}${paddedNumber}`);
+            return;
+          }
+        }
+
         const result = await getInvoices({
-          limit: 1,
+          limit: 50,
           sortBy: "createdAt",
           sortOrder: "desc",
           includeAllLocations: true,
         });
 
         if (result.data && result.data.length > 0) {
-          const lastInvoice = result.data[0];
-          if (lastInvoice.invoiceNumber) {
-            // Try to parse prefix and number
-            const match = lastInvoice.invoiceNumber.match(/^([A-Za-z]+)(\d+)$/);
-            if (match) {
-              const prefix = match[1];
-              const number = parseInt(match[2]);
-              const nextNumber = number + 1;
-              const paddedNumber = nextNumber
-                .toString()
-                .padStart(match[2].length, "0");
-              setInvoiceNumber(`${prefix}${paddedNumber}`);
+          // Find the first invoice that matches our sequence pattern (letters optionally followed by digits, or pure digits)
+          let matchFound = false;
+          for (const lastInvoice of result.data) {
+            if (lastInvoice.invoiceNumber) {
+              const match = lastInvoice.invoiceNumber.match(/^([^0-9]*)(\d+)$/);
+              if (match) {
+                const prefix = match[1] || "";
+                const number = parseInt(match[2]);
+                const nextNumber = number + 1;
+                const paddedNumber = nextNumber
+                  .toString()
+                  .padStart(match[2].length, "0");
+                setInvoiceNumber(`${prefix}${paddedNumber}`);
+                matchFound = true;
+                break; // Stop looking once we find a sequence-based invoice
+              }
             }
+          }
+
+          if (!matchFound) {
+            setInvoiceNumber("#00001");
           }
         } else {
           // Default start if no invoices exist
-          setInvoiceNumber("N0001");
+          setInvoiceNumber("#00001");
         }
       } catch (error) {
         console.error("Failed to fetch latest invoice number:", error);
@@ -277,6 +308,12 @@ export default function CreateInvoiceForm() {
       });
 
       toast.success("Invoice created successfully");
+      if (invoiceDate) {
+        sessionStorage.setItem("lastInvoiceDate", invoiceDate);
+      }
+      if (invoice.invoiceNumber) {
+        sessionStorage.setItem("lastInvoiceNumber", invoice.invoiceNumber);
+      }
       router.push(`/invoices/${invoice.id}`);
     } catch (error) {
       console.error("Failed to create invoice:", error);

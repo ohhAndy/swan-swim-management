@@ -312,7 +312,12 @@ export class TrialBookingsService {
             date: true,
             offering: {
               select: {
+                id: true,
                 title: true,
+                termId: true,
+                weekday: true,
+                startTime: true,
+                endTime: true,
               },
             },
           },
@@ -350,7 +355,12 @@ export class TrialBookingsService {
             date: true,
             offering: {
               select: {
+                id: true,
                 title: true,
+                termId: true,
+                weekday: true,
+                startTime: true,
+                endTime: true,
               },
             },
           },

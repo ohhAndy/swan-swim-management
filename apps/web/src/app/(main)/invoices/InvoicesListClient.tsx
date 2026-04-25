@@ -38,6 +38,8 @@ export default function InvoicesListClient() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState<"createdAt" | "invoiceNumber">(
@@ -59,6 +61,8 @@ export default function InvoicesListClient() {
       const result = await getInvoices({
         search: search || undefined,
         status: statusFilter as "paid" | "partial" | "void" | "all",
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
         page,
         limit: 20,
         sortBy,
@@ -72,7 +76,7 @@ export default function InvoicesListClient() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, page, sortBy, sortOrder]);
+  }, [search, statusFilter, startDate, endDate, page, sortBy, sortOrder]);
 
   useEffect(() => {
     loadInvoices();
@@ -129,8 +133,8 @@ export default function InvoicesListClient() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-4">
+        <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search by invoice number or guardian..."
@@ -139,9 +143,10 @@ export default function InvoicesListClient() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="pl-9"
+            className="pl-9 w-full"
           />
         </div>
+        <div className="flex flex-wrap items-center gap-4">
         <Select
           value={statusFilter}
           onValueChange={(value) => {
@@ -159,6 +164,27 @@ export default function InvoicesListClient() {
             <SelectItem value="partial">Partial</SelectItem>
           </SelectContent>
         </Select>
+
+        <Input
+          type="date"
+          value={startDate}
+          onChange={(e) => {
+            setStartDate(e.target.value);
+            setPage(1);
+          }}
+          className="w-[150px]"
+          title="Start Date"
+        />
+        <Input
+          type="date"
+          value={endDate}
+          onChange={(e) => {
+            setEndDate(e.target.value);
+            setPage(1);
+          }}
+          className="w-[150px]"
+          title="End Date"
+        />
 
         <Select
           value={`${sortBy}-${sortOrder}`}
@@ -195,6 +221,8 @@ export default function InvoicesListClient() {
               const blob = await exportInvoices({
                 status: statusFilter === "all" ? undefined : statusFilter,
                 query: search || undefined,
+                startDate: startDate || undefined,
+                endDate: endDate || undefined,
               });
               const url = window.URL.createObjectURL(blob);
               const a = document.createElement("a");
@@ -209,6 +237,7 @@ export default function InvoicesListClient() {
           <FileSpreadsheet className="mr-2 h-4 w-4" />
           Export to Excel
         </Button>
+        </div>
       </div>
 
       {/* Table */}

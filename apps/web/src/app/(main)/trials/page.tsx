@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   getUpcomingTrials,
   getPastTrials,
@@ -31,7 +32,12 @@ interface UpcomingTrial {
   classSession: {
     date: string;
     offering: {
+      id: string;
       title: string;
+      termId: string;
+      weekday: number;
+      startTime: string;
+      endTime: string;
     };
   };
 }
@@ -110,7 +116,14 @@ export default function TrialsPage() {
               </TableCell>
               <TableCell>{trial.childName}</TableCell>
               <TableCell>{trial.childAge}</TableCell>
-              <TableCell>{trial.classSession.offering.title}</TableCell>
+              <TableCell>
+                <Link
+                  href={`/term/${trial.classSession.offering.termId}/schedule/weekday/${trial.classSession.offering.weekday}/slot/${trial.classSession.offering.startTime}-${trial.classSession.offering.endTime}?highlight=${trial.classSession.offering.id}`}
+                  className="text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  {trial.classSession.offering.title}
+                </Link>
+              </TableCell>
               <TableCell>{trial.parentPhone}</TableCell>
               <TableCell>
                 <Badge

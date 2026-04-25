@@ -223,14 +223,18 @@ export function StudentRow({
                 ? "bg-white text-gray-400 hover:bg-gray-50"
                 : currentReportCardStatus === "created"
                   ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                  : "bg-green-100 text-green-700 hover:bg-green-200"
+                  : currentReportCardStatus === "did_not_pass"
+                    ? "bg-red-100 text-red-700 hover:bg-red-200"
+                    : "bg-green-100 text-green-700 hover:bg-green-200"
             }`}
           >
             {currentReportCardStatus === "created"
               ? "Created"
               : currentReportCardStatus === "given"
                 ? "Given"
-                : "None"}
+                : currentReportCardStatus === "did_not_pass"
+                  ? "Did Not Pass"
+                  : "None"}
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem
@@ -249,6 +253,11 @@ export function StudentRow({
               onSelect={() => onReportCardUpdate?.(row.enrollmentId, "given")}
             >
               Given
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => onReportCardUpdate?.(row.enrollmentId, "did_not_pass")}
+            >
+              Did Not Pass
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
