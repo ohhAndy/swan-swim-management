@@ -88,8 +88,8 @@ export default function FinancialsClient() {
                     tickFormatter={(value) => `$${value.toLocaleString()}`}
                   />
                   <Tooltip
-                    formatter={(value: number | undefined) => [
-                      `$${(value || 0).toLocaleString()}`,
+                    formatter={(value: unknown) => [
+                      `$${(Number(value) || 0).toLocaleString()}`,
                       "Revenue",
                     ]}
                   />
@@ -136,8 +136,8 @@ export default function FinancialsClient() {
                   />
                   <YAxis type="category" dataKey="termName" width={180} />
                   <Tooltip
-                    formatter={(value: number | undefined) => [
-                      `$${(value || 0).toLocaleString()}`,
+                    formatter={(value: unknown) => [
+                      `$${(Number(value) || 0).toLocaleString()}`,
                       "Revenue",
                     ]}
                   />
