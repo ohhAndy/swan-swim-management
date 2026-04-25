@@ -20,7 +20,7 @@ export interface ReportCard {
   id: string;
   enrollmentId: string;
   levelId: string | null;
-  status: "draft" | "completed" | "sent";
+  status: "draft" | "completed" | "did_not_pass" | "sent";
   comments: string | null;
   createdAt: string;
   updatedAt: string;
@@ -31,7 +31,7 @@ export interface ReportCard {
 export interface CreateReportCardDto {
   enrollmentId: string;
   levelId: string;
-  status?: "draft" | "completed" | "sent";
+  status?: "draft" | "completed" | "did_not_pass" | "sent";
   comments?: string;
   skills?: {
     skillId: string;
@@ -42,7 +42,7 @@ export interface CreateReportCardDto {
 export interface UpdateReportCardDto {
   enrollmentId?: string;
   levelId?: string;
-  status?: "draft" | "completed" | "sent";
+  status?: "draft" | "completed" | "did_not_pass" | "sent";
   comments?: string;
   skills?: {
     skillId: string;

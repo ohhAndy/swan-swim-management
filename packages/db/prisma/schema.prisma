@@ -602,6 +602,7 @@ model ReportCardSkill {
 enum ReportCardStatus {
   draft
   completed
+  did_not_pass
   sent
 }
 

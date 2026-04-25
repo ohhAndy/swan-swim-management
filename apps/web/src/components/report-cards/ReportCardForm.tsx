@@ -78,7 +78,7 @@ export function ReportCardForm({
   const [existingReportCard, setExistingReportCard] =
     useState<ReportCard | null>(null);
   const [selectedLevelId, setSelectedLevelId] = useState<string>("");
-  const [status, setStatus] = useState<"draft" | "completed" | "sent">("draft");
+  const [status, setStatus] = useState<"draft" | "completed" | "did_not_pass" | "sent">("draft");
   const [comments, setComments] = useState("");
   const [skillgrades, setSkillGrades] = useState<
     Record<string, "not_started" | "developing" | "mastered">
@@ -264,7 +264,7 @@ export function ReportCardForm({
             <Label>Status</Label>
             <Select
               value={status}
-              onValueChange={(val: "draft" | "completed" | "sent") =>
+              onValueChange={(val: "draft" | "completed" | "did_not_pass" | "sent") =>
                 setStatus(val)
               }
             >
@@ -274,6 +274,7 @@ export function ReportCardForm({
               <SelectContent>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="did_not_pass">Did Not Pass</SelectItem>
                 <SelectItem value="sent">Sent</SelectItem>
               </SelectContent>
             </Select>
