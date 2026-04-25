@@ -17,12 +17,19 @@ export class AuditLogsController {
     @Query("action") action?: string,
     @Query("entityType") entityType?: string,
     @Query("staffId") staffId?: string,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
   ) {
     const where: any = {};
     if (action) where.action = { contains: action, mode: "insensitive" };
     if (entityType)
       where.entityType = { contains: entityType, mode: "insensitive" };
     if (staffId) where.staffId = staffId;
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = new Date(startDate);
+      if (endDate) where.createdAt.lte = new Date(endDate);
+    }
 
     const [data, total] = await Promise.all([
       this.auditLogsService.findAll({

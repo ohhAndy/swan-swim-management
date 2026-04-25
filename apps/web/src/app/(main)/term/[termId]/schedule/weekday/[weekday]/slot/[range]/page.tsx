@@ -89,6 +89,7 @@ export default async function SlotPageView({
         blocks={blocks}
         isoDates={isoDates}
         user={user}
+        termName={subtitle || "Term"}
       />
     </main>
   );

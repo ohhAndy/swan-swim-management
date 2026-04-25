@@ -189,8 +189,8 @@ model Enrollment {
   transferredTo      Enrollment?      @relation("EnrollmentTransfer", fields: [transferredToId], references: [id])
   transferredFrom    Enrollment?      @relation("EnrollmentTransfer")
   enrollmentSkips    EnrollmentSkip[]
-  invoiceLineItem    InvoiceLineItem?
-  report_cards       report_cards[]
+  invoiceLineItem    InvoiceLineItem? // Reverse relation to check if invoiced
+  reportCards        ReportCard[]
 
   @@unique([offeringId, studentId], name: "offeringId_studentId")
   @@index([studentId])
@@ -452,62 +452,7 @@ model Task {
 
 
 
-model levels {
-  id           String         @id
-  name         String         @unique
-  description  String?
-  color        String?        @default("#3b82f6")
-  order        Int            @default(0)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime
-  report_cards report_cards[]
-  skills       skills[]
-}
 
-model report_card_skills {
-  id           String       @id
-  reportCardId String
-  skillId      String
-  status       SkillStatus  @default(not_started)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime
-  report_cards report_cards @relation(fields: [reportCardId], references: [id], onDelete: Cascade)
-  skills       skills       @relation(fields: [skillId], references: [id], onDelete: Cascade)
-
-  @@unique([reportCardId, skillId])
-  @@index([reportCardId])
-  @@index([skillId])
-}
-
-model report_cards {
-  id                 String               @id
-  enrollmentId       String
-  levelId            String?
-  status             ReportCardStatus     @default(draft)
-  comments           String?
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime
-  sentAt             DateTime?
-  report_card_skills report_card_skills[]
-  Enrollment         Enrollment           @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  levels             levels?              @relation(fields: [levelId], references: [id])
-
-  @@index([enrollmentId])
-  @@index([levelId])
-}
-
-model skills {
-  id                 String               @id
-  levelId            String
-  description        String
-  order              Int                  @default(0)
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime
-  report_card_skills report_card_skills[]
-  levels             levels               @relation(fields: [levelId], references: [id], onDelete: Cascade)
-
-  @@index([levelId])
-}
 
 enum EnrollmentStatus {
   active
@@ -587,6 +532,73 @@ enum TaskPriority {
   urgent
 }
 
+// Report Card System
+
+model Level {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  color       String?  @default("#3b82f6") // hex code
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  skills      Skill[]
+  reportCards ReportCard[]
+
+  @@map("levels")
+}
+
+model Skill {
+  id          String   @id @default(cuid())
+  levelId     String
+  description String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  level            Level             @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  reportCardSkills ReportCardSkill[]
+
+  @@index([levelId])
+  @@map("skills")
+}
+
+model ReportCard {
+  id           String           @id @default(cuid())
+  enrollmentId String
+  levelId      String?
+  status       ReportCardStatus @default(draft) // draft, completed, sent
+  comments     String?          @db.Text
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  sentAt       DateTime?
+
+  enrollment       Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  level            Level?            @relation(fields: [levelId], references: [id])
+  reportCardSkills ReportCardSkill[]
+
+  @@index([enrollmentId])
+  @@index([levelId])
+  @@map("report_cards")
+}
+
+model ReportCardSkill {
+  id           String      @id @default(cuid())
+  reportCardId String
+  skillId      String
+  status       SkillStatus @default(not_started)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  reportCard ReportCard @relation(fields: [reportCardId], references: [id], onDelete: Cascade)
+  skill      Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([reportCardId, skillId])
+  @@index([reportCardId])
+  @@index([skillId])
+  @@map("report_card_skills")
+}
 enum ReportCardStatus {
   draft
   completed
@@ -594,9 +606,7 @@ enum ReportCardStatus {
 }
 
 enum SkillStatus {
-  not_started
-  developing
-  mastered
+  not_started // "Not Started" / Bad
+  developing  // "Developing" / Ok
+  mastered    // "Mastered" / Good
 }
-
-

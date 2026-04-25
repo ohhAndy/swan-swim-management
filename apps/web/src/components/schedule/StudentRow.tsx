@@ -21,8 +21,12 @@ import {
   CalendarClock,
   CalendarX,
   CalendarCheck,
+  Eye,
 } from "lucide-react";
 import { calcAge, markClass } from "@/lib/utils/student-helpers";
+import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
+import { ReportCardForm } from "../report-cards/ReportCardForm";
+import { useState } from "react";
 
 // Duplicate of getPaymentStatus for now, can be extracted if needed
 function getPaymentStatus(
@@ -91,7 +95,9 @@ function getPaymentStatus(
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="flex items-center justify-center">
-              <span className="text-xs text-muted-foreground">VOID</span>
+              <span className="text-[10px] text-gray-500 wrap-break-word">
+                VOID
+              </span>
             </div>
           </TooltipTrigger>
           <TooltipContent>
@@ -128,6 +134,8 @@ interface StudentRowProps {
   onReportCardUpdate?: (enrollmentId: string, status: string) => Promise<void>;
   reportCardOverrides?: Record<string, string | undefined>;
   userRole: string;
+  termName: string;
+  instructorName: string;
 }
 
 export function StudentRow({
@@ -142,7 +150,10 @@ export function StudentRow({
   onReportCardUpdate,
   reportCardOverrides,
   userRole,
+  termName,
+  instructorName,
 }: StudentRowProps) {
+  const [isReportCardOpen, setIsReportCardOpen] = useState(false);
   const currentReportCardStatus =
     reportCardOverrides?.[row.enrollmentId] ??
     row.reportCardStatus ??
@@ -215,52 +226,79 @@ export function StudentRow({
         {row.level ? LEVEL_MAP.get(row.level) : ""}
       </div>
       <div className="p-0 text-center bg-white flex justify-center">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            disabled={!onReportCardUpdate || !canEdit}
-            className={`w-full h-full text-[10px] font-medium flex items-center justify-center transition-colors ${
-              currentReportCardStatus === "not_created"
-                ? "bg-white text-gray-400 hover:bg-gray-50"
-                : currentReportCardStatus === "created"
-                  ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                  : currentReportCardStatus === "did_not_pass"
-                    ? "bg-red-100 text-red-700 hover:bg-red-200"
-                    : "bg-green-100 text-green-700 hover:bg-green-200"
-            }`}
-          >
-            {currentReportCardStatus === "created"
-              ? "Created"
-              : currentReportCardStatus === "given"
-                ? "Given"
-                : currentReportCardStatus === "did_not_pass"
-                  ? "Did Not Pass"
-                  : "None"}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem
-              onSelect={() =>
-                onReportCardUpdate?.(row.enrollmentId, "not_created")
-              }
+        <Dialog open={isReportCardOpen} onOpenChange={setIsReportCardOpen}>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              disabled={!onReportCardUpdate || !canEdit}
+              className={`w-full h-full text-[10px] font-medium flex items-center justify-center transition-colors ${
+                currentReportCardStatus === "not_created"
+                  ? "bg-white text-gray-400 hover:bg-gray-50"
+                  : currentReportCardStatus === "created" ||
+                    currentReportCardStatus === "draft"
+                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                    : currentReportCardStatus === "did_not_pass"
+                      ? "bg-red-100 text-red-700 hover:bg-red-200"
+                      : "bg-green-100 text-green-700 hover:bg-green-200"
+              }`}
             >
-              Not Created
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => onReportCardUpdate?.(row.enrollmentId, "created")}
-            >
-              Created
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => onReportCardUpdate?.(row.enrollmentId, "given")}
-            >
-              Given
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => onReportCardUpdate?.(row.enrollmentId, "did_not_pass")}
-            >
-              Did Not Pass
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {currentReportCardStatus === "created"
+                ? "Created"
+                : currentReportCardStatus === "draft"
+                  ? "Draft"
+                  : currentReportCardStatus === "sent"
+                    ? "Sent"
+                    : currentReportCardStatus === "did_not_pass"
+                      ? "Did Not Pass"
+                      : currentReportCardStatus === "given"
+                        ? "Given"
+                        : "None"}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsReportCardOpen(true);
+                }}
+              >
+                Grade / Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() =>
+                  onReportCardUpdate?.(row.enrollmentId, "not_created")
+                }
+              >
+                Mark Not Created
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() =>
+                  onReportCardUpdate?.(row.enrollmentId, "created")
+                }
+              >
+                Mark Created
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => onReportCardUpdate?.(row.enrollmentId, "sent")}
+              >
+                Mark Sent
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => onReportCardUpdate?.(row.enrollmentId, "did_not_pass")}
+              >
+                Mark Did Not Pass
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogTitle className="sr-only">Report Card</DialogTitle>
+            <ReportCardForm
+              enrollmentId={row.enrollmentId}
+              studentName={row.name}
+              termName={termName}
+              instructorName={instructorName}
+              onClose={() => setIsReportCardOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {header.map((h, i) => {

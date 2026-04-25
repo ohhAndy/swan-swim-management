@@ -3,6 +3,14 @@
 # Database Backup Script for Swan Swim Management
 # This script creates a compressed PostgreSQL backup and manages retention
 
+# Load BACKUP_DIRECT_URL / DIRECT_URL from .env (needed when run by cron)
+# We only extract the two URL vars to avoid parse errors from other .env lines
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="$SCRIPT_DIR/../apps/api/.env"
+if [ -f "$ENV_FILE" ]; then
+    eval "$(grep -E '^(BACKUP_DIRECT_URL|DIRECT_URL)=' "$ENV_FILE" | sed 's/\r//')"
+fi
+
 # Configuration
 BACKUP_DIR="/Users/andyhu/swan-swim-management/backups"
 LOG_FILE="$BACKUP_DIR/backup.log"
@@ -17,9 +25,12 @@ if [ -z "$DIRECT_URL" ]; then
     fi
 fi
 
-if [ -z "$DIRECT_URL" ]; then
-    echo "ERROR: DIRECT_URL environment variable is not set" | tee -a "$LOG_FILE"
-    echo "Please set DIRECT_URL or ensure packages/db/.env exists" | tee -a "$LOG_FILE"
+# Database connection - uses BACKUP_DIRECT_URL (preferred) or falls back to DIRECT_URL
+# pg_dump requires a direct connection, not a pooled connection
+DB_CONN_URL="${BACKUP_DIRECT_URL:-$DIRECT_URL}"
+if [ -z "$DB_CONN_URL" ]; then
+    echo "ERROR: BACKUP_DIRECT_URL (or DIRECT_URL) environment variable is not set" | tee -a "$LOG_FILE"
+    echo "Please set BACKUP_DIRECT_URL or ensure packages/db/.env exists" | tee -a "$LOG_FILE"
     exit 1
 fi
 
@@ -50,11 +61,15 @@ for i in {1..12}; do
     sleep 5
 done
 
+# Add local bin directories to PATH for cron execution
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 # Perform backup using pg_dump
 echo "Creating backup: $BACKUP_FILE" >> "$LOG_FILE"
 
 # Provide the connection URI directly (much safer than regex parsing)
-if pg_dump "$DIRECT_URL" -F p -f "$BACKUP_FILE"; then
+# Capture stderr to log file for debugging
+if pg_dump "$DB_CONN_URL" -F p -f "$BACKUP_FILE" 2>> "$LOG_FILE"; then
     echo "Backup created successfully" >> "$LOG_FILE"
     
     # Compress the backup
@@ -69,6 +84,8 @@ if pg_dump "$DIRECT_URL" -F p -f "$BACKUP_FILE"; then
     fi
 else
     echo "ERROR: Backup failed" | tee -a "$LOG_FILE"
+    # Remove partial backup file if it exists
+    rm -f "$BACKUP_FILE"
     exit 1
 fi
 

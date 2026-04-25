@@ -30,6 +30,9 @@ import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { SupabaseAuthGuard } from "./auth/supabase-auth.guard";
 import { RolesGuard } from "./auth/roles.guard";
+import { LevelsModule } from './levels/levels.module';
+import { SkillsModule } from './skills/skills.module';
+import { ReportCardsModule } from './report-cards/report-cards.module';
 
 @Module({
   imports: [
@@ -72,6 +75,9 @@ import { RolesGuard } from "./auth/roles.guard";
     InventoryModule,
     AnalyticsModule,
     CommunicationsModule,
+    LevelsModule,
+    SkillsModule,
+    ReportCardsModule,
   ],
   providers: [
     {
