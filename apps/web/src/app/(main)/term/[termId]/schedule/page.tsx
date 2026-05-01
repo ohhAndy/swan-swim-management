@@ -9,6 +9,7 @@ import { groupByOffering } from "@/lib/schedule/transform";
 import { SlotBlock } from "@/components/schedule/SlotBlock";
 import { AddFlexibleClassDialog } from "@/components/schedule/AddFlexibleClassDialog";
 import { getCurrentUser } from "@/lib/auth/user";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { Metadata } from "next";
@@ -79,7 +80,12 @@ export default async function TimeSlotsPage({
       <div className="flex flex-row items-center justify-between">
         <h1 className="text-xl font-bold text-[#1c82c5]">{termTitle}</h1>
         <div className="flex gap-4 text-sm items-center">
-          <AddFlexibleClassDialog termId={termId} />
+          <PermissionGate
+            allowedRoles={["super_admin", "admin"]}
+            currentRole={user.role}
+          >
+            <AddFlexibleClassDialog termId={termId} />
+          </PermissionGate>
           <div className="flex items-center gap-2 ml-4">
             <div className="w-3 h-3 rounded-full bg-yellow-600" />
             <span>P&T</span>

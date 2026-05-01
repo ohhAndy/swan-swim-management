@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { calculateClassUsage } from "../common/capacity.utils";
@@ -117,6 +118,10 @@ export class OfferingsService {
       where: { authId: user.authId },
     });
     if (!staffUser) return;
+
+    if (data.type === "flexible" && staffUser.role !== "super_admin" && staffUser.role !== "admin") {
+      throw new ForbiddenException("Only admins can create flexible short courses");
+    }
 
     const term = await this.prisma.term.findUnique({
       where: { id: data.termId },
