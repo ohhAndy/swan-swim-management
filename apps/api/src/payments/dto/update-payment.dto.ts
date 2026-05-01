@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const UpdatePaymentSchema = z.object({
-  amount: z.number().min(0).optional(),
+  amount: z.number().optional(),
   paymentDate: z.string().optional(), // ISO date string
   paymentMethod: z
     .enum([

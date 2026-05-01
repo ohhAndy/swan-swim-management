@@ -6,14 +6,20 @@
 # Configuration
 BACKUP_DIR="/Users/andyhu/swan-swim-management/backups"
 LOG_FILE="$BACKUP_DIR/backup.log"
-RETENTION_DAYS=30
+RETENTION_DAYS=7
 
-# Database connection - reads from environment or uses default
-# Use DIRECT_URL for pg_dump (not the pooled DATABASE_URL)
+# Load environment variables if not already present
+if [ -z "$DIRECT_URL" ]; then
+    if [ -f "/Users/andyhu/swan-swim-management/packages/db/.env" ]; then
+        export $(grep -v '^#' /Users/andyhu/swan-swim-management/packages/db/.env | xargs)
+    elif [ -f "./packages/db/.env" ]; then
+        export $(grep -v '^#' ./packages/db/.env | xargs)
+    fi
+fi
+
 if [ -z "$DIRECT_URL" ]; then
     echo "ERROR: DIRECT_URL environment variable is not set" | tee -a "$LOG_FILE"
-    echo "Please set DIRECT_URL or modify the script with your direct connection string" | tee -a "$LOG_FILE"
-    echo "Note: pg_dump requires a direct connection, not a pooled connection" | tee -a "$LOG_FILE"
+    echo "Please set DIRECT_URL or ensure packages/db/.env exists" | tee -a "$LOG_FILE"
     exit 1
 fi
 
@@ -29,25 +35,11 @@ COMPRESSED_FILE="$BACKUP_FILE.gz"
 echo "===========================================================" >> "$LOG_FILE"
 echo "Backup started at $(date)" >> "$LOG_FILE"
 
-# Extract database connection details from DIRECT_URL
-# Format: postgresql://user:password@host:port/database
-DB_URL_REGEX="postgresql://([^:]+):([^@]+)@([^:]+):([^/]+)/(.+)"
-if [[ $DIRECT_URL =~ $DB_URL_REGEX ]]; then
-    DB_USER="${BASH_REMATCH[1]}"
-    DB_PASS="${BASH_REMATCH[2]}"
-    DB_HOST="${BASH_REMATCH[3]}"
-    DB_PORT="${BASH_REMATCH[4]}"
-    DB_NAME="${BASH_REMATCH[5]}"
-else
-    echo "ERROR: Could not parse DIRECT_URL" | tee -a "$LOG_FILE"
-    exit 1
-fi
-
 # Perform backup using pg_dump
 echo "Creating backup: $BACKUP_FILE" >> "$LOG_FILE"
-export PGPASSWORD="$DB_PASS"
 
-if pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -F p -f "$BACKUP_FILE"; then
+# Provide the connection URI directly (much safer than regex parsing)
+if pg_dump "$DIRECT_URL" -F p -f "$BACKUP_FILE"; then
     echo "Backup created successfully" >> "$LOG_FILE"
     
     # Compress the backup
@@ -73,8 +65,5 @@ echo "Deleted $DELETED_COUNT old backup(s)" >> "$LOG_FILE"
 # Log completion
 echo "Backup completed successfully at $(date)" >> "$LOG_FILE"
 echo "===========================================================" >> "$LOG_FILE"
-
-# Unset password
-unset PGPASSWORD
 
 exit 0

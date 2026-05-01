@@ -161,7 +161,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
     if (!invoice) return;
 
     const amount = parseFloat(paymentAmount);
-    if (isNaN(amount) || amount <= 0) {
+    if (isNaN(amount)) {
       toast.error("Please enter a valid amount");
       return;
     }

@@ -117,7 +117,7 @@ export class PaymentsService {
       0,
     );
 
-    // Check if payment would exceed total
+    // Check if payment would exceed total or drop below 0
     const newTotal = currentAmountPaid + createPaymentDto.amount;
     if (newTotal > Number(invoice.totalAmount)) {
       throw new BadRequestException(
@@ -126,6 +126,11 @@ export class PaymentsService {
         } would exceed invoice total. Balance remaining: $${
           Number(invoice.totalAmount) - currentAmountPaid
         }`,
+      );
+    }
+    if (newTotal < 0) {
+      throw new BadRequestException(
+        `Refund of $${Math.abs(createPaymentDto.amount)} exceeds current amount paid ($${currentAmountPaid}).`,
       );
     }
 
@@ -305,7 +310,7 @@ export class PaymentsService {
         ? updatePaymentDto.amount
         : Number(payment.amount);
 
-    // Validate if new amount exceeds invoice total
+    // Validate if new amount exceeds invoice total or drops below 0
     // NOTE: If the user explicitly wants to overpay, we might need a flag.
     // For now, sticking to the rule: cannot exceed total.
     if (otherPaymentsTotal + newAmount > Number(payment.invoice.totalAmount)) {
@@ -313,6 +318,11 @@ export class PaymentsService {
         `Payment update would exceed invoice total. Maximum allowed: $${
           Number(payment.invoice.totalAmount) - otherPaymentsTotal
         }`,
+      );
+    }
+    if (otherPaymentsTotal + newAmount < 0) {
+      throw new BadRequestException(
+        `Refund amount exceeds total payments. Cannot update to less than $${-otherPaymentsTotal}.`,
       );
     }
 
