@@ -102,12 +102,14 @@ export class OfferingsService {
   async createOffering(
     data: {
       termId: string;
-      weekday: number;
-      startTime: string; // HH:MM
+      type?: "regular" | "flexible";
+      weekday?: number;
+      startTime?: string; // HH:MM
       title: string;
       capacity: number;
       duration?: number;
       notes?: string;
+      sessions?: { date: string; startTime: string; endTime: string }[];
     },
     user: any
   ) {
@@ -123,24 +125,26 @@ export class OfferingsService {
 
     const DURATION = data.duration || 45;
 
-    const [h, m] = data.startTime.split(":").map(Number);
-    const total = h * 60 + m + DURATION;
-    const hh = Math.floor((total % (24 * 60)) / 60.0);
-    const mm = total % 60;
-    const endTime = `${String(hh).padStart(2, "0")}:${String(mm).padStart(
-      2,
-      "0"
-    )}`;
+    let endTime: string | undefined = undefined;
+
+    if (data.type !== "flexible" && data.startTime) {
+      const [h, m] = data.startTime.split(":").map(Number);
+      const total = h * 60 + m + DURATION;
+      const hh = Math.floor((total % (24 * 60)) / 60.0);
+      const mm = total % 60;
+      endTime = `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+    }
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Create Offering
       const offering = await tx.classOffering.create({
         data: {
           termId: data.termId,
-          weekday: data.weekday,
-          startTime: data.startTime,
-          endTime,
-          duration: DURATION,
+          type: data.type || "regular",
+          weekday: data.type === "flexible" ? null : data.weekday,
+          startTime: data.type === "flexible" ? null : data.startTime,
+          endTime: data.type === "flexible" ? null : endTime,
+          duration: data.type === "flexible" ? null : DURATION,
           title: data.title,
           capacity: data.capacity,
           notes: data.notes ?? null,
@@ -148,35 +152,51 @@ export class OfferingsService {
       });
 
       // 2. Generate Sessions
-      // We need to find all dates in the term that match this weekday
-      const start = new Date(term.startDate);
-      const end = new Date(term.endDate);
-      end.setUTCHours(23, 59, 59, 999);
+      if (data.type === "flexible") {
+        if (data.sessions && data.sessions.length > 0) {
+          await tx.classSession.createMany({
+            data: data.sessions.map((s) => ({
+              offeringId: offering.id,
+              date: new Date(s.date),
+              startTime: s.startTime,
+              endTime: s.endTime,
+              status: "scheduled",
+              notes: null,
+            })),
+          });
+        }
+      } else {
+        // We need to find all dates in the term that match this weekday
+        if (data.weekday === undefined) throw new BadRequestException("Weekday is required for regular offerings");
+        const start = new Date(term.startDate);
+        const end = new Date(term.endDate);
+        end.setUTCHours(23, 59, 59, 999);
 
-      const dates: Date[] = [];
-      const cur = new Date(start);
-      // Set to noon UTC to avoid timezone shifts
-      cur.setUTCHours(12, 0, 0, 0);
+        const dates: Date[] = [];
+        const cur = new Date(start);
+        // Set to noon UTC to avoid timezone shifts
+        cur.setUTCHours(12, 0, 0, 0);
 
-      // Advance to first matching weekday
-      while (cur.getUTCDay() !== data.weekday) {
-        cur.setDate(cur.getDate() + 1);
-      }
+        // Advance to first matching weekday
+        while (cur.getUTCDay() !== data.weekday) {
+          cur.setDate(cur.getDate() + 1);
+        }
 
-      while (cur <= end) {
-        dates.push(new Date(cur));
-        cur.setDate(cur.getDate() + 7);
-      }
+        while (cur <= end) {
+          dates.push(new Date(cur));
+          cur.setDate(cur.getDate() + 7);
+        }
 
-      if (dates.length > 0) {
-        await tx.classSession.createMany({
-          data: dates.map((d) => ({
-            offeringId: offering.id,
-            date: d,
-            status: "scheduled",
-            notes: null,
-          })),
-        });
+        if (dates.length > 0) {
+          await tx.classSession.createMany({
+            data: dates.map((d) => ({
+              offeringId: offering.id,
+              date: d,
+              status: "scheduled",
+              notes: null,
+            })),
+          });
+        }
       }
 
       // 3. Audit

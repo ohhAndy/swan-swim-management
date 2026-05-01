@@ -36,6 +36,7 @@ export interface DailyClass {
   id: string; // Session ID
   offeringId: string;
   title: string;
+  type: "regular" | "flexible";
   time: string;
   instructors: InstructorInfo[];
   capacity: number;

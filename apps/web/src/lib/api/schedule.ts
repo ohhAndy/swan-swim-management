@@ -217,3 +217,22 @@ export async function getDailySchedule(termId: string, date: string) {
 
   return res.json();
 }
+
+export async function getFlexibleSchedule(termId: string): Promise<SlotPage> {
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API}/terms/${termId}/flexible-schedule`, {
+    cache: "no-store",
+    headers,
+  });
+
+  if (res.status === 403) forbidden();
+  if (!res.ok) {
+    throw new ApiError(
+      res.status,
+      res.statusText,
+      `Failed to fetch flexible schedule: ${res.status}`,
+    );
+  }
+
+  return res.json();
+}

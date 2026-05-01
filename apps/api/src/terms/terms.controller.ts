@@ -89,4 +89,11 @@ export class TermsController {
     const wd = weekday ? Number(weekday) : undefined;
     return this.termsService.getTermAvailability(termId, level, wd);
   }
+
+  @Get(":termId/flexible-schedule")
+  async getFlexibleSchedule(
+    @Param("termId") termId: string,
+  ) {
+    return this.termsService.getFlexibleSlotPage(termId);
+  }
 }

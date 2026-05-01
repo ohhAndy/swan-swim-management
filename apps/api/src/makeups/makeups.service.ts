@@ -31,6 +31,7 @@ export class MakeupsService {
           offering: {
             select: {
               id: true,
+              type: true,
               capacity: true,
               term: { select: { locationId: true } },
             },
@@ -38,6 +39,9 @@ export class MakeupsService {
         },
       });
       if (!session) throw new BadRequestException("Session not found");
+      if (session.offering.type === "flexible") {
+        throw new BadRequestException("Make-ups are not allowed for flexible courses");
+      }
 
       // Validate Location Access
       validateLocationAccess(

@@ -8,15 +8,15 @@ datasource db {
 }
 
 model Location {
-  id        String      @id @default(cuid())
-  name      String
-  slug      String      @unique
-  address   String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  terms     Term[]
-  invoices  Invoice[]
-  staff     StaffUser[]
+  id                  String                @id @default(cuid())
+  name                String
+  slug                String                @unique
+  address             String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  invoices            Invoice[]
+  terms               Term[]
+  staffUsers          StaffUser[]           @relation("LocationToStaffUser")
 
   @@map("locations")
 }
@@ -28,7 +28,6 @@ model TrialBooking {
   childAge             Int
   parentPhone          String
   status               TrialStatus  @default(scheduled)
-  classRatio           String       @default("3:1") // "3:1", "2:1", "1:1"
   notes                String?
   createdAt            DateTime     @default(now())
   createdBy            String?
@@ -37,6 +36,7 @@ model TrialBooking {
   convertedAt          DateTime?
   convertedBy          String?
   convertedToStudentId String?
+  classRatio           String       @default("3:1")
   classSession         ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
   convertedByUser      StaffUser?   @relation("TrialBookingConvertedBy", fields: [convertedBy], references: [id])
   convertedToStudent   Student?     @relation(fields: [convertedToStudentId], references: [id])
@@ -49,40 +49,40 @@ model TrialBooking {
 }
 
 model StaffUser {
-  id                           String            @id @default(cuid())
-  authId                       String            @unique
-  email                        String            @unique
+  id                           String                @id @default(cuid())
+  authId                       String                @unique
+  email                        String                @unique
   fullName                     String
   role                         StaffRole
-  active                       Boolean           @default(true)
-  createdAt                    DateTime          @default(now())
-  updatedAt                    DateTime          @updatedAt
-  attendanceMarked             Attendance[]      @relation("AttendanceMarkedBy")
-  attendanceUpdated            Attendance[]      @relation("AttendanceUpdatedBy")
+  active                       Boolean               @default(true)
+  createdAt                    DateTime              @default(now())
+  updatedAt                    DateTime              @updatedAt
+  accessSchedule               Json?
+  attendanceMarked             Attendance[]          @relation("AttendanceMarkedBy")
+  attendanceUpdated            Attendance[]          @relation("AttendanceUpdatedBy")
   auditLogs                    AuditLog[]
-  enrollmentsCreated           Enrollment[]      @relation("EnrollmentCreatedBy")
-  transfersInitiated           Enrollment[]      @relation("EnrollmentTransferredBy")
-  skipsCreated                 EnrollmentSkip[]  @relation("SkipCreatedBy")
-  guardiansCreated             Guardian[]        @relation("GuardianCreatedBy")
-  guardiansUpdated             Guardian[]        @relation("GuardianUpdatedBy")
-  makeUpsCreated               MakeUpBooking[]   @relation("MakeUpCreatedBy")
-  makeUpsUpdated               MakeUpBooking[]   @relation("MakeUpUpdatedBy")
-  studentsCreated              Student[]         @relation("StudentCreatedBy")
-  studentsUpdated              Student[]         @relation("StudentUpdatedBy")
-  termsCreated                 Term[]            @relation("TermCreatedBy")
-  instructorAssignmentsCreated ClassInstructor[] @relation("ClassInstructorAssignedBy")
-  instructorAssignmentsRemoved ClassInstructor[] @relation("ClassInstructorRemovedBy")
-  trialBookingsConverted       TrialBooking[]    @relation("TrialBookingConvertedBy")
-  trialBookingsCreated         TrialBooking[]    @relation("TrialBookingCreatedBy")
-  trialBookingsUpdated         TrialBooking[]    @relation("TrialBookingUpdatedBy")
-  invoicesCreated              Invoice[]         @relation("InvoiceCreatedBy")
-  invoicesUpdated              Invoice[]         @relation("InvoiceUpdatedBy")
-  paymentsCreated              Payment[]         @relation("PaymentCreatedBy")
+  enrollmentsCreated           Enrollment[]          @relation("EnrollmentCreatedBy")
+  transfersInitiated           Enrollment[]          @relation("EnrollmentTransferredBy")
+  skipsCreated                 EnrollmentSkip[]      @relation("SkipCreatedBy")
+  guardiansCreated             Guardian[]            @relation("GuardianCreatedBy")
+  guardiansUpdated             Guardian[]            @relation("GuardianUpdatedBy")
+  invoicesCreated              Invoice[]             @relation("InvoiceCreatedBy")
+  invoicesUpdated              Invoice[]             @relation("InvoiceUpdatedBy")
+  makeUpsCreated               MakeUpBooking[]       @relation("MakeUpCreatedBy")
+  makeUpsUpdated               MakeUpBooking[]       @relation("MakeUpUpdatedBy")
+  paymentsCreated              Payment[]             @relation("PaymentCreatedBy")
+  studentsCreated              Student[]             @relation("StudentCreatedBy")
+  studentsUpdated              Student[]             @relation("StudentUpdatedBy")
+  termsCreated                 Term[]                @relation("TermCreatedBy")
+  accessibleLocations          Location[]            @relation("LocationToStaffUser")
+  instructorAssignmentsCreated ClassInstructor[]     @relation("ClassInstructorAssignedBy")
+  instructorAssignmentsRemoved ClassInstructor[]     @relation("ClassInstructorRemovedBy")
   classInstructors             ClassInstructor[]
-  accessibleLocations          Location[]
-  tasksAssigned                Task[]            @relation("TaskAssignedTo")
-  tasksCreated                 Task[]            @relation("TaskCreatedBy")
-  accessSchedule               Json? // Stores weekly access rules e.g. { "Friday": [{ start: "15:00", end: "21:00" }] }
+  tasksAssigned                Task[]                @relation("TaskAssignedTo")
+  tasksCreated                 Task[]                @relation("TaskCreatedBy")
+  trialBookingsConverted       TrialBooking[]        @relation("TrialBookingConvertedBy")
+  trialBookingsCreated         TrialBooking[]        @relation("TrialBookingCreatedBy")
+  trialBookingsUpdated         TrialBooking[]        @relation("TrialBookingUpdatedBy")
 }
 
 model AuditLog {
@@ -107,10 +107,10 @@ model Term {
   endDate        DateTime        @db.Date
   name           String
   slug           String?         @unique
-  locationId     String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   createdBy      String?
+  locationId     String?
   offerings      ClassOffering[]
   createdByStaff StaffUser?      @relation("TermCreatedBy", fields: [createdBy], references: [id])
   location       Location?       @relation(fields: [locationId], references: [id])
@@ -121,11 +121,12 @@ model Term {
 model ClassOffering {
   id          String            @id @default(cuid())
   termId      String
-  weekday     Int
-  startTime   String
-  endTime     String
+  type        OfferingType      @default(regular)
+  weekday     Int?
+  startTime   String?
+  endTime     String?
   title       String
-  duration    Int
+  duration    Int?
   capacity    Int
   notes       String?
   createdAt   DateTime          @default(now())
@@ -143,6 +144,8 @@ model ClassSession {
   id              String           @id @default(cuid())
   offeringId      String
   date            DateTime         @db.Date
+  startTime       String?
+  endTime         String?
   status          SessionStatus    @default(scheduled)
   notes           String?
   createdAt       DateTime         @default(now())
@@ -175,6 +178,8 @@ model Enrollment {
   transferredBy      String?
   transferredFromId  String?          @unique
   transferredToId    String?          @unique
+  classRatio         String           @default("3:1")
+  reportCardStatus   String?          @default("not_created")
   attendance         Attendance[]
   createdByStaff     StaffUser?       @relation("EnrollmentCreatedBy", fields: [createdBy], references: [id])
   offering           ClassOffering    @relation(fields: [offeringId], references: [id], onDelete: Cascade)
@@ -183,9 +188,8 @@ model Enrollment {
   transferredTo      Enrollment?      @relation("EnrollmentTransfer", fields: [transferredToId], references: [id])
   transferredFrom    Enrollment?      @relation("EnrollmentTransfer")
   enrollmentSkips    EnrollmentSkip[]
-  classRatio         String           @default("3:1") // "3:1", "2:1", "1:1"
-  reportCardStatus   String?          @default("not_created") // "not_created", "created", "given"
-  invoiceLineItem    InvoiceLineItem? // Reverse relation to check if invoiced
+  invoiceLineItem    InvoiceLineItem?
+  report_cards       report_cards[]
 
   @@unique([offeringId, studentId], name: "offeringId_studentId")
   @@index([studentId])
@@ -272,11 +276,11 @@ model Guardian {
   phone          String
   address        Json?
   notes          String?
-  waiverSigned   Boolean    @default(false)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   createdBy      String?
   updatedBy      String?
+  waiverSigned   Boolean    @default(false)
   createdByStaff StaffUser? @relation("GuardianCreatedBy", fields: [createdBy], references: [id])
   updatedByStaff StaffUser? @relation("GuardianUpdatedBy", fields: [updatedBy], references: [id])
   invoices       Invoice[]
@@ -288,26 +292,23 @@ model Guardian {
 }
 
 model Invoice {
-  id            String        @id @default(uuid())
-  invoiceNumber String?       @unique // Staff-entered, nullable for drafts
+  id            String            @id @default(uuid())
+  invoiceNumber String?           @unique
   guardianId    String?
-  locationId    String?
-  totalAmount   Decimal       @db.Decimal(10, 2) // Calculated but overridable
+  totalAmount   Decimal           @db.Decimal(10, 2)
   status        InvoiceStatus
-  notes         String?       @db.Text
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String?
-  updatedBy String?
-
-  // Relations
+  notes         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  createdBy     String?
+  updatedBy     String?
+  locationId    String?
+  createdByUser StaffUser?        @relation("InvoiceCreatedBy", fields: [createdBy], references: [id])
   guardian      Guardian?         @relation(fields: [guardianId], references: [id], onDelete: Restrict)
   location      Location?         @relation(fields: [locationId], references: [id])
+  updatedByUser StaffUser?        @relation("InvoiceUpdatedBy", fields: [updatedBy], references: [id])
   lineItems     InvoiceLineItem[]
   payments      Payment[]
-  createdByUser StaffUser?        @relation("InvoiceCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  updatedByUser StaffUser?        @relation("InvoiceUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
 
   @@index([guardianId])
   @@index([invoiceNumber])
@@ -317,19 +318,16 @@ model Invoice {
 }
 
 model InvoiceLineItem {
-  id              String  @id @default(uuid())
+  id              String         @id @default(uuid())
   invoiceId       String
-  enrollmentId    String? @unique // Nullable for custom line items, unique so enrollment can only be on one invoice
+  enrollmentId    String?        @unique
   inventoryItemId String?
-  description     String // Auto-generated for enrollments, manual for custom items
-  amount          Decimal @db.Decimal(10, 2)
-
-  createdAt DateTime @default(now())
-
-  // Relations
-  invoice       Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  enrollment    Enrollment?    @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
-  inventoryItem InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+  description     String
+  amount          Decimal        @db.Decimal(10, 2)
+  createdAt       DateTime       @default(now())
+  enrollment      Enrollment?    @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+  invoice         Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
   @@index([enrollmentId])
@@ -340,16 +338,13 @@ model Payment {
   id            String        @id @default(uuid())
   invoiceId     String
   amount        Decimal       @db.Decimal(10, 2)
-  paymentDate   DateTime // When payment was received
+  paymentDate   DateTime
   paymentMethod PaymentMethod
-  notes         String?       @db.Text // e.g., "Check #1234"
-
-  createdAt DateTime @default(now())
-  createdBy String?
-
-  // Relations
-  invoice       Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  createdByUser StaffUser? @relation("PaymentCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  createdBy     String?
+  createdByUser StaffUser?    @relation("PaymentCreatedBy", fields: [createdBy], references: [id])
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
   @@index([paymentDate])
@@ -360,12 +355,12 @@ model MakeUpBooking {
   studentId      String
   classSessionId String
   status         MakeUpStatus @default(requested)
-  classRatio     String       @default("3:1") // "3:1", "2:1", "1:1"
   notes          String?
   createdBy      String?
   createdAt      DateTime     @default(now())
   updatedBy      String?
   updatedAt      DateTime     @updatedAt
+  classRatio     String       @default("3:1")
   classSession   ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
   createdByStaff StaffUser?   @relation("MakeUpCreatedBy", fields: [createdBy], references: [id])
   student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -379,16 +374,15 @@ model MakeUpBooking {
 }
 
 model InventoryItem {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  price       Decimal  @db.Decimal(10, 2)
-  sku         String?  @unique
-  stock       Int      @default(0)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id               String            @id @default(cuid())
+  name             String
+  description      String?
+  price            Decimal           @db.Decimal(10, 2)
+  sku              String?           @unique
+  stock            Int               @default(0)
+  active           Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   invoiceLineItems InvoiceLineItem[]
 
   @@map("inventory_items")
@@ -397,17 +391,17 @@ model InventoryItem {
 model ClassInstructor {
   id              String        @id @default(uuid())
   classOfferingId String
-  instructorId    String
+  staffUserId     String?
   assignedAt      DateTime      @default(now())
   assignedBy      String?
   removedAt       DateTime?
   removedBy       String?
+  instructorId    String
   assignedByUser  StaffUser?    @relation("ClassInstructorAssignedBy", fields: [assignedBy], references: [id])
   classOffering   ClassOffering @relation(fields: [classOfferingId], references: [id], onDelete: Cascade)
-  removedByUser   StaffUser?    @relation("ClassInstructorRemovedBy", fields: [removedBy], references: [id])
   instructor      Instructor    @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  removedByUser   StaffUser?    @relation("ClassInstructorRemovedBy", fields: [removedBy], references: [id])
   staffUser       StaffUser?    @relation(fields: [staffUserId], references: [id])
-  staffUserId     String?
 
   @@unique([classOfferingId, instructorId, removedAt], name: "unique_active_instructor")
   @@index([classOfferingId])
@@ -416,29 +410,112 @@ model ClassInstructor {
 }
 
 model Instructor {
-  id           String    @id @default(uuid())
+  id           String            @id @default(uuid())
   firstName    String
   lastName     String
   email        String?
   phone        String?
   gender       String?
-  startDate    DateTime?
   languages    String[]
   certificates Json[]
   notes        String?
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  assignments ClassInstructor[]
+  isActive     Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  startDate    DateTime?
+  assignments  ClassInstructor[]
 
   @@map("instructors")
+}
+
+model Task {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  status       TaskStatus   @default(pending)
+  priority     TaskPriority @default(medium)
+  dueDate      DateTime?
+  assignedToId String?
+  createdById  String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  assignedTo   StaffUser?   @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  createdBy    StaffUser    @relation("TaskCreatedBy", fields: [createdById], references: [id])
+
+  @@index([assignedToId])
+  @@index([createdById])
+  @@index([status])
+  @@map("tasks")
+}
+
+
+
+model levels {
+  id           String         @id
+  name         String         @unique
+  description  String?
+  color        String?        @default("#3b82f6")
+  order        Int            @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime
+  report_cards report_cards[]
+  skills       skills[]
+}
+
+model report_card_skills {
+  id           String       @id
+  reportCardId String
+  skillId      String
+  status       SkillStatus  @default(not_started)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime
+  report_cards report_cards @relation(fields: [reportCardId], references: [id], onDelete: Cascade)
+  skills       skills       @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([reportCardId, skillId])
+  @@index([reportCardId])
+  @@index([skillId])
+}
+
+model report_cards {
+  id                 String               @id
+  enrollmentId       String
+  levelId            String?
+  status             ReportCardStatus     @default(draft)
+  comments           String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  sentAt             DateTime?
+  report_card_skills report_card_skills[]
+  Enrollment         Enrollment           @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  levels             levels?              @relation(fields: [levelId], references: [id])
+
+  @@index([enrollmentId])
+  @@index([levelId])
+}
+
+model skills {
+  id                 String               @id
+  levelId            String
+  description        String
+  order              Int                  @default(0)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  report_card_skills report_card_skills[]
+  levels             levels               @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
+  @@index([levelId])
 }
 
 enum EnrollmentStatus {
   active
   inactive
   transferred
+}
+
+enum OfferingType {
+  regular
+  flexible
 }
 
 enum SessionStatus {
@@ -478,12 +555,12 @@ enum MakeUpStatus {
 }
 
 enum StaffRole {
-  super_admin
   admin
   manager
   supervisor
   viewer
   instructor
+  super_admin
 }
 
 enum TrialStatus {
@@ -492,27 +569,6 @@ enum TrialStatus {
   noshow
   converted
   cancelled
-}
-
-model Task {
-  id           String       @id @default(cuid())
-  title        String
-  description  String?
-  status       TaskStatus   @default(pending)
-  priority     TaskPriority @default(medium)
-  dueDate      DateTime?
-  assignedToId String?
-  createdById  String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
-  assignedTo StaffUser? @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
-  createdBy  StaffUser  @relation("TaskCreatedBy", fields: [createdById], references: [id])
-
-  @@index([assignedToId])
-  @@index([createdById])
-  @@index([status])
-  @@map("tasks")
 }
 
 enum TaskStatus {
@@ -528,3 +584,17 @@ enum TaskPriority {
   high
   urgent
 }
+
+enum ReportCardStatus {
+  draft
+  completed
+  sent
+}
+
+enum SkillStatus {
+  not_started
+  developing
+  mastered
+}
+
+

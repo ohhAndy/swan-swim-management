@@ -27,10 +27,18 @@ export class TrialBookingsService {
     // Verify session exists
     const session = await this.prisma.classSession.findUnique({
       where: { id: classSessionId },
+      include: {
+        offering: {
+          select: { type: true }
+        }
+      }
     });
 
     if (!session) {
       throw new NotFoundException("Class session not found");
+    }
+    if (session.offering.type === "flexible") {
+      throw new BadRequestException("Trials are not allowed for flexible courses");
     }
 
     if (childAge < 0 || childAge > 18) {

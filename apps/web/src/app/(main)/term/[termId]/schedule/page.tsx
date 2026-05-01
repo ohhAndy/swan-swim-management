@@ -2,8 +2,12 @@ import {
   getTimeSlotsByWeekday,
   getTermTitle,
   getAllTerms,
+  getFlexibleSchedule,
 } from "@/lib/api/schedule";
 import TimeSlots from "./TimeSlotClient";
+import { groupByOffering } from "@/lib/schedule/transform";
+import { SlotBlock } from "@/components/schedule/SlotBlock";
+import { AddFlexibleClassDialog } from "@/components/schedule/AddFlexibleClassDialog";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
@@ -56,10 +60,13 @@ export default async function TimeSlotsPage({
     getTimeSlotsByWeekday(termId, weekday),
   );
 
-  const [fetchTitle, ...weeklySlots] = await Promise.all([
+  const [fetchTitle, flexibleSchedule, ...weeklySlots] = await Promise.all([
     getTermTitle(termId),
+    getFlexibleSchedule(termId).catch(() => null),
     ...weekdayPromises,
   ]);
+
+  const flexibleBlocks = flexibleSchedule ? groupByOffering(flexibleSchedule) : [];
 
   const timeSlotsByDay: Record<number, string[]> = {};
   weeklySlots.forEach((slots, index) => {
@@ -71,8 +78,9 @@ export default async function TimeSlotsPage({
     <div className="flex flex-col gap-5">
       <div className="flex flex-row items-center justify-between">
         <h1 className="text-xl font-bold text-[#1c82c5]">{termTitle}</h1>
-        <div className="flex gap-4 text-sm">
-          <div className="flex items-center gap-2">
+        <div className="flex gap-4 text-sm items-center">
+          <AddFlexibleClassDialog termId={termId} />
+          <div className="flex items-center gap-2 ml-4">
             <div className="w-3 h-3 rounded-full bg-yellow-600" />
             <span>P&T</span>
           </div>
@@ -86,16 +94,35 @@ export default async function TimeSlotsPage({
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-1 max-h-[80vh] overflow-y-auto">
-        {Array.from({ length: 7 }).map((_, i) => (
-          <TimeSlots
-            key={i}
-            timeSlots={timeSlotsByDay[i]}
-            weekday={i}
-            termId={termId}
-          />
-        ))}
-      </div>
+      {flexibleBlocks.length === 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-1 max-h-[80vh] overflow-y-auto">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <TimeSlots
+              key={i}
+              timeSlots={timeSlotsByDay[i]}
+              weekday={i}
+              termId={termId}
+            />
+          ))}
+        </div>
+      )}
+
+      {flexibleBlocks.length > 0 && (
+        <div className="mt-8 flex flex-col gap-5">
+          <h2 className="text-xl font-bold text-[#1c82c5]">Flexible / Short Courses</h2>
+          <div className="grid gap-5">
+            {flexibleBlocks.map((b) => (
+              <SlotBlock
+                key={b.offeringKey}
+                title={b.title}
+                isoDates={flexibleSchedule!.days.map((d) => d.date)}
+                rosters={b.rosters}
+                user={user}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

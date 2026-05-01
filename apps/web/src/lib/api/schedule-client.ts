@@ -166,12 +166,14 @@ export async function updateOfferingInfo(offeringId: string, title: string) {
 
 export async function createOffering(payload: {
   termId: string;
-  weekday: number;
-  startTime: string;
+  type?: "regular" | "flexible";
+  weekday?: number;
+  startTime?: string;
   title: string;
   capacity: number;
   duration?: number;
   notes?: string;
+  sessions?: { date: string; startTime: string; endTime: string }[];
 }) {
   const headers = await getHeaders();
   const res = await fetch(`${API}/offerings`, {

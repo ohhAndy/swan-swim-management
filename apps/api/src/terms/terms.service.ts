@@ -292,9 +292,17 @@ export class TermsService {
       name: term.name,
     };
 
+        return this.buildSlotPageFromOfferings(offerings, termMeta, { weekday, startTime, endTime, term: termMeta });
+  }
+
+  private async buildSlotPageFromOfferings(
+    offerings: { id: string, capacity: number, title: string }[],
+    termMeta: Term,
+    meta: any
+  ): Promise<SlotPage> {
     if (offerings.length === 0) {
       return {
-        meta: { weekday, startTime, endTime, term: termMeta },
+        meta,
         days: [],
       };
     }
@@ -341,7 +349,7 @@ export class TermsService {
 
     if (sessions.length === 0) {
       return {
-        meta: { weekday, startTime, endTime, term: termMeta },
+        meta,
         days: [],
       };
     }
@@ -475,7 +483,7 @@ export class TermsService {
 
       // Query: Next Term IDs
       (async () => {
-        const queryTermId = term.id;
+        const queryTermId = termMeta.id;
         const currentTerm = await this.prisma.term.findUnique({
           where: { id: queryTermId },
           select: { startDate: true, locationId: true },
@@ -787,10 +795,38 @@ export class TermsService {
       });
 
     return {
-      meta: { weekday, startTime, endTime, term: termMeta },
+      meta,
       days,
     };
   }
+
+  async getFlexibleSlotPage(termId: string): Promise<SlotPage> {
+    const term = await this.prisma.term.findUnique({
+      where: { id: termId },
+      select: { id: true, name: true },
+    });
+
+    if (!term) {
+      throw new NotFoundException("Term Does Not Exist");
+    }
+
+    const termMeta: Term = {
+      id: term.id.toString(),
+      name: term.name,
+    };
+
+    const offerings = await this.prisma.classOffering.findMany({
+      where: { termId, type: "flexible" },
+      select: {
+        id: true,
+        capacity: true,
+        title: true,
+      },
+    });
+
+    return this.buildSlotPageFromOfferings(offerings, termMeta, { weekday: -1, startTime: "", endTime: "", term: termMeta });
+  }
+
 
   async getDailySchedule(termId: string, dateString: string) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
@@ -806,10 +842,11 @@ export class TermsService {
         select: { id: true, name: true, startDate: true, locationId: true },
       }),
       this.prisma.classOffering.findMany({
-        where: { termId, weekday: dow },
+        where: { termId, sessions: { some: { date: targetDate } } },
         select: {
           id: true,
           title: true,
+          type: true,
           startTime: true,
           endTime: true,
           capacity: true,
@@ -861,6 +898,8 @@ export class TermsService {
         offeringId: true,
         status: true,
         notes: true,
+        startTime: true,
+        endTime: true,
       },
     });
 
@@ -1123,7 +1162,8 @@ export class TermsService {
           id: session.id, // Session ID needed usually, but here we used cls.id which is session.id
           offeringId: offering.id,
           title: offering.title,
-          time: `${offering.startTime}-${offering.endTime}`,
+          type: offering.type,
+          time: `${session.startTime ?? offering.startTime}-${session.endTime ?? offering.endTime}`,
           instructors: offering.instructors.map((i) => ({
             id: i.id,
             staffUserId: i.staffUserId,
