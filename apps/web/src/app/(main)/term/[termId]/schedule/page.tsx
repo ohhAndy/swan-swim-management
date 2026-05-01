@@ -121,7 +121,7 @@ export default async function TimeSlotsPage({
               <SlotBlock
                 key={b.offeringKey}
                 title={b.title}
-                isoDates={flexibleSchedule!.days.map((d) => d.date)}
+                isoDates={Array.from(new Set(b.rosters.map((r) => r.session.date.slice(0, 10) + "T04:00:00.000Z"))).sort()}
                 rosters={b.rosters}
                 user={user}
               />
