@@ -47,14 +47,10 @@ export default async function TimeSlotsPage({
   if (!user) redirect("/login");
 
   // Only admin and manager can see the full weekly schedule grid
-  // Only admin and manager can see the full weekly schedule grid
-  if (
-    user.role !== "super_admin" &&
-    user.role !== "admin" &&
-    user.role !== "manager"
-  ) {
+  if (!["super_admin", "admin", "manager"].includes(user.role)) {
+    // Other roles shouldn't see full grid, just redirect to today's schedule
     const today = new Date().toISOString().split("T")[0];
-    redirect(`/term/${termId}/schedule/date/${today}`);
+    redirect(`/schedule/date/${today}`);
   }
 
   const weekdayPromises = Array.from({ length: 7 }).map((_, weekday) =>

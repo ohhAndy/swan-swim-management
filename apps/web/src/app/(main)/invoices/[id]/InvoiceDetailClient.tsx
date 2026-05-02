@@ -577,7 +577,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                 {invoice.payments.length} payment(s) recorded
               </CardDescription>
             </div>
-            {invoice.balance > 0 && invoice.status !== "void" && (
+            {invoice.status !== "void" && (
               <Dialog
                 open={showPaymentDialog}
                 onOpenChange={setShowPaymentDialog}

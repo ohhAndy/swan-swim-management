@@ -199,9 +199,9 @@ export async function getAvailableClassesForTransfer(
   return res.json();
 }
 
-export async function getDailySchedule(termId: string, date: string) {
+export async function getDailySchedule(date: string) {
   const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/terms/${termId}/schedule/date/${date}`, {
+  const res = await fetch(`${API}/terms/schedule/date/${date}`, {
     cache: "no-store",
     headers,
   });

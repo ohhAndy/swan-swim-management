@@ -72,12 +72,12 @@ export class TermsController {
     return this.termsService.slotByWeekdayAndTime(weekday, termId, start, end);
   }
 
-  @Get(":termId/schedule/date/:date")
+  @Get("schedule/date/:date")
   async getDailySchedule(
-    @Param("termId") termId: string,
     @Param("date") date: string,
+    @CurrentLocationId() locationId?: string,
   ) {
-    return this.termsService.getDailySchedule(termId, date);
+    return this.termsService.getDailySchedule(locationId ?? null, date);
   }
 
   @Get(":termId/availability")

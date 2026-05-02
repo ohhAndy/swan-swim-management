@@ -1,3 +1,4 @@
+import { Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { getCurrentUser } from "@/lib/auth/user";
@@ -94,8 +95,8 @@ export default async function DashboardPage({ searchParams }: Props) {
                 variant="outline"
                 className="w-full bg-[#1c82c5] hover:bg-[#156a9e] text-white"
               >
-                <Link href={`/term/${termToUse.id}/schedule/date/${today}`}>
-                  View Today&apos;s Schedule
+                <Link href={`/schedule/date/${today}`}>
+                  <Calendar className="mr-2 h-4 w-4" /> View Today&apos;s Schedule
                 </Link>
               </Button>
               <PermissionGate

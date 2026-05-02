@@ -117,22 +117,8 @@ export class PaymentsService {
       0,
     );
 
-    // Check if payment would exceed total or drop below 0
+    // Removed strict limits to allow overpayments and free refunds as requested
     const newTotal = currentAmountPaid + createPaymentDto.amount;
-    if (newTotal > Number(invoice.totalAmount)) {
-      throw new BadRequestException(
-        `Payment of $${
-          createPaymentDto.amount
-        } would exceed invoice total. Balance remaining: $${
-          Number(invoice.totalAmount) - currentAmountPaid
-        }`,
-      );
-    }
-    if (newTotal < 0) {
-      throw new BadRequestException(
-        `Refund of $${Math.abs(createPaymentDto.amount)} exceeds current amount paid ($${currentAmountPaid}).`,
-      );
-    }
 
     // Create payment
     const payment = await this.prisma.payment.create({

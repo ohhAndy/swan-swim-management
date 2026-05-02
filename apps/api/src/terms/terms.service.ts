@@ -828,61 +828,44 @@ export class TermsService {
   }
 
 
-  async getDailySchedule(termId: string, dateString: string) {
+  async getDailySchedule(locationId: string | null, dateString: string) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       throw new BadRequestException("Invalid date format YYYY-MM-DD");
     }
     const targetDate = new Date(`${dateString}T04:00:00.000Z`);
-    // Use UTC Day
-    const dow = targetDate.getUTCDay();
 
-    const [term, offerings] = await Promise.all([
-      this.prisma.term.findUnique({
-        where: { id: termId },
-        select: { id: true, name: true, startDate: true, locationId: true },
-      }),
-      this.prisma.classOffering.findMany({
-        where: { termId, sessions: { some: { date: targetDate } } },
-        select: {
-          id: true,
-          title: true,
-          type: true,
-          startTime: true,
-          endTime: true,
-          capacity: true,
-          notes: true,
-          instructors: {
-            where: { removedAt: null },
-            select: {
-              id: true,
-              staffUserId: true,
-              staffUser: { select: { fullName: true } },
-              instructor: { select: { firstName: true, lastName: true } },
-            },
-            orderBy: { assignedAt: "asc" },
-          },
-        },
-        orderBy: { startTime: "asc" },
-      }),
-    ]);
-
-    // Find chronologically next term(s)
-    const futureTerms = await this.prisma.term.findMany({
+    const offerings = await this.prisma.classOffering.findMany({
       where: {
-        startDate: { gt: term.startDate },
-        OR: [{ locationId: term.locationId }, { locationId: null }],
+        term: {
+          OR: [{ locationId: locationId ?? null }, { locationId: null }],
+        },
+        sessions: { some: { date: targetDate } },
       },
-      orderBy: { startDate: "asc" },
-      select: { id: true, startDate: true },
+      select: {
+        id: true,
+        termId: true,
+        term: { select: { name: true } },
+        title: true,
+        type: true,
+        startTime: true,
+        endTime: true,
+        capacity: true,
+        notes: true,
+        instructors: {
+          where: { removedAt: null },
+          select: {
+            id: true,
+            staffUserId: true,
+            staffUser: { select: { fullName: true } },
+            instructor: { select: { firstName: true, lastName: true } },
+          },
+          orderBy: { assignedAt: "asc" },
+        },
+      },
+      orderBy: { startTime: "asc" },
     });
 
-    let nextTerms: { id: string }[] = [];
-    if (futureTerms.length > 0) {
-      const firstDateStr = futureTerms[0].startDate.toISOString().slice(0, 10);
-      nextTerms = futureTerms
-        .filter((t) => t.startDate.toISOString().slice(0, 10) === firstDateStr)
-        .map((t) => ({ id: t.id }));
-    }
+
     if (offerings.length === 0) return { date: dateString, classes: [] };
 
     const offeringIds = offerings.map((o) => o.id);
@@ -993,8 +976,6 @@ export class TermsService {
           select: { enrollmentId: true },
         }),
         (async () => {
-          if (nextTerms.length === 0) return [];
-
           const studentIds = enrollments
             .map((e) => e.studentId)
             .filter((id): id is string => !!id);
@@ -1004,7 +985,7 @@ export class TermsService {
           const res = await this.prisma.enrollment.findMany({
             where: {
               studentId: { in: studentIds },
-              offering: { termId: { in: nextTerms.map((t) => t.id) } },
+              offering: { term: { startDate: { gt: targetDate } } },
               status: "active",
             },
             select: {
@@ -1159,8 +1140,10 @@ export class TermsService {
         ].sort((a, b) => a.name.localeCompare(b.name));
 
         return {
-          id: session.id, // Session ID needed usually, but here we used cls.id which is session.id
+          id: session.id, 
           offeringId: offering.id,
+          termId: offering.termId,
+          termName: offering.term.name,
           title: offering.title,
           type: offering.type,
           time: `${session.startTime ?? offering.startTime}-${session.endTime ?? offering.endTime}`,
@@ -1180,7 +1163,6 @@ export class TermsService {
 
     return {
       date: dateString,
-      termName: term.name,
       classes: classes,
     };
   }
