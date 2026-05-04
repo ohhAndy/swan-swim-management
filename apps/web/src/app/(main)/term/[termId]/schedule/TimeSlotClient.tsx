@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FULL_DAY_LABELS, formatTimeRange } from "@/lib/schedule/slots";
 import { AddClassDialog } from "@/components/schedule/AddClassDialog";
+import { DetailedTimeSlot } from "@/lib/api/schedule";
 
 import Link from "next/link";
 
@@ -11,10 +12,12 @@ export default function TimeSlots({
   timeSlots,
   weekday,
   termId,
+  showDetails = false,
 }: {
-  timeSlots: string[];
+  timeSlots: DetailedTimeSlot[];
   weekday: number;
   termId: string;
+  showDetails?: boolean;
 }) {
   const getDuration = (timeSlot: string) => {
     const [start, end] = timeSlot.split("-");
@@ -31,27 +34,34 @@ export default function TimeSlots({
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-2 items-center">
-          {timeSlots.map((t, i) => (
+          {timeSlots.map((slot, i) => (
             <Button
               key={i}
               asChild
               variant="ghost"
-              className="w-full flex rounded-md hover:bg-muted transition cursor-pointer"
+              className="w-full h-auto flex flex-col items-center rounded-md hover:bg-muted transition cursor-pointer py-2 gap-0.5"
             >
               <Link
-                href={`/term/${termId}/schedule/weekday/${weekday}/slot/${timeSlots[i]}`}
+                href={`/term/${termId}/schedule/weekday/${weekday}/slot/${slot.time}`}
               >
                 <span
-                  className={`text-center align-middle text-sm ${
-                    getDuration(t) === 30
-                      ? "text-yellow-600 font-medium"
-                      : getDuration(t) === 45
+                  className={`text-center text-sm font-medium ${
+                    getDuration(slot.time) === 30
+                      ? "text-yellow-600"
+                      : getDuration(slot.time) === 45
                         ? "text-[#1c82c5]"
-                        : "text-green-600 font-medium"
+                        : "text-green-600"
                   }`}
                 >
-                  {formatTimeRange(t)}
+                  {formatTimeRange(slot.time)}
                 </span>
+                {showDetails && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{slot.offeringCount} {slot.offeringCount === 1 ? "class" : "classes"}</span>
+                    <span>·</span>
+                    <span className={slot.filledSeats >= slot.realCapacity ? "text-red-500 font-medium" : ""}>{slot.filledSeats}/{slot.realCapacity}</span>
+                  </div>
+                )}
               </Link>
             </Button>
           ))}

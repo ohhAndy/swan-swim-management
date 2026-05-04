@@ -253,6 +253,61 @@ export class TermsService {
     return sessions.map((s) => `${s.startTime}-${s.endTime}`);
   }
 
+  async getDetailedSlotsForWeekday(termId: string, weekday: number) {
+    const offerings = await this.prisma.classOffering.findMany({
+      where: { termId, weekday },
+      select: {
+        startTime: true,
+        endTime: true,
+        capacity: true,
+        enrollments: {
+          where: { status: 'active' },
+          select: { classRatio: true },
+        },
+      },
+      orderBy: [{ startTime: 'asc' }],
+    });
+
+    const groups: Record<
+      string,
+      { time: string; offeringCount: number; realCapacity: number; filledSeats: number }
+    > = {};
+
+    for (const off of offerings) {
+      if (!off.startTime || !off.endTime) continue;
+      const time = `${off.startTime}-${off.endTime}`;
+      if (!groups[time]) {
+        groups[time] = { time, offeringCount: 0, realCapacity: 0, filledSeats: 0 };
+      }
+
+      // Use dominant classRatio from enrollments to determine real capacity
+      const allRatios = off.enrollments.map((e) => e.classRatio || '3:1');
+      const dominantRatio =
+        allRatios.length > 0
+          ? allRatios.sort(
+              (a, b) =>
+                allRatios.filter((r) => r === b).length -
+                allRatios.filter((r) => r === a).length,
+            )[0]
+          : '3:1';
+
+      let realCap: number;
+      if (dominantRatio === '1:1') {
+        realCap = Math.floor(off.capacity / 3);
+      } else if (dominantRatio === '2:1') {
+        realCap = Math.round(off.capacity / 1.5);
+      } else {
+        realCap = off.capacity;
+      }
+
+      groups[time].offeringCount += 1;
+      groups[time].realCapacity += realCap;
+      groups[time].filledSeats += off.enrollments.length;
+    }
+
+    return Object.values(groups).sort((a, b) => a.time.localeCompare(b.time));
+  }
+
   async slotByWeekdayAndTime(
     weekday: number,
     termId: string,

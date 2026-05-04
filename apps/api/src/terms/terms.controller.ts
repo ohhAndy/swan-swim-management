@@ -55,6 +55,14 @@ export class TermsController {
     return this.termsService.getSlotsForWeekday(termId, Number(weekday));
   }
 
+  @Get(":termId/schedule/weekday/:weekday/slots-detailed")
+  async getDetailedTimeSlotsForWeekday(
+    @Param("termId") termId: string,
+    @Param("weekday") weekday: string,
+  ) {
+    return this.termsService.getDetailedSlotsForWeekday(termId, Number(weekday));
+  }
+
   @Get(":termId/schedule/weekday/:weekday/slots-default")
   async getDefaultTimeSlots(
     @Param("termId") termId: string,

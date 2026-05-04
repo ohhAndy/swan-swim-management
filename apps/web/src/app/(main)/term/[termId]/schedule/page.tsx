@@ -1,10 +1,11 @@
 import {
-  getTimeSlotsByWeekday,
+  getDetailedTimeSlotsByWeekday,
   getTermTitle,
   getAllTerms,
   getFlexibleSchedule,
+  DetailedTimeSlot,
 } from "@/lib/api/schedule";
-import TimeSlots from "./TimeSlotClient";
+import ScheduleGrid from "./ScheduleGrid";
 import { groupByOffering } from "@/lib/schedule/transform";
 import { SlotBlock } from "@/components/schedule/SlotBlock";
 import { AddFlexibleClassDialog } from "@/components/schedule/AddFlexibleClassDialog";
@@ -54,7 +55,7 @@ export default async function TimeSlotsPage({
   }
 
   const weekdayPromises = Array.from({ length: 7 }).map((_, weekday) =>
-    getTimeSlotsByWeekday(termId, weekday),
+    getDetailedTimeSlotsByWeekday(termId, weekday),
   );
 
   const [fetchTitle, flexibleSchedule, ...weeklySlots] = await Promise.all([
@@ -65,7 +66,7 @@ export default async function TimeSlotsPage({
 
   const flexibleBlocks = flexibleSchedule ? groupByOffering(flexibleSchedule) : [];
 
-  const timeSlotsByDay: Record<number, string[]> = {};
+  const timeSlotsByDay: Record<number, DetailedTimeSlot[]> = {};
   weeklySlots.forEach((slots, index) => {
     timeSlotsByDay[index] = slots;
   });
@@ -97,16 +98,7 @@ export default async function TimeSlotsPage({
         </div>
       </div>
       {flexibleBlocks.length === 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-1 max-h-[80vh] overflow-y-auto">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <TimeSlots
-              key={i}
-              timeSlots={timeSlotsByDay[i]}
-              weekday={i}
-              termId={termId}
-            />
-          ))}
-        </div>
+        <ScheduleGrid timeSlotsByDay={timeSlotsByDay} termId={termId} />
       )}
 
       {flexibleBlocks.length > 0 && (

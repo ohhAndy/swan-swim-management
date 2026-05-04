@@ -35,6 +35,21 @@ COMPRESSED_FILE="$BACKUP_FILE.gz"
 echo "===========================================================" >> "$LOG_FILE"
 echo "Backup started at $(date)" >> "$LOG_FILE"
 
+# Wait for network connection (crucial when waking from sleep)
+echo "Checking network connectivity..." >> "$LOG_FILE"
+for i in {1..12}; do
+    if ping -c 1 8.8.8.8 &> /dev/null; then
+        echo "Network connected." >> "$LOG_FILE"
+        break
+    fi
+    if [ $i -eq 12 ]; then
+        echo "ERROR: Network not available after 60 seconds. Backup failed." | tee -a "$LOG_FILE"
+        exit 1
+    fi
+    echo "Waiting for network (attempt $i/12)..." >> "$LOG_FILE"
+    sleep 5
+done
+
 # Perform backup using pg_dump
 echo "Creating backup: $BACKUP_FILE" >> "$LOG_FILE"
 

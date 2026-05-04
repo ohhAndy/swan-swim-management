@@ -64,6 +64,33 @@ export async function getTimeSlotsByWeekday(
   return res.json();
 }
 
+export interface DetailedTimeSlot {
+  time: string;
+  offeringCount: number;
+  realCapacity: number;
+  filledSeats: number;
+}
+
+export async function getDetailedTimeSlotsByWeekday(
+  termId: string,
+  weekday: number,
+): Promise<DetailedTimeSlot[]> {
+  const headers = await getAuthHeaders();
+  const res = await fetch(
+    `${API}/terms/${termId}/schedule/weekday/${weekday}/slots-detailed`,
+    { cache: "no-store", headers },
+  );
+  if (res.status === 403) forbidden();
+  if (!res.ok) {
+    throw new ApiError(
+      res.status,
+      res.statusText,
+      "Failed to fetch detailed time slots",
+    );
+  }
+  return res.json();
+}
+
 export async function getTermTitle(termId: string): Promise<string> {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API}/terms/${termId}`, {
