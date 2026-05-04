@@ -98,7 +98,7 @@ export default async function TimeSlotsPage({
         </div>
       </div>
       {flexibleBlocks.length === 0 && (
-        <ScheduleGrid timeSlotsByDay={timeSlotsByDay} termId={termId} />
+        <ScheduleGrid timeSlotsByDay={timeSlotsByDay} termId={termId} userRole={user.role} />
       )}
 
       {flexibleBlocks.length > 0 && (
