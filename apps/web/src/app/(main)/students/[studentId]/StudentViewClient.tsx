@@ -1026,6 +1026,11 @@ export default function StudentViewClient({
                                 "Unknown Location"}
                             </p>
                             <p className="text-sm text-gray-500 mt-1">
+                              {FULL_DAY_LABELS[enrollment.offering.weekday]}{" "}
+                              {enrollment.offering.startTime}–
+                              {enrollment.offering.endTime}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
                               Status:{" "}
                               <span className="capitalize text-gray-900 font-medium">
                                 {enrollment.status}

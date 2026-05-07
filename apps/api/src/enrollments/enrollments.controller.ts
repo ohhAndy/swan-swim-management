@@ -20,6 +20,7 @@ import {
   TransferEnrollmentDto,
   transferEnrollmentSchema,
 } from "./dto/transfer.dto";
+import { BulkTransferDto, bulkTransferSchema } from "./dto/bulk-transfer.dto";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
@@ -55,6 +56,15 @@ export class EnrollmentsController {
     @CurrentUser() user: any,
   ) {
     return this.enrollmentsService.transferEnrollment(id, body, user);
+  }
+
+  @Post("bulk-transfer")
+  @Roles("super_admin", "admin")
+  async bulkTransferEnrollments(
+    @Body(new ZodValidationPipe(bulkTransferSchema)) body: BulkTransferDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.enrollmentsService.bulkTransfer(body.transfers, user);
   }
 
   @Put(":id/remarks")

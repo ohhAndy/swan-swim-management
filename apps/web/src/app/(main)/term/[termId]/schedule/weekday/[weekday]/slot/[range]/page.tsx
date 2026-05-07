@@ -2,7 +2,7 @@ import { getSlotPage } from "@/lib/api/schedule";
 import { weekdayName, groupByOffering } from "@/lib/schedule/transform";
 import type { SlotPage } from "@school/shared-types";
 import { SlotHeader } from "@/components/schedule/SlotHeader";
-import { SlotBlock } from "@/components/schedule/SlotBlock";
+import { SlotBlockGrid } from "@/components/schedule/SlotBlockGrid";
 import PreviousButton from "@/components/nav/PreviousButton";
 import NextButton from "@/components/nav/NextButton";
 import { getCurrentUser } from "@/lib/auth/user";
@@ -85,18 +85,11 @@ export default async function SlotPageView({
           />
         </PermissionGate>
       </SlotHeader>
-      <div className="grid gap-5 print:block">
-        {blocks.map((b) => (
-          <SlotBlock
-            key={b.offeringKey}
-            title={b.title}
-            isoDates={isoDates}
-            rosters={b.rosters}
-            user={user}
-            gridHeaderTop="128px"
-          />
-        ))}
-      </div>
+      <SlotBlockGrid
+        blocks={blocks}
+        isoDates={isoDates}
+        user={user}
+      />
     </main>
   );
 }

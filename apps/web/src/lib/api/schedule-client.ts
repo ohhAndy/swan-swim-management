@@ -118,6 +118,24 @@ export async function transferEnrollment(
   return res.json();
 }
 
+export async function bulkTransferEnrollments(
+  transfers: { enrollmentId: string; targetOfferingId: string; transferNotes?: string }[],
+) {
+  const headers = await getHeaders();
+  const res = await fetch(`${API}/enrollments/bulk-transfer`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ transfers }),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to bulk transfer: ${res.status} - ${errorText}`);
+  }
+
+  return res.json();
+}
+
 export async function getAvailableClassesForTransfer(
   termId: string,
   currentOfferingId: string,

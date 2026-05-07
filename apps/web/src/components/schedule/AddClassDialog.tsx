@@ -43,7 +43,7 @@ export function AddClassDialog({
   const [capacity, setCapacity] = useState("3");
   const [customTime, setCustomTime] = useState("09:00");
   const [durationMinutes, setDurationMinutes] = useState(
-    duration?.toString() || "30",
+    duration?.toString() || "45",
   );
 
   async function handleCreate() {
@@ -59,12 +59,12 @@ export function AddClassDialog({
         startTime: timeToUse,
         title,
         capacity: parseInt(capacity) || 3,
-        duration: parseInt(durationMinutes) || 30,
+        duration: parseInt(durationMinutes) || 45,
       });
       setOpen(false);
       setTitle("");
       setCapacity("3");
-      setDurationMinutes("30");
+      setDurationMinutes("45");
       startTransition(() => {
         router.refresh();
       });

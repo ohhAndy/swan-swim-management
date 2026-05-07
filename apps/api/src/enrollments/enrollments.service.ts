@@ -91,16 +91,15 @@ export class EnrollmentsService {
       throw new BadRequestException("Can only transfer within the same term");
     }
 
-    const existingEnrollment = await this.prisma.enrollment.findUnique({
+    const existingEnrollment = await this.prisma.enrollment.findFirst({
       where: {
-        offeringId_studentId: {
-          offeringId: targetOfferingId,
-          studentId: currEnrollment.studentId,
-        },
+        offeringId: targetOfferingId,
+        studentId: currEnrollment.studentId,
+        status: 'active',
       },
     });
     if (existingEnrollment)
-      throw new BadRequestException("Student already enrolled");
+      throw new BadRequestException("Student is already actively enrolled in the target offering");
 
     // Fetch sessions for both offerings to map them by index
     const [oldSessions, newSessions] = await Promise.all([
@@ -114,27 +113,64 @@ export class EnrollmentsService {
       }),
     ]);
 
-    // Fetch existing attendance
-    const oldAttendance = await this.prisma.attendance.findMany({
-      where: { enrollmentId: enrollmentId },
-    });
+    // Fetch existing attendance and skips in parallel
+    const [oldAttendance, oldSkips] = await Promise.all([
+      this.prisma.attendance.findMany({
+        where: { enrollmentId: enrollmentId },
+      }),
+      this.prisma.enrollmentSkip.findMany({
+        where: { enrollmentId: enrollmentId },
+      }),
+    ]);
 
     return await this.prisma.$transaction(async (tx) => {
-      // Create new enrollment
-      const newEnrollment = await tx.enrollment.create({
-        data: {
-          studentId: currEnrollment.studentId,
+      // Check if an inactive enrollment already exists at the target offering
+      // (e.g. student was there before and was transferred away — reactivate it)
+      const existingInactive = await tx.enrollment.findFirst({
+        where: {
           offeringId: targetOfferingId,
-          status: "active",
-          enrollDate: new Date(),
-          transferredFromId: enrollmentId,
-          createdBy: staffUser.id,
-          classRatio: currEnrollment.classRatio,
+          studentId: currEnrollment.studentId,
+          status: { not: 'active' },
         },
       });
 
+      let newEnrollment: { id: string };
+
+      if (existingInactive) {
+        // Reactivate the old enrollment record instead of creating a duplicate
+        newEnrollment = await tx.enrollment.update({
+          where: { id: existingInactive.id },
+          data: {
+            status: 'active',
+            enrollDate: new Date(),
+            transferredFromId: enrollmentId,
+            transferredToId: null,
+            transferredAt: null,
+            transferNotes: null,
+            classRatio: currEnrollment.classRatio,
+          },
+        });
+        // Clear any old attendance and skips on the reactivated enrollment —
+        // we'll recreate them fresh from the source enrollment below
+        await tx.attendance.deleteMany({ where: { enrollmentId: existingInactive.id } });
+        await tx.enrollmentSkip.deleteMany({ where: { enrollmentId: existingInactive.id } });
+      } else {
+        // Create a brand-new enrollment
+        newEnrollment = await tx.enrollment.create({
+          data: {
+            studentId: currEnrollment.studentId,
+            offeringId: targetOfferingId,
+            status: 'active',
+            enrollDate: new Date(),
+            transferredFromId: enrollmentId,
+            createdBy: staffUser.id,
+            classRatio: currEnrollment.classRatio,
+          },
+        });
+      }
+
       // Map sessions and identify which new sessions should have attendance vs skips
-      const attendanceToCreate: any[] = [];
+      const attendanceToCreate: Prisma.AttendanceCreateManyInput[] = [];
       const finalSkippedSessionIds = new Set(skippedSessionIds);
 
       oldSessions.forEach((oldSession, index) => {
@@ -145,16 +181,22 @@ export class EnrollmentsService {
           (a) => a.classSessionId === oldSession.id,
         );
         if (att) {
-          // If we have attendance, we transfer it and REMOVE from skips
+          // If we have attendance, transfer it and REMOVE from skips
           attendanceToCreate.push({
             enrollmentId: newEnrollment.id,
             classSessionId: newSession.id,
             status: att.status,
-            notes: `[Transferred] ${att.notes || ""}`.trim(),
+            notes: `[Transferred] ${att.notes || ''}`.trim(),
             markedBy: staffUser.id,
             markedAt: new Date(),
           });
           finalSkippedSessionIds.delete(newSession.id);
+        } else {
+          // If the old session was skipped, carry that skip over to the new session
+          const wasSkipped = oldSkips.some((sk) => sk.classSessionId === oldSession.id);
+          if (wasSkipped) {
+            finalSkippedSessionIds.add(newSession.id);
+          }
         }
       });
 
@@ -175,26 +217,36 @@ export class EnrollmentsService {
         });
       }
 
-      // Update old enrollment to transferred status
-      await tx.enrollment.update({
-        where: { id: enrollmentId },
-        data: {
-          status: "transferred",
-          transferredToId: newEnrollment.id,
-          transferredAt: new Date(),
-          transferNotes: transferNotes || null,
-          transferredBy: staffUser?.id ?? null,
-        },
-      });
-
-      // Transfer invoice line item if it exists
-      if (currEnrollment.invoiceLineItem) {
-        await tx.invoiceLineItem.update({
-          where: { id: currEnrollment.invoiceLineItem.id },
+      if (existingInactive) {
+        // We're reactivating a previous enrollment — the intermediate source enrollment
+        // (the one we're transferring FROM) is now redundant, so delete it cleanly.
+        // Must move any invoice line item first due to onDelete: Restrict.
+        if (currEnrollment.invoiceLineItem) {
+          await tx.invoiceLineItem.update({
+            where: { id: currEnrollment.invoiceLineItem.id },
+            data: { enrollmentId: newEnrollment.id },
+          });
+        }
+        // Attendance and EnrollmentSkips cascade-delete automatically.
+        await tx.enrollment.delete({ where: { id: enrollmentId } });
+      } else {
+        // Fresh transfer — mark the old enrollment as transferred and move its invoice.
+        await tx.enrollment.update({
+          where: { id: enrollmentId },
           data: {
-            enrollmentId: newEnrollment.id,
+            status: 'transferred',
+            transferredToId: newEnrollment.id,
+            transferredAt: new Date(),
+            transferNotes: transferNotes || null,
+            transferredBy: staffUser?.id ?? null,
           },
         });
+        if (currEnrollment.invoiceLineItem) {
+          await tx.invoiceLineItem.update({
+            where: { id: currEnrollment.invoiceLineItem.id },
+            data: { enrollmentId: newEnrollment.id },
+          });
+        }
       }
 
       // Create audit log for transfer
@@ -550,5 +602,40 @@ export class EnrollmentsService {
         enrollDate: "desc",
       },
     });
+  }
+
+  async bulkTransfer(
+    transfers: { enrollmentId: string; targetOfferingId: string; transferNotes?: string }[],
+    user: any,
+  ) {
+    const results: any[] = [];
+    const errors: { enrollmentId: string; error: string }[] = [];
+
+    for (const t of transfers) {
+      try {
+        const result = await this.transferEnrollment(
+          t.enrollmentId,
+          {
+            targetOfferingId: t.targetOfferingId,
+            skippedSessionIds: [],
+            transferNotes: t.transferNotes,
+          },
+          user,
+        );
+        results.push(result);
+      } catch (err: any) {
+        errors.push({ enrollmentId: t.enrollmentId, error: err?.message ?? 'Unknown error' });
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new BadRequestException({
+        message: `${errors.length} transfer(s) failed`,
+        errors,
+        succeeded: results.length,
+      });
+    }
+
+    return { succeeded: results.length, results };
   }
 }
