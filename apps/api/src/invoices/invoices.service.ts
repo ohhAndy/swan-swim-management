@@ -298,14 +298,20 @@ export class InvoicesService {
       where.status = { not: "void" };
     }
 
+    const orderBy: Prisma.InvoiceOrderByWithRelationInput[] = [
+      { [query.sortBy || "createdAt"]: query.sortOrder || "desc" },
+    ];
+
+    if ((query.sortBy || "createdAt") === "createdAt") {
+      orderBy.push({ invoiceNumber: "desc" });
+    }
+
     const [invoices, total] = await Promise.all([
       this.prisma.invoice.findMany({
         where,
         skip,
         take: limit,
-        orderBy: {
-          [query.sortBy || "createdAt"]: query.sortOrder || "desc",
-        },
+        orderBy,
         include: {
           guardian: true,
           lineItems: true,

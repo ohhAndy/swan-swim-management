@@ -296,14 +296,23 @@ export default function CreateInvoiceForm() {
         }
       });
 
+      let finalCreatedAt: string | undefined;
+      if (invoiceDate) {
+        const todayStr = new Date().toLocaleDateString("en-CA");
+        if (invoiceDate === todayStr) {
+          finalCreatedAt = new Date().toISOString();
+        } else {
+          const now = new Date();
+          finalCreatedAt = new Date(`${invoiceDate}T${now.toTimeString().split(' ')[0]}`).toISOString();
+        }
+      }
+
       const invoice = await createInvoice({
         guardianId: selectedGuardian?.id,
         invoiceNumber: invoiceNumber || undefined,
         totalAmount: calculateTotal(),
         notes: notes || undefined,
-        createdAt: invoiceDate
-          ? new Date(invoiceDate).toISOString()
-          : undefined,
+        createdAt: finalCreatedAt,
         lineItems,
       });
 
