@@ -91,7 +91,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
   // Payment form state
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(
-    new Date().toLocaleDateString("en-CA"),
+    new Date().toISOString().split("T")[0],
   );
   const [paymentMethod, setPaymentMethod] = useState<
     "cash" | "debit" | "visa" | "mastercard" | "etransfer" | "website" | "other"
@@ -137,7 +137,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
         invoiceNumber: editInvoiceNumber || undefined,
         notes: editNotes || undefined,
         status: editStatus,
-        createdAt: editDate ? new Date(editDate).toISOString() : undefined,
+        createdAt: editDate && invoice ? `${editDate}T${new Date(invoice.createdAt).toISOString().split("T")[1] || "00:00:00.000Z"}` : undefined,
         lineItems: editLineItems.map((item) => ({
           id: item.id.startsWith("temp-") ? undefined : item.id,
           enrollmentId: item.enrollmentId,

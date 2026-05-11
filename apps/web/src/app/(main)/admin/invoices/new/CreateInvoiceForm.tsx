@@ -78,7 +78,7 @@ export default function CreateInvoiceForm() {
   const [customLineItems, setCustomLineItems] = useState<LineItem[]>([]);
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(
-    new Date().toLocaleDateString("en-CA"),
+    new Date().toISOString().split("T")[0],
   );
   const [notes, setNotes] = useState("");
   const [enrollmentAmounts, setEnrollmentAmounts] = useState<
@@ -298,12 +298,12 @@ export default function CreateInvoiceForm() {
 
       let finalCreatedAt: string | undefined;
       if (invoiceDate) {
-        const todayStr = new Date().toLocaleDateString("en-CA");
+        const todayStr = new Date().toISOString().split("T")[0];
         if (invoiceDate === todayStr) {
           finalCreatedAt = new Date().toISOString();
         } else {
           const now = new Date();
-          finalCreatedAt = new Date(`${invoiceDate}T${now.toTimeString().split(' ')[0]}`).toISOString();
+          finalCreatedAt = `${invoiceDate}T${now.toISOString().split("T")[1]}`;
         }
       }
 
