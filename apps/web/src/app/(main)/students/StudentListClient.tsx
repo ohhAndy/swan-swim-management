@@ -328,23 +328,31 @@ export default function StudentsListClient({
                         className="border-b hover:bg-gray-50 cursor-pointer transition-colors"
                         onClick={() => handleRowClick(student.id)}
                       >
-                        <td className="p-4">
-                          <div className="font-medium text-gray-900">
-                            {student.firstName} {student.lastName}
-                          </div>
+                        <td className="p-0">
+                          <Link href={`/students/${student.id}`} className="block w-full h-full p-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="font-medium text-gray-900">
+                              {student.firstName} {student.lastName}
+                            </div>
+                          </Link>
                         </td>
-                        <td className="p-4 text-gray-600">
-                          {student.shortCode || "—"}
+                        <td className="p-0">
+                          <Link href={`/students/${student.id}`} className="block w-full h-full p-4 text-gray-600" onClick={(e) => e.stopPropagation()}>
+                            {student.shortCode || "—"}
+                          </Link>
                         </td>
-                        <td className="p-4 text-gray-600">
-                          {calculateAge(student.birthdate)}
+                        <td className="p-0">
+                          <Link href={`/students/${student.id}`} className="block w-full h-full p-4 text-gray-600" onClick={(e) => e.stopPropagation()}>
+                            {calculateAge(student.birthdate)}
+                          </Link>
                         </td>
-                        <td className="p-4">
-                          {student.level ? (
-                            <Badge variant="outline">{student.level}</Badge>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
+                        <td className="p-0">
+                          <Link href={`/students/${student.id}`} className="block w-full h-full p-4" onClick={(e) => e.stopPropagation()}>
+                            {student.level ? (
+                              <Badge variant="outline">{student.level}</Badge>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </Link>
                         </td>
                         <td className="p-4">
                           <div className="text-gray-900 font-medium hover:text-blue-600 hover:underline">
@@ -382,10 +390,12 @@ export default function StudentsListClient({
                             </div>
                           </PermissionGate>
                         </td>
-                        <td className="p-4 text-gray-600">
-                          {new Date(student.createdAt).toLocaleDateString(
-                            "en-CA",
-                          )}
+                        <td className="p-0">
+                          <Link href={`/students/${student.id}`} className="block w-full h-full p-4 text-gray-600" onClick={(e) => e.stopPropagation()}>
+                            {new Date(student.createdAt).toLocaleDateString(
+                              "en-CA",
+                            )}
+                          </Link>
                         </td>
                       </tr>
                     ))}

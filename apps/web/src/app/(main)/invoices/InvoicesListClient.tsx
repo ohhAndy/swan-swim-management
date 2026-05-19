@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { getInvoices, type Invoice } from "@/lib/api/invoice-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,18 +35,68 @@ import EditInvoiceDialog from "@/components/invoices/EditInvoiceDialog";
 
 export default function InvoicesListClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
-  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "all");
+  const [startDate, setStartDate] = useState<string>(searchParams.get("startDate") || "");
+  const [endDate, setEndDate] = useState<string>(searchParams.get("endDate") || "");
+  const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"));
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState<"createdAt" | "invoiceNumber">(
-    "createdAt",
+    (searchParams.get("sortBy") as "createdAt" | "invoiceNumber") || "createdAt"
   );
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">(
+    (searchParams.get("sortOrder") as "asc" | "desc") || "desc"
+  );
+
+  // Sync URL changes (like Back button) to local state
+  useEffect(() => {
+    setSearch(searchParams.get("search") || "");
+    setStatusFilter(searchParams.get("status") || "all");
+    setStartDate(searchParams.get("startDate") || "");
+    setEndDate(searchParams.get("endDate") || "");
+    setPage(parseInt(searchParams.get("page") || "1"));
+    setSortBy((searchParams.get("sortBy") as "createdAt" | "invoiceNumber") || "createdAt");
+    setSortOrder((searchParams.get("sortOrder") as "asc" | "desc") || "desc");
+  }, [searchParams]);
+
+  // Sync local state changes to URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (search) params.set("search", search);
+    else params.delete("search");
+    
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    else params.delete("status");
+    
+    if (startDate) params.set("startDate", startDate);
+    else params.delete("startDate");
+    
+    if (endDate) params.set("endDate", endDate);
+    else params.delete("endDate");
+    
+    if (page > 1) params.set("page", page.toString());
+    else params.delete("page");
+    
+    if (sortBy !== "createdAt") params.set("sortBy", sortBy);
+    else params.delete("sortBy");
+    
+    if (sortOrder !== "desc") params.set("sortOrder", sortOrder);
+    else params.delete("sortOrder");
+    
+    const query = params.toString();
+    const newUrl = query ? `?${query}` : window.location.pathname;
+    
+    // Only replace if the URL actually changed to prevent infinite loops
+    const currentSearch = window.location.search.replace(/^\?/, "");
+    if (query !== currentSearch) {
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [search, statusFilter, startDate, endDate, page, sortBy, sortOrder, router, searchParams]);
 
   // Location & Edit state
   const [locations, setLocations] = useState<Location[]>([]);
@@ -281,54 +332,70 @@ export default function InvoicesListClient() {
                       }`}
                       onClick={() => router.push(`/invoices/${invoice.id}`)}
                     >
-                      <TableCell className="font-medium">
-                        {invoice.invoiceNumber || (
-                          <span className="text-muted-foreground italic">
-                            No number
-                          </span>
-                        )}
+                      <TableCell className="font-medium p-0">
+                        <Link href={`/invoices/${invoice.id}`} className="flex items-center w-full h-full p-4" onClick={(e) => e.stopPropagation()}>
+                          {invoice.invoiceNumber || (
+                            <span className="text-muted-foreground italic">
+                              No number
+                            </span>
+                          )}
+                        </Link>
                       </TableCell>
-                      <TableCell>
-                        {invoice.location?.name || (
-                          <span className="text-muted-foreground italic">
-                            All Locations
-                          </span>
-                        )}
+                      <TableCell className="p-0">
+                        <Link href={`/invoices/${invoice.id}`} className="flex items-center w-full h-full p-4" onClick={(e) => e.stopPropagation()}>
+                          {invoice.location?.name || (
+                            <span className="text-muted-foreground italic">
+                              All Locations
+                            </span>
+                          )}
+                        </Link>
                       </TableCell>
-                      <TableCell>
-                        {invoice.guardian?.fullName || (
-                          <span className="text-muted-foreground italic">
-                            No Guardian
-                          </span>
-                        )}
+                      <TableCell className="p-0">
+                        <Link href={`/invoices/${invoice.id}`} className="flex items-center w-full h-full p-4" onClick={(e) => e.stopPropagation()}>
+                          {invoice.guardian?.fullName || (
+                            <span className="text-muted-foreground italic">
+                              No Guardian
+                            </span>
+                          )}
+                        </Link>
                       </TableCell>
-                      <TableCell>{formatDate(invoice.createdAt)}</TableCell>
-                      <TableCell>
-                        {formatCurrency(invoice.totalAmount)}
+                      <TableCell className="p-0">
+                        <Link href={`/invoices/${invoice.id}`} className="flex items-center w-full h-full p-4" onClick={(e) => e.stopPropagation()}>
+                          {formatDate(invoice.createdAt)}
+                        </Link>
                       </TableCell>
-                      <TableCell
-                        className={
-                          isMismatch ? "font-bold text-yellow-700" : ""
-                        }
-                      >
-                        {formatCurrency(invoice.amountPaid)}
-                        {isMismatch && (
-                          <Badge
-                            variant="outline"
-                            className="ml-2 text-xs border-yellow-500 text-yellow-700"
-                          >
-                            MISMATCH
-                          </Badge>
-                        )}
+                      <TableCell className="p-0">
+                        <Link href={`/invoices/${invoice.id}`} className="flex items-center w-full h-full p-4" onClick={(e) => e.stopPropagation()}>
+                          {formatCurrency(invoice.totalAmount)}
+                        </Link>
                       </TableCell>
                       <TableCell
-                        className={
-                          isMismatch ? "font-bold text-yellow-700" : ""
-                        }
+                        className={`p-0 ${isMismatch ? "font-bold text-yellow-700" : ""}`}
                       >
-                        {formatCurrency(invoice.balance)}
+                        <Link href={`/invoices/${invoice.id}`} className="flex items-center w-full h-full p-4" onClick={(e) => e.stopPropagation()}>
+                          {formatCurrency(invoice.amountPaid)}
+                          {isMismatch && (
+                            <Badge
+                              variant="outline"
+                              className="ml-2 text-xs border-yellow-500 text-yellow-700"
+                            >
+                              MISMATCH
+                            </Badge>
+                          )}
+                        </Link>
                       </TableCell>
-                      <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                      <TableCell
+                        className={`p-0 ${isMismatch ? "font-bold text-yellow-700" : ""}`}
+                      >
+                        <Link href={`/invoices/${invoice.id}`} className="flex items-center w-full h-full p-4" onClick={(e) => e.stopPropagation()}>
+                          {formatCurrency(invoice.balance)}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="p-0">
+                        <Link href={`/invoices/${invoice.id}`} className="flex items-center w-full h-full p-4" onClick={(e) => e.stopPropagation()}>
+                          {getStatusBadge(invoice.status)}
+                        </Link>
+                      </TableCell>
                       <TableCell>
                         <Button
                           variant="ghost"
