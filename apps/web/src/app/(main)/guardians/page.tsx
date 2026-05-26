@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
 import { getServerAuthHeaders } from "@/lib/api/server-headers";
 import { Metadata } from "next";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Guardians | Swan Swim Management",
@@ -51,13 +52,16 @@ export default async function GuardiansPage({
 
   return (
     <div className="container mx-auto py-6 px-4">
-      <GuardianListClient
-        initialData={guardiansData}
-        initialQuery={query}
-        initialPage={page}
-        initialWaiverStatus={waiverStatus}
-        user={user}
-      />
+      <Suspense fallback={<div className="text-center py-8 text-muted-foreground">Loading guardians...</div>}>
+        <GuardianListClient
+          initialData={guardiansData}
+          initialQuery={query}
+          initialPage={page}
+          initialWaiverStatus={waiverStatus}
+          user={user}
+        />
+      </Suspense>
     </div>
   );
 }
+

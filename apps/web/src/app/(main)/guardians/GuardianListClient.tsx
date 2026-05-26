@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Select,
   SelectContent,
@@ -51,58 +51,68 @@ export default function GuardianListClient({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const waiverStatus = (searchParams.get("waiverStatus") || undefined) as "signed" | "pending" | undefined;
+
   const [data, setData] = useState(initialData);
   const [query, setQuery] = useState(initialQuery);
-  const [waiverStatus, setWaiverStatus] = useState<
-    "signed" | "pending" | undefined
-  >(initialWaiverStatus);
-
   const [loading, setLoading] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  // Update URL and fetch data
-  const updateFilters = async (
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    async function fetch() {
+      setLoading(true);
+      try {
+        const q = searchParams.get("query") || "";
+        const p = parseInt(searchParams.get("page") || "1");
+        const ws = searchParams.get("waiverStatus") as "signed" | "pending" | null;
+
+        const newData = await searchGuardiansPage(
+          q,
+          p,
+          20,
+          { waiverStatus: ws || undefined },
+        );
+        setData(newData);
+        setQuery(q);
+      } catch (error) {
+        console.error("Failed to fetch guardians:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetch();
+  }, [searchParams]);
+
+  // Update URL and let useEffect handle fetching data
+  const updateFilters = (
     newQuery?: string,
     newPage?: number,
     newWaiverStatus?: "signed" | "pending" | "all",
   ) => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams(searchParams.toString());
 
-    if (newQuery !== undefined) params.set("query", newQuery);
+    if (newQuery !== undefined) {
+      if (newQuery) params.set("query", newQuery);
+      else params.delete("query");
+    }
     if (newPage !== undefined) params.set("page", newPage.toString());
 
     if (newWaiverStatus) {
       if (newWaiverStatus === "all") {
         params.delete("waiverStatus");
-        setWaiverStatus(undefined);
       } else {
         params.set("waiverStatus", newWaiverStatus);
-        setWaiverStatus(newWaiverStatus);
       }
     }
 
     router.push(`/guardians?${params.toString()}`);
-
-    // Fetch new data
-    try {
-      setLoading(true);
-      const effectiveWaiverStatus =
-        newWaiverStatus === "all"
-          ? undefined
-          : (newWaiverStatus ?? waiverStatus);
-
-      const newData = await searchGuardiansPage(
-        newQuery ?? query,
-        newPage ?? initialPage,
-        20,
-        { waiverStatus: effectiveWaiverStatus },
-      );
-      setData(newData);
-    } catch (error) {
-      console.error("Failed to fetch guardians:", error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleSearch = () => {

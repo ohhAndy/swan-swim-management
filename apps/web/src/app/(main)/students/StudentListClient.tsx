@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Search, Plus, Users } from "lucide-react";
@@ -72,13 +72,46 @@ export default function StudentsListClient({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const enrollmentStatus = searchParams.get("enrollmentStatus") || "";
+  const level = searchParams.get("level") || "";
+
   const [data, setData] = useState(initialData);
   const [query, setQuery] = useState(initialQuery);
-  const [enrollmentStatus, setEnrollmentStatus] = useState(
-    initialEnrollmentStatus,
-  );
-  const [level, setLevel] = useState(initialLevel);
   const [loading, setLoading] = useState(false);
+
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    async function fetch() {
+      setLoading(true);
+      try {
+        const q = searchParams.get("query") || "";
+        const p = parseInt(searchParams.get("page") || "1");
+        const status = searchParams.get("enrollmentStatus") || "";
+        const lvl = searchParams.get("level") || "";
+
+        const newData = await searchStudents({
+          query: q,
+          page: p,
+          pageSize: 20,
+          enrollmentStatus: status,
+          level: lvl === "all" ? "" : lvl,
+        });
+        setData(newData);
+        setQuery(q);
+      } catch (error) {
+        console.error("Failed to fetch students:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetch();
+  }, [searchParams]);
 
   // Calculate age helper
   const calculateAge = (birthdate: string | null) => {
@@ -98,19 +131,22 @@ export default function StudentsListClient({
     return `${years}y`;
   };
 
-  // Update URL and fetch data
-  const updateFilters = async (
+  // Update URL and let useEffect handle fetching data
+  const updateFilters = (
     newQuery?: string,
     newPage?: number,
     newEnrollmentStatus?: string,
     newLevel?: string,
   ) => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams(searchParams.toString());
 
-    if (newQuery !== undefined) params.set("query", newQuery);
+    if (newQuery !== undefined) {
+      if (newQuery) params.set("query", newQuery);
+      else params.delete("query");
+    }
     if (newPage !== undefined) params.set("page", newPage.toString());
     if (newEnrollmentStatus !== undefined) {
-      if (newEnrollmentStatus)
+      if (newEnrollmentStatus && newEnrollmentStatus !== "all")
         params.set("enrollmentStatus", newEnrollmentStatus);
       else params.delete("enrollmentStatus");
     }
@@ -120,23 +156,6 @@ export default function StudentsListClient({
     }
 
     router.push(`/students?${params.toString()}`);
-
-    // Fetch new data
-    try {
-      setLoading(true);
-      const newData = await searchStudents({
-        query: newQuery ?? query,
-        page: newPage ?? initialPage,
-        pageSize: 20,
-        enrollmentStatus: newEnrollmentStatus ?? enrollmentStatus,
-        level: (newLevel === "all" ? "" : newLevel) ?? level,
-      });
-      setData(newData);
-    } catch (error) {
-      console.error("Failed to fetch students:", error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleSearch = () => {
@@ -150,12 +169,10 @@ export default function StudentsListClient({
   };
 
   const handleEnrollmentStatusChange = (value: string) => {
-    setEnrollmentStatus(value);
     updateFilters(undefined, 1, value);
   };
 
   const handleLevelChange = (value: string) => {
-    setLevel(value);
     updateFilters(undefined, 1, undefined, value);
   };
 

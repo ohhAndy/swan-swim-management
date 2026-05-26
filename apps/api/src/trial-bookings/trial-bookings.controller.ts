@@ -74,6 +74,17 @@ export class TrialBookingsController {
     return this.service.updateTrialStatus(id, body.status, staffUser);
   }
 
+  @Patch(":id/notes")
+  @Roles("super_admin", "admin", "manager", "supervisor")
+  async updateNotes(
+    @Param("id") id: string,
+    @Body() body: { notes: string | null },
+    @CurrentUser() staffUser: any,
+  ) {
+    return this.service.updateTrialNotes(id, body.notes, staffUser);
+  }
+
+
   @Patch(":id/convert")
   @Roles("super_admin", "admin", "manager")
   async convertToStudent(

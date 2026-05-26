@@ -3,6 +3,7 @@ import StudentsListClient from "./StudentListClient";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Students | Swan Swim Management",
@@ -49,14 +50,17 @@ export default async function StudentsPage({
 
   return (
     <div className="container mx-auto py-6 px-4">
-      <StudentsListClient
-        initialData={studentsData}
-        initialQuery={query}
-        initialPage={page}
-        initialEnrollmentStatus={enrollmentStatus}
-        initialLevel={level}
-        user={user}
-      />
+      <Suspense fallback={<div className="text-center py-8 text-muted-foreground">Loading students...</div>}>
+        <StudentsListClient
+          initialData={studentsData}
+          initialQuery={query}
+          initialPage={page}
+          initialEnrollmentStatus={enrollmentStatus}
+          initialLevel={level}
+          user={user}
+        />
+      </Suspense>
     </div>
   );
 }
+

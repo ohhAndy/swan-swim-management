@@ -196,6 +196,74 @@ export class TrialBookingsService {
     });
   }
 
+  async updateTrialNotes(
+    trialId: string,
+    notes: string | null,
+    updatedBy: any,
+  ) {
+    const user = await this.prisma.staffUser.findUnique({
+      where: { authId: updatedBy.authId },
+    });
+    if (!user) return;
+
+    const trial = await this.prisma.trialBooking.findUnique({
+      where: { id: trialId },
+      include: {
+        classSession: {
+          select: {
+            date: true,
+            offering: {
+              select: {
+                title: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!trial) {
+      throw new NotFoundException("Trial booking not found");
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.trialBooking.update({
+        where: { id: trialId },
+        data: {
+          notes,
+          updatedBy: user.id,
+        },
+        include: {
+          updatedByUser: {
+            select: {
+              fullName: true,
+            },
+          },
+        },
+      });
+
+      // Create audit log
+      await tx.auditLog.create({
+        data: {
+          staffId: user.id,
+          action: "Update Trial Notes",
+          entityType: "TrialBooking",
+          entityId: trialId,
+          metadata: {
+            childName: trial.childName,
+            oldNotes: trial.notes,
+            newNotes: notes,
+            sessionDate: trial.classSession.date.toISOString(),
+            offeringTitle: trial.classSession.offering.title,
+          },
+        },
+      });
+
+      return updated;
+    });
+  }
+
+
   async convertToStudent(trialId: string, studentId: string, convertedBy: any) {
     const user = await this.prisma.staffUser.findUnique({
       where: { authId: convertedBy.authId },

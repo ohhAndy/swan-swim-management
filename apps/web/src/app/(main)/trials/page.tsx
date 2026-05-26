@@ -18,9 +18,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, XCircle, Clock, Percent } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Percent, Pencil } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { EditNotesDialog } from "./EditNotesDialog";
 
 interface UpcomingTrial {
   id: string;
@@ -47,25 +48,35 @@ export default function TrialsPage() {
   const [upcoming, setUpcoming] = useState<UpcomingTrial[]>([]);
   const [past, setPast] = useState<UpcomingTrial[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTrialForNotes, setSelectedTrialForNotes] = useState<{
+    id: string;
+    childName: string;
+    notes: string | null;
+  } | null>(null);
+  const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
+
+  const loadData = async () => {
+    try {
+      const [fetchedStats, fetchedUpcoming, fetchedPast] = await Promise.all([
+        getTrialStats(),
+        getUpcomingTrials(),
+        getPastTrials(),
+      ]);
+      setStats(fetchedStats);
+      setUpcoming(fetchedUpcoming);
+      setPast(fetchedPast);
+    } catch (error) {
+      console.error("Failed to load trials data:", error);
+    }
+  };
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [fetchedStats, fetchedUpcoming, fetchedPast] = await Promise.all([
-          getTrialStats(),
-          getUpcomingTrials(),
-          getPastTrials(),
-        ]);
-        setStats(fetchedStats);
-        setUpcoming(fetchedUpcoming);
-        setPast(fetchedPast);
-      } catch (error) {
-        console.error("Failed to load trials data:", error);
-      } finally {
-        setLoading(false);
-      }
+    async function init() {
+      setLoading(true);
+      await loadData();
+      setLoading(false);
     }
-    loadData();
+    init();
   }, []);
 
   if (loading) {
@@ -147,11 +158,26 @@ export default function TrialsPage() {
                   {trial.status}
                 </Badge>
               </TableCell>
-              <TableCell
-                className="max-w-[200px] truncate"
-                title={trial.notes || ""}
-              >
-                {trial.notes || "-"}
+              <TableCell className="max-w-[200px]">
+                <div className="flex items-center justify-between group gap-2">
+                  <span className="truncate" title={trial.notes || ""}>
+                    {trial.notes || "-"}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setSelectedTrialForNotes({
+                        id: trial.id,
+                        childName: trial.childName,
+                        notes: trial.notes,
+                      });
+                      setIsNotesDialogOpen(true);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted rounded transition-opacity"
+                    title="Edit Notes"
+                  >
+                    <Pencil className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                  </button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
@@ -246,6 +272,13 @@ export default function TrialsPage() {
           </Tabs>
         </CardContent>
       </Card>
+
+      <EditNotesDialog
+        open={isNotesDialogOpen}
+        onOpenChange={setIsNotesDialogOpen}
+        trial={selectedTrialForNotes}
+        onSuccess={loadData}
+      />
     </div>
   );
 }

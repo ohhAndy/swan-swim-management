@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { getTermAvailability, getTermTitle } from "@/lib/api/schedule-client";
 import {
@@ -50,13 +51,18 @@ const getSeatsColor = (seats: number) => {
 };
 
 export default function AvailabilityClient({ termId }: { termId: string }) {
-  const [level, setLevel] = useState<string>("all");
-  const [weekday, setWeekday] = useState<string>("all");
-  const [selectedInstructor, setSelectedInstructor] = useState<string>("all");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const level = searchParams.get("level") || "all";
+  const weekday = searchParams.get("weekday") || "all";
+  const selectedInstructor = searchParams.get("instructor") || "all";
+  const selectedTime = searchParams.get("time") || "all";
+
   const [data, setData] = useState<AvailabilityData | null>(null);
   const [loading, setLoading] = useState(true);
   const [termName, setTermName] = useState("");
-  const [selectedTime, setSelectedTime] = useState<string>("all");
 
   const allLevels = ["PS", "SW", "Adult"];
 
@@ -64,10 +70,19 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
     getTermTitle(termId).then(setTermName).catch(console.error);
   }, [termId]);
 
-  useEffect(() => {
-    setSelectedTime("all");
-    setSelectedInstructor("all");
-  }, [weekday]);
+  const setFilter = (name: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "all") {
+      params.delete(name);
+    } else {
+      params.set(name, value);
+    }
+    if (name === "weekday") {
+      params.delete("time");
+      params.delete("instructor");
+    }
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   useEffect(() => {
     async function fetch() {
@@ -119,7 +134,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
         </div>
 
         <div className="flex items-center gap-3">
-          <Select value={weekday} onValueChange={setWeekday}>
+          <Select value={weekday} onValueChange={(val) => setFilter("weekday", val)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Day" />
             </SelectTrigger>
@@ -133,7 +148,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
             </SelectContent>
           </Select>
 
-          <Select value={level} onValueChange={setLevel}>
+          <Select value={level} onValueChange={(val) => setFilter("level", val)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by Level" />
             </SelectTrigger>
@@ -149,7 +164,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
 
           <Select
             value={selectedInstructor}
-            onValueChange={setSelectedInstructor}
+            onValueChange={(val) => setFilter("instructor", val)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Instructor" />
@@ -220,7 +235,7 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
 
                 {isSingleDay && (
                   <div className="flex justify-center pb-2">
-                    <Tabs value={selectedTime} onValueChange={setSelectedTime}>
+                    <Tabs value={selectedTime} onValueChange={(val) => setFilter("time", val)}>
                       <TabsList className="flex flex-wrap h-auto gap-1">
                         <TabsTrigger value="all">All Times</TabsTrigger>
                         {uniqueTimes.map((time) => (

@@ -48,6 +48,28 @@ export async function updateTrialStatus(
   return res.json();
 }
 
+export async function updateTrialNotes(
+  trialId: string,
+  notes: string | null,
+) {
+  const headers = await getHeaders();
+  const res = await fetch(`${API}/trial-bookings/${trialId}/notes`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ notes }),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("API Error:", res.status, res.statusText, errorText);
+    throw new Error(
+      `Failed to update trial notes: ${res.status} - ${errorText}`,
+    );
+  }
+
+  return res.json();
+}
+
 export async function convertTrialToStudent(
   trialId: string,
   studentId: string,
