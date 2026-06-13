@@ -94,18 +94,18 @@ export async function getStudentById(studentId: string) {
   return res.json();
 }
 
-export async function updateRemarks(enrollmentId: string, remarks: string) {
+export async function updateStudentNotes(studentId: string, notes: string) {
   const headers = await getHeaders();
-  const res = await fetch(`${API}/enrollments/${enrollmentId}/remarks`, {
+  const res = await fetch(`${API}/students/${studentId}/notes`, {
     method: "PUT",
     headers,
-    body: JSON.stringify({ remarks }),
+    body: JSON.stringify({ notes }),
   });
 
   if (!res.ok) {
     const errorText = await res.text();
     console.error("API Error:", res.status, res.statusText, errorText);
-    throw new Error(`Failed to enroll student: ${res.status} - ${errorText}`);
+    throw new Error(`Failed to update student notes: ${res.status} - ${errorText}`);
   }
 
   return res.json();

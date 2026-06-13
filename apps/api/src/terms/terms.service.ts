@@ -49,6 +49,16 @@ function computeEnd(start: string, duration: number): string {
   return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
 }
 
+function formatTime(time: string): string {
+  if (!time) return "";
+  const [h, m] = time.split(":");
+  const hour = parseInt(h, 10);
+  const minute = m;
+  const ampm = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minute} ${ampm}`;
+}
+
 @Injectable()
 export class TermsService {
   //Create a prismaservice to use
@@ -261,27 +271,37 @@ export class TermsService {
         endTime: true,
         capacity: true,
         enrollments: {
-          where: { status: 'active' },
+          where: { status: "active" },
           select: { classRatio: true },
         },
       },
-      orderBy: [{ startTime: 'asc' }],
+      orderBy: [{ startTime: "asc" }],
     });
 
     const groups: Record<
       string,
-      { time: string; offeringCount: number; realCapacity: number; filledSeats: number }
+      {
+        time: string;
+        offeringCount: number;
+        realCapacity: number;
+        filledSeats: number;
+      }
     > = {};
 
     for (const off of offerings) {
       if (!off.startTime || !off.endTime) continue;
       const time = `${off.startTime}-${off.endTime}`;
       if (!groups[time]) {
-        groups[time] = { time, offeringCount: 0, realCapacity: 0, filledSeats: 0 };
+        groups[time] = {
+          time,
+          offeringCount: 0,
+          realCapacity: 0,
+          filledSeats: 0,
+        };
       }
 
       // Use dominant classRatio from enrollments to determine real capacity
-      const allRatios = off.enrollments.map((e) => e.classRatio || '3:1');
+      const allRatios = off.enrollments.map((e) => e.classRatio || "3:1");
       const dominantRatio =
         allRatios.length > 0
           ? allRatios.sort(
@@ -289,12 +309,12 @@ export class TermsService {
                 allRatios.filter((r) => r === b).length -
                 allRatios.filter((r) => r === a).length,
             )[0]
-          : '3:1';
+          : "3:1";
 
       let realCap: number;
-      if (dominantRatio === '1:1') {
+      if (dominantRatio === "1:1") {
         realCap = Math.floor(off.capacity / 3);
-      } else if (dominantRatio === '2:1') {
+      } else if (dominantRatio === "2:1") {
         realCap = Math.round(off.capacity / 1.5);
       } else {
         realCap = off.capacity;
@@ -347,13 +367,18 @@ export class TermsService {
       name: term.name,
     };
 
-        return this.buildSlotPageFromOfferings(offerings, termMeta, { weekday, startTime, endTime, term: termMeta });
+    return this.buildSlotPageFromOfferings(offerings, termMeta, {
+      weekday,
+      startTime,
+      endTime,
+      term: termMeta,
+    });
   }
 
   private async buildSlotPageFromOfferings(
-    offerings: { id: string, capacity: number, title: string }[],
+    offerings: { id: string; capacity: number; title: string }[],
     termMeta: Term,
-    meta: any
+    meta: any,
   ): Promise<SlotPage> {
     if (offerings.length === 0) {
       return {
@@ -427,7 +452,6 @@ export class TermsService {
         id: true,
         offeringId: true,
         studentId: true,
-        notes: true,
         classRatio: true,
         reportCardStatus: true,
         invoiceLineItem: {
@@ -451,6 +475,7 @@ export class TermsService {
             shortCode: true,
             level: true,
             birthdate: true,
+            notes: true,
           },
         },
       },
@@ -810,7 +835,7 @@ export class TermsService {
               studentLevel: e.student.level,
               studentBirthDate: e.student.birthdate?.toISOString() ?? null,
               skippedSessionIds,
-              notes: e.notes,
+              notes: e.student.notes,
               attendance: attendance
                 ? {
                     id: attendance.id,
@@ -879,9 +904,13 @@ export class TermsService {
       },
     });
 
-    return this.buildSlotPageFromOfferings(offerings, termMeta, { weekday: -1, startTime: "", endTime: "", term: termMeta });
+    return this.buildSlotPageFromOfferings(offerings, termMeta, {
+      weekday: -1,
+      startTime: "",
+      endTime: "",
+      term: termMeta,
+    });
   }
-
 
   async getDailySchedule(locationId: string | null, dateString: string) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
@@ -919,7 +948,6 @@ export class TermsService {
       },
       orderBy: { startTime: "asc" },
     });
-
 
     if (offerings.length === 0) return { date: dateString, classes: [] };
 
@@ -960,7 +988,6 @@ export class TermsService {
         studentId: true,
         classRatio: true,
         reportCardStatus: true,
-        notes: true,
         student: {
           select: {
             id: true,
@@ -969,6 +996,7 @@ export class TermsService {
             shortCode: true,
             level: true,
             birthdate: true,
+            notes: true,
           },
         },
       },
@@ -983,7 +1011,7 @@ export class TermsService {
     }
 
     // Dynamic Data
-    const [attendance, makeups, trials, skips, nextTermEnrollments] =
+    const [attendance, makeups, trials, skips, nextTermEnrollments, allOfferingSessions, allTermAttendance, allTermSkips] =
       await Promise.all([
         this.prisma.attendance.findMany({
           where: {
@@ -1007,6 +1035,7 @@ export class TermsService {
                 level: true,
                 birthdate: true,
                 shortCode: true,
+                notes: true,
               },
             },
           },
@@ -1054,6 +1083,19 @@ export class TermsService {
           });
           return res;
         })(),
+        this.prisma.classSession.findMany({
+          where: { offeringId: { in: offeringIds } },
+          select: { id: true, offeringId: true, date: true, status: true },
+          orderBy: { date: "asc" },
+        }),
+        this.prisma.attendance.findMany({
+          where: { enrollmentId: { in: enrollmentIds } },
+          select: { enrollmentId: true, classSessionId: true, status: true },
+        }),
+        this.prisma.enrollmentSkip.findMany({
+          where: { enrollmentId: { in: enrollmentIds } },
+          select: { enrollmentId: true, classSessionId: true },
+        }),
       ]);
 
     const attendanceMap = new Map(attendance.map((a) => [a.enrollmentId, a]));
@@ -1078,6 +1120,62 @@ export class TermsService {
       if (!ne.studentId) continue;
       const paid = ne.invoiceLineItem?.invoice?.status === "paid";
       nextTermMap.set(ne.studentId, paid ? "paid" : "enrolled");
+    }
+
+    const sessionsByOffering = new Map<string, typeof allOfferingSessions>();
+    for (const s of allOfferingSessions) {
+      const arr = sessionsByOffering.get(s.offeringId) ?? [];
+      arr.push(s);
+      sessionsByOffering.set(s.offeringId, arr);
+    }
+
+    const termAttendanceMap = new Map<string, Map<string, string>>();
+    for (const a of allTermAttendance) {
+      if (!termAttendanceMap.has(a.enrollmentId)) {
+        termAttendanceMap.set(a.enrollmentId, new Map());
+      }
+      termAttendanceMap.get(a.enrollmentId)!.set(a.classSessionId, a.status);
+    }
+
+    const termSkipMap = new Map<string, Set<string>>();
+    for (const s of allTermSkips) {
+      if (!termSkipMap.has(s.enrollmentId)) {
+        termSkipMap.set(s.enrollmentId, new Set());
+      }
+      termSkipMap.get(s.enrollmentId)!.add(s.classSessionId);
+    }
+
+    const makeupStudentIds = makeups.map((m) => m.student.id);
+    const termIds = Array.from(new Set(offerings.map((o) => o.termId)));
+    const makeupEnrollments =
+      makeupStudentIds.length > 0 && termIds.length > 0
+        ? await this.prisma.enrollment.findMany({
+            where: {
+              studentId: { in: makeupStudentIds },
+              offering: { termId: { in: termIds } },
+              status: "active",
+            },
+            select: {
+              studentId: true,
+              offering: {
+                select: {
+                  termId: true,
+                  weekday: true,
+                  startTime: true,
+                  endTime: true,
+                },
+              },
+            },
+          })
+        : [];
+
+    const makeupEnrollmentMap = new Map<
+      string,
+      (typeof makeupEnrollments)[0]
+    >();
+    for (const enr of makeupEnrollments) {
+      const key = `${enr.studentId}_${enr.offering.termId}`;
+      makeupEnrollmentMap.set(key, enr);
     }
 
     // Helper for age
@@ -1145,6 +1243,42 @@ export class TermsService {
           ...sessionEnrollments.map((e) => {
             const isSkipped = skipSet.has(e.id);
             const att = attendanceMap.get(e.id);
+
+            const offeringSessions = sessionsByOffering.get(offering.id) ?? [];
+            const studentAttendance = termAttendanceMap.get(e.id) ?? new Map<string, string>();
+            const studentSkips = termSkipMap.get(e.id) ?? new Set<string>();
+
+            const timeline = offeringSessions.map((sess) => {
+              const sessDateStr = sess.date.toISOString().slice(0, 10);
+              const hasSkip = studentSkips.has(sess.id);
+              const attendanceStatus = studentAttendance.get(sess.id);
+
+              let timelineStatus: "present" | "absent" | "excused" | "skipped" | "unmarked" | "upcoming";
+              if (hasSkip) {
+                timelineStatus = "skipped";
+              } else if (attendanceStatus === "present") {
+                timelineStatus = "present";
+              } else if (attendanceStatus === "absent") {
+                timelineStatus = "absent";
+              } else if (attendanceStatus === "excused") {
+                timelineStatus = "excused";
+              } else if (sessDateStr > dateString) {
+                timelineStatus = "upcoming";
+              } else {
+                timelineStatus = "unmarked";
+              }
+
+              return {
+                date: sessDateStr,
+                status: timelineStatus,
+                isCurrent: sessDateStr === dateString,
+              };
+            });
+
+            const presentCount = timeline.filter(
+              (t) => t.status === "present" && t.date <= dateString
+            ).length;
+
             return {
               id: e.id, // Enrollment ID for updates
               type: "student",
@@ -1154,7 +1288,7 @@ export class TermsService {
               age: e.student.birthdate ? getAge(e.student.birthdate) : null,
               status: att?.status ?? (isSkipped ? "skipped" : null),
               ratio: e.classRatio,
-              notes: e.notes,
+              notes: e.student.notes,
               isSkipped,
               reportCardStatus: e.reportCardStatus,
               nextTermStatus:
@@ -1162,22 +1296,51 @@ export class TermsService {
                   | "paid"
                   | "enrolled"
                   | "not_registered") ?? "not_registered",
+              attendanceCount: presentCount,
+              totalSessionsCount: timeline.length,
+              attendanceTimeline: timeline,
             };
           }),
-          ...sessionMakeups.map((m) => ({
-            id: m.id, // Makeup ID for updates
-            type: "makeup",
-            name: `${m.student.firstName} ${m.student.lastName}`,
-            studentId: m.student.id,
-            level: m.student.level,
-            age: m.student.birthdate ? getAge(m.student.birthdate) : null,
-            status: m.status,
-            ratio: "3:1",
-            notes: "Makeup",
-            isSkipped: false,
-            reportCardStatus: null,
-            nextTermStatus: "not_registered",
-          })),
+          ...sessionMakeups.map((m) => {
+            const key = `${m.student.id}_${offering.termId}`;
+            const matchingEnrollment = makeupEnrollmentMap.get(key);
+            let normalSession = null;
+            if (matchingEnrollment) {
+              const off = matchingEnrollment.offering;
+              if (
+                off.weekday !== null &&
+                off.weekday !== undefined &&
+                off.startTime
+              ) {
+                const shortDays = [
+                  "Sun",
+                  "Mon",
+                  "Tue",
+                  "Wed",
+                  "Thu",
+                  "Fri",
+                  "Sat",
+                ];
+                const dayName = shortDays[off.weekday] ?? `Day ${off.weekday}`;
+                normalSession = `${dayName} ${formatTime(off.startTime)}`;
+              }
+            }
+            return {
+              id: m.id, // Makeup ID for updates
+              type: "makeup",
+              name: `${m.student.firstName} ${m.student.lastName}`,
+              studentId: m.student.id,
+              level: m.student.level,
+              age: m.student.birthdate ? getAge(m.student.birthdate) : null,
+              status: m.status,
+              ratio: "3:1",
+              notes: m.student.notes,
+              isSkipped: false,
+              reportCardStatus: null,
+              nextTermStatus: "not_registered",
+              normalSession,
+            };
+          }),
           ...sessionTrials.map((t) => ({
             id: t.id, // Trial ID for updates
             type: "trial",
@@ -1195,7 +1358,7 @@ export class TermsService {
         ].sort((a, b) => a.name.localeCompare(b.name));
 
         return {
-          id: session.id, 
+          id: session.id,
           offeringId: offering.id,
           termId: offering.termId,
           termName: offering.term.name,

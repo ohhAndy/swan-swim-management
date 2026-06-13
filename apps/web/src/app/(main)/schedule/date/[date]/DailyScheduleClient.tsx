@@ -2,7 +2,7 @@
 
 import { BackButton } from "@/components/nav/BackButton";
 import { format, addDays, subDays } from "date-fns";
-import { updateRemarks, updateStudent } from "@/lib/api/students-client";
+import { updateStudentNotes, updateStudent } from "@/lib/api/students-client";
 import { updateOfferingInfo } from "@/lib/api/schedule-client";
 import { Input } from "@/components/ui/input";
 import { updateReportCardStatus } from "@/lib/api/enrollment-client";
@@ -290,8 +290,12 @@ export default function DailyScheduleClient({
                                 router.refresh();
                               }}
                               onRemarksUpdate={async (item, remarks) => {
-                                if (item.type === "student") {
-                                  await updateRemarks(item.id, remarks);
+                                if (
+                                  (item.type === "student" ||
+                                    item.type === "makeup") &&
+                                  item.studentId
+                                ) {
+                                  await updateStudentNotes(item.studentId, remarks);
                                   router.refresh();
                                 }
                               }}

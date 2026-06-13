@@ -7,6 +7,7 @@ export const createStudentSchema = z.object({
   lastName: z.string().min(1).max(64),
   level: z.string().nullable().optional(),
   birthdate: z.coerce.date().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 export type CreateStudentDto = z.infer<typeof createStudentSchema>;

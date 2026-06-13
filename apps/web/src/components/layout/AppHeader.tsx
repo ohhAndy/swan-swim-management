@@ -34,7 +34,7 @@ export async function AppHeader() {
         {/* spacer */}
         <nav className="ml-auto flex items-center gap-3">
           <PermissionGate
-            allowedRoles={["super_admin", "admin", "manager"]}
+            allowedRoles={["super_admin", "admin", "manager", "supervisor"]}
             currentRole={user.role}
           >
             <DropdownMenu>
@@ -45,9 +45,14 @@ export async function AppHeader() {
                 <DropdownMenuItem asChild>
                   <Link href="/students">Students</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/guardians">Guardians</Link>
-                </DropdownMenuItem>
+                <PermissionGate
+                  allowedRoles={["super_admin", "admin", "manager"]}
+                  currentRole={user.role}
+                >
+                  <DropdownMenuItem asChild>
+                    <Link href="/guardians">Guardians</Link>
+                  </DropdownMenuItem>
+                </PermissionGate>
                 <PermissionGate
                   allowedRoles={["super_admin", "admin", "manager"]}
                   currentRole={user.role}

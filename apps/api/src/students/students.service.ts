@@ -30,6 +30,7 @@ export class StudentsService {
   }
 
   async searchOrList(params: SearchStudentsDto) {
+    await this.deactivateExpiredEnrollments();
     const {
       query,
       page = 1,
@@ -44,11 +45,33 @@ export class StudentsService {
       ...(level ? { level: level === "none" ? null : level } : {}),
       ...(enrollmentStatus === "active"
         ? {
-            enrollments: { some: { status: "active" } },
+            enrollments: {
+              some: {
+                status: "active",
+                offering: {
+                  term: {
+                    endDate: {
+                      gte: new Date(),
+                    },
+                  },
+                },
+              },
+            },
           }
         : enrollmentStatus === "inactive"
           ? {
-              enrollments: { none: { status: "active" } },
+              enrollments: {
+                none: {
+                  status: "active",
+                  offering: {
+                    term: {
+                      endDate: {
+                        gte: new Date(),
+                      },
+                    },
+                  },
+                },
+              },
             }
           : {}),
       ...(query
@@ -113,7 +136,8 @@ export class StudentsService {
     return { total, page, pageSize, items };
   }
 
-  async getById(id: string) {
+  async getById(id: string, staffUser?: any) {
+    await this.deactivateExpiredEnrollments();
     const student = await this.prisma.student.findUnique({
       where: { id },
       select: {
@@ -123,6 +147,7 @@ export class StudentsService {
         lastName: true,
         birthdate: true,
         level: true,
+        notes: true,
         guardianId: true,
         guardian: {
           select: { id: true, fullName: true, email: true, phone: true },
@@ -283,6 +308,30 @@ export class StudentsService {
       },
     });
     if (!student) throw new NotFoundException("Student not found");
+
+    const isEnrollmentActive = (e: any) => {
+      if (e.status !== "active") return false;
+      if (!e.offering?.term?.endDate) return true;
+      const now = new Date();
+      const end = new Date(e.offering.term.endDate);
+      end.setHours(23, 59, 59, 999);
+      return now <= end;
+    };
+
+    if (staffUser?.role === "supervisor") {
+      let pastCount = 0;
+      student.enrollments = student.enrollments.filter((e) => {
+        if (isEnrollmentActive(e)) {
+          return true;
+        }
+        if (e.status !== "transferred" && !e.transferredTo && pastCount < 1) {
+          pastCount++;
+          return true;
+        }
+        return false;
+      });
+    }
+
     return student;
   }
 
@@ -367,6 +416,7 @@ export class StudentsService {
         level: true,
         birthdate: true,
         guardianId: true,
+        notes: true,
       },
     });
 
@@ -389,6 +439,7 @@ export class StudentsService {
             ...(dto.birthdate !== undefined
               ? { birthdate: dto.birthdate }
               : {}),
+            ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
             updatedBy: staffUser.id,
           },
           select: {
@@ -397,6 +448,7 @@ export class StudentsService {
             firstName: true,
             lastName: true,
             level: true,
+            notes: true,
             birthdate: true,
             guardianId: true,
             createdAt: true,
@@ -458,9 +510,53 @@ export class StudentsService {
           });
         }
 
+        // Track notes change in audit log changes object
+        if (
+          dto.notes !== undefined &&
+          dto.notes !== existing.notes
+        ) {
+          changes.notes = { from: existing.notes, to: dto.notes };
+        }
+
         return updated;
       });
     }
+  }
+
+  async updateNotes(studentId: string, notes: string, user: any) {
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+    if (!staffUser) return;
+
+    const student = await this.prisma.student.findUnique({
+      where: { id: studentId },
+      select: { id: true, firstName: true, lastName: true, shortCode: true, notes: true },
+    });
+    if (!student) throw new NotFoundException("Student not found");
+
+    const updated = await this.prisma.student.update({
+      where: { id: studentId },
+      data: { notes },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        staffId: staffUser.id,
+        action: "Update Student Notes",
+        entityType: "Student",
+        entityId: studentId,
+        changes: {
+          notes: { from: student.notes, to: notes },
+        },
+        metadata: {
+          studentName: `${student.firstName} ${student.lastName}`,
+          shortCode: student.shortCode,
+        },
+      },
+    });
+
+    return { success: true, notes: updated.notes };
   }
 
   async delete(id: string, user: any) {
@@ -525,5 +621,30 @@ export class StudentsService {
       select: { id: true },
     });
     if (!ok) throw new NotFoundException("Student not found");
+  }
+
+  private async deactivateExpiredEnrollments() {
+    try {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      await this.prisma.enrollment.updateMany({
+        where: {
+          status: "active",
+          offering: {
+            term: {
+              endDate: {
+                lt: todayStart,
+              },
+            },
+          },
+        },
+        data: {
+          status: "inactive",
+        },
+      });
+    } catch (error) {
+      console.error("Failed to deactivate expired enrollments:", error);
+    }
   }
 }

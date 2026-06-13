@@ -41,6 +41,14 @@ export type RosterItem = {
   isSkipped: boolean;
   reportCardStatus: string | null;
   nextTermStatus: "not_registered" | "enrolled" | "paid" | null;
+  normalSession?: string | null;
+  attendanceCount?: number | null;
+  totalSessionsCount?: number | null;
+  attendanceTimeline?: {
+    date: string;
+    status: "present" | "absent" | "excused" | "skipped" | "unmarked" | "upcoming";
+    isCurrent: boolean;
+  }[] | null;
 };
 
 const ALL_LEVELS = [...PRESCHOOL_LEVELS, ...SWIMMER_LEVELS, ...SWIMTEAM_LEVELS];
@@ -201,11 +209,64 @@ export function DailyClassRoster({
                       </DropdownMenu>
                     </div>
                   )}
+                  {/* Normal Session for Makeup (Mobile) */}
+                  {item.type === "makeup" && item.normalSession && (
+                    <div className="ml-auto">
+                      <Badge variant="outline" className="text-[10px] h-5 bg-blue-50 text-blue-700 border-blue-200">
+                        {item.normalSession}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {item.age ? `${item.age} yrs` : "Age N/A"} •{" "}
                   {item.ratio || "3:1"}
                 </div>
+                {item.type === "student" && item.attendanceTimeline && item.attendanceTimeline.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                    {item.attendanceTimeline.map((slot, idx) => {
+                      let dotClass = "w-2.5 h-2.5 rounded-full border transition-all duration-150";
+                      let label = `${slot.date}: `;
+                      if (slot.status === "present") {
+                        dotClass += " bg-green-500 border-green-600";
+                        label += "Present";
+                      } else if (slot.status === "absent") {
+                        dotClass += " bg-red-500 border-red-600";
+                        label += "Absent";
+                      } else if (slot.status === "excused") {
+                        dotClass += " bg-yellow-500 border-yellow-600";
+                        label += "Excused";
+                      } else if (slot.status === "skipped") {
+                        dotClass += " bg-gray-800 border-black line-through opacity-70";
+                        label += "Skipped";
+                      } else if (slot.status === "upcoming") {
+                        dotClass += " bg-transparent border-gray-300 border-dashed";
+                        label += "Upcoming";
+                      } else {
+                        dotClass += " bg-gray-200 border-gray-300";
+                        label += "Not Marked";
+                      }
+
+                      if (slot.isCurrent) {
+                        dotClass += " ring-1 ring-primary ring-offset-1 scale-110";
+                        label += " (Today)";
+                      }
+
+                      return (
+                        <TooltipProvider key={idx}>
+                          <Tooltip delayDuration={100}>
+                            <TooltipTrigger asChild>
+                              <span className={dotClass} />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <span className="text-xs font-medium">{label}</span>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Level Badge (Editable) */}
@@ -260,7 +321,7 @@ export function DailyClassRoster({
               <div className="flex-1"></div>
 
               {/* Remarks */}
-              {item.type === "student" ? (
+              {item.type === "student" || item.type === "makeup" ? (
                 <RemarksDialog
                   title={`${item.name} Remarks`}
                   initialRemarks={item.notes}
@@ -411,6 +472,51 @@ export function DailyClassRoster({
                           </TooltipProvider>
                         )}
                     </div>
+                    {item.type === "student" && item.attendanceTimeline && item.attendanceTimeline.length > 0 && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {item.attendanceTimeline.map((slot, idx) => {
+                          let dotClass = "w-2 h-2 rounded-full border transition-all duration-150";
+                          let label = `${slot.date}: `;
+                          if (slot.status === "present") {
+                            dotClass += " bg-green-500 border-green-600";
+                            label += "Present";
+                          } else if (slot.status === "absent") {
+                            dotClass += " bg-red-500 border-red-600";
+                            label += "Absent";
+                          } else if (slot.status === "excused") {
+                            dotClass += " bg-yellow-500 border-yellow-600";
+                            label += "Excused";
+                          } else if (slot.status === "skipped") {
+                            dotClass += " bg-gray-800 border-black line-through opacity-70";
+                            label += "Skipped";
+                          } else if (slot.status === "upcoming") {
+                            dotClass += " bg-transparent border-gray-300 border-dashed";
+                            label += "Upcoming";
+                          } else {
+                            dotClass += " bg-gray-200 border-gray-300";
+                            label += "Not Marked";
+                          }
+
+                          if (slot.isCurrent) {
+                            dotClass += " ring-1 ring-primary ring-offset-1 scale-125";
+                            label += " (Today)";
+                          }
+
+                          return (
+                            <TooltipProvider key={idx}>
+                              <Tooltip delayDuration={100}>
+                                <TooltipTrigger asChild>
+                                  <span className={dotClass} />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <span className="text-xs font-medium">{label}</span>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td className="p-3">{item.age}</td>
@@ -460,7 +566,7 @@ export function DailyClassRoster({
                   </DropdownMenu>
                 </td>
                 <td className="p-3 text-center">
-                  {item.type === "student" && (
+                  {item.type === "student" ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         disabled={
@@ -508,6 +614,12 @@ export function DailyClassRoster({
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                  ) : item.type === "makeup" && item.normalSession ? (
+                    <span className="text-xs font-medium text-muted-foreground whitespace-nowrap bg-muted px-2 py-1 rounded">
+                      {item.normalSession}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">-</span>
                   )}
                 </td>
                 <td className="p-3 text-center">
@@ -520,7 +632,7 @@ export function DailyClassRoster({
                   </div>
                 </td>
                 <td className="p-3 text-center">
-                  {item.type === "student" ? (
+                  {item.type === "student" || item.type === "makeup" ? (
                     <RemarksDialog
                       title={`${item.name} Remarks`}
                       initialRemarks={item.notes}

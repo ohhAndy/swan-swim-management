@@ -255,6 +255,7 @@ model Student {
   createdBy          String?
   level              String?
   updatedBy          String?
+  notes              String?
   enrollments        Enrollment[]
   makeUps            MakeUpBooking[]
   createdByStaff     StaffUser?      @relation("StudentCreatedBy", fields: [createdBy], references: [id])

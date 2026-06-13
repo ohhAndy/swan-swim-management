@@ -15,7 +15,7 @@ import { EnrollStudentDialog } from "./EnrollStudentDialog";
 import { ScheduleMakeupDialog } from "./ScheduleMakeUpDialog";
 import { CurrentUser } from "@/lib/auth/user";
 import { PermissionGate } from "../auth/PermissionGate";
-import { updateRemarks } from "@/lib/api/students-client";
+import { updateStudentNotes } from "@/lib/api/students-client";
 import { Loader2, Users } from "lucide-react";
 import OfferingDialog from "./OfferingInfoDialog";
 import { updateOfferingInfo } from "@/lib/api/schedule-client";
@@ -137,14 +137,14 @@ export function SlotBlock({
     }
   };
 
-  const handleRemarksUpdate = async (enrollmentId: string, notes: string) => {
+  const handleRemarksUpdate = async (studentId: string, notes: string) => {
     try {
-      await updateRemarks(enrollmentId, notes);
+      await updateStudentNotes(studentId, notes);
       startTransition(() => {
         router.refresh();
       });
     } catch (error) {
-      console.error("Failed to update remarks:", error);
+      console.error("Failed to update student notes:", error);
       throw error; // Re-throw so the dialog can show error state
     }
   };

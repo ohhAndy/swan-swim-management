@@ -330,9 +330,11 @@ export default function StudentsListClient({
                       <th className="text-left p-4 font-medium text-gray-900">
                         Level
                       </th>
-                      <th className="text-left p-4 font-medium text-gray-900">
-                        Guardian
-                      </th>
+                      {user.role !== "supervisor" && (
+                        <th className="text-left p-4 font-medium text-gray-900">
+                          Guardian
+                        </th>
+                      )}
                       <th className="text-left p-4 font-medium text-gray-900">
                         Enrolled
                       </th>
@@ -371,42 +373,44 @@ export default function StudentsListClient({
                             )}
                           </Link>
                         </td>
-                        <td className="p-4">
-                          <div className="text-gray-900 font-medium hover:text-blue-600 hover:underline">
-                            <Link
-                              href={`/guardians/${student.guardian.id}`}
-                              onClick={(e) => e.stopPropagation()}
+                        {user.role !== "supervisor" && (
+                          <td className="p-4">
+                            <div className="text-gray-900 font-medium hover:text-blue-600 hover:underline">
+                              <Link
+                                href={`/guardians/${student.guardian.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {student.guardian.fullName}
+                              </Link>
+                            </div>
+                            <PermissionGate
+                              allowedRoles={["super_admin", "admin", "manager"]}
+                              currentRole={user.role}
                             >
-                              {student.guardian.fullName}
-                            </Link>
-                          </div>
-                          <PermissionGate
-                            allowedRoles={["super_admin", "admin", "manager"]}
-                            currentRole={user.role}
-                          >
-                            <div className="text-sm text-gray-500 hover:text-blue-600 hover:underline">
-                              <Link
-                                href={`/guardians/${student.guardian.id}`}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {student.guardian.email}
-                              </Link>
-                            </div>
-                          </PermissionGate>
-                          <PermissionGate
-                            allowedRoles={["super_admin", "admin", "manager"]}
-                            currentRole={user.role}
-                          >
-                            <div className="text-sm text-gray-500 hover:text-blue-600 hover:underline">
-                              <Link
-                                href={`/guardians/${student.guardian.id}`}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {student.guardian.phone}
-                              </Link>
-                            </div>
-                          </PermissionGate>
-                        </td>
+                              <div className="text-sm text-gray-500 hover:text-blue-600 hover:underline">
+                                <Link
+                                  href={`/guardians/${student.guardian.id}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {student.guardian.email}
+                                </Link>
+                              </div>
+                            </PermissionGate>
+                            <PermissionGate
+                              allowedRoles={["super_admin", "admin", "manager"]}
+                              currentRole={user.role}
+                            >
+                              <div className="text-sm text-gray-500 hover:text-blue-600 hover:underline">
+                                <Link
+                                  href={`/guardians/${student.guardian.id}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {student.guardian.phone}
+                                </Link>
+                              </div>
+                            </PermissionGate>
+                          </td>
+                        )}
                         <td className="p-0">
                           <Link href={`/students/${student.id}`} className="block w-full h-full p-4 text-gray-600" onClick={(e) => e.stopPropagation()}>
                             {new Date(student.createdAt).toLocaleDateString(
@@ -441,16 +445,18 @@ export default function StudentsListClient({
                     <div className="space-y-1 text-sm text-gray-600">
                       <div>Code: {student.shortCode || "—"}</div>
                       <div>Age: {calculateAge(student.birthdate)}</div>
-                      <div>
-                        Guardian:{" "}
-                        <Link
-                          href={`/guardians/${student.guardian.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="hover:text-blue-600 hover:underline"
-                        >
-                          {student.guardian.fullName}
-                        </Link>
-                      </div>
+                      {user.role !== "supervisor" && (
+                        <div>
+                          Guardian:{" "}
+                          <Link
+                            href={`/guardians/${student.guardian.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="hover:text-blue-600 hover:underline"
+                          >
+                            {student.guardian.fullName}
+                          </Link>
+                        </div>
+                      )}
                       <div>
                         Enrolled:{" "}
                         {new Date(student.createdAt).toLocaleDateString(

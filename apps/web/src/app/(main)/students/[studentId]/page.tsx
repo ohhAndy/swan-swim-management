@@ -23,7 +23,8 @@ export default async function StudentPage({
   if (
     user.role !== "super_admin" &&
     user.role !== "admin" &&
-    user.role !== "manager"
+    user.role !== "manager" &&
+    user.role !== "supervisor"
   ) {
     redirect("/");
   }

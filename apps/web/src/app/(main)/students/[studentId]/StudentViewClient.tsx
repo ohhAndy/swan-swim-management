@@ -81,6 +81,10 @@ const EditGuardianSchema = z.object({
 type EditGuardianInput = z.infer<typeof EditGuardianSchema>;
 
 function getInvoiceStatusBadge(enrollment: Enrollment, userRole: string) {
+  if (userRole === "supervisor") {
+    return null;
+  }
+
   if (!enrollment.invoiceLineItem) {
     // Not invoiced yet
     return (

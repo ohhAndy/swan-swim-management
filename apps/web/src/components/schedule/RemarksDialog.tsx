@@ -74,8 +74,8 @@ export default function RemarksDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            {`Add notes or remarks for this student's enrollment. These notes are
-            visible to all staff members.`}
+            {`Add notes or remarks for this student. These notes are
+            student-wide and visible to all staff members across all terms.`}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -83,7 +83,7 @@ export default function RemarksDialog({
             <Label htmlFor="remarks">Remarks</Label>
             <Textarea
               id="remarks"
-              placeholder="Enter any notes about this enrollment..."
+              placeholder="Enter any notes about this student..."
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               rows={6}

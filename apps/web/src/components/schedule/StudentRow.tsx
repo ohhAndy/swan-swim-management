@@ -379,7 +379,7 @@ export function StudentRow({
                     initialRemarks={row.remarks}
                     triggerLabel="View / Edit"
                     onSave={(remarks) =>
-                      onSaveRemarks(row.enrollmentId, remarks)
+                      onSaveRemarks(row.studentId, remarks)
                     }
                   />
                 </span>
@@ -395,7 +395,7 @@ export function StudentRow({
             title={`${row.name} - Remarks`}
             initialRemarks={row.remarks}
             triggerLabel="View / Edit"
-            onSave={(remarks) => onSaveRemarks(row.enrollmentId, remarks)}
+            onSave={(remarks) => onSaveRemarks(row.studentId, remarks)}
           />
         )}
       </div>

@@ -6,6 +6,7 @@ import {
   Post,
   Body,
   Patch,
+  Put,
   Delete,
   UseGuards,
 } from "@nestjs/common";
@@ -38,8 +39,8 @@ export class StudentsController {
   }
 
   @Get(":id")
-  async getById(@Param("id") id: string) {
-    return this.studentsService.getById(id);
+  async getById(@Param("id") id: string, @CurrentStaffUser() staffUser: any) {
+    return this.studentsService.getById(id, staffUser);
   }
 
   @Post()
@@ -59,6 +60,16 @@ export class StudentsController {
     @CurrentUser() user: any,
   ) {
     return this.studentsService.update(id, body, user);
+  }
+
+  @Put(":id/notes")
+  @Roles("super_admin", "admin", "manager", "supervisor")
+  async updateNotes(
+    @Param("id") id: string,
+    @Body() body: { notes: string },
+    @CurrentUser() user: any,
+  ) {
+    return this.studentsService.updateNotes(id, body.notes, user);
   }
 
   @Delete(":id")
