@@ -1,6 +1,8 @@
 import { getAllTerms } from "@/lib/api/schedule";
 import type { Term } from "@school/shared-types";
 import { Metadata } from "next";
+import { getCurrentUser } from "@/lib/auth/user";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Terms | Swan Swim Management",
@@ -9,6 +11,19 @@ export const metadata: Metadata = {
 import TermSlot from "./TermClientPage";
 
 export default async function TermPage() {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  if (
+    user.role !== "super_admin" &&
+    user.role !== "admin" &&
+    user.role !== "manager"
+  ) {
+    redirect("/");
+  }
+
   const terms: Term[] = await getAllTerms();
 
   // Dynamically group terms by year based on startDate
