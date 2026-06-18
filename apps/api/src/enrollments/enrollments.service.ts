@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -463,8 +464,12 @@ export class EnrollmentsService {
     });
 
     if (!enrollment) throw new NotFoundException("Enrollment not found");
-    if (enrollment.status !== "active")
-      throw new BadRequestException("Enrollment is not active");
+    if (enrollment.status !== "active" && enrollment.status !== "inactive")
+      throw new BadRequestException("Enrollment is not active or inactive");
+
+    if (enrollment.status === "inactive" && staffUser.role !== "admin" && staffUser.role !== "super_admin") {
+      throw new ForbiddenException("Only admins can modify skips for inactive enrollments");
+    }
 
     // Verify all skippedSessionIds belong to the offering
     const offeringSessionIds = new Set(
@@ -562,7 +567,7 @@ export class EnrollmentsService {
   }
   async findUninvoiced(query?: UnInvoicedEnrollmentsQueryDto) {
     const where: Prisma.EnrollmentWhereInput = {
-      status: "active",
+      status: { in: ["active", "inactive"] },
       invoiceLineItem: null,
     };
 

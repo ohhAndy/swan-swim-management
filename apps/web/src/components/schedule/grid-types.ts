@@ -16,4 +16,5 @@ export type Row = {
   remarks: string | null;
   reportCardStatus: string | null;
   nextTermStatus: "not_registered" | "enrolled" | "paid";
+  enrollmentStatus?: string;
 };

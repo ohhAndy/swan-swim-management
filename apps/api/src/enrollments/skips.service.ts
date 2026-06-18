@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -32,8 +33,19 @@ export class SkipsService {
       throw new BadRequestException(
         "Session and Enrollment's offeringId do not match",
       );
-    if (enrollment.status !== "active")
-      throw new BadRequestException("Only active enrollments can be skipped");
+
+    if (enrollment.status !== "active" && enrollment.status !== "inactive")
+      throw new BadRequestException("Only active or inactive enrollments can be skipped");
+
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+    if (!staffUser) throw new ForbiddenException("Staff user not found");
+
+    if (enrollment.status === "inactive" && staffUser.role !== "admin" && staffUser.role !== "super_admin") {
+      throw new ForbiddenException("Only admins can modify skips for inactive enrollments");
+    }
+
     if (session.status === "canceled")
       throw new BadRequestException("Cannot skip a cancelled session");
 
@@ -60,27 +72,41 @@ export class SkipsService {
       },
     });
 
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
+    await this.auditLogsService.create({
+      staffId: staffUser.id,
+      action: "skip_class",
+      entityType: "enrollment_skip",
+      entityId: skip.id,
+      metadata: {
+        enrollmentId,
+        classSessionId: dto.classSessionId,
+        reason: dto.reason,
+      },
     });
-    if (staffUser) {
-      await this.auditLogsService.create({
-        staffId: staffUser.id,
-        action: "skip_class",
-        entityType: "enrollment_skip",
-        entityId: skip.id,
-        metadata: {
-          enrollmentId,
-          classSessionId: dto.classSessionId,
-          reason: dto.reason,
-        },
-      });
-    }
 
     return skip;
   }
 
   async deleteSkip(enrollmentId: string, classSessionId: string, user: any) {
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: { id: enrollmentId },
+      select: { id: true, status: true },
+    });
+    if (!enrollment) throw new NotFoundException("Enrollment not found");
+
+    if (enrollment.status !== "active" && enrollment.status !== "inactive") {
+      throw new BadRequestException("Only active or inactive enrollments can be modified");
+    }
+
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+    if (!staffUser) throw new ForbiddenException("Staff user not found");
+
+    if (enrollment.status === "inactive" && staffUser.role !== "admin" && staffUser.role !== "super_admin") {
+      throw new ForbiddenException("Only admins can modify skips for inactive enrollments");
+    }
+
     try {
       await this.prisma.enrollmentSkip.delete({
         where: {
@@ -88,18 +114,13 @@ export class SkipsService {
         },
       });
 
-      const staffUser = await this.prisma.staffUser.findUnique({
-        where: { authId: user.authId },
+      await this.auditLogsService.create({
+        staffId: staffUser.id,
+        action: "remove_skip",
+        entityType: "enrollment",
+        entityId: enrollmentId,
+        metadata: { classSessionId },
       });
-      if (staffUser) {
-        await this.auditLogsService.create({
-          staffId: staffUser.id,
-          action: "remove_skip",
-          entityType: "enrollment",
-          entityId: enrollmentId,
-          metadata: { classSessionId },
-        });
-      }
     } catch {}
     return { ok: true };
   }

@@ -1046,7 +1046,43 @@ export default function StudentViewClient({
                               ).toLocaleDateString()}
                             </p>
                           </div>
-                          <div>{badge}</div>
+                          <div className="flex flex-col gap-2 items-end">
+                            {badge}
+                            <PermissionGate
+                              allowedRoles={["super_admin", "admin"]}
+                              currentRole={user.role}
+                            >
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const sessions = enrollment.offering.sessions;
+                                  setSelectedEnrollmentForSkips({
+                                    id: enrollment.id,
+                                    studentName: `${student.firstName} ${student.lastName}`,
+                                    offering: {
+                                      ...enrollment.offering,
+                                      sessions: sessions || [],
+                                    },
+                                    attendedSessions:
+                                      enrollment.attendance?.map((a) => ({
+                                        id: a.classSession.id,
+                                        status: a.status,
+                                        date: a.classSession.date,
+                                      })) || [],
+                                    skippedSessionIds:
+                                      enrollment.enrollmentSkips?.map(
+                                        (s) => s.classSessionId,
+                                      ) || [],
+                                  });
+                                  setManageSkipsDialogOpen(true);
+                                }}
+                                className="bg-white"
+                              >
+                                Edit Skips
+                              </Button>
+                            </PermissionGate>
+                          </div>
                         </CardContent>
                       </Card>
                     );

@@ -471,7 +471,7 @@ export class InvoicesService {
 
     const where: Prisma.EnrollmentWhereInput = {
       invoiceLineItem: null, // Not linked to any invoice
-      status: "active", // Only active enrollments
+      status: { in: ["active", "inactive"] }, // Active or inactive enrollments
     };
 
     if (query.guardianId) {

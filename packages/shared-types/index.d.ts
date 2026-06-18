@@ -28,6 +28,7 @@ export type RosterRow = {
   skippedSessionIds: string[];
   reportCardStatus: string | null;
   nextTermStatus: "not_registered" | "enrolled" | "paid";
+  enrollmentStatus?: string;
 };
 
 export type Term = {

@@ -198,9 +198,9 @@ export function StudentRow({
       </div>
       <div className="px-2 py-1 text-center truncate max-w-[150px] bg-white">
         <Link
-          className="hover:underline"
+          className={`hover:underline ${row.enrollmentStatus !== "active" ? "text-gray-400 line-through" : ""}`}
           href={`/students/${row.studentId}`}
-          title={row.name}
+          title={row.name + (row.enrollmentStatus !== "active" ? ` (${row.enrollmentStatus})` : "")}
         >
           {row.name}
         </Link>
@@ -314,15 +314,15 @@ export function StudentRow({
                 className={`content-center relative px-2 py-1 text-center font-semibold rounded transition-all hover:bg-gray-200 ${markClass(
                   mark,
                 )} ${
-                  isUpdating || !canEdit
+                  isUpdating || !canEdit || (row.enrollmentStatus !== "active" && userRole !== "admin" && userRole !== "super_admin")
                     ? "opacity-50 cursor-not-allowed"
                     : "cursor-pointer"
-                } ${!canEdit ? "pointer-events-none opacity-70" : ""} ${
+                } ${(!canEdit || (row.enrollmentStatus !== "active" && userRole !== "admin" && userRole !== "super_admin")) ? "pointer-events-none opacity-70" : ""} ${
                   isTransferred
                     ? "border border-transparent"
                     : "border border-transparent"
                 }`}
-                disabled={isUpdating || !canEdit}
+                disabled={isUpdating || !canEdit || (row.enrollmentStatus !== "active" && userRole !== "admin" && userRole !== "super_admin")}
                 title={
                   canEdit
                     ? `${row.name} - ${h.label}${

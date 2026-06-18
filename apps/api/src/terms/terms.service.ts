@@ -447,13 +447,14 @@ export class TermsService {
 
     // Step 3: Get enrollments first to get enrollment IDs
     const enrollments = await this.prisma.enrollment.findMany({
-      where: { offeringId: { in: offeringIds }, status: "active" },
+      where: { offeringId: { in: offeringIds }, status: { in: ["active", "inactive"] } },
       select: {
         id: true,
         offeringId: true,
         studentId: true,
         classRatio: true,
         reportCardStatus: true,
+        status: true,
         invoiceLineItem: {
           select: {
             invoice: {
@@ -843,6 +844,7 @@ export class TermsService {
                     notes: attendance.notes,
                   }
                 : null,
+              enrollmentStatus: e.status,
             };
           });
 
@@ -980,7 +982,7 @@ export class TermsService {
     const enrollments = await this.prisma.enrollment.findMany({
       where: {
         offeringId: { in: offeringIds },
-        status: "active",
+        status: { in: ["active", "inactive"] },
       },
       select: {
         id: true,
@@ -988,6 +990,7 @@ export class TermsService {
         studentId: true,
         classRatio: true,
         reportCardStatus: true,
+        status: true,
         student: {
           select: {
             id: true,
@@ -1299,6 +1302,7 @@ export class TermsService {
               attendanceCount: presentCount,
               totalSessionsCount: timeline.length,
               attendanceTimeline: timeline,
+              enrollmentStatus: e.status,
             };
           }),
           ...sessionMakeups.map((m) => {
@@ -1339,6 +1343,7 @@ export class TermsService {
               reportCardStatus: null,
               nextTermStatus: "not_registered",
               normalSession,
+              enrollmentStatus: null,
             };
           }),
           ...sessionTrials.map((t) => ({
@@ -1354,6 +1359,7 @@ export class TermsService {
             isSkipped: false,
             reportCardStatus: null,
             nextTermStatus: "not_registered",
+            enrollmentStatus: null,
           })),
         ].sort((a, b) => a.name.localeCompare(b.name));
 

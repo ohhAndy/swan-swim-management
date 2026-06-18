@@ -37,6 +37,7 @@ function buildRow(rosters: RosterResponse[]): Row[] {
         remarks: p.notes ?? null,
         reportCardStatus: p.reportCardStatus,
         nextTermStatus: p.nextTermStatus,
+        enrollmentStatus: p.enrollmentStatus,
       };
 
       const s = p.attendance?.status;

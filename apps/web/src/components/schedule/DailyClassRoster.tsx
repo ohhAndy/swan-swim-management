@@ -49,6 +49,7 @@ export type RosterItem = {
     status: "present" | "absent" | "excused" | "skipped" | "unmarked" | "upcoming";
     isCurrent: boolean;
   }[] | null;
+  enrollmentStatus?: string;
 };
 
 const ALL_LEVELS = [...PRESCHOOL_LEVELS, ...SWIMMER_LEVELS, ...SWIMTEAM_LEVELS];
@@ -121,12 +122,15 @@ export function DailyClassRoster({
                   {item.type === "student" && item.studentId ? (
                     <Link
                       href={`/students/${item.studentId}`}
-                      className="hover:underline"
+                      className={`hover:underline ${item.enrollmentStatus !== "active" ? "text-muted-foreground line-through" : ""}`}
+                      title={item.enrollmentStatus !== "active" ? `(${item.enrollmentStatus})` : ""}
                     >
                       {item.name}
                     </Link>
                   ) : (
-                    <span>{item.name}</span>
+                    <span className={item.enrollmentStatus !== "active" ? "text-muted-foreground line-through" : ""}>
+                      {item.name}
+                    </span>
                   )}
                   {item.type === "makeup" && (
                     <Badge variant="secondary" className="text-[10px] h-5">
@@ -273,7 +277,7 @@ export function DailyClassRoster({
               <DropdownMenu>
                 <DropdownMenuTrigger
                   disabled={
-                    !onLevelUpdate || item.type === "trial" || updating !== null
+                    !onLevelUpdate || item.type === "trial" || updating !== null || (item.type === "student" && item.enrollmentStatus !== "active" && userRole !== "admin" && userRole !== "super_admin")
                   }
                 >
                   <Badge
@@ -390,12 +394,15 @@ export function DailyClassRoster({
                       {item.type === "student" && item.studentId ? (
                         <Link
                           href={`/students/${item.studentId}`}
-                          className="hover:underline text-blue-600"
+                          className={`hover:underline ${item.enrollmentStatus !== "active" ? "text-muted-foreground line-through" : "text-blue-600"}`}
+                          title={item.enrollmentStatus !== "active" ? `(${item.enrollmentStatus})` : ""}
                         >
                           {item.name}
                         </Link>
                       ) : (
-                        item.name
+                        <span className={item.enrollmentStatus !== "active" ? "text-muted-foreground line-through" : ""}>
+                          {item.name}
+                        </span>
                       )}
                       {item.type === "makeup" && (
                         <Badge
@@ -528,7 +535,8 @@ export function DailyClassRoster({
                       disabled={
                         !onLevelUpdate ||
                         item.type === "trial" ||
-                        updating !== null
+                        updating !== null ||
+                        (item.type === "student" && item.enrollmentStatus !== "active" && userRole !== "admin" && userRole !== "super_admin")
                       }
                     >
                       <Button
@@ -624,11 +632,12 @@ export function DailyClassRoster({
                 </td>
                 <td className="p-3 text-center">
                   <div className="flex justify-center">
-                    <AttendanceButton
-                      item={item}
-                      loading={updating === `status-${item.id}`}
-                      onUpdate={(s) => handleStatusUpdate(item, s)}
-                    />
+                      <AttendanceButton
+                        item={item}
+                        loading={updating === item.id}
+                        onUpdate={(s) => handleStatusUpdate(item, s)}
+                        userRole={userRole}
+                      />
                   </div>
                 </td>
                 <td className="p-3 text-center">
@@ -686,10 +695,12 @@ function AttendanceButton({
   item,
   loading,
   onUpdate,
+  userRole,
 }: {
   item: RosterItem;
   loading: boolean;
   onUpdate: (s: string) => void;
+  userRole?: string;
 }) {
   // Determine current status label/color
   let label = "Mark";
@@ -793,7 +804,7 @@ function AttendanceButton({
     <DropdownMenu>
       <DropdownMenuTrigger
         asChild
-        disabled={loading || item.status === "converted"}
+        disabled={loading || item.status === "converted" || (item.type === "student" && item.enrollmentStatus !== "active" && userRole !== "admin" && userRole !== "super_admin")}
       >
         <Button
           variant={variant}
