@@ -53,20 +53,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ReportCardPdf } from "./ReportCardPdf";
-import dynamic from "next/dynamic";
+import { PDFViewer } from "@react-pdf/renderer";
 import { PermissionGate } from "@/components/auth/PermissionGate";
-
-const PDFViewer = dynamic(
-  () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex justify-center p-8">
-        <Loader2 className="animate-spin" />
-      </div>
-    ),
-  },
-);
 
 interface ReportCardFormProps {
   enrollmentId: string;
