@@ -311,7 +311,6 @@ export function ReportCardForm({
               onValueChange={(val) => {
                 setSelectedLevelId(val);
               }}
-              disabled={isReadOnly}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Level" />
