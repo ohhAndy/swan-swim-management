@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -41,19 +41,15 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { updateStudent, deleteStudent } from "@/lib/api/students-client";
+import { getLevels, Level } from "@/lib/api/curriculum-client";
 import { deleteEnrollment } from "@/lib/api/schedule-client";
 import { updateGuardian } from "@/lib/api/guardian-client";
 
 import { EmailGuardianDialog } from "@/components/guardians/EmailGuardianDialog";
 import { TransferEnrollmentDialog } from "@/components/schedule/TransferEnrollmentDialog";
 import { ManageSkipsDialog } from "@/components/schedule/ManageSkipsDialog";
-
-import {
-  PRESCHOOL_LEVELS,
-  SWIMMER_LEVELS,
-  SWIMTEAM_LEVELS,
-  PARENT_TOT_LEVELS,
-} from "@/lib/constants/levels";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { ReportCardForm } from "@/components/report-cards/ReportCardForm";
 
 import { Enrollment, Student } from "@/lib/constants/student";
 import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
@@ -67,6 +63,7 @@ const EditStudentSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   shortCode: z.string().nullable().optional(),
   level: z.string().nullable().optional(),
+  levelId: z.string().nullable().optional(),
   birthdate: z.string().nullable().optional(),
 });
 
@@ -161,6 +158,44 @@ export default function StudentViewClient({
   const [isEditingGuardian, setIsEditingGuardian] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [levels, setLevels] = useState<Level[]>([]);
+  const [selectedReportCardEnrollment, setSelectedReportCardEnrollment] = useState<{
+    enrollmentId: string;
+    studentName: string;
+    termName: string;
+    instructorName: string;
+  } | null>(null);
+  const [isReportCardOpen, setIsReportCardOpen] = useState(false);
+
+  const isSupervisorOrAbove =
+    user.role === "super_admin" ||
+    user.role === "admin" ||
+    user.role === "manager" ||
+    user.role === "supervisor";
+
+  const canViewReportCard = (rc: NonNullable<Enrollment["reportCards"]>[number]) => {
+    if (user.role === "super_admin" || user.role === "admin" || user.role === "manager") {
+      return true;
+    }
+    if (user.role === "supervisor") {
+      return rc.createdBy === user.staffUserId;
+    }
+    return false;
+  };
+
+  const handleViewReportCard = (enrollment: Enrollment, instructorNames: string) => {
+    setSelectedReportCardEnrollment({
+      enrollmentId: enrollment.id,
+      studentName: `${student.firstName} ${student.lastName}`,
+      termName: enrollment.offering.term.name,
+      instructorName: instructorNames || "Unknown",
+    });
+    setIsReportCardOpen(true);
+  };
+
+  useEffect(() => {
+    getLevels().then(setLevels).catch(console.error);
+  }, []);
 
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [selectedEnrollment, setSelectedEnrollment] = useState<{
@@ -221,6 +256,7 @@ export default function StudentViewClient({
       lastName: student.lastName,
       shortCode: student.shortCode || "",
       level: student.level || "",
+      levelId: student.levelId || "",
       birthdate: student.birthdate ? student.birthdate.split("T")[0] : "",
     },
   });
@@ -239,8 +275,8 @@ export default function StudentViewClient({
     },
   });
 
-  const level = watch("level");
-  const displayLevel = level || "none";
+  const levelId = watch("levelId");
+  const displayLevelId = levelId || "none";
 
   // Calculate age
   const calculateAge = (birthdate: string | null) => {
@@ -285,6 +321,7 @@ export default function StudentViewClient({
         lastName: data.lastName,
         shortCode: data.shortCode || null,
         level: data.level || null,
+        levelId: data.levelId || null,
         birthdate: data.birthdate || null,
       });
       setIsEditing(false);
@@ -324,10 +361,26 @@ export default function StudentViewClient({
     setIsEditingGuardian(false);
   };
 
-  const handleLevelSelect = (selectedLevel: string) => {
-    const levelValue = selectedLevel === "none" ? "" : selectedLevel;
-    setValue("level", levelValue, { shouldValidate: true });
+  const handleLevelSelect = (selectedLevelId: string) => {
+    if (selectedLevelId === "none") {
+      setValue("level", "", { shouldValidate: true });
+      setValue("levelId", "", { shouldValidate: true });
+      return;
+    }
+    const selectedLevel = levels.find((l) => l.id === selectedLevelId);
+    if (selectedLevel) {
+      setValue("level", selectedLevel.name, { shouldValidate: true });
+      setValue("levelId", selectedLevel.id, { shouldValidate: true });
+    }
   };
+
+  // Group levels for display
+  const groupedLevels = levels.reduce((acc, level) => {
+    const category = level.category || "Other";
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(level);
+    return acc;
+  }, {} as Record<string, Level[]>);
 
   // Separate current and past enrollments
   const currentEnrollments = student.enrollments.filter(
@@ -563,7 +616,7 @@ export default function StudentViewClient({
                   <div className="space-y-1">
                     <Label>Level</Label>
                     <Select
-                      value={displayLevel}
+                      value={displayLevelId}
                       onValueChange={handleLevelSelect}
                       disabled={loading}
                     >
@@ -571,46 +624,19 @@ export default function StudentViewClient({
                         <SelectValue placeholder="Select level" />
                       </SelectTrigger>
                       <SelectContent className="max-h-60 overflow-y-auto">
-                        <SelectGroup>
-                          <SelectLabel className="font-light text-gray-500 text-xs">
-                            Parent and Tot
-                          </SelectLabel>
-                          {PARENT_TOT_LEVELS.map((levelOption) => (
-                            <SelectItem key={levelOption} value={levelOption}>
-                              {levelOption}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                        <SelectGroup>
-                          <SelectLabel className="font-light text-gray-500 text-xs">
-                            Preschool
-                          </SelectLabel>
-                          {PRESCHOOL_LEVELS.map((levelOption) => (
-                            <SelectItem key={levelOption} value={levelOption}>
-                              {levelOption}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                        <SelectGroup>
-                          <SelectLabel className="font-light text-gray-500 text-xs">
-                            Swimmer
-                          </SelectLabel>
-                          {SWIMMER_LEVELS.map((levelOption) => (
-                            <SelectItem key={levelOption} value={levelOption}>
-                              {levelOption}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                        <SelectGroup>
-                          <SelectLabel className="font-light text-gray-500 text-xs">
-                            Swim Team
-                          </SelectLabel>
-                          {SWIMTEAM_LEVELS.map((levelOption) => (
-                            <SelectItem key={levelOption} value={levelOption}>
-                              {levelOption}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
+                        <SelectItem value="none">None</SelectItem>
+                        {Object.entries(groupedLevels).map(([category, catLevels]) => (
+                          <SelectGroup key={category}>
+                            <SelectLabel className="font-light text-gray-500 text-xs">
+                              {category}
+                            </SelectLabel>
+                            {catLevels.map((levelOption) => (
+                              <SelectItem key={levelOption.id} value={levelOption.id}>
+                                {levelOption.name}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        ))}
                       </SelectContent>
                     </Select>
                     {errors.level && (
@@ -875,6 +901,47 @@ export default function StudentViewClient({
                               </p>
                             )}
 
+                            {/* Report Cards Section */}
+                            {enrollment.reportCards && enrollment.reportCards.length > 0 && (
+                              <div className="mt-2 pt-2 border-t border-green-200">
+                                {enrollment.reportCards.map(rc => {
+                                  const showLink = isSupervisorOrAbove && canViewReportCard(rc);
+                                  return (
+                                    <div key={rc.id} className="text-sm flex flex-col gap-0.5 mb-2">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-gray-700">Report Card:</span>
+                                        <span className="text-gray-900">{rc.level?.name || "Unknown Level"}</span>
+                                        {showLink ? (
+                                          <button
+                                            onClick={() => handleViewReportCard(enrollment, instructorNames)}
+                                            className="hover:opacity-80 transition-opacity focus:outline-none"
+                                            title="Click to view/edit report card"
+                                          >
+                                            <Badge 
+                                              variant={rc.status === 'completed' ? 'default' : rc.status === 'did_not_pass' ? 'destructive' : 'secondary'} 
+                                              className="text-[10px] py-0 h-4 px-1.5 capitalize cursor-pointer"
+                                            >
+                                              {rc.status.replace(/_/g, ' ')}
+                                            </Badge>
+                                          </button>
+                                        ) : (
+                                          <Badge 
+                                            variant={rc.status === 'completed' ? 'default' : rc.status === 'did_not_pass' ? 'destructive' : 'secondary'} 
+                                            className="text-[10px] py-0 h-4 px-1.5 capitalize"
+                                          >
+                                            {rc.status.replace(/_/g, ' ')}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <div className="text-[10px] text-gray-500 font-normal pl-0.5">
+                                        Created by: {rc.createdByUser?.fullName || "Unknown"} • Last updated: {new Date(rc.updatedAt).toLocaleDateString()}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+
                             {/* Makeups Section */}
                             {(() => {
                               const termMakeups = student.makeUps.filter(
@@ -1016,6 +1083,14 @@ export default function StudentViewClient({
                 <div className="space-y-4 opacity-75">
                   {pastEnrollments.map((enrollment) => {
                     const badge = getInvoiceStatusBadge(enrollment, user.role);
+                    const instructors = enrollment.offering.instructors || [];
+                    const instructorNames = instructors
+                      .map((i) =>
+                        i.instructor
+                          ? `${i.instructor.firstName} ${i.instructor.lastName}`
+                          : (i.staffUser?.fullName ?? "Unknown"),
+                      )
+                      .join(", ");
 
                     return (
                       <Card key={enrollment.id}>
@@ -1045,6 +1120,46 @@ export default function StudentViewClient({
                                 enrollment.enrollDate,
                               ).toLocaleDateString()}
                             </p>
+                            {/* Report Cards Section */}
+                            {enrollment.reportCards && enrollment.reportCards.length > 0 && (
+                              <div className="mt-3 pt-2 border-t border-gray-100">
+                                {enrollment.reportCards.map(rc => {
+                                  const showLink = isSupervisorOrAbove && canViewReportCard(rc);
+                                  return (
+                                    <div key={rc.id} className="text-sm flex flex-col gap-0.5 mb-2">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-gray-600">Report Card:</span>
+                                        <span className="text-gray-800">{rc.level?.name || "Unknown Level"}</span>
+                                        {showLink ? (
+                                          <button
+                                            onClick={() => handleViewReportCard(enrollment, instructorNames)}
+                                            className="hover:opacity-80 transition-opacity focus:outline-none"
+                                            title="Click to view/edit report card"
+                                          >
+                                            <Badge 
+                                              variant={rc.status === 'completed' ? 'default' : rc.status === 'did_not_pass' ? 'destructive' : 'secondary'} 
+                                              className="text-[10px] py-0 h-4 px-1.5 capitalize cursor-pointer"
+                                            >
+                                              {rc.status.replace(/_/g, ' ')}
+                                            </Badge>
+                                          </button>
+                                        ) : (
+                                          <Badge 
+                                            variant={rc.status === 'completed' ? 'default' : rc.status === 'did_not_pass' ? 'destructive' : 'secondary'} 
+                                            className="text-[10px] py-0 h-4 px-1.5 capitalize"
+                                          >
+                                            {rc.status.replace(/_/g, ' ')}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <div className="text-[10px] text-gray-500 font-normal pl-0.5">
+                                        Created by: {rc.createdByUser?.fullName || "Unknown"} • Last updated: {new Date(rc.updatedAt).toLocaleDateString()}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                           <div className="flex flex-col gap-2 items-end">
                             {badge}
@@ -1181,6 +1296,26 @@ export default function StudentViewClient({
         open={emailDialogOpen}
         onOpenChange={setEmailDialogOpen}
       />
+      {selectedReportCardEnrollment && (
+        <Dialog open={isReportCardOpen} onOpenChange={setIsReportCardOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogTitle className="sr-only">Report Card</DialogTitle>
+            <ReportCardForm
+              enrollmentId={selectedReportCardEnrollment.enrollmentId}
+              studentLevelId={student.levelId || undefined}
+              studentName={selectedReportCardEnrollment.studentName}
+              termName={selectedReportCardEnrollment.termName}
+              instructorName={selectedReportCardEnrollment.instructorName}
+              userRole={user.role}
+              onClose={() => {
+                setIsReportCardOpen(false);
+                setSelectedReportCardEnrollment(null);
+                router.refresh();
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

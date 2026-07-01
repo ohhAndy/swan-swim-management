@@ -8,6 +8,7 @@ export type Row = {
   studentId: string;
   code: string | null;
   level: string | null;
+  levelId?: string | null;
   marks: Record<string, string>;
   markMeta: Record<string, { notes: string | null }>;
   skippedSessionIds: string[];

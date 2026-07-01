@@ -6,6 +6,7 @@ export const createStudentSchema = z.object({
   firstName: z.string().min(1).max(64),
   lastName: z.string().min(1).max(64),
   level: z.string().nullable().optional(),
+  levelId: z.string().nullable().optional(),
   birthdate: z.coerce.date().optional(),
   notes: z.string().nullable().optional(),
 });

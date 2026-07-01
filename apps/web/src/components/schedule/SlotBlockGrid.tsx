@@ -12,9 +12,10 @@ interface SlotBlockGridProps {
   blocks: { offeringKey: string; title: string; notes: string; rosters: RosterResponse[] }[];
   isoDates: string[];
   user: CurrentUser;
+  termName: string;
 }
 
-export function SlotBlockGrid({ blocks, isoDates, user }: SlotBlockGridProps) {
+export function SlotBlockGrid({ blocks, isoDates, user, termName }: SlotBlockGridProps) {
   const [reorganizeMode, setReorganizeMode] = useState(false);
 
   const canReorganize = ["admin", "super_admin"].includes(user.role);
@@ -58,6 +59,7 @@ export function SlotBlockGrid({ blocks, isoDates, user }: SlotBlockGridProps) {
             rosters={b.rosters}
             user={user}
             gridHeaderTop="128px"
+            termName={termName}
           />
         ))}
       </div>

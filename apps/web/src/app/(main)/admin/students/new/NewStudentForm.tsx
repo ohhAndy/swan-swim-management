@@ -4,8 +4,9 @@ import { createStudent } from "@/lib/api/students-client";
 import { CreateStudentInput, CreateStudentSchema } from "@/lib/zod/student";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { getLevels, Level } from "@/lib/api/curriculum-client";
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -21,16 +22,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import {
-  PRESCHOOL_LEVELS,
-  SWIMMER_LEVELS,
-  SWIMTEAM_LEVELS,
-  PARENT_TOT_LEVELS,
-} from "@/lib/constants/levels";
 
 export default function NewStudentForm() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [levels, setLevels] = useState<Level[]>([]);
+
+  useEffect(() => {
+    getLevels().then((data) => setLevels(data));
+  }, []);
+
+  // Group levels for display
+  const groupedLevels = levels.reduce((acc, level) => {
+    const category = level.category || "Other";
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(level);
+    return acc;
+  }, {} as Record<string, Level[]>);
 
   const searchParams = useSearchParams();
 
@@ -54,7 +62,7 @@ export default function NewStudentForm() {
   });
 
   const guardianId = watch("guardianId");
-  const level = watch("level");
+  const levelId = watch("levelId");
 
   async function onSubmit(values: CreateStudentInput) {
     try {
@@ -69,8 +77,17 @@ export default function NewStudentForm() {
     }
   }
 
-  const handleLevelSelect = (selectedLevel: string) => {
-    setValue("level", selectedLevel, { shouldValidate: true });
+  const handleLevelSelect = (selectedLevelId: string) => {
+    if (selectedLevelId === "none") {
+      setValue("level", "", { shouldValidate: true });
+      setValue("levelId", "", { shouldValidate: true });
+      return;
+    }
+    const selectedLevel = levels.find((l) => l.id === selectedLevelId);
+    if (selectedLevel) {
+      setValue("level", selectedLevel.name, { shouldValidate: true });
+      setValue("levelId", selectedLevel.id, { shouldValidate: true });
+    }
   };
 
   return (
@@ -126,7 +143,7 @@ export default function NewStudentForm() {
         <div className="space-y-1">
           <Label>Level (Optional)</Label>
           <Select
-            value={level}
+            value={levelId || "none"}
             onValueChange={handleLevelSelect}
             disabled={submitting}
           >
@@ -134,46 +151,19 @@ export default function NewStudentForm() {
               <SelectValue placeholder="Select swimming level" />
             </SelectTrigger>
             <SelectContent className="max-h-64 overflow-y-auto">
-              <SelectGroup>
-                <SelectLabel className="font-light text-gray-500 text-xs">
-                  Parent and Tot
-                </SelectLabel>
-                {PARENT_TOT_LEVELS.map((levelOption) => (
-                  <SelectItem key={levelOption} value={levelOption}>
-                    {levelOption}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-              <SelectGroup>
-                <SelectLabel className="font-light text-gray-500 text-xs">
-                  Preschool
-                </SelectLabel>
-                {PRESCHOOL_LEVELS.map((levelOption) => (
-                  <SelectItem key={levelOption} value={levelOption}>
-                    {levelOption}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-              <SelectGroup>
-                <SelectLabel className="font-light text-gray-500 text-xs">
-                  Swimmer
-                </SelectLabel>
-                {SWIMMER_LEVELS.map((levelOption) => (
-                  <SelectItem key={levelOption} value={levelOption}>
-                    {levelOption}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-              <SelectGroup>
-                <SelectLabel className="font-light text-gray-500 text-xs">
-                  Swim Team
-                </SelectLabel>
-                {SWIMTEAM_LEVELS.map((levelOption) => (
-                  <SelectItem key={levelOption} value={levelOption}>
-                    {levelOption}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
+              <SelectItem value="none">None</SelectItem>
+              {Object.entries(groupedLevels).map(([category, catLevels]) => (
+                <SelectGroup key={category}>
+                  <SelectLabel className="font-light text-gray-500 text-xs">
+                    {category}
+                  </SelectLabel>
+                  {catLevels.map((levelOption) => (
+                    <SelectItem key={levelOption.id} value={levelOption.id}>
+                      {levelOption.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))}
             </SelectContent>
           </Select>
           {errors.level && (

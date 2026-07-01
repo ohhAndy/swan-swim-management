@@ -25,6 +25,8 @@ export async function getAuditLogs(
     action?: string;
     entityType?: string;
     staffId?: string;
+    startDate?: string;
+    endDate?: string;
   },
 ): Promise<{ data: AuditLog[]; total: number }> {
   const headers = await getHeaders();
@@ -36,6 +38,8 @@ export async function getAuditLogs(
   if (filters?.action) searchParams.set("action", filters.action);
   if (filters?.entityType) searchParams.set("entityType", filters.entityType);
   if (filters?.staffId) searchParams.set("staffId", filters.staffId);
+  if (filters?.startDate) searchParams.set("startDate", filters.startDate);
+  if (filters?.endDate) searchParams.set("endDate", filters.endDate);
 
   const res = await fetch(`${API}/audit-logs?${searchParams.toString()}`, {
     cache: "no-store",

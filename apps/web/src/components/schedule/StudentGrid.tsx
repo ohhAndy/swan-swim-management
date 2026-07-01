@@ -29,10 +29,11 @@ function buildRow(rosters: RosterResponse[]): Row[] {
         studentId: p.studentId,
         code: p.shortCode ?? null,
         level: p.studentLevel,
+        levelId: (p as { studentLevelId?: string | null }).studentLevelId || null,
         birthdate: p.studentBirthDate,
         skippedSessionIds: p.skippedSessionIds,
-        marks: {},
-        markMeta: {},
+        marks: {} as Record<string, string>,
+        markMeta: {} as Record<string, { notes: string | null }>,
         enrollmentId: p.enrollmentId,
         remarks: p.notes ?? null,
         reportCardStatus: p.reportCardStatus,
@@ -97,6 +98,8 @@ export function StudentGrid({
   onRemarksUpdate,
   onReportCardUpdate,
   user,
+  termName,
+  instructorName,
 }: {
   isoDates: string[];
   rosters: RosterResponse[];
@@ -118,6 +121,8 @@ export function StudentGrid({
   onRemarksUpdate?: (enrollmentId: string, notes: string) => Promise<void>;
   onReportCardUpdate?: (enrollmentId: string, status: string) => Promise<void>;
   user: CurrentUser;
+  termName: string;
+  instructorName: string;
 }) {
   const [updating, setUpdating] = useState<string | null>(null);
 
@@ -362,6 +367,8 @@ export function StudentGrid({
           onReportCardUpdate={handleReportCardUpdate}
           reportCardOverrides={reportCardOverrides}
           userRole={user.role}
+          termName={termName}
+          instructorName={instructorName}
         />
       ))}
 

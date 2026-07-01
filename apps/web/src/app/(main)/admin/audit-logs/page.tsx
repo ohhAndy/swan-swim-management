@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { getAllStaffUsers, StaffUser } from "@/lib/api/staff-client";
 
 export default function AuditLogsPage() {
@@ -34,6 +35,8 @@ export default function AuditLogsPage() {
 
   const [staffList, setStaffList] = useState<StaffUser[]>([]);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("all");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
   useEffect(() => {
     async function loadStaff() {
@@ -50,10 +53,19 @@ export default function AuditLogsPage() {
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
+      const filters: Record<string, string> = {};
+      if (selectedStaffId !== "all") filters.staffId = selectedStaffId;
+      if (startDate) {
+        filters.startDate = new Date(`${startDate}T00:00:00`).toISOString();
+      }
+      if (endDate) {
+        filters.endDate = new Date(`${endDate}T23:59:59.999`).toISOString();
+      }
+
       const { data, total } = await getAuditLogs(
         page,
         20,
-        selectedStaffId !== "all" ? { staffId: selectedStaffId } : undefined,
+        Object.keys(filters).length > 0 ? filters : undefined,
       );
       setLogs(data);
       setTotal(total);
@@ -62,7 +74,7 @@ export default function AuditLogsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, selectedStaffId]);
+  }, [page, selectedStaffId, startDate, endDate]);
 
   useEffect(() => {
     async function checkAccess() {
@@ -83,6 +95,18 @@ export default function AuditLogsPage() {
           System Audit Logs
         </h1>
         <div className="flex gap-2">
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-[150px]"
+          />
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="w-[150px]"
+          />
           <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Filter by Staff" />

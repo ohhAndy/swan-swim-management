@@ -34,12 +34,14 @@ export function SlotBlock({
   isoDates,
   rosters,
   user,
+  termName,
 }: {
   title: string;
   isoDates: string[];
   rosters: RosterResponse[];
   user: CurrentUser;
   gridHeaderTop?: string | number;
+  termName: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -328,6 +330,8 @@ export function SlotBlock({
             onTrialClick={handleTrialClick}
             onTrialConvert={handleTrialConvert}
             user={user}
+            termName={termName}
+            instructorName={instructorNames}
           />
         </CardContent>
       </Card>

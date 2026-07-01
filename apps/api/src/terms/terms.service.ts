@@ -475,6 +475,8 @@ export class TermsService {
             lastName: true,
             shortCode: true,
             level: true,
+            levelId: true,
+            levelModel: { select: { id: true, name: true, category: true } },
             birthdate: true,
             notes: true,
           },
@@ -540,6 +542,8 @@ export class TermsService {
               firstName: true,
               lastName: true,
               level: true,
+              levelId: true,
+              levelModel: { select: { id: true, name: true, category: true } },
               shortCode: true,
               birthdate: true,
             },
@@ -733,7 +737,7 @@ export class TermsService {
             const isExcused = attendanceStatus === "excused";
             const isAbsent = attendanceStatus === "absent";
 
-            if (!isSkipped && !isExcused && !isAbsent) {
+            if (enr.status === "active" && !isSkipped && !isExcused && !isAbsent) {
               const ratio = enr.classRatio || "3:1";
               regularWeighted +=
                 ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
@@ -777,7 +781,7 @@ export class TermsService {
             id: m.id,
             studentId: m.studentId,
             studentName: `${m.student.firstName} ${m.student.lastName}`,
-            level: m.student.level,
+            level: m.student.levelModel?.name ?? m.student.level,
             shortCode: m.student.shortCode,
             status: m.status,
             classRatio: m.classRatio,
@@ -833,7 +837,8 @@ export class TermsService {
               studentId: e.student.id,
               studentName: `${e.student.firstName} ${e.student.lastName}`,
               shortCode: e.student.shortCode,
-              studentLevel: e.student.level,
+              studentLevel: e.student.levelModel?.name ?? e.student.level,
+              studentLevelId: e.student.levelId,
               studentBirthDate: e.student.birthdate?.toISOString() ?? null,
               skippedSessionIds,
               notes: e.student.notes,
@@ -998,6 +1003,8 @@ export class TermsService {
             lastName: true,
             shortCode: true,
             level: true,
+            levelId: true,
+            levelModel: { select: { id: true, name: true, category: true } },
             birthdate: true,
             notes: true,
           },
@@ -1036,6 +1043,8 @@ export class TermsService {
                 firstName: true,
                 lastName: true,
                 level: true,
+                levelId: true,
+                levelModel: { select: { id: true, name: true, category: true } },
                 birthdate: true,
                 shortCode: true,
                 notes: true,
@@ -1210,7 +1219,7 @@ export class TermsService {
           const isExcused = attendance && attendance.status === "excused";
           const isAbsent = attendance && attendance.status === "absent";
 
-          if (!isSkipped && !isExcused && !isAbsent) {
+          if (enr.status === "active" && !isSkipped && !isExcused && !isAbsent) {
             const ratio = enr.classRatio || "3:1";
             regularWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
           }
@@ -1287,7 +1296,7 @@ export class TermsService {
               type: "student",
               name: `${e.student.firstName} ${e.student.lastName}`,
               studentId: e.student.id,
-              level: e.student.level,
+              level: e.student.levelModel?.name ?? e.student.level,
               age: e.student.birthdate ? getAge(e.student.birthdate) : null,
               status: att?.status ?? (isSkipped ? "skipped" : null),
               ratio: e.classRatio,
@@ -1334,7 +1343,7 @@ export class TermsService {
               type: "makeup",
               name: `${m.student.firstName} ${m.student.lastName}`,
               studentId: m.student.id,
-              level: m.student.level,
+              level: m.student.levelModel?.name ?? m.student.level,
               age: m.student.birthdate ? getAge(m.student.birthdate) : null,
               status: m.status,
               ratio: "3:1",

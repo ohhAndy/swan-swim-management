@@ -118,7 +118,7 @@ export async function AppHeader() {
               href="/admin/communications"
               className="text-sm font-medium hover:text-blue-600"
             >
-              Email
+              Communications
             </Link>
           </PermissionGate>
           <LocationSwitcher />

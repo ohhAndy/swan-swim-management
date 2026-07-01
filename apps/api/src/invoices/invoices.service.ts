@@ -34,7 +34,7 @@ export class InvoicesService {
     const totalWeeks =
       (enrollment.offering as any)?.sessions?.length ||
       (enrollment as any).totalSessions ||
-      8; // Fallback to 8 if not found
+      0; // Default to 0 if we can't determine the sessions
     const skippedWeeks = enrollment.enrollmentSkips?.length || 0;
     const attendingWeeks = totalWeeks - skippedWeeks;
 

@@ -20,11 +20,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { searchStudents } from "@/lib/api/students-client";
 
-import {
-  PRESCHOOL_LEVELS,
-  SWIMMER_LEVELS,
-  SWIMTEAM_LEVELS,
-} from "@/lib/constants/levels";
+import { getLevels, Level } from "@/lib/api/curriculum-client";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { CurrentUser } from "@/lib/auth/user";
 
@@ -78,8 +74,20 @@ export default function StudentsListClient({
   const [data, setData] = useState(initialData);
   const [query, setQuery] = useState(initialQuery);
   const [loading, setLoading] = useState(false);
+  const [levels, setLevels] = useState<Level[]>([]);
 
   const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    getLevels().then(setLevels);
+  }, []);
+
+  const groupedLevels = levels.reduce((acc, lvl) => {
+    const category = lvl.category || "Other";
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(lvl);
+    return acc;
+  }, {} as Record<string, Level[]>);
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -252,30 +260,16 @@ export default function StudentsListClient({
                 <SelectContent className="max-h-48 overflow-y-auto">
                   <SelectItem value="all">All Levels</SelectItem>
                   <SelectItem value="none">No Level Set</SelectItem>
-                  <SelectGroup>
-                    <SelectLabel className="text-xs">Preschool</SelectLabel>
-                    {PRESCHOOL_LEVELS.map((levelOption) => (
-                      <SelectItem key={levelOption} value={levelOption}>
-                        {levelOption}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                  <SelectGroup>
-                    <SelectLabel className="text-xs">Swimmer</SelectLabel>
-                    {SWIMMER_LEVELS.map((levelOption) => (
-                      <SelectItem key={levelOption} value={levelOption}>
-                        {levelOption}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                  <SelectGroup>
-                    <SelectLabel className="text-xs">Swim Team</SelectLabel>
-                    {SWIMTEAM_LEVELS.map((levelOption) => (
-                      <SelectItem key={levelOption} value={levelOption}>
-                        {levelOption}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
+                  {Object.entries(groupedLevels).map(([category, catLevels]) => (
+                    <SelectGroup key={category}>
+                      <SelectLabel className="text-xs">{category}</SelectLabel>
+                      {catLevels.map((lvl) => (
+                        <SelectItem key={lvl.id} value={lvl.name}>
+                          {lvl.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
