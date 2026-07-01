@@ -8,9 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  LEVEL_MAP,
-} from "@/lib/constants/levels";
+import { LEVEL_MAP } from "@/lib/constants/levels";
 import { getLevels, Level } from "@/lib/api/curriculum-client";
 import { cn } from "@/lib/utils";
 import { HelpCircle } from "lucide-react";
@@ -18,6 +16,10 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import RemarksDialog from "./RemarksDialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { ReportCardForm } from "../report-cards/ReportCardForm";
+import { StaffRole } from "@/lib/auth/permissions";
+import { useRouter } from "next/navigation";
 import { CalendarCheck, CalendarClock, CalendarX } from "lucide-react";
 import {
   Tooltip,
@@ -42,21 +44,35 @@ export type RosterItem = {
   normalSession?: string | null;
   attendanceCount?: number | null;
   totalSessionsCount?: number | null;
-  attendanceTimeline?: {
-    date: string;
-    status: "present" | "absent" | "excused" | "skipped" | "unmarked" | "upcoming";
-    isCurrent: boolean;
-  }[] | null;
+  attendanceTimeline?:
+    | {
+        date: string;
+        status:
+          | "present"
+          | "absent"
+          | "excused"
+          | "skipped"
+          | "unmarked"
+          | "upcoming";
+        isCurrent: boolean;
+      }[]
+    | null;
   enrollmentStatus?: string;
 };
 
 type Props = {
   roster: RosterItem[];
-  onLevelUpdate?: (studentId: string, levelId: string, levelName: string) => Promise<void>;
+  onLevelUpdate?: (
+    studentId: string,
+    levelId: string,
+    levelName: string,
+  ) => Promise<void>;
   onAttendanceUpdate?: (item: RosterItem, status: string) => Promise<void>;
   onRemarksUpdate?: (item: RosterItem, remarks: string) => Promise<void>;
   onReportCardUpdate?: (enrollmentId: string, status: string) => Promise<void>;
-  userRole: string;
+  userRole: StaffRole;
+  termName?: string;
+  instructorName?: string;
 };
 
 export function DailyClassRoster({
@@ -66,22 +82,34 @@ export function DailyClassRoster({
   onRemarksUpdate,
   onReportCardUpdate,
   userRole,
+  termName,
+  instructorName,
 }: Props) {
+  const router = useRouter();
   const [levels, setLevels] = useState<Level[]>([]);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [activeReportCardEnrollment, setActiveReportCardEnrollment] =
+    useState<RosterItem | null>(null);
 
   useEffect(() => {
     getLevels().then(setLevels);
   }, []);
 
-  const groupedLevels = levels.reduce((acc, lvl) => {
-    const category = lvl.category || "Other";
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(lvl);
-    return acc;
-  }, {} as Record<string, Level[]>);
+  const groupedLevels = levels.reduce(
+    (acc, lvl) => {
+      const category = lvl.category || "Other";
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(lvl);
+      return acc;
+    },
+    {} as Record<string, Level[]>,
+  );
 
-  const handleLevelUpdate = async (studentId: string, levelId: string, levelName: string) => {
+  const handleLevelUpdate = async (
+    studentId: string,
+    levelId: string,
+    levelName: string,
+  ) => {
     if (!onLevelUpdate) return;
     setUpdating(`level-${studentId}`);
     try {
@@ -131,12 +159,22 @@ export function DailyClassRoster({
                     <Link
                       href={`/students/${item.studentId}`}
                       className={`hover:underline ${item.enrollmentStatus !== "active" ? "text-muted-foreground line-through" : ""}`}
-                      title={item.enrollmentStatus !== "active" ? `(${item.enrollmentStatus})` : ""}
+                      title={
+                        item.enrollmentStatus !== "active"
+                          ? `(${item.enrollmentStatus})`
+                          : ""
+                      }
                     >
                       {item.name}
                     </Link>
                   ) : (
-                    <span className={item.enrollmentStatus !== "active" ? "text-muted-foreground line-through" : ""}>
+                    <span
+                      className={
+                        item.enrollmentStatus !== "active"
+                          ? "text-muted-foreground line-through"
+                          : ""
+                      }
+                    >
                       {item.name}
                     </span>
                   )}
@@ -173,58 +211,45 @@ export function DailyClassRoster({
                   {/* Report Card Badge (Mobile) */}
                   {item.type === "student" && (
                     <div className="ml-auto">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          disabled={!onReportCardUpdate || updating !== null}
-                        >
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-[10px] h-5 cursor-pointer ml-1",
-                              item.reportCardStatus === "given"
-                                ? "bg-green-100 text-green-700 border-green-200"
-                                : item.reportCardStatus === "created"
-                                  ? "bg-blue-100 text-blue-700 border-blue-200"
-                                  : "bg-gray-100 text-gray-500",
-                            )}
-                          >
-                            {item.reportCardStatus === "given"
+                      <Badge
+                        onClick={() => setActiveReportCardEnrollment(item)}
+                        variant="outline"
+                        className={cn(
+                          "text-[10px] h-5 cursor-pointer ml-1 transition-colors hover:opacity-90",
+                          item.reportCardStatus === "completed" ||
+                            item.reportCardStatus === "sent" ||
+                            item.reportCardStatus === "given"
+                            ? "bg-green-100 text-green-700 border-green-200"
+                            : item.reportCardStatus === "created" ||
+                              item.reportCardStatus === "draft"
+                              ? "bg-blue-100 text-blue-700 border-blue-200"
+                              : item.reportCardStatus === "did_not_pass"
+                                ? "bg-red-100 text-red-700 border-red-200"
+                                : "bg-gray-100 text-gray-500",
+                        )}
+                      >
+                        {item.reportCardStatus === "completed"
+                          ? "RC Completed"
+                          : item.reportCardStatus === "sent"
+                            ? "RC Sent"
+                            : item.reportCardStatus === "given"
                               ? "RC Given"
-                              : item.reportCardStatus === "created"
-                                ? "RC Created"
-                                : "No RC"}
-                          </Badge>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onSelect={() =>
-                              onReportCardUpdate?.(item.id, "not_created")
-                            }
-                          >
-                            Not Created
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() =>
-                              onReportCardUpdate?.(item.id, "created")
-                            }
-                          >
-                            Created
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() =>
-                              onReportCardUpdate?.(item.id, "given")
-                            }
-                          >
-                            Given
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                              : item.reportCardStatus === "created" ||
+                                item.reportCardStatus === "draft"
+                                ? "RC Draft"
+                                : item.reportCardStatus === "did_not_pass"
+                                  ? "RC Fail"
+                                  : "No RC"}
+                      </Badge>
                     </div>
                   )}
                   {/* Normal Session for Makeup (Mobile) */}
                   {item.type === "makeup" && item.normalSession && (
                     <div className="ml-auto">
-                      <Badge variant="outline" className="text-[10px] h-5 bg-blue-50 text-blue-700 border-blue-200">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] h-5 bg-blue-50 text-blue-700 border-blue-200"
+                      >
                         {item.normalSession}
                       </Badge>
                     </div>
@@ -234,58 +259,72 @@ export function DailyClassRoster({
                   {item.age ? `${item.age} yrs` : "Age N/A"} •{" "}
                   {item.ratio || "3:1"}
                 </div>
-                {item.type === "student" && item.attendanceTimeline && item.attendanceTimeline.length > 0 && (
-                  <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                    {item.attendanceTimeline.map((slot, idx) => {
-                      let dotClass = "w-2.5 h-2.5 rounded-full border transition-all duration-150";
-                      let label = `${slot.date}: `;
-                      if (slot.status === "present") {
-                        dotClass += " bg-green-500 border-green-600";
-                        label += "Present";
-                      } else if (slot.status === "absent") {
-                        dotClass += " bg-red-500 border-red-600";
-                        label += "Absent";
-                      } else if (slot.status === "excused") {
-                        dotClass += " bg-yellow-500 border-yellow-600";
-                        label += "Excused";
-                      } else if (slot.status === "skipped") {
-                        dotClass += " bg-gray-800 border-black line-through opacity-70";
-                        label += "Skipped";
-                      } else if (slot.status === "upcoming") {
-                        dotClass += " bg-transparent border-gray-300 border-dashed";
-                        label += "Upcoming";
-                      } else {
-                        dotClass += " bg-gray-200 border-gray-300";
-                        label += "Not Marked";
-                      }
+                {item.type === "student" &&
+                  item.attendanceTimeline &&
+                  item.attendanceTimeline.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                      {item.attendanceTimeline.map((slot, idx) => {
+                        let dotClass =
+                          "w-2.5 h-2.5 rounded-full border transition-all duration-150";
+                        let label = `${slot.date}: `;
+                        if (slot.status === "present") {
+                          dotClass += " bg-green-500 border-green-600";
+                          label += "Present";
+                        } else if (slot.status === "absent") {
+                          dotClass += " bg-red-500 border-red-600";
+                          label += "Absent";
+                        } else if (slot.status === "excused") {
+                          dotClass += " bg-yellow-500 border-yellow-600";
+                          label += "Excused";
+                        } else if (slot.status === "skipped") {
+                          dotClass +=
+                            " bg-gray-800 border-black line-through opacity-70";
+                          label += "Skipped";
+                        } else if (slot.status === "upcoming") {
+                          dotClass +=
+                            " bg-transparent border-gray-300 border-dashed";
+                          label += "Upcoming";
+                        } else {
+                          dotClass += " bg-gray-200 border-gray-300";
+                          label += "Not Marked";
+                        }
 
-                      if (slot.isCurrent) {
-                        dotClass += " ring-1 ring-primary ring-offset-1 scale-110";
-                        label += " (Today)";
-                      }
+                        if (slot.isCurrent) {
+                          dotClass +=
+                            " ring-1 ring-primary ring-offset-1 scale-110";
+                          label += " (Today)";
+                        }
 
-                      return (
-                        <TooltipProvider key={idx}>
-                          <Tooltip delayDuration={100}>
-                            <TooltipTrigger asChild>
-                              <span className={dotClass} />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <span className="text-xs font-medium">{label}</span>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      );
-                    })}
-                  </div>
-                )}
+                        return (
+                          <TooltipProvider key={idx}>
+                            <Tooltip delayDuration={100}>
+                              <TooltipTrigger asChild>
+                                <span className={dotClass} />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <span className="text-xs font-medium">
+                                  {label}
+                                </span>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        );
+                      })}
+                    </div>
+                  )}
               </div>
 
               {/* Level Badge (Editable) */}
               <DropdownMenu>
                 <DropdownMenuTrigger
                   disabled={
-                    !onLevelUpdate || item.type === "trial" || updating !== null || (item.type === "student" && item.enrollmentStatus !== "active" && userRole !== "admin" && userRole !== "super_admin")
+                    !onLevelUpdate ||
+                    item.type === "trial" ||
+                    updating !== null ||
+                    (item.type === "student" &&
+                      item.enrollmentStatus !== "active" &&
+                      userRole !== "admin" &&
+                      userRole !== "super_admin")
                   }
                 >
                   <Badge
@@ -301,30 +340,37 @@ export function DailyClassRoster({
                   </Badge>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  {Object.entries(groupedLevels).map(([category, catLevels]) => (
-                    <div key={category}>
-                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                        {category}
-                      </div>
-                      {catLevels.map((lvl) => (
-                        <DropdownMenuItem
-                          key={lvl.id}
-                          onSelect={() =>
-                            item.studentId && handleLevelUpdate(item.studentId, lvl.id, lvl.name)
-                          }
-                        >
-                          <span
-                            className={cn(
-                              "mr-2",
-                              item.level === lvl.name && "font-bold",
-                            )}
+                  {Object.entries(groupedLevels).map(
+                    ([category, catLevels]) => (
+                      <div key={category}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                          {category}
+                        </div>
+                        {catLevels.map((lvl) => (
+                          <DropdownMenuItem
+                            key={lvl.id}
+                            onSelect={() =>
+                              item.studentId &&
+                              handleLevelUpdate(
+                                item.studentId,
+                                lvl.id,
+                                lvl.name,
+                              )
+                            }
                           >
-                            {lvl.name}
-                          </span>
-                        </DropdownMenuItem>
-                      ))}
-                    </div>
-                  ))}
+                            <span
+                              className={cn(
+                                "mr-2",
+                                item.level === lvl.name && "font-bold",
+                              )}
+                            >
+                              {lvl.name}
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
+                      </div>
+                    ),
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -410,12 +456,22 @@ export function DailyClassRoster({
                         <Link
                           href={`/students/${item.studentId}`}
                           className={`hover:underline ${item.enrollmentStatus !== "active" ? "text-muted-foreground line-through" : "text-blue-600"}`}
-                          title={item.enrollmentStatus !== "active" ? `(${item.enrollmentStatus})` : ""}
+                          title={
+                            item.enrollmentStatus !== "active"
+                              ? `(${item.enrollmentStatus})`
+                              : ""
+                          }
                         >
                           {item.name}
                         </Link>
                       ) : (
-                        <span className={item.enrollmentStatus !== "active" ? "text-muted-foreground line-through" : ""}>
+                        <span
+                          className={
+                            item.enrollmentStatus !== "active"
+                              ? "text-muted-foreground line-through"
+                              : ""
+                          }
+                        >
                           {item.name}
                         </span>
                       )}
@@ -494,51 +550,59 @@ export function DailyClassRoster({
                           </TooltipProvider>
                         )}
                     </div>
-                    {item.type === "student" && item.attendanceTimeline && item.attendanceTimeline.length > 0 && (
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {item.attendanceTimeline.map((slot, idx) => {
-                          let dotClass = "w-2 h-2 rounded-full border transition-all duration-150";
-                          let label = `${slot.date}: `;
-                          if (slot.status === "present") {
-                            dotClass += " bg-green-500 border-green-600";
-                            label += "Present";
-                          } else if (slot.status === "absent") {
-                            dotClass += " bg-red-500 border-red-600";
-                            label += "Absent";
-                          } else if (slot.status === "excused") {
-                            dotClass += " bg-yellow-500 border-yellow-600";
-                            label += "Excused";
-                          } else if (slot.status === "skipped") {
-                            dotClass += " bg-gray-800 border-black line-through opacity-70";
-                            label += "Skipped";
-                          } else if (slot.status === "upcoming") {
-                            dotClass += " bg-transparent border-gray-300 border-dashed";
-                            label += "Upcoming";
-                          } else {
-                            dotClass += " bg-gray-200 border-gray-300";
-                            label += "Not Marked";
-                          }
+                    {item.type === "student" &&
+                      item.attendanceTimeline &&
+                      item.attendanceTimeline.length > 0 && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {item.attendanceTimeline.map((slot, idx) => {
+                            let dotClass =
+                              "w-2 h-2 rounded-full border transition-all duration-150";
+                            let label = `${slot.date}: `;
+                            if (slot.status === "present") {
+                              dotClass += " bg-green-500 border-green-600";
+                              label += "Present";
+                            } else if (slot.status === "absent") {
+                              dotClass += " bg-red-500 border-red-600";
+                              label += "Absent";
+                            } else if (slot.status === "excused") {
+                              dotClass += " bg-yellow-500 border-yellow-600";
+                              label += "Excused";
+                            } else if (slot.status === "skipped") {
+                              dotClass +=
+                                " bg-gray-800 border-black line-through opacity-70";
+                              label += "Skipped";
+                            } else if (slot.status === "upcoming") {
+                              dotClass +=
+                                " bg-transparent border-gray-300 border-dashed";
+                              label += "Upcoming";
+                            } else {
+                              dotClass += " bg-gray-200 border-gray-300";
+                              label += "Not Marked";
+                            }
 
-                          if (slot.isCurrent) {
-                            dotClass += " ring-1 ring-primary ring-offset-1 scale-125";
-                            label += " (Today)";
-                          }
+                            if (slot.isCurrent) {
+                              dotClass +=
+                                " ring-1 ring-primary ring-offset-1 scale-125";
+                              label += " (Today)";
+                            }
 
-                          return (
-                            <TooltipProvider key={idx}>
-                              <Tooltip delayDuration={100}>
-                                <TooltipTrigger asChild>
-                                  <span className={dotClass} />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <span className="text-xs font-medium">{label}</span>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          );
-                        })}
-                      </div>
-                    )}
+                            return (
+                              <TooltipProvider key={idx}>
+                                <Tooltip delayDuration={100}>
+                                  <TooltipTrigger asChild>
+                                    <span className={dotClass} />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <span className="text-xs font-medium">
+                                      {label}
+                                    </span>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            );
+                          })}
+                        </div>
+                      )}
                   </div>
                 </td>
                 <td className="p-3">{item.age}</td>
@@ -551,7 +615,10 @@ export function DailyClassRoster({
                         !onLevelUpdate ||
                         item.type === "trial" ||
                         updating !== null ||
-                        (item.type === "student" && item.enrollmentStatus !== "active" && userRole !== "admin" && userRole !== "super_admin")
+                        (item.type === "student" &&
+                          item.enrollmentStatus !== "active" &&
+                          userRole !== "admin" &&
+                          userRole !== "super_admin")
                       }
                     >
                       <Button
@@ -567,82 +634,71 @@ export function DailyClassRoster({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      {Object.entries(groupedLevels).map(([category, catLevels]) => (
-                        <div key={category}>
-                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                            {category}
-                          </div>
-                          {catLevels.map((lvl) => (
-                            <DropdownMenuItem
-                              key={lvl.id}
-                              onSelect={() =>
-                                item.studentId && handleLevelUpdate(item.studentId, lvl.id, lvl.name)
-                              }
-                            >
-                              <span
-                                className={cn(
-                                  "mr-2",
-                                  item.level === lvl.name && "font-bold",
-                                )}
+                      {Object.entries(groupedLevels).map(
+                        ([category, catLevels]) => (
+                          <div key={category}>
+                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                              {category}
+                            </div>
+                            {catLevels.map((lvl) => (
+                              <DropdownMenuItem
+                                key={lvl.id}
+                                onSelect={() =>
+                                  item.studentId &&
+                                  handleLevelUpdate(
+                                    item.studentId,
+                                    lvl.id,
+                                    lvl.name,
+                                  )
+                                }
                               >
-                                {lvl.name}
-                              </span>
-                            </DropdownMenuItem>
-                          ))}
-                        </div>
-                      ))}
+                                <span
+                                  className={cn(
+                                    "mr-2",
+                                    item.level === lvl.name && "font-bold",
+                                  )}
+                                >
+                                  {lvl.name}
+                                </span>
+                              </DropdownMenuItem>
+                            ))}
+                          </div>
+                        ),
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </td>
                 <td className="p-3 text-center">
                   {item.type === "student" ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        disabled={
-                          !onReportCardUpdate ||
-                          updating !== null ||
-                          item.type !== "student"
-                        }
-                        className={cn(
-                          "text-xs px-2 py-1 rounded border min-w-[80px]",
-                          !item.reportCardStatus ||
-                            item.reportCardStatus === "not_created"
-                            ? "bg-gray-50 border-gray-200 text-gray-500"
-                            : item.reportCardStatus === "created"
-                              ? "bg-blue-50 border-blue-200 text-blue-700"
-                              : "bg-green-50 border-green-200 text-green-700",
-                        )}
-                      >
-                        {item.reportCardStatus === "given"
-                          ? "Given"
-                          : item.reportCardStatus === "created"
-                            ? "Created"
-                            : "None"}
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem
-                          onSelect={() =>
-                            onReportCardUpdate?.(item.id, "not_created")
-                          }
-                        >
-                          Not Created
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() =>
-                            onReportCardUpdate?.(item.id, "created")
-                          }
-                        >
-                          Created
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() =>
-                            onReportCardUpdate?.(item.id, "given")
-                          }
-                        >
-                          Given
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <button
+                      onClick={() => setActiveReportCardEnrollment(item)}
+                      className={cn(
+                        "text-xs px-2 py-1 rounded border min-w-[80px] font-medium transition-colors hover:opacity-90",
+                        item.reportCardStatus === "completed" ||
+                          item.reportCardStatus === "sent" ||
+                          item.reportCardStatus === "given"
+                          ? "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                          : item.reportCardStatus === "created" ||
+                            item.reportCardStatus === "draft"
+                            ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                            : item.reportCardStatus === "did_not_pass"
+                              ? "bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                              : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100",
+                      )}
+                    >
+                      {item.reportCardStatus === "completed"
+                        ? "Completed"
+                        : item.reportCardStatus === "sent"
+                          ? "Sent"
+                          : item.reportCardStatus === "given"
+                            ? "Given"
+                            : item.reportCardStatus === "created" ||
+                              item.reportCardStatus === "draft"
+                              ? "Draft"
+                              : item.reportCardStatus === "did_not_pass"
+                                ? "Did Not Pass"
+                                : "None"}
+                    </button>
                   ) : item.type === "makeup" && item.normalSession ? (
                     <span className="text-xs font-medium text-muted-foreground whitespace-nowrap bg-muted px-2 py-1 rounded">
                       {item.normalSession}
@@ -653,12 +709,12 @@ export function DailyClassRoster({
                 </td>
                 <td className="p-3 text-center">
                   <div className="flex justify-center">
-                      <AttendanceButton
-                        item={item}
-                        loading={updating === `status-${item.id}`}
-                        onUpdate={(s) => handleStatusUpdate(item, s)}
-                        userRole={userRole}
-                      />
+                    <AttendanceButton
+                      item={item}
+                      loading={updating === `status-${item.id}`}
+                      onUpdate={(s) => handleStatusUpdate(item, s)}
+                      userRole={userRole}
+                    />
                   </div>
                 </td>
                 <td className="p-3 text-center">
@@ -708,6 +764,33 @@ export function DailyClassRoster({
           </tbody>
         </table>
       </div>
+
+      {/* Dialog for Report Card Form */}
+      {activeReportCardEnrollment && (
+        <Dialog
+          open={activeReportCardEnrollment !== null}
+          onOpenChange={(open) => !open && setActiveReportCardEnrollment(null)}
+        >
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogTitle className="sr-only">Report Card</DialogTitle>
+            <ReportCardForm
+              enrollmentId={activeReportCardEnrollment.id}
+              studentLevelId={
+                levels.find((l) => l.name === activeReportCardEnrollment.level)
+                  ?.id || undefined
+              }
+              studentName={activeReportCardEnrollment.name}
+              termName={termName || "Current Term"}
+              instructorName={instructorName || "No Instructor"}
+              userRole={userRole}
+              onClose={() => {
+                setActiveReportCardEnrollment(null);
+                router.refresh();
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
@@ -825,7 +908,14 @@ function AttendanceButton({
     <DropdownMenu>
       <DropdownMenuTrigger
         asChild
-        disabled={loading || item.status === "converted" || (item.type === "student" && item.enrollmentStatus !== "active" && userRole !== "admin" && userRole !== "super_admin")}
+        disabled={
+          loading ||
+          item.status === "converted" ||
+          (item.type === "student" &&
+            item.enrollmentStatus !== "active" &&
+            userRole !== "admin" &&
+            userRole !== "super_admin")
+        }
       >
         <Button
           variant={variant}

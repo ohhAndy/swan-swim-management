@@ -9,6 +9,7 @@ import { updateReportCardStatus } from "@/lib/api/enrollment-client";
 import { useRouter } from "next/navigation";
 import type { RosterItem } from "@/components/schedule/DailyClassRoster";
 import { DailyClassRoster } from "@/components/schedule/DailyClassRoster";
+import { StaffRole } from "@/lib/auth/permissions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   Calendar,
@@ -76,7 +77,11 @@ export default function DailyScheduleClient({
     userRole === "supervisor" ||
     userRole === "super_admin";
 
-  const handleLevelUpdate = async (studentId: string, levelId: string, levelName: string) => {
+  const handleLevelUpdate = async (
+    studentId: string,
+    levelId: string,
+    levelName: string,
+  ) => {
     await updateStudent(studentId, { level: levelName, levelId });
     router.refresh();
   };
@@ -151,13 +156,20 @@ export default function DailyScheduleClient({
                   {Object.entries(
                     data.classes
                       .filter((c) => c.time === time)
-                      .reduce((acc, cls) => {
-                        (acc[cls.termName] = acc[cls.termName] || []).push(cls);
-                        return acc;
-                      }, {} as Record<string, DailyClass[]>)
+                      .reduce(
+                        (acc, cls) => {
+                          (acc[cls.termName] = acc[cls.termName] || []).push(
+                            cls,
+                          );
+                          return acc;
+                        },
+                        {} as Record<string, DailyClass[]>,
+                      ),
                   ).map(([termName, classesInTerm]) => (
                     <div key={termName} className="space-y-4">
-                      <h3 className="text-lg font-semibold text-muted-foreground border-b pb-2">{termName}</h3>
+                      <h3 className="text-lg font-semibold text-muted-foreground border-b pb-2">
+                        {termName}
+                      </h3>
                       {classesInTerm.map((cls) => (
                         <Card key={cls.id} className="overflow-hidden">
                           <CardHeader className="bg-muted/40 py-3 border-b">
@@ -255,6 +267,14 @@ export default function DailyScheduleClient({
                           <CardContent className="p-0">
                             <DailyClassRoster
                               roster={cls.roster}
+                              termName={cls.termName}
+                              instructorName={
+                                cls.instructors.length > 0
+                                  ? cls.instructors
+                                      .map((i) => i.staffName)
+                                      .join(", ")
+                                  : "No Instructor"
+                              }
                               onLevelUpdate={
                                 canEditLevel ? handleLevelUpdate : undefined
                               }
@@ -295,7 +315,10 @@ export default function DailyScheduleClient({
                                     item.type === "makeup") &&
                                   item.studentId
                                 ) {
-                                  await updateStudentNotes(item.studentId, remarks);
+                                  await updateStudentNotes(
+                                    item.studentId,
+                                    remarks,
+                                  );
                                   router.refresh();
                                 }
                               }}
@@ -309,7 +332,7 @@ export default function DailyScheduleClient({
                                 );
                                 router.refresh();
                               }}
-                              userRole={userRole}
+                              userRole={userRole as StaffRole}
                             />
                           </CardContent>
                         </Card>

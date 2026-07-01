@@ -1,12 +1,18 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { CreateReportCardDto } from "./dto/create-report-card.dto";
 import { UpdateReportCardDto } from "./dto/update-report-card.dto";
 import { PrismaService } from "../prisma/prisma.service";
+import { CommunicationsService } from "../communications/communications.service";
 
 @Injectable()
 export class ReportCardsService {
   constructor(
     private prisma: PrismaService,
+    private communicationsService: CommunicationsService,
   ) {}
 
   async create(createReportCardDto: CreateReportCardDto, user: any) {
@@ -62,7 +68,8 @@ export class ReportCardsService {
           });
 
           if (nextLevel) {
-            const studentCurrentLevelOrder = enrollment.student.levelModel?.order ?? -1;
+            const studentCurrentLevelOrder =
+              enrollment.student.levelModel?.order ?? -1;
             if (nextLevel.order > studentCurrentLevelOrder) {
               await this.prisma.student.update({
                 where: { id: enrollment.studentId },
@@ -151,7 +158,11 @@ export class ReportCardsService {
     return reportCard;
   }
 
-  async update(id: string, updateReportCardDto: UpdateReportCardDto, user: any) {
+  async update(
+    id: string,
+    updateReportCardDto: UpdateReportCardDto,
+    user: any,
+  ) {
     const { skills, ...reportCardData } = updateReportCardDto;
 
     const staffUser = await this.prisma.staffUser.findUnique({
@@ -162,7 +173,9 @@ export class ReportCardsService {
     // Fetch existing report card to check its status before updating
     const existing = await this.prisma.reportCard.findUnique({
       where: { id },
-      include: { enrollment: { include: { student: { include: { levelModel: true } } } } },
+      include: {
+        enrollment: { include: { student: { include: { levelModel: true } } } },
+      },
     });
 
     if (!existing) {
@@ -171,12 +184,19 @@ export class ReportCardsService {
 
     // Enforce that completed/sent report cards cannot be edited
     if (existing.status === "completed" || existing.status === "sent") {
-      throw new ForbiddenException("Cannot modify a completed or sent report card");
+      throw new ForbiddenException(
+        "Cannot modify a completed or sent report card",
+      );
     }
 
     // Enforce that if role is supervisor, they can only modify a report card they created
-    if (staffUser.role === "supervisor" && existing.createdBy !== staffUser.id) {
-      throw new ForbiddenException("Supervisors can only modify report cards they created");
+    if (
+      staffUser.role === "supervisor" &&
+      existing.createdBy !== staffUser.id
+    ) {
+      throw new ForbiddenException(
+        "Supervisors can only modify report cards they created",
+      );
     }
 
     // First update the report card basic data
@@ -206,7 +226,8 @@ export class ReportCardsService {
           });
 
           if (nextLevel) {
-            const studentCurrentLevelOrder = existing.enrollment.student.levelModel?.order ?? -1;
+            const studentCurrentLevelOrder =
+              existing.enrollment.student.levelModel?.order ?? -1;
             if (nextLevel.order > studentCurrentLevelOrder) {
               await this.prisma.student.update({
                 where: { id: existing.enrollment.studentId },
@@ -262,5 +283,48 @@ export class ReportCardsService {
     return this.prisma.reportCard.delete({
       where: { id },
     });
+  }
+
+  async emailReportCard(id: string, pdfContent: string) {
+    const reportCard = await this.findOne(id);
+    if (reportCard.status === "sent") {
+      throw new ForbiddenException("This report card has already been sent.");
+    }
+    const student = reportCard.enrollment.student;
+    const guardian = student.guardian;
+
+    if (!guardian?.email) {
+      throw new Error("Guardian does not have an email address");
+    }
+
+    const termName = reportCard.enrollment.offering.term
+      ? reportCard.enrollment.offering.term["name"] // Assuming term has name, need to check if included
+      : "Current Term";
+
+    await this.communicationsService.sendEmail({
+      recipients: [guardian.email],
+      subject: `Progress Report for ${student.firstName} - ${termName}`,
+      body: `Dear ${guardian.fullName},\n\nPlease find attached the progress report for ${student.firstName}.\n\nBest regards,\nSwan Swim School`,
+      attachments: [
+        {
+          filename: `Progress_Report_${student.firstName}_${student.lastName}.pdf`,
+          content: pdfContent,
+        },
+      ],
+    });
+
+    // Update status to sent
+    await this.prisma.reportCard.update({
+      where: { id },
+      data: { status: "sent" },
+    });
+
+    // Sync reportCardStatus to enrollment
+    await this.prisma.enrollment.update({
+      where: { id: reportCard.enrollmentId },
+      data: { reportCardStatus: "sent" },
+    });
+
+    return { success: true };
   }
 }

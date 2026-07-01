@@ -93,3 +93,16 @@ export async function updateReportCard(
   return res.json();
 }
 
+export async function sendEmailReportCard(
+  id: string,
+  pdfContent: string,
+): Promise<{ success: boolean }> {
+  const headers = await getHeaders();
+  const res = await fetch(`${API_Base}/report-cards/${id}/email`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ pdfContent }),
+  });
+  if (!res.ok) throw new Error("Failed to email report card");
+  return res.json();
+}
