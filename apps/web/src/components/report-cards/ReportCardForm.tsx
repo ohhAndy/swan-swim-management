@@ -26,8 +26,6 @@ import {
   Circle,
   HelpCircle,
   Save,
-  Eye,
-  Mail,
 } from "lucide-react";
 
 import { getLevels, Level } from "@/lib/api/curriculum-client";
@@ -37,11 +35,9 @@ import {
   updateReportCard,
   ReportCard,
   getReportCards,
-  sendEmailReportCard,
 } from "@/lib/api/report-card-client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,21 +48,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ReportCardPdf } from "./ReportCardPdf";
-import dynamic from "next/dynamic";
-import { PermissionGate } from "@/components/auth/PermissionGate";
 
-const PDFViewer = dynamic(
-  () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex justify-center p-8">
-        <Loader2 className="animate-spin" />
-      </div>
-    ),
-  },
-);
 
 interface ReportCardFormProps {
   enrollmentId: string;
@@ -90,7 +72,12 @@ export function ReportCardForm({
   const [levels, setLevels] = useState<Level[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [sendingEmail, setSendingEmail] = useState(false);
+  const [skillgrades, setSkillGrades] = useState<
+    Record<string, "not_started" | "developing" | "mastered">
+  >({});
+
+  /* const componentRef = useRef<HTMLDivElement>(null); */
+  /* Replaced with direct PDF generation */
 
   // Form State
   const [existingReportCard, setExistingReportCard] =
@@ -100,57 +87,6 @@ export function ReportCardForm({
     "draft" | "completed" | "did_not_pass" | "sent"
   >("draft");
   const [comments, setComments] = useState("");
-  const [skillgrades, setSkillGrades] = useState<
-    Record<string, "not_started" | "developing" | "mastered">
-  >({});
-  const [showPreview, setShowPreview] = useState(false);
-
-  /* const componentRef = useRef<HTMLDivElement>(null); */
-  /* Replaced with direct PDF generation */
-
-  const handleEmail = async () => {
-    if (!existingReportCard) {
-      toast.error("Please save the report card first.");
-      return;
-    }
-    if (!selectedLevel) return;
-
-    setSendingEmail(true);
-    try {
-      // Generate PDF Blob using @react-pdf/renderer
-      // We need to dynamically import the pdf function to avoid SSR issues if any
-      const { pdf } = await import("@react-pdf/renderer");
-
-      const blob = await pdf(
-        <ReportCardPdf
-          studentName={studentName}
-          level={selectedLevel}
-          skillGrades={skillgrades}
-          comments={comments}
-          termName={termName}
-          instructorName={instructorName}
-        />,
-      ).toBlob();
-
-      // Convert Blob to Base64
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = async () => {
-        const base64data = reader.result as string;
-        // Remove data:application/pdf;base64, prefix
-        const pdfBase64 = base64data.split(",")[1];
-
-        await sendEmailReportCard(existingReportCard.id, pdfBase64);
-        toast.success("Email sent successfully!");
-        setStatus("sent");
-      };
-    } catch (error) {
-      console.error("Failed to send email", error);
-      toast.error("Failed to send email.");
-    } finally {
-      setSendingEmail(false);
-    }
-  };
 
   const loadData = useCallback(async () => {
     try {
@@ -489,79 +425,23 @@ export function ReportCardForm({
           </div>
         )}
 
-        <div className="flex justify-between items-center pt-4">
-          <PermissionGate
-            allowedRoles={["super_admin"]}
-            currentRole={userRole || "supervisor"}
-          >
-            <Button
-              variant="secondary"
-              onClick={() => setShowPreview(true)}
-              disabled={!selectedLevel}
-            >
-              <Eye className="mr-2 h-4 w-4" /> Preview
+        <div className="flex justify-end gap-3 pt-4">
+          {onClose && (
+            <Button variant="outline" onClick={onClose}>
+              Cancel
             </Button>
-          </PermissionGate>
-
-          <div className="flex gap-3 ml-auto">
-            {onClose && (
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-            )}
-            <Button onClick={handleSaveClick} disabled={saving || isReadOnly}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <Save className="mr-2 h-4 w-4" />{" "}
-              {status === "completed"
-                ? "Submit & Complete"
-                : "Save Report Card"}
-            </Button>
-          </div>
+          )}
+          <Button onClick={handleSaveClick} disabled={saving || isReadOnly}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Save className="mr-2 h-4 w-4" />{" "}
+            {status === "completed"
+              ? "Submit & Complete"
+              : "Save Report Card"}
+          </Button>
         </div>
       </CardContent>
 
-      <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-[1000px] w-full h-[90vh] flex flex-col p-6">
-          <DialogTitle className="sr-only">Report Card Preview</DialogTitle>
-          {selectedLevel && (
-            <div className="flex-1 flex flex-col gap-4 min-h-0">
-              {/* Email Guardians button hidden for now
-              <div className="flex justify-end gap-2 print:hidden shrink-0">
-                <Button
-                  onClick={handleEmail}
-                  variant="outline"
-                  disabled={sendingEmail || !existingReportCard}
-                >
-                  {sendingEmail ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Mail className="mr-2 h-4 w-4" />
-                  )}
-                  Email Guardians
-                </Button>
-              </div>
-              */}
 
-              <div className="flex-1 min-h-0 border rounded-md overflow-hidden">
-                <PDFViewer
-                  width="100%"
-                  height="100%"
-                  className="w-full h-full border-none"
-                >
-                  <ReportCardPdf
-                    studentName={studentName}
-                    level={selectedLevel}
-                    skillGrades={skillgrades}
-                    comments={comments}
-                    termName={termName}
-                    instructorName={instructorName}
-                  />
-                </PDFViewer>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       <AlertDialog open={submitConfirmOpen} onOpenChange={setSubmitConfirmOpen}>
         <AlertDialogContent>

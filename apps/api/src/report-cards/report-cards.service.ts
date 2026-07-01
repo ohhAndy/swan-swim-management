@@ -2,13 +2,11 @@ import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/commo
 import { CreateReportCardDto } from "./dto/create-report-card.dto";
 import { UpdateReportCardDto } from "./dto/update-report-card.dto";
 import { PrismaService } from "../prisma/prisma.service";
-import { CommunicationsService } from "../communications/communications.service";
 
 @Injectable()
 export class ReportCardsService {
   constructor(
     private prisma: PrismaService,
-    private communicationsService: CommunicationsService,
   ) {}
 
   async create(createReportCardDto: CreateReportCardDto, user: any) {
@@ -264,39 +262,5 @@ export class ReportCardsService {
     return this.prisma.reportCard.delete({
       where: { id },
     });
-  }
-
-  async emailReportCard(id: string, pdfContent: string) {
-    const reportCard = await this.findOne(id);
-    const student = reportCard.enrollment.student;
-    const guardian = student.guardian;
-
-    if (!guardian?.email) {
-      throw new Error("Guardian does not have an email address");
-    }
-
-    const termName = reportCard.enrollment.offering.term
-      ? reportCard.enrollment.offering.term["name"] // Assuming term has name, need to check if included
-      : "Current Term";
-
-    await this.communicationsService.sendEmail({
-      recipients: [guardian.email],
-      subject: `Report Card for ${student.firstName} - ${termName}`,
-      body: `Dear ${guardian.fullName},\n\nPlease find attached the report card for ${student.firstName}.\n\nBest regards,\nSwan Swim School`,
-      attachments: [
-        {
-          filename: `Report_Card_${student.firstName}_${student.lastName}.pdf`,
-          content: pdfContent,
-        },
-      ],
-    });
-
-    // Update status to sent
-    await this.prisma.reportCard.update({
-      where: { id },
-      data: { status: "sent" },
-    });
-
-    return { success: true };
   }
 }

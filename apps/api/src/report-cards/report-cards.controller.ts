@@ -53,9 +53,4 @@ export class ReportCardsController {
   remove(@Param("id") id: string) {
     return this.reportCardsService.remove(id);
   }
-
-  @Post(":id/email")
-  email(@Param("id") id: string, @Body() body: { pdfContent: string }) {
-    return this.reportCardsService.emailReportCard(id, body.pdfContent);
-  }
 }
