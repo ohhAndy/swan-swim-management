@@ -84,6 +84,7 @@ model StaffUser {
   trialBookingsConverted       TrialBooking[]        @relation("TrialBookingConvertedBy")
   trialBookingsCreated         TrialBooking[]        @relation("TrialBookingCreatedBy")
   trialBookingsUpdated         TrialBooking[]        @relation("TrialBookingUpdatedBy")
+  reportCardsCreated           ReportCard[]          @relation("ReportCardCreatedBy")
 }
 
 model AuditLog {
@@ -255,6 +256,8 @@ model Student {
   updatedAt          DateTime        @updatedAt
   createdBy          String?
   level              String?
+  levelId            String?
+  levelModel         Level?          @relation(fields: [levelId], references: [id])
   updatedBy          String?
   notes              String?
   enrollments        Enrollment[]
@@ -538,6 +541,7 @@ model Level {
   id          String   @id @default(cuid())
   name        String   @unique
   description String?
+  category    String?
   color       String?  @default("#3b82f6") // hex code
   order       Int      @default(0)
   createdAt   DateTime @default(now())
@@ -545,6 +549,7 @@ model Level {
 
   skills      Skill[]
   reportCards ReportCard[]
+  students    Student[]
 
   @@map("levels")
 }
@@ -573,6 +578,8 @@ model ReportCard {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   sentAt       DateTime?
+  createdBy    String?
+  createdByUser StaffUser?      @relation("ReportCardCreatedBy", fields: [createdBy], references: [id])
 
   enrollment       Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
   level            Level?            @relation(fields: [levelId], references: [id])

@@ -74,6 +74,14 @@ export interface Enrollment {
       term: { name: string };
     };
   } | null;
+  reportCards?: {
+    id: string;
+    status: string;
+    createdBy?: string | null;
+    createdByUser?: { fullName: string } | null;
+    updatedAt: string;
+    level: { name: string } | null;
+  }[];
 }
 
 export interface Payment {
@@ -123,6 +131,7 @@ export interface Student {
   shortCode: string | null;
   birthdate: string | null;
   level: string | null;
+  levelId: string | null;
   guardianId: string;
   guardian: Guardian;
   enrollments: Enrollment[];

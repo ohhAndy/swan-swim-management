@@ -5,12 +5,7 @@ import { RecipientFilter } from "@/lib/api/communications-client";
 import { getLocations, Location } from "@/lib/api/location-client";
 import { getTerms, Term } from "@/lib/api/term-client";
 import { getInstructors } from "@/lib/api/instructors";
-import {
-  PRESCHOOL_LEVELS,
-  SWIMMER_LEVELS,
-  SWIMTEAM_LEVELS,
-  PARENT_TOT_LEVELS,
-} from "@/lib/constants/levels";
+import { getLevels, Level } from "@/lib/api/curriculum-client";
 import {
   Select,
   SelectContent,
@@ -41,6 +36,7 @@ export function RecipientFilterComponent({
   const [instructors, setInstructors] = useState<
     { id: string; firstName: string; lastName: string }[]
   >([]);
+  const [levels, setLevels] = useState<Level[]>([]);
 
   useEffect(() => {
     // Load initial data
@@ -55,6 +51,7 @@ export function RecipientFilterComponent({
         })),
       ),
     );
+    getLevels().then(setLevels);
   }, []);
 
   const handleChange = (
@@ -64,12 +61,7 @@ export function RecipientFilterComponent({
     onChange({ ...filter, [key]: value === "all" ? undefined : value });
   };
 
-  const allLevels = [
-    ...PARENT_TOT_LEVELS,
-    ...PRESCHOOL_LEVELS,
-    ...SWIMMER_LEVELS,
-    ...SWIMTEAM_LEVELS,
-  ];
+
 
   return (
     <Card>
@@ -128,9 +120,9 @@ export function RecipientFilterComponent({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Levels</SelectItem>
-              {allLevels.map((l) => (
-                <SelectItem key={l} value={l}>
-                  {l}
+              {levels.map((l) => (
+                <SelectItem key={l.id} value={l.name}>
+                  {l.name}
                 </SelectItem>
               ))}
             </SelectContent>

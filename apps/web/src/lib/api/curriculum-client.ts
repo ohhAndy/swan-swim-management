@@ -27,6 +27,7 @@ export interface Level {
   name: string;
   description?: string;
   color?: string;
+  category?: string | null;
   order: number;
   skills: Skill[];
 }

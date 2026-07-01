@@ -24,6 +24,8 @@ export interface ReportCard {
   comments: string | null;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string | null;
+  createdByUser?: { fullName: string } | null;
   level: Level | null;
   reportCardSkills: ReportCardSkill[];
 }

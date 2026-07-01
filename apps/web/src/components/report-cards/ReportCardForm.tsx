@@ -12,7 +12,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -29,6 +31,7 @@ import {
 } from "lucide-react";
 
 import { getLevels, Level } from "@/lib/api/curriculum-client";
+import { StaffRole } from "@/lib/auth/permissions";
 import {
   createReportCard,
   updateReportCard,
@@ -39,8 +42,19 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ReportCardPdf } from "./ReportCardPdf";
 import dynamic from "next/dynamic";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 
 const PDFViewer = dynamic(
   () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
@@ -56,17 +70,21 @@ const PDFViewer = dynamic(
 
 interface ReportCardFormProps {
   enrollmentId: string;
+  studentLevelId?: string;
   studentName: string;
   termName: string;
   instructorName: string;
+  userRole?: StaffRole;
   onClose?: () => void;
 }
 
 export function ReportCardForm({
   enrollmentId,
+  studentLevelId,
   studentName,
   termName,
   instructorName,
+  userRole,
   onClose,
 }: ReportCardFormProps) {
   const [levels, setLevels] = useState<Level[]>([]);
@@ -78,7 +96,9 @@ export function ReportCardForm({
   const [existingReportCard, setExistingReportCard] =
     useState<ReportCard | null>(null);
   const [selectedLevelId, setSelectedLevelId] = useState<string>("");
-  const [status, setStatus] = useState<"draft" | "completed" | "did_not_pass" | "sent">("draft");
+  const [status, setStatus] = useState<
+    "draft" | "completed" | "did_not_pass" | "sent"
+  >("draft");
   const [comments, setComments] = useState("");
   const [skillgrades, setSkillGrades] = useState<
     Record<string, "not_started" | "developing" | "mastered">
@@ -161,9 +181,13 @@ export function ReportCardForm({
           grades[rcSkill.skillId] = rcSkill.status;
         });
         setSkillGrades(grades);
-      } else if (levelsData.length > 0) {
-        // Default to first level
-        setSelectedLevelId(levelsData[0].id);
+      } else {
+        // Default to student's current level or first level
+        if (studentLevelId && levelsData.some((l) => l.id === studentLevelId)) {
+          setSelectedLevelId(studentLevelId);
+        } else if (levelsData.length > 0) {
+          setSelectedLevelId(levelsData[0].id);
+        }
       }
     } catch (error) {
       console.error("Failed to load report card data", error);
@@ -171,19 +195,43 @@ export function ReportCardForm({
     } finally {
       setLoading(false);
     }
-  }, [enrollmentId]);
+  }, [enrollmentId, studentLevelId]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
   const selectedLevel = levels.find((l) => l.id === selectedLevelId);
+  const studentLevel = levels.find((l) => l.id === studentLevelId);
+  const isReadOnly =
+    existingReportCard?.status === "completed" ||
+    existingReportCard?.status === "sent";
+
+  const groupedLevels = levels.reduce(
+    (acc, lvl) => {
+      const category = lvl.category || "Other";
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(lvl);
+      return acc;
+    },
+    {} as Record<string, Level[]>,
+  );
+
+  const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
 
   const handleGradeChange = (
     skillId: string,
     grade: "not_started" | "developing" | "mastered",
   ) => {
     setSkillGrades((prev) => ({ ...prev, [skillId]: grade }));
+  };
+
+  const handleSaveClick = () => {
+    if (status === "completed") {
+      setSubmitConfirmOpen(true);
+    } else {
+      handleSave();
+    }
   };
 
   const handleSave = async () => {
@@ -232,11 +280,30 @@ export function ReportCardForm({
     <Card className="w-full max-w-2xl mx-auto shadow-lg">
       <CardHeader>
         <CardTitle>Report Card: {studentName}</CardTitle>
-        <CardDescription>
-          Grade skills and provide feedback for this term.
+        <CardDescription className="flex flex-col gap-1">
+          <span>Grade skills and provide feedback for this term.</span>
+          {existingReportCard && (
+            <span className="text-xs text-muted-foreground mt-1">
+              Created by:{" "}
+              <strong>
+                {existingReportCard.createdByUser?.fullName || "Unknown"}
+              </strong>{" "}
+              • Last updated:{" "}
+              {new Date(existingReportCard.updatedAt).toLocaleString()}
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {isReadOnly && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-md text-sm flex items-start gap-3">
+            <span className="text-base shrink-0 mt-0.5">ℹ️</span>
+            <div>
+              This report card has been completed/sent and is now read-only.
+            </div>
+          </div>
+        )}
+
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Level</Label>
@@ -244,29 +311,59 @@ export function ReportCardForm({
               value={selectedLevelId}
               onValueChange={(val) => {
                 setSelectedLevelId(val);
-                // Reset grades when level changes? Or keep implicit?
-                // For now, keep state but they won't show in UI if not in level
               }}
+              disabled={isReadOnly}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Level" />
               </SelectTrigger>
-              <SelectContent>
-                {levels.map((l) => (
-                  <SelectItem key={l.id} value={l.id}>
-                    {l.name}
-                  </SelectItem>
+              <SelectContent className="max-h-[200px] overflow-y-auto">
+                {Object.entries(groupedLevels).map(([category, catLevels]) => (
+                  <SelectGroup key={category}>
+                    <SelectLabel className="text-xs font-semibold px-2 py-1 text-muted-foreground">
+                      {category}
+                    </SelectLabel>
+                    {catLevels.map((l) => {
+                      let suffix = "";
+                      if (studentLevel) {
+                        if (l.id === studentLevel.id) {
+                          suffix = " (Active Level)";
+                        } else if (l.order < studentLevel.order) {
+                          suffix = " (Completed / Prior Level)";
+                        }
+                      }
+                      return (
+                        <SelectItem key={l.id} value={l.id}>
+                          {l.name}
+                          {suffix}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectGroup>
                 ))}
               </SelectContent>
             </Select>
+            {selectedLevel &&
+              studentLevel &&
+              selectedLevel.order < studentLevel.order && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-md text-sm mt-2 flex items-start gap-3">
+                  <span className="text-base shrink-0 mt-0.5">⚠️</span>
+                  <div>
+                    This is a completed/prior level. Completing it will not
+                    upgrade the student&apos;s active level ({studentLevel.name}
+                    ).
+                  </div>
+                </div>
+              )}
           </div>
           <div className="space-y-2">
             <Label>Status</Label>
             <Select
               value={status}
-              onValueChange={(val: "draft" | "completed" | "did_not_pass" | "sent") =>
-                setStatus(val)
-              }
+              onValueChange={(
+                val: "draft" | "completed" | "did_not_pass" | "sent",
+              ) => setStatus(val)}
+              disabled={isReadOnly}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -275,7 +372,9 @@ export function ReportCardForm({
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="did_not_pass">Did Not Pass</SelectItem>
-                <SelectItem value="sent">Sent</SelectItem>
+                {status === "sent" && (
+                  <SelectItem value="sent">Sent</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -348,6 +447,7 @@ export function ReportCardForm({
                                 | "mastered",
                             )
                           }
+                          disabled={isReadOnly}
                           title={option.label}
                         >
                           <option.icon
@@ -375,27 +475,46 @@ export function ReportCardForm({
             onChange={(e) => setComments(e.target.value)}
             placeholder="Additional feedback for the student..."
             className="min-h-[100px]"
+            disabled={isReadOnly}
           />
         </div>
 
-        <div className="flex justify-between items-center pt-4">
-          <Button
-            variant="secondary"
-            onClick={() => setShowPreview(true)}
-            disabled={!selectedLevel}
-          >
-            <Eye className="mr-2 h-4 w-4" /> Preview
-          </Button>
+        {status === "completed" && !isReadOnly && (
+          <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-md text-sm flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+            <div>
+              Saving as <strong>Completed</strong> will automatically upgrade
+              the student to the next level.
+            </div>
+          </div>
+        )}
 
-          <div className="flex gap-3">
+        <div className="flex justify-between items-center pt-4">
+          <PermissionGate
+            allowedRoles={["super_admin"]}
+            currentRole={userRole || "supervisor"}
+          >
+            <Button
+              variant="secondary"
+              onClick={() => setShowPreview(true)}
+              disabled={!selectedLevel}
+            >
+              <Eye className="mr-2 h-4 w-4" /> Preview
+            </Button>
+          </PermissionGate>
+
+          <div className="flex gap-3 ml-auto">
             {onClose && (
               <Button variant="outline" onClick={onClose}>
                 Cancel
               </Button>
             )}
-            <Button onClick={handleSave} disabled={saving}>
+            <Button onClick={handleSaveClick} disabled={saving || isReadOnly}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <Save className="mr-2 h-4 w-4" /> Save Report Card
+              <Save className="mr-2 h-4 w-4" />{" "}
+              {status === "completed"
+                ? "Submit & Complete"
+                : "Save Report Card"}
             </Button>
           </div>
         </div>
@@ -406,6 +525,7 @@ export function ReportCardForm({
           <DialogTitle className="sr-only">Report Card Preview</DialogTitle>
           {selectedLevel && (
             <div className="flex-1 flex flex-col gap-4 min-h-0">
+              {/* Email Guardians button hidden for now
               <div className="flex justify-end gap-2 print:hidden shrink-0">
                 <Button
                   onClick={handleEmail}
@@ -420,6 +540,7 @@ export function ReportCardForm({
                   Email Guardians
                 </Button>
               </div>
+              */}
 
               <div className="flex-1 min-h-0 border rounded-md overflow-hidden">
                 <PDFViewer
@@ -441,6 +562,50 @@ export function ReportCardForm({
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={submitConfirmOpen} onOpenChange={setSubmitConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Submit & Complete Report Card?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <div>
+                  Are you sure you want to mark this report card as{" "}
+                  <strong>Completed</strong>?
+                </div>
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-md text-xs flex items-start gap-2">
+                  <span className="shrink-0 mt-0.5">⚠️</span>
+                  <div>
+                    <strong>Once submitted, this action is final:</strong>
+                    <ul className="list-disc pl-4 mt-1 space-y-0.5 text-amber-900 font-normal">
+                      <li>
+                        The report card will become read-only and cannot be
+                        changed.
+                      </li>
+                      <li>
+                        The student will be automatically upgraded to the next
+                        level.
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setSubmitConfirmOpen(false);
+                handleSave();
+              }}
+              className="bg-green-600 text-white hover:bg-green-700"
+            >
+              Confirm & Submit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

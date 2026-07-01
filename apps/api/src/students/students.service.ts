@@ -123,6 +123,8 @@ export class StudentsService {
           lastName: true,
           birthdate: true,
           level: true,
+          levelId: true,
+          levelModel: { select: { id: true, name: true, category: true, color: true, order: true } },
           guardianId: true,
           guardian: {
             select: { id: true, fullName: true, email: true, phone: true },
@@ -147,6 +149,8 @@ export class StudentsService {
         lastName: true,
         birthdate: true,
         level: true,
+        levelId: true,
+        levelModel: { select: { id: true, name: true, category: true, color: true, order: true } },
         notes: true,
         guardianId: true,
         guardian: {
@@ -277,6 +281,24 @@ export class StudentsService {
                 },
               },
             },
+            reportCards: {
+              select: {
+                id: true,
+                status: true,
+                createdBy: true,
+                updatedAt: true,
+                createdByUser: {
+                  select: {
+                    fullName: true,
+                  },
+                },
+                level: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
           },
           orderBy: { enrollDate: "desc" },
         },
@@ -324,6 +346,12 @@ export class StudentsService {
         if (isEnrollmentActive(e)) {
           return true;
         }
+        const hasReportCardCreatedByMe = e.reportCards.some(
+          (rc) => rc.createdBy === staffUser.id,
+        );
+        if (hasReportCardCreatedByMe) {
+          return true;
+        }
         if (e.status !== "transferred" && !e.transferredTo && pastCount < 1) {
           pastCount++;
           return true;
@@ -355,6 +383,7 @@ export class StudentsService {
           firstName,
           lastName,
           level: level ?? null,
+          levelId: dto.levelId ?? null,
           birthdate: birthdate ?? null,
           createdBy: staffUser.id,
         },
@@ -365,6 +394,7 @@ export class StudentsService {
           lastName: true,
           birthdate: true,
           level: true,
+          levelId: true,
           guardianId: true,
           createdAt: true,
           updatedAt: true,
@@ -436,6 +466,7 @@ export class StudentsService {
               : {}),
             ...(dto.lastName !== undefined ? { lastName: dto.lastName } : {}),
             ...(dto.level !== undefined ? { level: dto.level } : {}),
+            ...(dto.levelId !== undefined ? { levelId: dto.levelId ?? null } : {}),
             ...(dto.birthdate !== undefined
               ? { birthdate: dto.birthdate }
               : {}),
@@ -448,6 +479,7 @@ export class StudentsService {
             firstName: true,
             lastName: true,
             level: true,
+            levelId: true,
             notes: true,
             birthdate: true,
             guardianId: true,

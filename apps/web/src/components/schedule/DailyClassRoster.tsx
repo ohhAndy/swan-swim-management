@@ -10,14 +10,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   LEVEL_MAP,
-  SWIMMER_LEVELS,
-  PRESCHOOL_LEVELS,
-  SWIMTEAM_LEVELS,
 } from "@/lib/constants/levels";
+import { getLevels, Level } from "@/lib/api/curriculum-client";
 import { cn } from "@/lib/utils";
 import { HelpCircle } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import RemarksDialog from "./RemarksDialog";
 import { CalendarCheck, CalendarClock, CalendarX } from "lucide-react";
@@ -52,11 +50,9 @@ export type RosterItem = {
   enrollmentStatus?: string;
 };
 
-const ALL_LEVELS = [...PRESCHOOL_LEVELS, ...SWIMMER_LEVELS, ...SWIMTEAM_LEVELS];
-
 type Props = {
   roster: RosterItem[];
-  onLevelUpdate?: (studentId: string, level: string) => Promise<void>;
+  onLevelUpdate?: (studentId: string, levelId: string, levelName: string) => Promise<void>;
   onAttendanceUpdate?: (item: RosterItem, status: string) => Promise<void>;
   onRemarksUpdate?: (item: RosterItem, remarks: string) => Promise<void>;
   onReportCardUpdate?: (enrollmentId: string, status: string) => Promise<void>;
@@ -71,13 +67,25 @@ export function DailyClassRoster({
   onReportCardUpdate,
   userRole,
 }: Props) {
+  const [levels, setLevels] = useState<Level[]>([]);
   const [updating, setUpdating] = useState<string | null>(null);
 
-  const handleLevelUpdate = async (studentId: string, newLevel: string) => {
+  useEffect(() => {
+    getLevels().then(setLevels);
+  }, []);
+
+  const groupedLevels = levels.reduce((acc, lvl) => {
+    const category = lvl.category || "Other";
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(lvl);
+    return acc;
+  }, {} as Record<string, Level[]>);
+
+  const handleLevelUpdate = async (studentId: string, levelId: string, levelName: string) => {
     if (!onLevelUpdate) return;
     setUpdating(`level-${studentId}`);
     try {
-      await onLevelUpdate(studentId, newLevel);
+      await onLevelUpdate(studentId, levelId, levelName);
     } catch (e) {
       console.error(e);
       toast.error("Failed to update level");
@@ -293,22 +301,29 @@ export function DailyClassRoster({
                   </Badge>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  {ALL_LEVELS.map((lvl) => (
-                    <DropdownMenuItem
-                      key={lvl}
-                      onSelect={() =>
-                        item.studentId && handleLevelUpdate(item.studentId, lvl)
-                      }
-                    >
-                      <span
-                        className={cn(
-                          "mr-2",
-                          item.level === lvl && "font-bold",
-                        )}
-                      >
-                        {lvl}
-                      </span>
-                    </DropdownMenuItem>
+                  {Object.entries(groupedLevels).map(([category, catLevels]) => (
+                    <div key={category}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                        {category}
+                      </div>
+                      {catLevels.map((lvl) => (
+                        <DropdownMenuItem
+                          key={lvl.id}
+                          onSelect={() =>
+                            item.studentId && handleLevelUpdate(item.studentId, lvl.id, lvl.name)
+                          }
+                        >
+                          <span
+                            className={cn(
+                              "mr-2",
+                              item.level === lvl.name && "font-bold",
+                            )}
+                          >
+                            {lvl.name}
+                          </span>
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -552,23 +567,29 @@ export function DailyClassRoster({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      {ALL_LEVELS.map((lvl) => (
-                        <DropdownMenuItem
-                          key={lvl}
-                          onSelect={() =>
-                            item.studentId &&
-                            handleLevelUpdate(item.studentId, lvl)
-                          }
-                        >
-                          <span
-                            className={cn(
-                              "mr-2",
-                              item.level === lvl && "font-bold",
-                            )}
-                          >
-                            {lvl}
-                          </span>
-                        </DropdownMenuItem>
+                      {Object.entries(groupedLevels).map(([category, catLevels]) => (
+                        <div key={category}>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                            {category}
+                          </div>
+                          {catLevels.map((lvl) => (
+                            <DropdownMenuItem
+                              key={lvl.id}
+                              onSelect={() =>
+                                item.studentId && handleLevelUpdate(item.studentId, lvl.id, lvl.name)
+                              }
+                            >
+                              <span
+                                className={cn(
+                                  "mr-2",
+                                  item.level === lvl.name && "font-bold",
+                                )}
+                              >
+                                {lvl.name}
+                              </span>
+                            </DropdownMenuItem>
+                          ))}
+                        </div>
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -634,7 +655,7 @@ export function DailyClassRoster({
                   <div className="flex justify-center">
                       <AttendanceButton
                         item={item}
-                        loading={updating === item.id}
+                        loading={updating === `status-${item.id}`}
                         onUpdate={(s) => handleStatusUpdate(item, s)}
                         userRole={userRole}
                       />

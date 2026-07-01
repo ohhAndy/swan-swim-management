@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { CreateReportCardDto } from "./dto/create-report-card.dto";
 import { UpdateReportCardDto } from "./dto/update-report-card.dto";
 import { PrismaService } from "../prisma/prisma.service";
@@ -11,12 +11,18 @@ export class ReportCardsService {
     private communicationsService: CommunicationsService,
   ) {}
 
-  async create(createReportCardDto: CreateReportCardDto) {
+  async create(createReportCardDto: CreateReportCardDto, user: any) {
     const { skills, ...reportCardData } = createReportCardDto;
 
-    return this.prisma.reportCard.create({
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+    if (!staffUser) throw new Error("Staff user not found");
+
+    const reportCard = await this.prisma.reportCard.create({
       data: {
         ...reportCardData,
+        createdBy: staffUser.id,
         reportCardSkills: {
           create: skills?.map((skill) => ({
             skillId: skill.skillId,
@@ -32,11 +38,55 @@ export class ReportCardsService {
         },
       },
     });
+
+    // Sync report card status back to the Enrollment
+    await this.prisma.enrollment.update({
+      where: { id: reportCard.enrollmentId },
+      data: { reportCardStatus: reportCard.status },
+    });
+
+    // Automatically upgrade student level if report card is created as completed
+    if (reportCard.status === "completed" && reportCard.levelId) {
+      const enrollment = await this.prisma.enrollment.findUnique({
+        where: { id: reportCard.enrollmentId },
+        include: { student: { include: { levelModel: true } } },
+      });
+
+      if (enrollment) {
+        const currentLevel = await this.prisma.level.findUnique({
+          where: { id: reportCard.levelId },
+        });
+
+        if (currentLevel) {
+          const nextLevel = await this.prisma.level.findFirst({
+            where: { order: { gt: currentLevel.order } },
+            orderBy: { order: "asc" },
+          });
+
+          if (nextLevel) {
+            const studentCurrentLevelOrder = enrollment.student.levelModel?.order ?? -1;
+            if (nextLevel.order > studentCurrentLevelOrder) {
+              await this.prisma.student.update({
+                where: { id: enrollment.studentId },
+                data: { level: nextLevel.name, levelId: nextLevel.id },
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return reportCard;
   }
 
   findAll() {
     return this.prisma.reportCard.findMany({
       include: {
+        createdByUser: {
+          select: {
+            fullName: true,
+          },
+        },
         enrollment: {
           include: {
             student: true,
@@ -60,6 +110,11 @@ export class ReportCardsService {
     const reportCard = await this.prisma.reportCard.findUnique({
       where: { id },
       include: {
+        createdByUser: {
+          select: {
+            fullName: true,
+          },
+        },
         enrollment: {
           include: {
             student: {
@@ -98,14 +153,72 @@ export class ReportCardsService {
     return reportCard;
   }
 
-  async update(id: string, updateReportCardDto: UpdateReportCardDto) {
+  async update(id: string, updateReportCardDto: UpdateReportCardDto, user: any) {
     const { skills, ...reportCardData } = updateReportCardDto;
+
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+    if (!staffUser) throw new Error("Staff user not found");
+
+    // Fetch existing report card to check its status before updating
+    const existing = await this.prisma.reportCard.findUnique({
+      where: { id },
+      include: { enrollment: { include: { student: { include: { levelModel: true } } } } },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(`Report card with ID ${id} not found`);
+    }
+
+    // Enforce that completed/sent report cards cannot be edited
+    if (existing.status === "completed" || existing.status === "sent") {
+      throw new ForbiddenException("Cannot modify a completed or sent report card");
+    }
+
+    // Enforce that if role is supervisor, they can only modify a report card they created
+    if (staffUser.role === "supervisor" && existing.createdBy !== staffUser.id) {
+      throw new ForbiddenException("Supervisors can only modify report cards they created");
+    }
 
     // First update the report card basic data
     const reportCard = await this.prisma.reportCard.update({
       where: { id },
       data: reportCardData,
     });
+
+    // Sync report card status back to the Enrollment
+    await this.prisma.enrollment.update({
+      where: { id: existing.enrollmentId },
+      data: { reportCardStatus: reportCard.status },
+    });
+
+    // Automatically upgrade student level if report card is marked as completed
+    if (reportCard.status === "completed") {
+      const levelIdToUse = reportCard.levelId || existing.levelId;
+      if (levelIdToUse) {
+        const currentLevel = await this.prisma.level.findUnique({
+          where: { id: levelIdToUse },
+        });
+
+        if (currentLevel) {
+          const nextLevel = await this.prisma.level.findFirst({
+            where: { order: { gt: currentLevel.order } },
+            orderBy: { order: "asc" },
+          });
+
+          if (nextLevel) {
+            const studentCurrentLevelOrder = existing.enrollment.student.levelModel?.order ?? -1;
+            if (nextLevel.order > studentCurrentLevelOrder) {
+              await this.prisma.student.update({
+                where: { id: existing.enrollment.studentId },
+                data: { level: nextLevel.name, levelId: nextLevel.id },
+              });
+            }
+          }
+        }
+      }
+    }
 
     // If skills are provided, upsert them
     if (skills && skills.length > 0) {

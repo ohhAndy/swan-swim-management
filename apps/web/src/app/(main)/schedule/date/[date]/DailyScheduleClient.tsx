@@ -76,8 +76,8 @@ export default function DailyScheduleClient({
     userRole === "supervisor" ||
     userRole === "super_admin";
 
-  const handleLevelUpdate = async (studentId: string, level: string) => {
-    await updateStudent(studentId, { level });
+  const handleLevelUpdate = async (studentId: string, levelId: string, levelName: string) => {
+    await updateStudent(studentId, { level: levelName, levelId });
     router.refresh();
   };
 

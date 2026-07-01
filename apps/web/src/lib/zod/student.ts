@@ -6,6 +6,7 @@ export const CreateStudentSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   shortCode: z.string().min(1).max(32).optional().or(z.literal("")).transform(v => v || undefined),
   level: z.string().optional(),
+  levelId: z.string().optional(),
   birthdate: z.string().optional(),
 });
 

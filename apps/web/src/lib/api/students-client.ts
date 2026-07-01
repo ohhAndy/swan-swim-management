@@ -62,6 +62,7 @@ export async function updateStudent(
     lastName?: string;
     shortCode?: string | null;
     level?: string | null;
+    levelId?: string | null;
     birthdate?: string | null;
   },
 ) {
