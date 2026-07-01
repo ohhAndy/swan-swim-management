@@ -55,7 +55,11 @@ export class ReportCardsController {
   }
 
   @Post(":id/email")
-  email(@Param("id") id: string, @Body() body: { pdfContent: string }) {
-    return this.reportCardsService.emailReportCard(id, body.pdfContent);
+  email(
+    @Param("id") id: string,
+    @Body() body: { pdfContent: string },
+    @CurrentUser() user: any,
+  ) {
+    return this.reportCardsService.emailReportCard(id, body.pdfContent, user);
   }
 }

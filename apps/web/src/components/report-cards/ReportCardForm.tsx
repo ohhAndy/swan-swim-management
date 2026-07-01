@@ -37,6 +37,7 @@ import {
   updateReportCard,
   ReportCard,
   getReportCards,
+  getReportCard,
   sendEmailReportCard,
 } from "@/lib/api/report-card-client";
 import { cn } from "@/lib/utils";
@@ -129,6 +130,9 @@ export function ReportCardForm({
 
         await sendEmailReportCard(existingReportCard.id, pdfBase64);
         toast.success("Email sent successfully!");
+        // Refetch the report card so sentAt + sentByUser are populated in the UI
+        const updated = await getReportCard(existingReportCard.id);
+        setExistingReportCard(updated);
         setStatus("sent");
       };
     } catch (error) {
@@ -270,13 +274,38 @@ export function ReportCardForm({
         <CardDescription className="flex flex-col gap-1">
           <span>Grade skills and provide feedback for this term.</span>
           {existingReportCard && (
-            <span className="text-xs text-muted-foreground mt-1">
-              Created by:{" "}
-              <strong>
-                {existingReportCard.createdByUser?.fullName || "Unknown"}
-              </strong>{" "}
-              • Last updated:{" "}
-              {new Date(existingReportCard.updatedAt).toLocaleString()}
+            <span className="text-xs text-muted-foreground mt-1 space-y-0.5 flex flex-col">
+              <span>
+                Created by:{" "}
+                <strong>
+                  {existingReportCard.createdByUser?.fullName || "Unknown"}
+                </strong>
+              </span>
+              <span>
+                Last updated:{" "}
+                {new Date(existingReportCard.updatedAt).toLocaleString()}
+                {existingReportCard.updatedByUser?.fullName && (
+                  <>
+                    {" "}by{" "}
+                    <strong>{existingReportCard.updatedByUser.fullName}</strong>
+                  </>
+                )}
+              </span>
+              {existingReportCard.status === "sent" &&
+                existingReportCard.sentAt && (
+                  <span>
+                    Sent:{" "}
+                    {new Date(existingReportCard.sentAt).toLocaleString()}
+                    {existingReportCard.sentByUser?.fullName && (
+                      <>
+                        {" "}by{" "}
+                        <strong>
+                          {existingReportCard.sentByUser.fullName}
+                        </strong>
+                      </>
+                    )}
+                  </span>
+                )}
             </span>
           )}
         </CardDescription>
@@ -476,19 +505,13 @@ export function ReportCardForm({
         )}
 
         <div className="flex justify-between items-center pt-4">
-          <PermissionGate
-            allowedRoles={["super_admin"]}
-            currentRole={userRole || "supervisor"}
+          <Button
+            variant="secondary"
+            onClick={() => setShowPreview(true)}
+            disabled={!selectedLevel}
           >
-            <Button
-              variant="secondary"
-              onClick={() => setShowPreview(true)}
-              disabled={!selectedLevel}
-            >
-              <Eye className="mr-2 h-4 w-4" /> Preview
-            </Button>
-          </PermissionGate>
-
+            <Eye className="mr-2 h-4 w-4" /> Preview
+          </Button>
           <div className="flex gap-3 ml-auto">
             {onClose && (
               <Button variant="outline" onClick={onClose}>
@@ -515,7 +538,9 @@ export function ReportCardForm({
                 <Button
                   onClick={handleEmail}
                   variant="outline"
-                  disabled={sendingEmail || !existingReportCard || status === "sent"}
+                  disabled={
+                    sendingEmail || !existingReportCard || status !== "completed"
+                  }
                 >
                   {sendingEmail ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

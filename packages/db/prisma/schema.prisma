@@ -85,6 +85,8 @@ model StaffUser {
   trialBookingsCreated         TrialBooking[]        @relation("TrialBookingCreatedBy")
   trialBookingsUpdated         TrialBooking[]        @relation("TrialBookingUpdatedBy")
   reportCardsCreated           ReportCard[]          @relation("ReportCardCreatedBy")
+  reportCardsUpdated           ReportCard[]          @relation("ReportCardUpdatedBy")
+  reportCardsSent              ReportCard[]          @relation("ReportCardSentBy")
 }
 
 model AuditLog {
@@ -580,7 +582,10 @@ model ReportCard {
   sentAt       DateTime?
   createdBy    String?
   createdByUser StaffUser?      @relation("ReportCardCreatedBy", fields: [createdBy], references: [id])
-
+  updatedBy    String?
+  updatedByUser StaffUser?      @relation("ReportCardUpdatedBy", fields: [updatedBy], references: [id])
+  sentById     String?
+  sentByUser   StaffUser?      @relation("ReportCardSentBy", fields: [sentById], references: [id])
   enrollment       Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
   level            Level?            @relation(fields: [levelId], references: [id])
   reportCardSkills ReportCardSkill[]

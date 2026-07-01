@@ -92,6 +92,16 @@ export class ReportCardsService {
             fullName: true,
           },
         },
+        updatedByUser: {
+          select: {
+            fullName: true,
+          },
+        },
+        sentByUser: {
+          select: {
+            fullName: true,
+          },
+        },
         enrollment: {
           include: {
             student: true,
@@ -116,6 +126,16 @@ export class ReportCardsService {
       where: { id },
       include: {
         createdByUser: {
+          select: {
+            fullName: true,
+          },
+        },
+        updatedByUser: {
+          select: {
+            fullName: true,
+          },
+        },
+        sentByUser: {
           select: {
             fullName: true,
           },
@@ -202,7 +222,10 @@ export class ReportCardsService {
     // First update the report card basic data
     const reportCard = await this.prisma.reportCard.update({
       where: { id },
-      data: reportCardData,
+      data: {
+        ...reportCardData,
+        updatedBy: staffUser.id,
+      },
     });
 
     // Sync report card status back to the Enrollment
@@ -285,11 +308,17 @@ export class ReportCardsService {
     });
   }
 
-  async emailReportCard(id: string, pdfContent: string) {
+  async emailReportCard(id: string, pdfContent: string, user: any) {
     const reportCard = await this.findOne(id);
     if (reportCard.status === "sent") {
       throw new ForbiddenException("This report card has already been sent.");
     }
+
+    const staffUser = await this.prisma.staffUser.findUnique({
+      where: { authId: user.authId },
+    });
+    if (!staffUser) throw new Error("Staff user not found");
+
     const student = reportCard.enrollment.student;
     const guardian = student.guardian;
 
@@ -298,7 +327,7 @@ export class ReportCardsService {
     }
 
     const termName = reportCard.enrollment.offering.term
-      ? reportCard.enrollment.offering.term["name"] // Assuming term has name, need to check if included
+      ? reportCard.enrollment.offering.term["name"]
       : "Current Term";
 
     await this.communicationsService.sendEmail({
@@ -313,10 +342,14 @@ export class ReportCardsService {
       ],
     });
 
-    // Update status to sent
+    // Update status, sentAt, and sentById
     await this.prisma.reportCard.update({
       where: { id },
-      data: { status: "sent" },
+      data: {
+        status: "sent",
+        sentAt: new Date(),
+        sentById: staffUser.id,
+      },
     });
 
     // Sync reportCardStatus to enrollment

@@ -26,6 +26,11 @@ export interface ReportCard {
   updatedAt: string;
   createdBy?: string | null;
   createdByUser?: { fullName: string } | null;
+  updatedBy?: string | null;
+  updatedByUser?: { fullName: string } | null;
+  sentAt?: string | null;
+  sentById?: string | null;
+  sentByUser?: { fullName: string } | null;
   level: Level | null;
   reportCardSkills: ReportCardSkill[];
 }
