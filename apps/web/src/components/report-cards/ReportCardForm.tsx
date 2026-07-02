@@ -55,7 +55,6 @@ import {
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ReportCardPdf } from "./ReportCardPdf";
 import { PDFViewer } from "@react-pdf/renderer";
-import { PermissionGate } from "@/components/auth/PermissionGate";
 
 interface ReportCardFormProps {
   enrollmentId: string;
@@ -286,7 +285,8 @@ export function ReportCardForm({
                 {new Date(existingReportCard.updatedAt).toLocaleString()}
                 {existingReportCard.updatedByUser?.fullName && (
                   <>
-                    {" "}by{" "}
+                    {" "}
+                    by{" "}
                     <strong>{existingReportCard.updatedByUser.fullName}</strong>
                   </>
                 )}
@@ -294,11 +294,11 @@ export function ReportCardForm({
               {existingReportCard.status === "sent" &&
                 existingReportCard.sentAt && (
                   <span>
-                    Sent:{" "}
-                    {new Date(existingReportCard.sentAt).toLocaleString()}
+                    Sent: {new Date(existingReportCard.sentAt).toLocaleString()}
                     {existingReportCard.sentByUser?.fullName && (
                       <>
-                        {" "}by{" "}
+                        {" "}
+                        by{" "}
                         <strong>
                           {existingReportCard.sentByUser.fullName}
                         </strong>
@@ -539,7 +539,9 @@ export function ReportCardForm({
                   onClick={handleEmail}
                   variant="outline"
                   disabled={
-                    sendingEmail || !existingReportCard || status !== "completed"
+                    sendingEmail ||
+                    !existingReportCard ||
+                    status !== "completed"
                   }
                 >
                   {sendingEmail ? (

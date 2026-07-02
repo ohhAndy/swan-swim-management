@@ -253,14 +253,6 @@ export const ReportCardPdf = ({
           <View style={styles.commentsSection}>
             <Text style={styles.commentsTitle}>Instructor Comments</Text>
             <Text style={styles.commentsText}>{comments}</Text>
-            <Text
-              style={[
-                styles.commentsText,
-                { marginTop: 10, fontStyle: "italic", fontSize: 10 },
-              ]}
-            >
-              - {instructorName}
-            </Text>
           </View>
         )}
 

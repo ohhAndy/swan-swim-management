@@ -29,7 +29,7 @@ export class StatisticsService {
         where: { termId },
         include: {
           enrollments: {
-            where: { status: "active" },
+            where: { status: { not: "transferred" } },
             select: {
               classRatio: true,
             },
@@ -75,10 +75,11 @@ export class StatisticsService {
 
       // 3. Levels Breakdown
       // We need to query students with active enrollments in this term
-      const activeEnrollments = await this.prisma.enrollment.findMany({
+      // Fetch all enrollments (active and inactive) to count students and levels, excluding transferred
+      const allEnrollments = await this.prisma.enrollment.findMany({
         where: {
           offering: { termId },
-          status: "active",
+          status: { not: "transferred" },
         },
         include: {
           student: {
@@ -87,13 +88,14 @@ export class StatisticsService {
         },
       });
 
+      const activeStudents = allEnrollments.filter(e => e.status === "active").length;
+      const inactiveStudents = allEnrollments.filter(e => e.status === "inactive").length;
+
       const levels: Record<string, number> = {};
-      activeEnrollments.forEach((e) => {
+      allEnrollments.forEach((e) => {
         const lvl = e.student.level || "Unknown";
         levels[lvl] = (levels[lvl] || 0) + 1;
       });
-
-      const activeStudents = activeEnrollments.length;
 
       // 4. Action Items
       // Pending makeups
@@ -128,7 +130,7 @@ export class StatisticsService {
       });
 
       return {
-        activeStudents,
+        studentCount: activeStudents + inactiveStudents,
         capacity: {
           total: totalCapacity,
           filled: totalEnrollments,

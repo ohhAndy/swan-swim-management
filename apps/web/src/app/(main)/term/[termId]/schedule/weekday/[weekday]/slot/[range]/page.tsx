@@ -11,10 +11,19 @@ import { AddClassDialog } from "@/components/schedule/AddClassDialog";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { SlotNavigator } from "@/components/schedule/SlotNavigator";
 import { formatTimeRange } from "@/lib/schedule/slots";
-import { Metadata } from "next";
+import { DAY_LABELS } from "@/lib/schedule/slots";
 
-export const metadata: Metadata = {
-  title: "Class Slot | Swan Swim Management",
+// Dynamic metadata based on numeric weekday
+export const generateMetadata = async ({
+  params,
+}: {
+  params: Promise<{ weekday: string }>;
+}) => {
+  const { weekday } = await params;
+  const weekdayName = DAY_LABELS[Number(weekday)] ?? `Day ${weekday}`;
+  return {
+    title: `${weekdayName} | Swan Swim Management`,
+  };
 };
 
 function parseRange(range: string) {

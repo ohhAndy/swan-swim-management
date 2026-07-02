@@ -1,9 +1,11 @@
 import { MakeupLite } from "@school/shared-types";
 import { LEVEL_MAP } from "@/lib/constants/levels";
+import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { getMakeUpStatusColour, calcAge } from "@/lib/utils/student-helpers";
@@ -121,6 +123,12 @@ export function MakeupRow({
                     {option.label}
                   </DropdownMenuItem>
                 ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href={`/students/${makeUpStudent.studentId}`}>
+                    View Student Profile
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           );

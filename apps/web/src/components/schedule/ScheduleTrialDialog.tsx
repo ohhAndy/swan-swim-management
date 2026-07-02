@@ -56,8 +56,8 @@ export function ScheduleTrialDialog({
     }
 
     const age = parseInt(childAge);
-    if (isNaN(age) || age < 0 || age > 18) {
-      setError("Please enter a valid age (0-18)");
+    if (isNaN(age) || age < 0 || age > 100) {
+      setError("Please enter a valid age (0-100)");
       return;
     }
 

@@ -3,7 +3,7 @@ import { getHeaders } from "./headers";
 const API = process.env.NEXT_PUBLIC_API_URL!;
 
 export interface DashboardStats {
-  activeStudents: number;
+  studentCount: number;
   capacity: {
     total: number;
     filled: number;

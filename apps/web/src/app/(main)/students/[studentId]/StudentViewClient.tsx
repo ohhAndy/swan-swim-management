@@ -847,7 +847,7 @@ export default function StudentViewClient({
                           <div>
                             <h4 className="font-medium">
                               <Link
-                                href={`/term/${enrollment.offering.termId}/schedule/weekday/${enrollment.offering.weekday}/slot/${enrollment.offering.startTime}-${enrollment.offering.endTime}`}
+                                href={`/term/${enrollment.offering.termId}/schedule/weekday/${enrollment.offering.weekday}/slot/${enrollment.offering.startTime}-${enrollment.offering.endTime}?highlight=${enrollment.offering.id}`}
                                 className="hover:underline text-blue-600"
                               >
                                 {enrollment.offering.title}
@@ -1096,8 +1096,13 @@ export default function StudentViewClient({
                       <Card key={enrollment.id}>
                         <CardContent className="p-4 flex flex-col sm:flex-row justify-between">
                           <div>
-                            <h4 className="font-medium text-gray-700">
-                              {enrollment.offering.title}
+                            <h4 className="font-medium">
+                              <Link
+                                href={`/term/${enrollment.offering.termId}/schedule/weekday/${enrollment.offering.weekday}/slot/${enrollment.offering.startTime}-${enrollment.offering.endTime}?highlight=${enrollment.offering.id}`}
+                                className="hover:underline text-blue-600"
+                              >
+                                {enrollment.offering.title}
+                              </Link>
                             </h4>
                             <p className="text-sm text-gray-500">
                               {enrollment.offering.term.name} •{" "}

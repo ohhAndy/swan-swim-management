@@ -2,10 +2,17 @@ import { notFound, redirect } from "next/navigation";
 import { getStudentById } from "@/lib/api/students";
 import StudentViewClient from "./StudentViewClient";
 import { getCurrentUser } from "@/lib/auth/user";
-import { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Student Details | Swan Swim Management",
+export const generateMetadata = async ({
+  params,
+}: {
+  params: Promise<{ studentId: string }>;
+}) => {
+  const { studentId } = await params;
+  const student = await getStudentById(studentId);
+  return {
+    title: `${student.firstName} ${student.lastName} | Swan Swim Management`,
+  };
 };
 
 export default async function StudentPage({

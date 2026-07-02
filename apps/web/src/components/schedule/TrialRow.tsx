@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { TrialLite } from "@school/shared-types";
 import {
   DropdownMenu,
@@ -42,9 +43,9 @@ export function TrialRow({
   return (
     <div className="contents">
       <div className="px-2 py-1 text-center bg-purple-50"></div>
-      <div className="px-2 py-1 font-bold text-center bg-purple-50 text-md text-gray-600">
+      <Link href="/trials" className="px-2 py-1 font-bold text-center bg-purple-50 text-md text-gray-600 block text-center">
         {rowIndex === 0 ? "Trials" : ""}
-      </div>
+      </Link>
       <div className="px-2 py-1 text-center bg-purple-50"></div>
       <div className="px-2 py-1 text-center bg-purple-50"></div>
       <div className="px-2 py-1 text-center bg-purple-50"></div>
