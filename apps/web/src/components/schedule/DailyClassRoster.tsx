@@ -170,7 +170,7 @@ export function DailyClassRoster({
                   ) : (
                     <span
                       className={
-                        item.enrollmentStatus !== "active"
+                        item.type === "student" && item.enrollmentStatus !== "active"
                           ? "text-muted-foreground line-through"
                           : ""
                       }
@@ -467,7 +467,7 @@ export function DailyClassRoster({
                       ) : (
                         <span
                           className={
-                            item.enrollmentStatus !== "active"
+                            item.type === "student" && item.enrollmentStatus !== "active"
                               ? "text-muted-foreground line-through"
                               : ""
                           }
