@@ -10,7 +10,9 @@ import {
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser, CurrentStaffUser } from "../auth/current-user.decorator";
+import { CurrentUser } from "../auth/current-user.decorator";
+import { AuthenticatedUser } from "../auth/auth.types";
+
 @Controller("attendance")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
 export class AttendanceController {
@@ -21,7 +23,7 @@ export class AttendanceController {
   async upsert(
     @Body(new ZodValidationPipe(UpsertAttendanceSchema))
     body: UpsertAttendanceInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.attendanceService.upsert(body, user);
   }
@@ -31,7 +33,7 @@ export class AttendanceController {
   async updateMakeUp(
     @Body(new ZodValidationPipe(UpdateMakeupAttendanceSchema))
     body: UpdateMakeupAttendanceInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.attendanceService.updateMakeup(body, user);
   }

@@ -22,7 +22,8 @@ import {
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser, CurrentStaffUser } from "../auth/current-user.decorator";
+import { CurrentUser } from "../auth/current-user.decorator";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Controller("guardians")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -46,7 +47,7 @@ export class GuardiansController {
   @Roles("super_admin", "admin", "manager")
   async create(
     @Body(new ZodValidationPipe(createGuardianSchema)) body: CreateGuardianDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.guardiansService.create(body, user);
   }
@@ -56,14 +57,17 @@ export class GuardiansController {
   async update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(updateGuardianSchema)) body: UpdateGuardianDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.guardiansService.update(id, body, user);
   }
 
   @Delete(":id")
   @Roles("super_admin", "admin", "manager")
-  async delete(@Param("id") id: string, @CurrentUser() user: any) {
+  async delete(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.guardiansService.delete(id, user);
   }
 }

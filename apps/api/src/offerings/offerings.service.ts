@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { calculateClassUsage } from "../common/capacity.utils";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class OfferingsService {
@@ -14,7 +15,7 @@ export class OfferingsService {
   async updateOfferingInfo(
     offeringId: string,
     body: { title: string },
-    user: any
+    user: AuthenticatedUser,
   ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
@@ -57,7 +58,7 @@ export class OfferingsService {
   async getOfferingsForTransfer(
     termId: string,
     excludeOfferingId: string,
-    level?: string
+    level?: string,
   ) {
     const offerings = await this.prisma.classOffering.findMany({
       where: {
@@ -90,7 +91,7 @@ export class OfferingsService {
       const { filled, effectiveCapacity } = calculateClassUsage(
         o.enrollments,
         o.instructors.length,
-        o.capacity
+        o.capacity,
       );
       return {
         ...o,
@@ -112,15 +113,21 @@ export class OfferingsService {
       notes?: string;
       sessions?: { date: string; startTime: string; endTime: string }[];
     },
-    user: any
+    user: AuthenticatedUser,
   ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
     if (!staffUser) return;
 
-    if (data.type === "flexible" && staffUser.role !== "super_admin" && staffUser.role !== "admin") {
-      throw new ForbiddenException("Only admins can create flexible short courses");
+    if (
+      data.type === "flexible" &&
+      staffUser.role !== "super_admin" &&
+      staffUser.role !== "admin"
+    ) {
+      throw new ForbiddenException(
+        "Only admins can create flexible short courses",
+      );
     }
 
     const term = await this.prisma.term.findUnique({
@@ -172,7 +179,10 @@ export class OfferingsService {
         }
       } else {
         // We need to find all dates in the term that match this weekday
-        if (data.weekday === undefined) throw new BadRequestException("Weekday is required for regular offerings");
+        if (data.weekday === undefined)
+          throw new BadRequestException(
+            "Weekday is required for regular offerings",
+          );
         const start = new Date(term.startDate);
         const end = new Date(term.endDate);
         end.setUTCHours(23, 59, 59, 999);
@@ -222,7 +232,7 @@ export class OfferingsService {
     });
   }
 
-  async deleteOffering(offeringId: string, user: any) {
+  async deleteOffering(offeringId: string, user: AuthenticatedUser) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
@@ -233,7 +243,7 @@ export class OfferingsService {
 
     if (enrollments > 0) {
       throw new BadRequestException(
-        "Cannot delete offering with active enrollments."
+        "Cannot delete offering with active enrollments.",
       );
     }
 

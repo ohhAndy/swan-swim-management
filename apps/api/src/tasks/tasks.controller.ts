@@ -15,6 +15,7 @@ import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { CurrentUser } from "../auth/current-user.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Controller("tasks")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -23,19 +24,22 @@ export class TasksController {
 
   @Post()
   @Roles("super_admin", "admin", "manager", "supervisor")
-  create(@Body() createTaskDto: CreateTaskDto, @CurrentUser() user: any) {
+  create(
+    @Body() createTaskDto: CreateTaskDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.tasksService.create(createTaskDto, user);
   }
 
   @Get()
   @Roles("super_admin", "admin", "manager", "supervisor")
-  findAll(@CurrentUser() user: any) {
+  findAll(@CurrentUser() user: AuthenticatedUser) {
     return this.tasksService.findAll(user);
   }
 
   @Get(":id")
   @Roles("super_admin", "admin", "manager", "supervisor")
-  findOne(@Param("id") id: string, @CurrentUser() user: any) {
+  findOne(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.tasksService.findOne(id, user);
   }
 
@@ -44,14 +48,14 @@ export class TasksController {
   update(
     @Param("id") id: string,
     @Body() updateTaskDto: UpdateTaskDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.tasksService.update(id, updateTaskDto, user);
   }
 
   @Delete(":id")
   @Roles("super_admin", "admin", "manager")
-  remove(@Param("id") id: string, @CurrentUser() user: any) {
+  remove(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.tasksService.remove(id, user);
   }
 }

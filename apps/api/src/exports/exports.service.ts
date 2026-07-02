@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import * as ExcelJS from "exceljs";
+import { Prisma, PaymentMethod, InvoiceStatus } from "@prisma/client";
 
 @Injectable()
 export class ExportsService {
@@ -12,7 +13,7 @@ export class ExportsService {
     method?: string,
     query?: string,
   ) {
-    const where: any = {};
+    const where: Prisma.PaymentWhereInput = {};
 
     if (startDate && endDate) {
       where.paymentDate = {
@@ -30,7 +31,7 @@ export class ExportsService {
     }
 
     if (method && method !== "all") {
-      where.paymentMethod = method;
+      where.paymentMethod = method as PaymentMethod;
     }
 
     if (query) {
@@ -92,7 +93,7 @@ export class ExportsService {
     status?: string,
     query?: string,
   ) {
-    const where: any = {};
+    const where: Prisma.InvoiceWhereInput = {};
 
     if (startDate && endDate) {
       where.createdAt = {
@@ -110,7 +111,7 @@ export class ExportsService {
     }
 
     if (status && status !== "all") {
-      where.status = status;
+      where.status = status as InvoiceStatus;
     }
 
     if (query) {

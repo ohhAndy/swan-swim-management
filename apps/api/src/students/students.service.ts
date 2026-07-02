@@ -10,6 +10,7 @@ import {
   UpdateStudentDto,
 } from "./dto/schemas.dto";
 import { Prisma } from "@prisma/client";
+import { AuthenticatedUser, StaffUserWithLocations } from "../auth/auth.types";
 
 @Injectable()
 export class StudentsService {
@@ -124,7 +125,15 @@ export class StudentsService {
           birthdate: true,
           level: true,
           levelId: true,
-          levelModel: { select: { id: true, name: true, category: true, color: true, order: true } },
+          levelModel: {
+            select: {
+              id: true,
+              name: true,
+              category: true,
+              color: true,
+              order: true,
+            },
+          },
           guardianId: true,
           guardian: {
             select: { id: true, fullName: true, email: true, phone: true },
@@ -138,7 +147,7 @@ export class StudentsService {
     return { total, page, pageSize, items };
   }
 
-  async getById(id: string, staffUser?: any) {
+  async getById(id: string, staffUser?: StaffUserWithLocations) {
     await this.deactivateExpiredEnrollments();
     const student = await this.prisma.student.findUnique({
       where: { id },
@@ -150,7 +159,15 @@ export class StudentsService {
         birthdate: true,
         level: true,
         levelId: true,
-        levelModel: { select: { id: true, name: true, category: true, color: true, order: true } },
+        levelModel: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            color: true,
+            order: true,
+          },
+        },
         notes: true,
         guardianId: true,
         guardian: {
@@ -176,6 +193,7 @@ export class StudentsService {
                   select: {
                     id: true,
                     name: true,
+                    endDate: true,
                     location: {
                       select: {
                         name: true,
@@ -331,7 +349,7 @@ export class StudentsService {
     });
     if (!student) throw new NotFoundException("Student not found");
 
-    const isEnrollmentActive = (e: any) => {
+    const isEnrollmentActive = (e: NonNullable<typeof student>["enrollments"][number]) => {
       if (e.status !== "active") return false;
       if (!e.offering?.term?.endDate) return true;
       const now = new Date();
@@ -363,7 +381,7 @@ export class StudentsService {
     return student;
   }
 
-  async create(dto: CreateStudentDto, user: any) {
+  async create(dto: CreateStudentDto, user: AuthenticatedUser) {
     const { guardianId, shortCode, firstName, lastName, level, birthdate } =
       dto;
 
@@ -428,7 +446,7 @@ export class StudentsService {
     });
   }
 
-  async update(id: string, dto: UpdateStudentDto, user: any) {
+  async update(id: string, dto: UpdateStudentDto, user: AuthenticatedUser) {
     await this.ensureExists(id);
 
     const staffUser = await this.prisma.staffUser.findUnique({
@@ -466,7 +484,9 @@ export class StudentsService {
               : {}),
             ...(dto.lastName !== undefined ? { lastName: dto.lastName } : {}),
             ...(dto.level !== undefined ? { level: dto.level } : {}),
-            ...(dto.levelId !== undefined ? { levelId: dto.levelId ?? null } : {}),
+            ...(dto.levelId !== undefined
+              ? { levelId: dto.levelId ?? null }
+              : {}),
             ...(dto.birthdate !== undefined
               ? { birthdate: dto.birthdate }
               : {}),
@@ -489,7 +509,7 @@ export class StudentsService {
         });
 
         // Build changes object only for fields that actually changed
-        const changes: Record<string, { from: any; to: any }> = {};
+        const changes: Record<string, { from: unknown; to: unknown }> = {};
 
         if (
           dto.firstName !== undefined &&
@@ -533,7 +553,7 @@ export class StudentsService {
               action: "Update Student",
               entityType: "Student",
               entityId: id,
-              changes,
+              changes: changes as Prisma.InputJsonValue,
               metadata: {
                 studentName: `${updated.firstName} ${updated.lastName}`,
                 shortCode: updated.shortCode,
@@ -543,10 +563,7 @@ export class StudentsService {
         }
 
         // Track notes change in audit log changes object
-        if (
-          dto.notes !== undefined &&
-          dto.notes !== existing.notes
-        ) {
+        if (dto.notes !== undefined && dto.notes !== existing.notes) {
           changes.notes = { from: existing.notes, to: dto.notes };
         }
 
@@ -555,7 +572,7 @@ export class StudentsService {
     }
   }
 
-  async updateNotes(studentId: string, notes: string, user: any) {
+  async updateNotes(studentId: string, notes: string, user: AuthenticatedUser) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
@@ -563,7 +580,13 @@ export class StudentsService {
 
     const student = await this.prisma.student.findUnique({
       where: { id: studentId },
-      select: { id: true, firstName: true, lastName: true, shortCode: true, notes: true },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        shortCode: true,
+        notes: true,
+      },
     });
     if (!student) throw new NotFoundException("Student not found");
 
@@ -591,7 +614,7 @@ export class StudentsService {
     return { success: true, notes: updated.notes };
   }
 
-  async delete(id: string, user: any) {
+  async delete(id: string, user: AuthenticatedUser) {
     await this.ensureExists(id);
 
     const staffUser = await this.prisma.staffUser.findUnique({

@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -152,7 +153,7 @@ export class AnalyticsService {
     startDate?: string,
     endDate?: string,
   ) {
-    const whereClause: any = {
+    const whereClause: Prisma.PaymentWhereInput = {
       invoice: {
         lineItems: {
           some: {
@@ -170,13 +171,13 @@ export class AnalyticsService {
 
     if (startDate) {
       whereClause.paymentDate = {
-        ...whereClause.paymentDate,
+        ...(whereClause.paymentDate as object),
         gte: new Date(startDate),
       };
     }
     if (endDate) {
       whereClause.paymentDate = {
-        ...whereClause.paymentDate,
+        ...(whereClause.paymentDate as object),
         lte: new Date(endDate),
       };
     }

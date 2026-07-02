@@ -1,13 +1,15 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { Prisma } from "@prisma/client";
 import { CreateTaskDto } from "./dto/create-task.dto";
 import { UpdateTaskDto } from "./dto/update-task.dto";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class TasksService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createTaskDto: CreateTaskDto, user: any) {
+  async create(createTaskDto: CreateTaskDto, user: AuthenticatedUser) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
@@ -49,7 +51,7 @@ export class TasksService {
     });
   }
 
-  async findAll(user: any) {
+  async findAll(user: AuthenticatedUser) {
     // We still use the ID passed from controller (which comes from auth token) for filtering
     // But we might want to look up the StaffUser ID if userId is AuthID?
     // The previous controller logic passed req.user.id which is likely the AuthID.
@@ -67,7 +69,7 @@ export class TasksService {
     // Let's assume return empty for safety
     if (!staffUser) return [];
 
-    const whereClause: any = {};
+    const whereClause: Prisma.TaskWhereInput = {};
 
     if (staffUser.role !== "admin" && staffUser.role !== "manager") {
       whereClause.OR = [
@@ -88,7 +90,7 @@ export class TasksService {
     });
   }
 
-  async findOne(id: string, user: any) {
+  async findOne(id: string, user: AuthenticatedUser) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
@@ -119,7 +121,11 @@ export class TasksService {
     return task;
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto, user: any) {
+  async update(
+    id: string,
+    updateTaskDto: UpdateTaskDto,
+    user: AuthenticatedUser,
+  ) {
     // Ideally we should pass the user object here too for auditing
     // But the current signature usually only has (id, dto).
     // The controller needs to be updated to pass the user.
@@ -172,7 +178,7 @@ export class TasksService {
           entityId: task.id,
           metadata: {
             title: task.title,
-            changes: updateTaskDto as any,
+            changes: updateTaskDto as Prisma.InputJsonValue,
           },
         },
       });
@@ -181,7 +187,7 @@ export class TasksService {
     });
   }
 
-  async remove(id: string, user: any) {
+  async remove(id: string, user: AuthenticatedUser) {
     // Similarly, need `user` for auditing
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },

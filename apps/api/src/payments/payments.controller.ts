@@ -18,6 +18,7 @@ import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentUser } from "../auth/current-user.decorator";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Controller("payments")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -49,7 +50,7 @@ export class PaymentsController {
   @Roles("super_admin", "admin", "manager")
   create(
     @Body() createPaymentDto: CreatePaymentDto,
-    @CurrentUser() staffUser: any,
+    @CurrentUser() staffUser: AuthenticatedUser,
   ) {
     return this.paymentsService.create(createPaymentDto, staffUser);
   }
@@ -71,7 +72,7 @@ export class PaymentsController {
   // Delete payment - Admin only
   @Delete(":id")
   @Roles("super_admin", "admin")
-  remove(@Param("id") id: string, @CurrentUser() staffUser: any) {
+  remove(@Param("id") id: string, @CurrentUser() staffUser: AuthenticatedUser) {
     return this.paymentsService.remove(id, staffUser);
   }
 
@@ -81,7 +82,7 @@ export class PaymentsController {
   update(
     @Param("id") id: string,
     @Body() updatePaymentDto: UpdatePaymentDto,
-    @CurrentUser() staffUser: any,
+    @CurrentUser() staffUser: AuthenticatedUser,
   ) {
     return this.paymentsService.update(id, updatePaymentDto, staffUser);
   }

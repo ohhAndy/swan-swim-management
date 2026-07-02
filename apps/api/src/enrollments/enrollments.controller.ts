@@ -25,6 +25,7 @@ import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentUser } from "../auth/current-user.decorator";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Controller("enrollments")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -42,7 +43,7 @@ export class EnrollmentsController {
   async enrollWithSkips(
     @Body(new ZodValidationPipe(EnrollWithSkipSchema))
     body: EnrollWithSkipInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.enrollmentsService.enrollWithSkips(body, user);
   }
@@ -53,7 +54,7 @@ export class EnrollmentsController {
     @Param("id") id: string,
     @Body(new ZodValidationPipe(transferEnrollmentSchema))
     body: TransferEnrollmentDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.enrollmentsService.transferEnrollment(id, body, user);
   }
@@ -62,7 +63,7 @@ export class EnrollmentsController {
   @Roles("super_admin", "admin")
   async bulkTransferEnrollments(
     @Body(new ZodValidationPipe(bulkTransferSchema)) body: BulkTransferDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.enrollmentsService.bulkTransfer(body.transfers, user);
   }
@@ -71,8 +72,8 @@ export class EnrollmentsController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   async updateRemarks(
     @Param("id") id: string,
-    @Body() body: any,
-    @CurrentUser() user: any,
+    @Body() body: { remarks: string },
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.enrollmentsService.updateRemarks(id, body, user);
   }
@@ -82,7 +83,7 @@ export class EnrollmentsController {
   async updateReportCardStatus(
     @Param("id") id: string,
     @Body() body: { status: string },
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.enrollmentsService.updateReportCardStatus(
       id,
@@ -96,7 +97,7 @@ export class EnrollmentsController {
   async updateSkips(
     @Param("id") id: string,
     @Body() body: { skippedSessionIds: string[] },
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.enrollmentsService.updateSkips(
       id,
@@ -106,7 +107,10 @@ export class EnrollmentsController {
   }
   @Delete(":id")
   @Roles("super_admin", "admin", "manager")
-  async deleteEnrollment(@Param("id") id: string, @CurrentUser() user: any) {
+  async deleteEnrollment(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.enrollmentsService.deleteEnrollment(id, user);
   }
 }

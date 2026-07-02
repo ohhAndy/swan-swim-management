@@ -3,10 +3,13 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
+import { Prisma, PaymentMethod } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreatePaymentDto } from "./dto/create-payment.dto";
+import { UpdatePaymentDto } from "./dto/update-payment.dto";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class PaymentsService {
@@ -26,7 +29,7 @@ export class PaymentsService {
   ) {
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: Prisma.PaymentWhereInput = {};
 
     if (startDate && endDate) {
       where.paymentDate = {
@@ -44,7 +47,7 @@ export class PaymentsService {
     }
 
     if (method && method !== "all") {
-      where.paymentMethod = method;
+      where.paymentMethod = method as PaymentMethod;
     }
 
     if (query) {
@@ -89,7 +92,7 @@ export class PaymentsService {
   }
 
   // Record a payment
-  async create(createPaymentDto: CreatePaymentDto, user: any) {
+  async create(createPaymentDto: CreatePaymentDto, user: AuthenticatedUser) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
@@ -118,7 +121,6 @@ export class PaymentsService {
     );
 
     // Removed strict limits to allow overpayments and free refunds as requested
-    const newTotal = currentAmountPaid + createPaymentDto.amount;
 
     // Create payment
     const payment = await this.prisma.payment.create({
@@ -205,7 +207,7 @@ export class PaymentsService {
   }
 
   // Delete payment (admin only, recalculates invoice status)
-  async remove(id: string, user?: any) {
+  async remove(id: string, user?: AuthenticatedUser) {
     const payment = await this.prisma.payment.findUnique({
       where: { id },
       include: { invoice: { include: { payments: true } } },
@@ -268,7 +270,7 @@ export class PaymentsService {
   }
 
   // Update payment
-  async update(id: string, updatePaymentDto: any, user: any) {
+  async update(id: string, updatePaymentDto: UpdatePaymentDto, user: AuthenticatedUser) {
     const payment = await this.prisma.payment.findUnique({
       where: { id },
       include: { invoice: { include: { payments: true } } },

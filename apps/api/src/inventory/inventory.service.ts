@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { Prisma } from "@prisma/client";
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class InventoryService {
@@ -50,7 +51,7 @@ export class InventoryService {
     return item;
   }
 
-  async create(data: Prisma.InventoryItemCreateInput, user: any) {
+  async create(data: Prisma.InventoryItemCreateInput, user: AuthenticatedUser) {
     const item = await this.prisma.inventoryItem.create({
       data,
     });
@@ -65,14 +66,18 @@ export class InventoryService {
         action: "create",
         entityType: "inventory_item",
         entityId: item.id,
-        changes: data as any,
+        changes: data as Prisma.InputJsonValue,
       });
     }
 
     return item;
   }
 
-  async update(id: string, data: Prisma.InventoryItemUpdateInput, user: any) {
+  async update(
+    id: string,
+    data: Prisma.InventoryItemUpdateInput,
+    user: AuthenticatedUser,
+  ) {
     const item = await this.prisma.inventoryItem.update({
       where: { id },
       data,
@@ -88,14 +93,14 @@ export class InventoryService {
         action: "update",
         entityType: "inventory_item",
         entityId: item.id,
-        changes: data as any,
+        changes: data as Prisma.InputJsonValue,
       });
     }
 
     return item;
   }
 
-  async delete(id: string, user: any) {
+  async delete(id: string, user: AuthenticatedUser) {
     const item = await this.prisma.inventoryItem.findUnique({ where: { id } });
     if (!item) throw new NotFoundException("Item not found");
 

@@ -37,8 +37,8 @@ export class AuditLogsService {
     action: string;
     entityType: string;
     entityId: string;
-    changes?: Record<string, any>;
-    metadata?: Record<string, any>;
+    changes?: Prisma.InputJsonValue;
+    metadata?: Prisma.InputJsonValue;
   }) {
     return this.prisma.auditLog.create({
       data: {

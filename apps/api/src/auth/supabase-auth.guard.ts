@@ -3,7 +3,6 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
-  ForbiddenException,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { createClient } from "@supabase/supabase-js";
@@ -53,7 +52,7 @@ export class SupabaseAuthGuard implements CanActivate {
       // Attach user to request
       request.user = { authId: user.id, email: user.email };
       return true;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException("Invalid token");
     }
   }

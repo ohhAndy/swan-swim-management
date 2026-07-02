@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuthenticatedUser } from "../auth/auth.types";
 import {
   UpdateMakeupAttendanceInput,
   UpsertAttendanceInput,
@@ -9,7 +10,7 @@ import {
 export class AttendanceService {
   constructor(private prisma: PrismaService) {}
 
-  async upsert(data: UpsertAttendanceInput, user: any) {
+  async upsert(data: UpsertAttendanceInput, user: AuthenticatedUser) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
@@ -109,7 +110,10 @@ export class AttendanceService {
     return { success: true };
   }
 
-  async updateMakeup(data: UpdateMakeupAttendanceInput, user: any) {
+  async updateMakeup(
+    data: UpdateMakeupAttendanceInput,
+    user: AuthenticatedUser,
+  ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });

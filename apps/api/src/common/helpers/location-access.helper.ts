@@ -1,7 +1,8 @@
 import { ForbiddenException, BadRequestException } from "@nestjs/common";
+import { StaffUserWithLocations } from "../../auth/auth.types";
 
 export function validateLocationAccess(
-  staffUser: any, // Typed as any to match current usage, refine if StaffUser type available
+  staffUser: StaffUserWithLocations,
   locationId?: string,
 ): string | null {
   // 1. Admin Bypass
@@ -19,7 +20,7 @@ export function validateLocationAccess(
 
   // 3. Validate Access
   const hasAccess = staffUser.accessibleLocations?.some(
-    (l: any) => l.id === locationId,
+    (l) => l.id === locationId,
   );
 
   if (!hasAccess) {

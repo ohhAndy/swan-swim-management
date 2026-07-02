@@ -10,11 +10,11 @@ import {
   Delete,
 } from "@nestjs/common";
 import { OfferingsService } from "./offerings.service";
-import { ZodValidationPipe } from "nestjs-zod";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser, CurrentStaffUser } from "../auth/current-user.decorator";
+import { CurrentUser } from "../auth/current-user.decorator";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Controller("offerings")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -39,7 +39,7 @@ export class OfferingsController {
   async updateOfferingInfo(
     @Param("offeringId") offeringId: string,
     @Body() body: { title: string },
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.offeringsService.updateOfferingInfo(offeringId, body, user);
   }
@@ -59,7 +59,7 @@ export class OfferingsController {
       notes?: string;
       sessions?: { date: string; startTime: string; endTime: string }[];
     },
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.offeringsService.createOffering(body, user);
   }
@@ -68,7 +68,7 @@ export class OfferingsController {
   @Roles("super_admin", "admin", "manager")
   async deleteOffering(
     @Param("offeringId") offeringId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.offeringsService.deleteOffering(offeringId, user);
   }

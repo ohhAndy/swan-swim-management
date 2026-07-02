@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { countUsedSeatsForSession } from "../sessions/sessions.helpers";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class MakeupsService {
@@ -14,7 +15,7 @@ export class MakeupsService {
       notes?: string;
       classRatio?: string;
     },
-    user: any,
+    user: AuthenticatedUser,
   ) {
     const { studentId, classSessionId, notes } = input;
 
@@ -40,7 +41,9 @@ export class MakeupsService {
       });
       if (!session) throw new BadRequestException("Session not found");
       if (session.offering.type === "flexible") {
-        throw new BadRequestException("Make-ups are not allowed for flexible courses");
+        throw new BadRequestException(
+          "Make-ups are not allowed for flexible courses",
+        );
       }
 
       // Validate Location Access
@@ -80,7 +83,7 @@ export class MakeupsService {
         select: { id: true, status: true, student: true, classSession: true },
       });
 
-      const audit = await tx.auditLog.create({
+      await tx.auditLog.create({
         data: {
           staffId: staffUser.id,
           action: "Schedule Makeup",

@@ -15,6 +15,7 @@ import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentUser } from "../auth/current-user.decorator";
 import { Prisma } from "@prisma/client";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Controller("inventory")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -25,7 +26,7 @@ export class InventoryController {
   @Roles("super_admin", "admin", "manager")
   create(
     @Body() data: Prisma.InventoryItemCreateInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.inventoryService.create(data, user);
   }
@@ -68,14 +69,14 @@ export class InventoryController {
   update(
     @Param("id") id: string,
     @Body() data: Prisma.InventoryItemUpdateInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.inventoryService.update(id, data, user);
   }
 
   @Delete(":id")
   @Roles("super_admin", "admin")
-  remove(@Param("id") id: string, @CurrentUser() user: any) {
+  remove(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.inventoryService.delete(id, user);
   }
 }

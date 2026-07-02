@@ -4,6 +4,7 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class ClassInstructorsService {
@@ -12,7 +13,7 @@ export class ClassInstructorsService {
   async assignInstructor(
     classOfferingId: string,
     instructorId: string,
-    assignedByKey: any
+    assignedByKey: AuthenticatedUser,
   ) {
     const user = await this.prisma.staffUser.findUnique({
       where: { authId: assignedByKey.authId },
@@ -50,7 +51,7 @@ export class ClassInstructorsService {
 
       if (existing) {
         throw new ConflictException(
-          "This instructor is already assigned to this class"
+          "This instructor is already assigned to this class",
         );
       }
 
@@ -90,7 +91,7 @@ export class ClassInstructorsService {
     });
   }
 
-  async removeInstructor(assignmentId: string, removedBy: any) {
+  async removeInstructor(assignmentId: string, removedBy: AuthenticatedUser) {
     const user = await this.prisma.staffUser.findUnique({
       where: { authId: removedBy.authId },
     });
@@ -117,7 +118,7 @@ export class ClassInstructorsService {
 
     if (assignment.removedAt) {
       throw new ConflictException(
-        "This instructor assignment is already removed"
+        "This instructor assignment is already removed",
       );
     }
 

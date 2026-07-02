@@ -24,6 +24,7 @@ import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentUser, CurrentStaffUser } from "../auth/current-user.decorator";
+import { AuthenticatedUser, StaffUserWithLocations } from "../auth/auth.types";
 
 @Controller("students")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -39,7 +40,10 @@ export class StudentsController {
   }
 
   @Get(":id")
-  async getById(@Param("id") id: string, @CurrentStaffUser() staffUser: any) {
+  async getById(
+    @Param("id") id: string,
+    @CurrentStaffUser() staffUser: StaffUserWithLocations,
+  ) {
     return this.studentsService.getById(id, staffUser);
   }
 
@@ -47,7 +51,7 @@ export class StudentsController {
   @Roles("super_admin", "admin", "manager")
   async create(
     @Body(new ZodValidationPipe(createStudentSchema)) body: CreateStudentDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.studentsService.create(body, user);
   }
@@ -57,7 +61,7 @@ export class StudentsController {
   async update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(updateStudentSchema)) body: UpdateStudentDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.studentsService.update(id, body, user);
   }
@@ -67,14 +71,17 @@ export class StudentsController {
   async updateNotes(
     @Param("id") id: string,
     @Body() body: { notes: string },
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.studentsService.updateNotes(id, body.notes, user);
   }
 
   @Delete(":id")
   @Roles("super_admin", "admin", "manager")
-  async delete(@Param("id") id: string, @CurrentUser() user: any) {
+  async delete(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return this.studentsService.delete(id, user);
   }
 }

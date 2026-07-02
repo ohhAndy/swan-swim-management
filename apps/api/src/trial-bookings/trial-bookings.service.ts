@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { TrialStatus } from "@prisma/client";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class TrialBookingsService {
@@ -17,7 +18,7 @@ export class TrialBookingsService {
     parentPhone: string,
     notes: string | null,
     classRatio: string,
-    createdBy: any,
+    createdBy: AuthenticatedUser,
   ) {
     const user = await this.prisma.staffUser.findUnique({
       where: { authId: createdBy.authId },
@@ -29,16 +30,18 @@ export class TrialBookingsService {
       where: { id: classSessionId },
       include: {
         offering: {
-          select: { type: true }
-        }
-      }
+          select: { type: true },
+        },
+      },
     });
 
     if (!session) {
       throw new NotFoundException("Class session not found");
     }
     if (session.offering.type === "flexible") {
-      throw new BadRequestException("Trials are not allowed for flexible courses");
+      throw new BadRequestException(
+        "Trials are not allowed for flexible courses",
+      );
     }
 
     if (childAge < 0 || childAge > 18) {
@@ -102,7 +105,7 @@ export class TrialBookingsService {
   async updateTrialStatus(
     trialId: string,
     status: TrialStatus,
-    updatedBy: any,
+    updatedBy: AuthenticatedUser,
   ) {
     const user = await this.prisma.staffUser.findUnique({
       where: { authId: updatedBy.authId },
@@ -199,7 +202,7 @@ export class TrialBookingsService {
   async updateTrialNotes(
     trialId: string,
     notes: string | null,
-    updatedBy: any,
+    updatedBy: AuthenticatedUser,
   ) {
     const user = await this.prisma.staffUser.findUnique({
       where: { authId: updatedBy.authId },
@@ -263,8 +266,11 @@ export class TrialBookingsService {
     });
   }
 
-
-  async convertToStudent(trialId: string, studentId: string, convertedBy: any) {
+  async convertToStudent(
+    trialId: string,
+    studentId: string,
+    convertedBy: AuthenticatedUser,
+  ) {
     const user = await this.prisma.staffUser.findUnique({
       where: { authId: convertedBy.authId },
     });
@@ -334,7 +340,7 @@ export class TrialBookingsService {
     });
   }
 
-  async deleteTrialBooking(trialId: string, deletedBy: any) {
+  async deleteTrialBooking(trialId: string, deletedBy: AuthenticatedUser) {
     const user = await this.prisma.staffUser.findUnique({
       where: { authId: deletedBy.authId },
     });

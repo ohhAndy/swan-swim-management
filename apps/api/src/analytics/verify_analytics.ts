@@ -1,3 +1,4 @@
+import { PrismaService } from "../prisma/prisma.service";
 import { AnalyticsService } from "./analytics.service";
 
 // Mock PrismaService
@@ -14,7 +15,7 @@ const mockPrismaService = {
   invoiceLineItem: {
     findMany: async () => [],
   },
-} as any;
+} as unknown as PrismaService;
 
 async function verify() {
   console.log("Starting Verification...");
@@ -22,16 +23,16 @@ async function verify() {
 
   // --- Test 1: getRevenueByLocation ---
   console.log("Test 1: getRevenueByLocation");
-  mockPrismaService.payment.findMany = async () => [
+  mockPrismaService.payment.findMany = (async () => [
     { amount: "100", invoice: { locationId: "loc1" } },
     { amount: "50", invoice: { locationId: "loc1" } },
     { amount: "200", invoice: { locationId: "loc2" } },
     { amount: "75", invoice: { locationId: null } },
-  ];
-  mockPrismaService.location.findMany = async () => [
+  ]) as unknown as typeof mockPrismaService.payment.findMany;
+  mockPrismaService.location.findMany = (async () => [
     { id: "loc1", name: "Location 1" },
     { id: "loc2", name: "Location 2" },
-  ];
+  ]) as unknown as typeof mockPrismaService.location.findMany;
 
   const locResult = await service.getRevenueByLocation();
 
@@ -79,7 +80,7 @@ async function verify() {
     },
   };
 
-  mockPrismaService.payment.findMany = async () => [mockPayment];
+  mockPrismaService.payment.findMany = (async () => [mockPayment]) as unknown as typeof mockPrismaService.payment.findMany;
 
   const termResult = await service.getRevenueByTerm();
 

@@ -10,7 +10,7 @@ export class SessionsController {
     @Query("termId") termId: string,
     @Query("weekday") weekday: string,
     @Query("startTime") startTime: string,
-    @Query("date") dateOnly: string
+    @Query("date") dateOnly: string,
   ) {
     return this.sessionsService.seatsForSlot({
       termId,

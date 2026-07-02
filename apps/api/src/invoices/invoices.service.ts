@@ -14,6 +14,16 @@ import { Prisma } from "@prisma/client";
 import { CreateInvoiceLineItemDto } from "./dto/create-invoice.dto";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
+import { AuthenticatedUser } from "../auth/auth.types";
+
+export interface EnrollmentForCalculation {
+  classRatio?: string | null;
+  offering?: {
+    sessions?: unknown[];
+  } | null;
+  totalSessions?: number | null;
+  enrollmentSkips?: unknown[] | null;
+}
 
 @Injectable()
 export class InvoicesService {
@@ -23,7 +33,7 @@ export class InvoicesService {
   ) {}
 
   // Calculate suggested amount for an enrollment based on class ratio and skips
-  calculateEnrollmentAmount(enrollment: any): number {
+  calculateEnrollmentAmount(enrollment: EnrollmentForCalculation): number {
     const rates = {
       "3:1": 50,
       "2:1": 73,
@@ -32,8 +42,8 @@ export class InvoicesService {
 
     const rate = rates[enrollment.classRatio as keyof typeof rates] || 50; // Default to 3:1 if unknown
     const totalWeeks =
-      (enrollment.offering as any)?.sessions?.length ||
-      (enrollment as any).totalSessions ||
+      enrollment.offering?.sessions?.length ||
+      enrollment.totalSessions ||
       0; // Default to 0 if we can't determine the sessions
     const skippedWeeks = enrollment.enrollmentSkips?.length || 0;
     const attendingWeeks = totalWeeks - skippedWeeks;
@@ -44,7 +54,7 @@ export class InvoicesService {
   // Create invoice with line items
   async create(
     createInvoiceDto: CreateInvoiceDto,
-    user: any,
+    user: AuthenticatedUser,
     locationId?: string,
   ) {
     const staffUser = await this.prisma.staffUser.findUnique({
@@ -222,7 +232,11 @@ export class InvoicesService {
   }
 
   // List invoices with filters
-  async findAll(query: InvoiceQueryDto, user: any, locationId?: string) {
+  async findAll(
+    query: InvoiceQueryDto,
+    user: AuthenticatedUser,
+    locationId?: string,
+  ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
       include: { accessibleLocations: true },
@@ -245,7 +259,7 @@ export class InvoicesService {
       !["admin", "super_admin"].includes(staffUser.role)
     ) {
       const accessibleLocationIds = staffUser.accessibleLocations.map(
-        (l: any) => l.id,
+        (l: { id: string }) => l.id,
       );
       where.locationId = { in: accessibleLocationIds };
     }
@@ -334,7 +348,11 @@ export class InvoicesService {
   }
 
   // Update invoice
-  async update(id: string, updateInvoiceDto: UpdateInvoiceDto, user: any) {
+  async update(
+    id: string,
+    updateInvoiceDto: UpdateInvoiceDto,
+    user: AuthenticatedUser,
+  ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
@@ -455,7 +473,7 @@ export class InvoicesService {
   // Get un-invoiced enrollments
   async getUnInvoicedEnrollments(
     query: UnInvoicedEnrollmentsQueryDto,
-    user: any,
+    user: AuthenticatedUser,
     locationId?: string,
   ) {
     const staffUser = await this.prisma.staffUser.findUnique({
@@ -506,7 +524,7 @@ export class InvoicesService {
     ) {
       // If including all locations but user is NOT admin/super_admin, restrict to accessible locations
       const accessibleLocationIds = staffUser.accessibleLocations.map(
-        (l: any) => l.id,
+        (l: { id: string }) => l.id,
       );
 
       const locationFilter = {
@@ -577,7 +595,7 @@ export class InvoicesService {
   }
 
   // Delete invoice (admin only, cascades to line items and payments)
-  async remove(id: string, user?: any) {
+  async remove(id: string, user?: AuthenticatedUser) {
     // We need user context for audit logs.
     // If not provided (legacy calls?), we might skip or fail?
     // Assuming controller will be updated to pass it.
@@ -613,7 +631,13 @@ export class InvoicesService {
   }
 
   // Helper: Enrich invoice with calculated fields
-  private enrichInvoice(invoice: any) {
+  private enrichInvoice<
+    T extends {
+      status: string;
+      totalAmount: number | Prisma.Decimal;
+      payments?: { amount: number | Prisma.Decimal }[];
+    },
+  >(invoice: T) {
     const amountPaid =
       invoice.payments?.reduce(
         (sum: number, payment: { amount: number | Prisma.Decimal }) =>

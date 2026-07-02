@@ -15,6 +15,7 @@ import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentUser } from "../auth/current-user.decorator";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Controller("report-cards")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -25,7 +26,7 @@ export class ReportCardsController {
   @Post()
   create(
     @Body() createReportCardDto: CreateReportCardDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.reportCardsService.create(createReportCardDto, user);
   }
@@ -44,7 +45,7 @@ export class ReportCardsController {
   update(
     @Param("id") id: string,
     @Body() updateReportCardDto: UpdateReportCardDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.reportCardsService.update(id, updateReportCardDto, user);
   }
@@ -58,7 +59,7 @@ export class ReportCardsController {
   email(
     @Param("id") id: string,
     @Body() body: { pdfContent: string },
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.reportCardsService.emailReportCard(id, body.pdfContent, user);
   }

@@ -14,8 +14,9 @@ import { CreateTermSchema } from "./dto/create-term.dto";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser, CurrentStaffUser } from "../auth/current-user.decorator";
+import { CurrentUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Controller("terms")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -26,7 +27,7 @@ export class TermsController {
   @Roles("super_admin", "admin")
   async create(
     @Body() body: unknown,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @CurrentLocationId() locationId?: string,
   ) {
     const input = CreateTermSchema.parse(body);
@@ -60,7 +61,10 @@ export class TermsController {
     @Param("termId") termId: string,
     @Param("weekday") weekday: string,
   ) {
-    return this.termsService.getDetailedSlotsForWeekday(termId, Number(weekday));
+    return this.termsService.getDetailedSlotsForWeekday(
+      termId,
+      Number(weekday),
+    );
   }
 
   @Get(":termId/schedule/weekday/:weekday/slots-default")
@@ -99,9 +103,7 @@ export class TermsController {
   }
 
   @Get(":termId/flexible-schedule")
-  async getFlexibleSchedule(
-    @Param("termId") termId: string,
-  ) {
+  async getFlexibleSchedule(@Param("termId") termId: string) {
     return this.termsService.getFlexibleSlotPage(termId);
   }
 }

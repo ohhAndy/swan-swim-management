@@ -7,6 +7,7 @@ import { CreateReportCardDto } from "./dto/create-report-card.dto";
 import { UpdateReportCardDto } from "./dto/update-report-card.dto";
 import { PrismaService } from "../prisma/prisma.service";
 import { CommunicationsService } from "../communications/communications.service";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class ReportCardsService {
@@ -15,7 +16,10 @@ export class ReportCardsService {
     private communicationsService: CommunicationsService,
   ) {}
 
-  async create(createReportCardDto: CreateReportCardDto, user: any) {
+  async create(
+    createReportCardDto: CreateReportCardDto,
+    user: AuthenticatedUser,
+  ) {
     const { skills, ...reportCardData } = createReportCardDto;
 
     const staffUser = await this.prisma.staffUser.findUnique({
@@ -181,7 +185,7 @@ export class ReportCardsService {
   async update(
     id: string,
     updateReportCardDto: UpdateReportCardDto,
-    user: any,
+    user: AuthenticatedUser,
   ) {
     const { skills, ...reportCardData } = updateReportCardDto;
 
@@ -308,7 +312,11 @@ export class ReportCardsService {
     });
   }
 
-  async emailReportCard(id: string, pdfContent: string, user: any) {
+  async emailReportCard(
+    id: string,
+    pdfContent: string,
+    user: AuthenticatedUser,
+  ) {
     const reportCard = await this.findOne(id);
     if (reportCard.status === "sent") {
       throw new ForbiddenException("This report card has already been sent.");

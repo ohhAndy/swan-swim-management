@@ -63,7 +63,7 @@ export class SessionsService {
     const makeups = await this.prisma.makeUpBooking.findMany({
       where: {
         classSessionId: { in: sessions.map((s) => s.id) },
-        status: { in: ["scheduled", "attended"] as any },
+        status: { in: ["scheduled", "attended"] },
       },
       select: {
         classSessionId: true,
@@ -121,10 +121,10 @@ export class SessionsService {
     return offerings.map((o) => {
       const ses = sessionByOffering.get(o.id);
       const skipSet = ses
-        ? skipsBySession.get(ses.id) ?? new Set<string>()
+        ? (skipsBySession.get(ses.id) ?? new Set<string>())
         : new Set<string>();
       const excusedSet = ses
-        ? excusedBySession.get(ses.id) ?? new Set<string>()
+        ? (excusedBySession.get(ses.id) ?? new Set<string>())
         : new Set<string>();
 
       const regs = regulars
@@ -157,7 +157,7 @@ export class SessionsService {
           ...mUps.map((m) => ({ classRatio: m.ratio })),
         ],
         o.instructors.length,
-        o.capacity
+        o.capacity,
       );
 
       const filledItems = [...regs, ...mUps];

@@ -8,6 +8,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import type { AddSkipInput } from "./dto/skips.dto";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class SkipsService {
@@ -16,7 +17,11 @@ export class SkipsService {
     private readonly auditLogsService: AuditLogsService,
   ) {}
 
-  async addSkip(enrollmentId: string, dto: AddSkipInput, user: any) {
+  async addSkip(
+    enrollmentId: string,
+    dto: AddSkipInput,
+    user: AuthenticatedUser,
+  ) {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
       select: { id: true, offeringId: true, status: true },
@@ -35,15 +40,23 @@ export class SkipsService {
       );
 
     if (enrollment.status !== "active" && enrollment.status !== "inactive")
-      throw new BadRequestException("Only active or inactive enrollments can be skipped");
+      throw new BadRequestException(
+        "Only active or inactive enrollments can be skipped",
+      );
 
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
     if (!staffUser) throw new ForbiddenException("Staff user not found");
 
-    if (enrollment.status === "inactive" && staffUser.role !== "admin" && staffUser.role !== "super_admin") {
-      throw new ForbiddenException("Only admins can modify skips for inactive enrollments");
+    if (
+      enrollment.status === "inactive" &&
+      staffUser.role !== "admin" &&
+      staffUser.role !== "super_admin"
+    ) {
+      throw new ForbiddenException(
+        "Only admins can modify skips for inactive enrollments",
+      );
     }
 
     if (session.status === "canceled")
@@ -87,7 +100,11 @@ export class SkipsService {
     return skip;
   }
 
-  async deleteSkip(enrollmentId: string, classSessionId: string, user: any) {
+  async deleteSkip(
+    enrollmentId: string,
+    classSessionId: string,
+    user: AuthenticatedUser,
+  ) {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
       select: { id: true, status: true },
@@ -95,7 +112,9 @@ export class SkipsService {
     if (!enrollment) throw new NotFoundException("Enrollment not found");
 
     if (enrollment.status !== "active" && enrollment.status !== "inactive") {
-      throw new BadRequestException("Only active or inactive enrollments can be modified");
+      throw new BadRequestException(
+        "Only active or inactive enrollments can be modified",
+      );
     }
 
     const staffUser = await this.prisma.staffUser.findUnique({
@@ -103,8 +122,14 @@ export class SkipsService {
     });
     if (!staffUser) throw new ForbiddenException("Staff user not found");
 
-    if (enrollment.status === "inactive" && staffUser.role !== "admin" && staffUser.role !== "super_admin") {
-      throw new ForbiddenException("Only admins can modify skips for inactive enrollments");
+    if (
+      enrollment.status === "inactive" &&
+      staffUser.role !== "admin" &&
+      staffUser.role !== "super_admin"
+    ) {
+      throw new ForbiddenException(
+        "Only admins can modify skips for inactive enrollments",
+      );
     }
 
     try {
@@ -121,7 +146,9 @@ export class SkipsService {
         entityId: enrollmentId,
         metadata: { classSessionId },
       });
-    } catch {}
+    } catch {
+      // ignore
+    }
     return { ok: true };
   }
 }

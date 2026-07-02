@@ -6,7 +6,7 @@ import { PrismaClientExceptionFilter } from "./common/filters/prisma-client-exce
 import { ZodValidationPipe } from "nestjs-zod";
 import { json, urlencoded } from "express";
 
-(BigInt.prototype as any).toJSON = function () {
+(BigInt.prototype as unknown as { toJSON: () => string }).toJSON = function () {
   return this.toString(); // Serialize BigInt IDs as strings
 };
 

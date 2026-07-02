@@ -18,6 +18,7 @@ import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentUser } from "../auth/current-user.decorator";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Controller("instructors")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -29,7 +30,7 @@ export class InstructorsController {
   @Roles("super_admin", "admin", "manager")
   create(
     @Body() createInstructorDto: CreateInstructorDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.instructorsService.create(createInstructorDto, user);
   }
@@ -51,14 +52,14 @@ export class InstructorsController {
   update(
     @Param("id") id: string,
     @Body() updateInstructorDto: UpdateInstructorDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.instructorsService.update(id, updateInstructorDto, user);
   }
 
   @Delete(":id")
   @Roles("super_admin", "admin", "manager")
-  remove(@Param("id") id: string, @CurrentUser() user: any) {
+  remove(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.instructorsService.remove(id, user);
   }
 }

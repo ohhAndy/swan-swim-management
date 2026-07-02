@@ -10,6 +10,7 @@ import {
   UpdateGuardianDto,
 } from "./dto/schemas.dto";
 import { Prisma } from "@prisma/client";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class GuardiansService {
@@ -206,7 +207,7 @@ export class GuardiansService {
     return guardian;
   }
 
-  async create(dto: CreateGuardianDto, user: any) {
+  async create(dto: CreateGuardianDto, user: AuthenticatedUser) {
     const { fullName, shortCode, email, phone, notes, waiverSigned } = dto;
 
     const staffUser = await this.prisma.staffUser.findUnique({
@@ -272,7 +273,7 @@ export class GuardiansService {
     });
   }
 
-  async update(id: string, dto: UpdateGuardianDto, user: any) {
+  async update(id: string, dto: UpdateGuardianDto, user: AuthenticatedUser) {
     await this.ensureExists(id);
 
     const staffUser = await this.prisma.staffUser.findUnique({
@@ -329,7 +330,7 @@ export class GuardiansService {
         });
 
         // Build changes object only for fields that actually changed
-        const changes: Record<string, { from: any; to: any }> = {};
+        const changes: Record<string, { from: unknown; to: unknown }> = {};
 
         if (dto.fullName !== undefined && dto.fullName !== existing.fullName) {
           changes.fullName = { from: existing.fullName, to: dto.fullName };
@@ -368,7 +369,7 @@ export class GuardiansService {
               action: "Update Guardian",
               entityType: "Guardian",
               entityId: id,
-              changes,
+              changes: changes as Prisma.InputJsonValue,
               metadata: {
                 guardianName: updated.fullName,
                 shortCode: updated.shortCode,
@@ -383,7 +384,7 @@ export class GuardiansService {
     }
   }
 
-  async delete(id: string, user: any) {
+  async delete(id: string, user: AuthenticatedUser) {
     await this.ensureExists(id);
 
     const staffUser = await this.prisma.staffUser.findUnique({

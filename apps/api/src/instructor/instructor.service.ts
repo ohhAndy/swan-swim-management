@@ -1,13 +1,18 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateInstructorDto } from "./dto/create-instructor.dto";
 import { UpdateInstructorDto } from "./dto/update-instructor.dto";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class InstructorsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createInstructorDto: CreateInstructorDto, user: any) {
+  async create(
+    createInstructorDto: CreateInstructorDto,
+    user: AuthenticatedUser,
+  ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
@@ -57,7 +62,7 @@ export class InstructorsService {
   async update(
     id: string,
     updateInstructorDto: UpdateInstructorDto,
-    user: any
+    user: AuthenticatedUser,
   ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
@@ -80,7 +85,7 @@ export class InstructorsService {
         entityId: instructor.id,
         metadata: {
           name: `${instructor.firstName} ${instructor.lastName}`,
-          changes: updateInstructorDto as any,
+          changes: updateInstructorDto as Prisma.InputJsonValue,
         },
       },
     });
@@ -88,7 +93,7 @@ export class InstructorsService {
     return instructor;
   }
 
-  async remove(id: string, removedBy: any) {
+  async remove(id: string, removedBy: AuthenticatedUser) {
     // Soft delete by setting isActive to false, or hard delete?
     // User asked to verify separate lifecycle. Usually soft delete is better, but allow hard delete if no relations?
     // Plan said "Delete (soft)".

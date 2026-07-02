@@ -5,6 +5,7 @@ import { Roles } from "../auth/roles.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
 import { CurrentUser } from "../auth/current-user.decorator";
 import { StatisticsService } from "./statistics.service";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Controller("statistics")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -15,7 +16,7 @@ export class StatisticsController {
   @Roles("super_admin", "admin", "manager")
   async getDashboardStats(
     @Query("termId") termId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @CurrentLocationId() locationId?: string,
   ) {
     return this.statisticsService.getDashboardStats(termId, user, locationId);

@@ -9,12 +9,17 @@ import { EnrollWithSkipInput } from "./dto/enrollment.dto";
 import { TransferEnrollmentDto } from "./dto/transfer.dto";
 import { UnInvoicedEnrollmentsQueryDto } from "../invoices/dto/uninvoiced-enrollments-query.dto";
 import { Prisma } from "@prisma/client";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class EnrollmentsService {
   constructor(private prisma: PrismaService) {}
 
-  async updateRemarks(enrollmentId: string, body: any, user: any) {
+  async updateRemarks(
+    enrollmentId: string,
+    body: { remarks: string },
+    user: AuthenticatedUser,
+  ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
@@ -58,7 +63,7 @@ export class EnrollmentsService {
   async transferEnrollment(
     enrollmentId: string,
     dto: TransferEnrollmentDto,
-    user: any,
+    user: AuthenticatedUser,
   ) {
     const { targetOfferingId, skippedSessionIds, transferNotes } = dto;
 
@@ -96,11 +101,13 @@ export class EnrollmentsService {
       where: {
         offeringId: targetOfferingId,
         studentId: currEnrollment.studentId,
-        status: 'active',
+        status: "active",
       },
     });
     if (existingEnrollment)
-      throw new BadRequestException("Student is already actively enrolled in the target offering");
+      throw new BadRequestException(
+        "Student is already actively enrolled in the target offering",
+      );
 
     // Fetch sessions for both offerings to map them by index
     const [oldSessions, newSessions] = await Promise.all([
@@ -131,7 +138,7 @@ export class EnrollmentsService {
         where: {
           offeringId: targetOfferingId,
           studentId: currEnrollment.studentId,
-          status: { not: 'active' },
+          status: { not: "active" },
         },
       });
 
@@ -142,7 +149,7 @@ export class EnrollmentsService {
         newEnrollment = await tx.enrollment.update({
           where: { id: existingInactive.id },
           data: {
-            status: 'active',
+            status: "active",
             enrollDate: new Date(),
             transferredFromId: enrollmentId,
             transferredToId: null,
@@ -153,15 +160,19 @@ export class EnrollmentsService {
         });
         // Clear any old attendance and skips on the reactivated enrollment —
         // we'll recreate them fresh from the source enrollment below
-        await tx.attendance.deleteMany({ where: { enrollmentId: existingInactive.id } });
-        await tx.enrollmentSkip.deleteMany({ where: { enrollmentId: existingInactive.id } });
+        await tx.attendance.deleteMany({
+          where: { enrollmentId: existingInactive.id },
+        });
+        await tx.enrollmentSkip.deleteMany({
+          where: { enrollmentId: existingInactive.id },
+        });
       } else {
         // Create a brand-new enrollment
         newEnrollment = await tx.enrollment.create({
           data: {
             studentId: currEnrollment.studentId,
             offeringId: targetOfferingId,
-            status: 'active',
+            status: "active",
             enrollDate: new Date(),
             transferredFromId: enrollmentId,
             createdBy: staffUser.id,
@@ -187,14 +198,16 @@ export class EnrollmentsService {
             enrollmentId: newEnrollment.id,
             classSessionId: newSession.id,
             status: att.status,
-            notes: `[Transferred] ${att.notes || ''}`.trim(),
+            notes: `[Transferred] ${att.notes || ""}`.trim(),
             markedBy: staffUser.id,
             markedAt: new Date(),
           });
           finalSkippedSessionIds.delete(newSession.id);
         } else {
           // If the old session was skipped, carry that skip over to the new session
-          const wasSkipped = oldSkips.some((sk) => sk.classSessionId === oldSession.id);
+          const wasSkipped = oldSkips.some(
+            (sk) => sk.classSessionId === oldSession.id,
+          );
           if (wasSkipped) {
             finalSkippedSessionIds.add(newSession.id);
           }
@@ -235,7 +248,7 @@ export class EnrollmentsService {
         await tx.enrollment.update({
           where: { id: enrollmentId },
           data: {
-            status: 'transferred',
+            status: "transferred",
             transferredToId: newEnrollment.id,
             transferredAt: new Date(),
             transferNotes: transferNotes || null,
@@ -305,7 +318,7 @@ export class EnrollmentsService {
     });
   }
 
-  async enrollWithSkips(input: EnrollWithSkipInput, user: any) {
+  async enrollWithSkips(input: EnrollWithSkipInput, user: AuthenticatedUser) {
     const { studentId, offeringId, skippedDates, classRatio } = input;
 
     const staffUser = await this.prisma.staffUser.findUnique({
@@ -409,7 +422,7 @@ export class EnrollmentsService {
   async updateReportCardStatus(
     enrollmentId: string,
     status: string,
-    user: any,
+    user: AuthenticatedUser,
   ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
@@ -421,7 +434,7 @@ export class EnrollmentsService {
     });
     if (!curr) throw new NotFoundException("Enrollment not found");
 
-    const updated = await this.prisma.enrollment.update({
+    await this.prisma.enrollment.update({
       where: { id: enrollmentId },
       data: { reportCardStatus: status },
     });
@@ -444,7 +457,7 @@ export class EnrollmentsService {
   async updateSkips(
     enrollmentId: string,
     skippedSessionIds: string[],
-    user: any,
+    user: AuthenticatedUser,
   ) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
@@ -467,8 +480,14 @@ export class EnrollmentsService {
     if (enrollment.status !== "active" && enrollment.status !== "inactive")
       throw new BadRequestException("Enrollment is not active or inactive");
 
-    if (enrollment.status === "inactive" && staffUser.role !== "admin" && staffUser.role !== "super_admin") {
-      throw new ForbiddenException("Only admins can modify skips for inactive enrollments");
+    if (
+      enrollment.status === "inactive" &&
+      staffUser.role !== "admin" &&
+      staffUser.role !== "super_admin"
+    ) {
+      throw new ForbiddenException(
+        "Only admins can modify skips for inactive enrollments",
+      );
     }
 
     // Verify all skippedSessionIds belong to the offering
@@ -521,7 +540,7 @@ export class EnrollmentsService {
     return { success: true };
   }
 
-  async deleteEnrollment(id: string, user: any) {
+  async deleteEnrollment(id: string, user: AuthenticatedUser) {
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
     });
@@ -610,10 +629,14 @@ export class EnrollmentsService {
   }
 
   async bulkTransfer(
-    transfers: { enrollmentId: string; targetOfferingId: string; transferNotes?: string }[],
-    user: any,
+    transfers: {
+      enrollmentId: string;
+      targetOfferingId: string;
+      transferNotes?: string;
+    }[],
+    user: AuthenticatedUser,
   ) {
-    const results: any[] = [];
+    const results: unknown[] = [];
     const errors: { enrollmentId: string; error: string }[] = [];
 
     for (const t of transfers) {
@@ -628,8 +651,11 @@ export class EnrollmentsService {
           user,
         );
         results.push(result);
-      } catch (err: any) {
-        errors.push({ enrollmentId: t.enrollmentId, error: err?.message ?? 'Unknown error' });
+      } catch (err: unknown) {
+        errors.push({
+          enrollmentId: t.enrollmentId,
+          error: err instanceof Error ? err.message : "Unknown error",
+        });
       }
     }
 

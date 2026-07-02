@@ -1,12 +1,17 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class StatisticsService {
   constructor(private prisma: PrismaService) {}
 
-  async getDashboardStats(termId: string, user: any, locationId?: string) {
+  async getDashboardStats(
+    termId: string,
+    user: AuthenticatedUser,
+    locationId?: string,
+  ) {
     try {
       if (!termId) {
         throw new Error("Term ID is required");
@@ -88,8 +93,12 @@ export class StatisticsService {
         },
       });
 
-      const activeStudents = allEnrollments.filter(e => e.status === "active").length;
-      const inactiveStudents = allEnrollments.filter(e => e.status === "inactive").length;
+      const activeStudents = allEnrollments.filter(
+        (e) => e.status === "active",
+      ).length;
+      const inactiveStudents = allEnrollments.filter(
+        (e) => e.status === "inactive",
+      ).length;
 
       const levels: Record<string, number> = {};
       allEnrollments.forEach((e) => {

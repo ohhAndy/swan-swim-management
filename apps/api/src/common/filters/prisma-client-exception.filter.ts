@@ -1,8 +1,6 @@
 import {
   ArgumentsHost,
   Catch,
-  ConflictException,
-  ExceptionFilter,
 } from "@nestjs/common";
 import { BaseExceptionFilter, HttpAdapterHost } from "@nestjs/core";
 import { Prisma } from "@prisma/client";

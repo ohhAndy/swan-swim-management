@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class StaffUsersService {
@@ -53,7 +55,7 @@ export class StaffUsersService {
       role?: "admin" | "manager" | "supervisor" | "viewer";
       accessSchedule?: Record<string, { start: string; end: string }[]>;
     },
-    adminUser: any,
+    adminUser: AuthenticatedUser,
   ) {
     const newUser = await this.prisma.staffUser.create({
       data: {
@@ -62,7 +64,7 @@ export class StaffUsersService {
         fullName: data.fullName,
         role: data.role || "viewer",
         active: true,
-        accessSchedule: data.accessSchedule as any,
+        accessSchedule: data.accessSchedule as Prisma.InputJsonValue,
       },
     });
 
@@ -94,13 +96,13 @@ export class StaffUsersService {
       active?: boolean;
       accessSchedule?: Record<string, { start: string; end: string }[]>;
     },
-    adminUser: any,
+    adminUser: AuthenticatedUser,
   ) {
     const updatedUser = await this.prisma.staffUser.update({
       where: { id },
       data: {
         ...data,
-        accessSchedule: data.accessSchedule as any,
+        accessSchedule: data.accessSchedule as Prisma.InputJsonValue,
       },
     });
 
@@ -113,7 +115,7 @@ export class StaffUsersService {
         action: "update",
         entityType: "staff_user",
         entityId: id,
-        changes: data as any,
+        changes: data as Prisma.InputJsonValue,
       });
     }
 

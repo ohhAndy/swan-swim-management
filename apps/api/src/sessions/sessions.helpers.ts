@@ -1,5 +1,4 @@
 import type { Prisma } from "@prisma/client";
-import { NOTFOUND } from "dns";
 import { calculateClassUsage } from "../common/capacity.utils";
 
 export async function countUsedSeatsForSession(
@@ -45,7 +44,7 @@ export async function countUsedSeatsForSession(
     ? await tx.makeUpBooking.findMany({
         where: {
           classSessionId: session.id,
-          status: { in: ["scheduled", "attended"] as any },
+          status: { in: ["scheduled", "attended"] },
         },
         select: { id: true },
       })

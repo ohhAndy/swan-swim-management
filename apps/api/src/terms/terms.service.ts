@@ -14,6 +14,7 @@ import type {
 } from "@school/shared-types";
 import { CreateTermInput } from "./dto/create-term.dto";
 import { SessionStatus, Prisma } from "@prisma/client";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 // Use UTC for date matching to ensure consistency
 function getUTCDayKey(d: Date): string {
@@ -83,7 +84,7 @@ export class TermsService {
 
   async createTermWithSchedule(
     input: CreateTermInput,
-    user: any,
+    user: AuthenticatedUser,
     locationId?: string,
   ) {
     const { name, slug, startDate, endDate, weeks = 8, templates } = input;
@@ -144,7 +145,7 @@ export class TermsService {
           },
         });
 
-        const audit = await tx.auditLog.create({
+        await tx.auditLog.create({
           data: {
             staffId: staffUser.id,
             action: "Create Term",
@@ -378,7 +379,7 @@ export class TermsService {
   private async buildSlotPageFromOfferings(
     offerings: { id: string; capacity: number; title: string }[],
     termMeta: Term,
-    meta: any,
+    meta: SlotPage["meta"],
   ): Promise<SlotPage> {
     if (offerings.length === 0) {
       return {
@@ -447,7 +448,10 @@ export class TermsService {
 
     // Step 3: Get enrollments first to get enrollment IDs
     const enrollments = await this.prisma.enrollment.findMany({
-      where: { offeringId: { in: offeringIds }, status: { in: ["active", "inactive"] } },
+      where: {
+        offeringId: { in: offeringIds },
+        status: { in: ["active", "inactive"] },
+      },
       select: {
         id: true,
         offeringId: true,
@@ -737,7 +741,12 @@ export class TermsService {
             const isExcused = attendanceStatus === "excused";
             const isAbsent = attendanceStatus === "absent";
 
-            if (enr.status === "active" && !isSkipped && !isExcused && !isAbsent) {
+            if (
+              enr.status === "active" &&
+              !isSkipped &&
+              !isExcused &&
+              !isAbsent
+            ) {
               const ratio = enr.classRatio || "3:1";
               regularWeighted +=
                 ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
@@ -1021,94 +1030,102 @@ export class TermsService {
     }
 
     // Dynamic Data
-    const [attendance, makeups, trials, skips, nextTermEnrollments, allOfferingSessions, allTermAttendance, allTermSkips] =
-      await Promise.all([
-        this.prisma.attendance.findMany({
-          where: {
-            classSessionId: { in: sessionIds },
-            enrollmentId: { in: enrollmentIds },
-          },
-          select: { enrollmentId: true, status: true, id: true },
-        }),
-        this.prisma.makeUpBooking.findMany({
-          where: { classSessionId: { in: sessionIds } },
-          select: {
-            id: true,
-            classSessionId: true,
-            status: true,
-            classRatio: true,
-            student: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                level: true,
-                levelId: true,
-                levelModel: { select: { id: true, name: true, category: true } },
-                birthdate: true,
-                shortCode: true,
-                notes: true,
-              },
-            },
-          },
-        }),
-        this.prisma.trialBooking.findMany({
-          where: { classSessionId: { in: sessionIds } },
-          select: {
-            id: true,
-            classSessionId: true,
-            childName: true,
-            childAge: true,
-            status: true,
-            classRatio: true,
-            notes: true,
-          },
-        }),
-        this.prisma.enrollmentSkip.findMany({
-          where: {
-            classSessionId: { in: sessionIds },
-            enrollmentId: { in: enrollmentIds },
-          },
-          select: { enrollmentId: true },
-        }),
-        (async () => {
-          const studentIds = enrollments
-            .map((e) => e.studentId)
-            .filter((id): id is string => !!id);
-
-          if (studentIds.length === 0) return [];
-
-          const res = await this.prisma.enrollment.findMany({
-            where: {
-              studentId: { in: studentIds },
-              offering: { term: { startDate: { gt: targetDate } } },
-              status: "active",
-            },
+    const [
+      attendance,
+      makeups,
+      trials,
+      skips,
+      nextTermEnrollments,
+      allOfferingSessions,
+      allTermAttendance,
+      allTermSkips,
+    ] = await Promise.all([
+      this.prisma.attendance.findMany({
+        where: {
+          classSessionId: { in: sessionIds },
+          enrollmentId: { in: enrollmentIds },
+        },
+        select: { enrollmentId: true, status: true, id: true },
+      }),
+      this.prisma.makeUpBooking.findMany({
+        where: { classSessionId: { in: sessionIds } },
+        select: {
+          id: true,
+          classSessionId: true,
+          status: true,
+          classRatio: true,
+          student: {
             select: {
-              studentId: true,
-              invoiceLineItem: {
-                select: {
-                  invoice: { select: { status: true } },
-                },
+              id: true,
+              firstName: true,
+              lastName: true,
+              level: true,
+              levelId: true,
+              levelModel: { select: { id: true, name: true, category: true } },
+              birthdate: true,
+              shortCode: true,
+              notes: true,
+            },
+          },
+        },
+      }),
+      this.prisma.trialBooking.findMany({
+        where: { classSessionId: { in: sessionIds } },
+        select: {
+          id: true,
+          classSessionId: true,
+          childName: true,
+          childAge: true,
+          status: true,
+          classRatio: true,
+          notes: true,
+        },
+      }),
+      this.prisma.enrollmentSkip.findMany({
+        where: {
+          classSessionId: { in: sessionIds },
+          enrollmentId: { in: enrollmentIds },
+        },
+        select: { enrollmentId: true },
+      }),
+      (async () => {
+        const studentIds = enrollments
+          .map((e) => e.studentId)
+          .filter((id): id is string => !!id);
+
+        if (studentIds.length === 0) return [];
+
+        const res = await this.prisma.enrollment.findMany({
+          where: {
+            studentId: { in: studentIds },
+            offering: { term: { startDate: { gt: targetDate } } },
+            status: "active",
+          },
+          select: {
+            studentId: true,
+            invoiceLineItem: {
+              select: {
+                invoice: { select: { status: true } },
               },
             },
-          });
-          return res;
-        })(),
-        this.prisma.classSession.findMany({
-          where: { offeringId: { in: offeringIds } },
-          select: { id: true, offeringId: true, date: true, status: true },
-          orderBy: { date: "asc" },
-        }),
-        this.prisma.attendance.findMany({
-          where: { enrollmentId: { in: enrollmentIds } },
-          select: { enrollmentId: true, classSessionId: true, status: true },
-        }),
-        this.prisma.enrollmentSkip.findMany({
-          where: { enrollmentId: { in: enrollmentIds } },
-          select: { enrollmentId: true, classSessionId: true },
-        }),
-      ]);
+          },
+        });
+        return res;
+      })(),
+      this.prisma.classSession.findMany({
+        where: { offeringId: { in: offeringIds } },
+        select: { id: true, offeringId: true, date: true, status: true },
+        orderBy: { date: "asc" },
+      }),
+      this.prisma.attendance.findMany({
+        where: { enrollmentId: { in: enrollmentIds } },
+        select: { enrollmentId: true, classSessionId: true, status: true },
+      }),
+      this.prisma.enrollmentSkip.findMany({
+        where: { enrollmentId: { in: enrollmentIds } },
+        select: { enrollmentId: true, classSessionId: true },
+      }),
+    ]);
 
     const attendanceMap = new Map(attendance.map((a) => [a.enrollmentId, a]));
     const skipSet = new Set(skips.map((s) => s.enrollmentId));
@@ -1219,7 +1236,12 @@ export class TermsService {
           const isExcused = attendance && attendance.status === "excused";
           const isAbsent = attendance && attendance.status === "absent";
 
-          if (enr.status === "active" && !isSkipped && !isExcused && !isAbsent) {
+          if (
+            enr.status === "active" &&
+            !isSkipped &&
+            !isExcused &&
+            !isAbsent
+          ) {
             const ratio = enr.classRatio || "3:1";
             regularWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
           }
@@ -1247,9 +1269,6 @@ export class TermsService {
         const filled = regularWeighted + makeupWeighted + trialsWeighted;
 
         // Dynamic Capacity
-        const instructorCount = offering.instructors.length;
-        const dynamicMin = instructorCount >= 2 ? 5 : 0;
-        const effectiveCapacity = Math.max(offering.capacity, dynamicMin);
 
         const roster = [
           ...sessionEnrollments.map((e) => {
@@ -1257,7 +1276,8 @@ export class TermsService {
             const att = attendanceMap.get(e.id);
 
             const offeringSessions = sessionsByOffering.get(offering.id) ?? [];
-            const studentAttendance = termAttendanceMap.get(e.id) ?? new Map<string, string>();
+            const studentAttendance =
+              termAttendanceMap.get(e.id) ?? new Map<string, string>();
             const studentSkips = termSkipMap.get(e.id) ?? new Set<string>();
 
             const timeline = offeringSessions.map((sess) => {
@@ -1265,7 +1285,13 @@ export class TermsService {
               const hasSkip = studentSkips.has(sess.id);
               const attendanceStatus = studentAttendance.get(sess.id);
 
-              let timelineStatus: "present" | "absent" | "excused" | "skipped" | "unmarked" | "upcoming";
+              let timelineStatus:
+                | "present"
+                | "absent"
+                | "excused"
+                | "skipped"
+                | "unmarked"
+                | "upcoming";
               if (hasSkip) {
                 timelineStatus = "skipped";
               } else if (attendanceStatus === "present") {
@@ -1288,7 +1314,7 @@ export class TermsService {
             });
 
             const presentCount = timeline.filter(
-              (t) => t.status === "present" && t.date <= dateString
+              (t) => t.status === "present" && t.date <= dateString,
             ).length;
 
             return {
@@ -1305,9 +1331,7 @@ export class TermsService {
               reportCardStatus: e.reportCardStatus,
               nextTermStatus:
                 (nextTermMap.get(e.studentId) as
-                  | "paid"
-                  | "enrolled"
-                  | "not_registered") ?? "not_registered",
+                  "paid" | "enrolled" | "not_registered") ?? "not_registered",
               attendanceCount: presentCount,
               totalSessionsCount: timeline.length,
               attendanceTimeline: timeline,

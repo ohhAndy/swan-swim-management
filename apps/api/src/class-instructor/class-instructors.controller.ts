@@ -12,6 +12,7 @@ import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentUser } from "../auth/current-user.decorator";
+import { AuthenticatedUser } from "../auth/auth.types";
 
 @Controller("class-instructors")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -22,7 +23,7 @@ export class ClassInstructorsController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   async assignInstructor(
     @Body() body: { classOfferingId: string; instructorId: string },
-    @CurrentUser() staffUser: any,
+    @CurrentUser() staffUser: AuthenticatedUser,
   ) {
     return this.service.assignInstructor(
       body.classOfferingId,
@@ -35,7 +36,7 @@ export class ClassInstructorsController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   async removeInstructor(
     @Param("id") id: string,
-    @CurrentUser() staffUser: any,
+    @CurrentUser() staffUser: AuthenticatedUser,
   ) {
     return this.service.removeInstructor(id, staffUser);
   }
