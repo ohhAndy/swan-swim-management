@@ -11,7 +11,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "dotenv -e .env.test -- jest --config ./test/jest-e2e.json --forceExit",
+    "db:test:start": "docker compose -f ../../docker-compose.test.yml up -d",
+    "db:test:push": "cd ../../packages/db && dotenv -e ../../apps/api/.env.test -- npx prisma db push --accept-data-loss"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",
@@ -39,9 +41,11 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",
     "@types/supertest": "^6.0.3",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^9.39.2",
     "globals": "^14.0.0",
     "jest": "^30.2.0",
+    "jest-mock-extended": "^4.0.1",
     "prisma": "^7.2.0",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.6",
