@@ -26,8 +26,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 
-import { updateGuardian } from "@/lib/api/guardian-client";
-import { deleteEnrollment } from "@/lib/api/schedule-client";
+import { updateGuardian } from "@/lib/api/client/guardian";
+import { deleteEnrollment } from "@/lib/api/client/schedule";
 import { TransferEnrollmentDialog } from "@/components/schedule/TransferEnrollmentDialog";
 import { ManageSkipsDialog } from "@/components/schedule/ManageSkipsDialog";
 import { FULL_DAY_LABELS } from "@/lib/schedule/slots";

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import InstructorForm from "../InstructorForm";
-import { getInstructor, type Instructor } from "@/lib/api/instructors";
+import { getInstructor, type Instructor } from "@/lib/api/client/instructors";
 
 export default function EditInstructorPage() {
   const params = useParams();

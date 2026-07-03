@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GripVertical, Loader2, X, Check } from "lucide-react";
-import { bulkTransferEnrollments } from "@/lib/api/schedule-client";
+import { bulkTransferEnrollments } from "@/lib/api/client/schedule";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { RosterResponse } from "@school/shared-types";

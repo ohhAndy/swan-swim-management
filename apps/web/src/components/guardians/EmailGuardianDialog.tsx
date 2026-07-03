@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Composer } from "@/components/communications/Composer";
-import { sendEmail } from "@/lib/api/communications-client";
+import { sendEmail } from "@/lib/api/client/communications";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface EmailGuardianDialogProps {

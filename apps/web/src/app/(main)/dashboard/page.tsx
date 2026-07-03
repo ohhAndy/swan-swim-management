@@ -2,7 +2,7 @@ import { Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { getCurrentUser } from "@/lib/auth/user";
-import { getAllTerms } from "@/lib/api/schedule";
+import { getAllTerms } from "@/lib/api/server/schedule";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { format } from "date-fns";

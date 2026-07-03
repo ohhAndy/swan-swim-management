@@ -18,8 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { searchStudents, StudentLite } from "@/lib/api/students-client";
-import { scheduleMakeUp } from "@/lib/api/schedule-client";
+import { searchStudents, StudentLite } from "@/lib/api/client/students";
+import { scheduleMakeUp } from "@/lib/api/client/schedule";
 import type { RosterResponse } from "@school/shared-types";
 
 interface ScheduleMakeupDialogProps {

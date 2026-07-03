@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { SendEmailRequest } from "@/lib/api/communications-client";
+import { SendEmailRequest } from "@/lib/api/client/communications";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";

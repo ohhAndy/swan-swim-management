@@ -15,12 +15,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { CreateTaskInput, Task } from "@/lib/api/tasks-client";
+import { CreateTaskInput, Task } from "@/lib/api/client/tasks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
 import { useEffect, useState } from "react";
-import { StaffUser } from "@/lib/api/users-client";
+import { StaffUser } from "@/lib/api/client/users";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),

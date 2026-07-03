@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LEVEL_MAP } from "@/lib/constants/levels";
-import { Level } from "@/lib/api/curriculum-client";
+import { Level } from "@/lib/api/client/curriculum";
 import { cn } from "@/lib/utils";
 import { HelpCircle, CalendarCheck, CalendarClock } from "lucide-react";
 import Link from "next/link";

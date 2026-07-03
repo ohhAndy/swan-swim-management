@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { createTrialBooking } from "@/lib/api/trial-client";
+import { createTrialBooking } from "@/lib/api/client/trial";
 
 interface ScheduleTrialDialogProps {
   open: boolean;

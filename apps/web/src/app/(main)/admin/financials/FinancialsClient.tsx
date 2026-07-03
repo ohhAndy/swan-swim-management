@@ -6,7 +6,7 @@ import {
   getRevenueByTerm,
   RevenueByLocation,
   RevenueByTerm,
-} from "@/lib/api/analytics";
+} from "@/lib/api/client/analytics";
 import {
   BarChart,
   Bar,

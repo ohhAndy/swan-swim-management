@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getInventoryItems, InventoryItem } from "@/lib/api/inventory-client";
-import { createInvoice, Invoice } from "@/lib/api/invoice-client";
-import { createPayment } from "@/lib/api/payments";
+import { getInventoryItems, InventoryItem } from "@/lib/api/client/inventory";
+import { createInvoice, Invoice } from "@/lib/api/client/invoice";
+import { createPayment } from "@/lib/api/client/payments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

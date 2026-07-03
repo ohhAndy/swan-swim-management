@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getInstructors, type Instructor } from "@/lib/api/instructors";
+import { getInstructors, type Instructor } from "@/lib/api/client/instructors";
 
 export default function InstructorsList() {
   const [instructors, setInstructors] = useState<Instructor[]>([]);

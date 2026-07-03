@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FULL_DAY_LABELS, formatTimeRange } from "@/lib/schedule/slots";
-import { getTimeSlotsByWeekday } from "@/lib/api/schedule-client";
+import { getTimeSlotsByWeekday } from "@/lib/api/client/schedule";
 import { Loader2 } from "lucide-react";
 
 export function SlotNavigator({

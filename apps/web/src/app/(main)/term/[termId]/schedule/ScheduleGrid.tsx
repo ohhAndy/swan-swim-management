@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import TimeSlots from "./TimeSlotClient";
-import { DetailedTimeSlot } from "@/lib/api/schedule";
+import { DetailedTimeSlot } from "@/lib/api/server/schedule";
 import { Button } from "@/components/ui/button";
 import { BarChart2, List } from "lucide-react";
 

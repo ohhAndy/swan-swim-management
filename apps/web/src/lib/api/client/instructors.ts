@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/client";
+import { clientFetch } from "../_fetch/client";
 
 export interface Certificate {
   name: string;
@@ -36,49 +36,23 @@ export interface CreateInstructorInput {
 
 export type UpdateInstructorInput = Partial<CreateInstructorInput>;
 
-const API = process.env.NEXT_PUBLIC_API_URL!;
-
-async function getAuthHeaders() {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${session?.access_token}`,
-  };
-}
-
 export const getInstructors = async (activeOnly = false) => {
-  const headers = await getAuthHeaders();
-  const res = await fetch(
-    `${API}/instructors${activeOnly ? "?active=true" : ""}`,
-    {
-      headers,
-    },
+  const res = await clientFetch(
+    `/instructors${activeOnly ? "?active=true" : ""}`,
   );
-  if (!res.ok) throw new Error("Failed to fetch instructors");
   return res.json() as Promise<Instructor[]>;
 };
 
 export const getInstructor = async (id: string) => {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/instructors/${id}`, {
-    headers,
-  });
-  if (!res.ok) throw new Error("Failed to fetch instructor");
+  const res = await clientFetch(`/instructors/${id}`);
   return res.json() as Promise<Instructor>;
 };
 
 export const createInstructor = async (data: CreateInstructorInput) => {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/instructors`, {
+  const res = await clientFetch(`/instructors`, {
     method: "POST",
-    headers,
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create instructor");
   return res.json() as Promise<Instructor>;
 };
 
@@ -86,23 +60,15 @@ export const updateInstructor = async (
   id: string,
   data: UpdateInstructorInput,
 ) => {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/instructors/${id}`, {
+  const res = await clientFetch(`/instructors/${id}`, {
     method: "PATCH",
-    headers,
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update instructor");
   return res.json() as Promise<Instructor>;
 };
 
 export const deleteInstructor = async (id: string) => {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API}/instructors/${id}`, {
-    method: "DELETE",
-    headers,
-  });
-  if (!res.ok) throw new Error("Failed to delete instructor");
+  const res = await clientFetch(`/instructors/${id}`, { method: "DELETE" });
   return res.json() as Promise<Instructor>;
 };
 

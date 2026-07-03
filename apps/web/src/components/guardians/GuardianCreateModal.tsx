@@ -1,6 +1,6 @@
 "use client";
 
-import { createGuardian } from "@/lib/api/guardian-client";
+import { createGuardian } from "@/lib/api/client/guardian";
 import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { getTermAvailability, getTermTitle } from "@/lib/api/schedule-client";
+import { getTermAvailability, getTermTitle } from "@/lib/api/client/schedule";
 import {
   Select,
   SelectContent,

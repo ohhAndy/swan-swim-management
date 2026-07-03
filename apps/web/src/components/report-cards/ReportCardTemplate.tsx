@@ -1,4 +1,4 @@
-import { Level } from "@/lib/api/curriculum-client";
+import { Level } from "@/lib/api/client/curriculum";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Circle, HelpCircle } from "lucide-react";
 

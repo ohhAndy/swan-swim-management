@@ -1,4 +1,4 @@
-import { getHeaders } from "./headers";
+import { clientFetch } from "../_fetch/client";
 
 export interface AuditLog {
   id: string;
@@ -16,8 +16,6 @@ export interface AuditLog {
   };
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL!;
-
 export async function getAuditLogs(
   page = 1,
   limit = 20,
@@ -29,7 +27,6 @@ export async function getAuditLogs(
     endDate?: string;
   },
 ): Promise<{ data: AuditLog[]; total: number }> {
-  const headers = await getHeaders();
   const searchParams = new URLSearchParams({
     skip: ((page - 1) * limit).toString(),
     take: limit.toString(),
@@ -41,14 +38,9 @@ export async function getAuditLogs(
   if (filters?.startDate) searchParams.set("startDate", filters.startDate);
   if (filters?.endDate) searchParams.set("endDate", filters.endDate);
 
-  const res = await fetch(`${API}/audit-logs?${searchParams.toString()}`, {
+  const res = await clientFetch(`/audit-logs?${searchParams.toString()}`, {
     cache: "no-store",
-    headers,
   });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch audit logs");
-  }
 
   return res.json();
 }

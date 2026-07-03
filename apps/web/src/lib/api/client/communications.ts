@@ -1,6 +1,4 @@
-import { getHeaders } from "./headers";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { clientFetch } from "../_fetch/client";
 
 export interface RecipientFilter {
   locationId?: string;
@@ -29,16 +27,10 @@ export interface SendEmailRequest {
 export async function getRecipients(
   filters: RecipientFilter,
 ): Promise<Recipient[]> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API_URL}/communications/recipients`, {
+  const res = await clientFetch(`/communications/recipients`, {
     method: "POST",
-    headers,
     body: JSON.stringify(filters),
   });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch recipients");
-  }
 
   return res.json();
 }
@@ -46,16 +38,10 @@ export async function getRecipients(
 export async function sendEmail(
   data: SendEmailRequest,
 ): Promise<{ success: boolean; count: number }> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API_URL}/communications/send`, {
+  const res = await clientFetch(`/communications/send`, {
     method: "POST",
-    headers,
     body: JSON.stringify(data),
   });
-
-  if (!res.ok) {
-    throw new Error("Failed to send email");
-  }
 
   return res.json();
 }

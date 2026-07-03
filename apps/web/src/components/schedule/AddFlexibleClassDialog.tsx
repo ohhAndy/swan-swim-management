@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Plus, Loader2, Trash } from "lucide-react";
-import { createOffering } from "@/lib/api/schedule-client";
+import { createOffering } from "@/lib/api/client/schedule";
 import { useRouter } from "next/navigation";
 
 interface AddFlexibleClassDialogProps {

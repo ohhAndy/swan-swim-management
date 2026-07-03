@@ -6,7 +6,7 @@ import {
   RecipientFilter,
   getRecipients,
   sendEmail,
-} from "@/lib/api/communications-client";
+} from "@/lib/api/client/communications";
 import { RecipientFilterComponent } from "@/components/communications/RecipientFilter";
 import { Composer } from "@/components/communications/Composer";
 import { Separator } from "@/components/ui/separator";

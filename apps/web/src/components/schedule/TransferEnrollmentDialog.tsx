@@ -25,7 +25,7 @@ import { AlertCircle, ArrowRight } from "lucide-react";
 import {
   transferEnrollment,
   getAvailableClassesForTransfer,
-} from "@/lib/api/schedule-client";
+} from "@/lib/api/client/schedule";
 
 import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
 

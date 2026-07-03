@@ -1,4 +1,4 @@
-import { getSlotPage } from "@/lib/api/schedule";
+import { getSlotPage } from "@/lib/api/server/schedule";
 import { weekdayName, groupByOffering } from "@/lib/schedule/transform";
 import type { SlotPage } from "@school/shared-types";
 import { SlotHeader } from "@/components/schedule/SlotHeader";

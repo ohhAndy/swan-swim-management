@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { DashboardStats, getDashboardStats } from "@/lib/api/stats";
+import { DashboardStats, getDashboardStats } from "@/lib/api/client/stats";
 import { Users, AlertCircle, CalendarClock, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 

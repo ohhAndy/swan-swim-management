@@ -30,7 +30,7 @@ import {
   Mail,
 } from "lucide-react";
 
-import { getLevels, Level } from "@/lib/api/curriculum-client";
+import { getLevels, Level } from "@/lib/api/client/curriculum";
 import { StaffRole } from "@/lib/auth/permissions";
 import {
   createReportCard,
@@ -39,7 +39,7 @@ import {
   getReportCards,
   getReportCard,
   sendEmailReportCard,
-} from "@/lib/api/report-card-client";
+} from "@/lib/api/client/report-card";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {

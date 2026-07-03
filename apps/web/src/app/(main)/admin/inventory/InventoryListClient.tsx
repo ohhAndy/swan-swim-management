@@ -9,7 +9,7 @@ import {
   deleteInventoryItem,
   InventoryItem,
   UpdateInventoryItemData,
-} from "@/lib/api/inventory-client";
+} from "@/lib/api/client/inventory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {

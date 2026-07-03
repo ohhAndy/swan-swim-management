@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
-import { updateTrialNotes } from '@/lib/api/trial-client';
+import { updateTrialNotes } from "@/lib/api/client/trial";
 
 interface EditNotesDialogProps {
   open: boolean;

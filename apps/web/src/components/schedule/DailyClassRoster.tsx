@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { getLevels, Level } from "@/lib/api/curriculum-client";
+import { getLevels, Level } from "@/lib/api/client/curriculum";
 import { ReportCardForm } from "../report-cards/ReportCardForm";
 import { StaffRole } from "@/lib/auth/permissions";
 import { useRouter } from "next/navigation";

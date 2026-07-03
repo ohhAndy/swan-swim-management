@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import {
   getTermFinancialDetails,
   TermFinancialDetails,
-} from "@/lib/api/analytics";
+} from "@/lib/api/client/analytics";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {

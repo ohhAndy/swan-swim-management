@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Task } from "@/lib/api/tasks-client";
+import { Task } from "@/lib/api/client/tasks";
 import { Calendar, MoreVertical, Flag } from "lucide-react";
 
 interface TaskCardProps {

@@ -1,7 +1,7 @@
 "use client";
 
-import { enrollStudentWithSkips } from "@/lib/api/schedule-client";
-import { searchStudents, StudentLite } from "@/lib/api/students-client";
+import { enrollStudentWithSkips } from "@/lib/api/client/schedule";
+import { searchStudents, StudentLite } from "@/lib/api/client/students";
 import { useEffect, useState } from "react";
 import {
   Dialog,

@@ -1,4 +1,4 @@
-import { searchGuardiansPage } from "@/lib/api/guardian-client";
+import { searchGuardiansPage } from "@/lib/api/client/guardian";
 import GuardianListClient from "./GuardianListClient";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
