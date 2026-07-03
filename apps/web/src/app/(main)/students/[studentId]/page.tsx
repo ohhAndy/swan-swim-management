@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { getStudentById } from "@/lib/api/students";
+import { getStudentById } from "@/lib/api/server/students";
 import StudentViewClient from "./StudentViewClient";
 import { getCurrentUser } from "@/lib/auth/user";
 

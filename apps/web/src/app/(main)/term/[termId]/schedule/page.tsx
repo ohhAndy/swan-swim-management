@@ -4,7 +4,7 @@ import {
   getAllTerms,
   getFlexibleSchedule,
   DetailedTimeSlot,
-} from "@/lib/api/schedule";
+} from "@/lib/api/server/schedule";
 import ScheduleGrid from "./ScheduleGrid";
 import { groupByOffering } from "@/lib/schedule/transform";
 import { SlotBlock } from "@/components/schedule/SlotBlock";

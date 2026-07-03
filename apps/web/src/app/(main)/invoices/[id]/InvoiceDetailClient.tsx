@@ -11,8 +11,8 @@ import {
   deletePayment,
   type Invoice,
   type InvoiceLineItem,
-} from "@/lib/api/invoice-client";
-import { Payment } from "@/lib/api/payments";
+} from "@/lib/api/client/invoice";
+import { Payment } from "@/lib/api/client/payments";
 import EditPaymentDialog from "@/components/payments/EditPaymentDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

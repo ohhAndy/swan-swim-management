@@ -19,8 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Location } from "@/lib/api/location-client";
-import { Invoice, updateInvoice } from "@/lib/api/invoice-client";
+import { Location } from "@/lib/api/client/location";
+import { Invoice, updateInvoice } from "@/lib/api/client/invoice";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 

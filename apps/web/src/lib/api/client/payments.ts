@@ -1,6 +1,4 @@
-import { getHeaders } from "./headers";
-
-const API = process.env.NEXT_PUBLIC_API_URL!;
+import { clientFetch } from "../_fetch/client";
 
 export type Payment = {
   id: string;
@@ -51,8 +49,6 @@ export async function getAllPayments({
   method,
   query,
 }: PaginatedParams & { query?: string }): Promise<PaginatedResponse<Payment>> {
-  const headers = await getHeaders();
-
   const params = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
@@ -63,15 +59,9 @@ export async function getAllPayments({
   if (method && method !== "all") params.append("method", method);
   if (query) params.append("query", query);
 
-  const res = await fetch(`${API}/payments?${params.toString()}`, {
+  const res = await clientFetch(`/payments?${params.toString()}`, {
     cache: "no-store",
-    headers,
   });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch payments");
-  }
-
   return res.json();
 }
 
@@ -82,18 +72,10 @@ export async function createPayment(data: {
   paymentMethod: string;
   notes?: string;
 }) {
-  const headers = await getHeaders();
-  const res = await fetch(`${API}/payments`, {
+  const res = await clientFetch(`/payments`, {
     method: "POST",
-    headers,
     body: JSON.stringify(data),
   });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`Failed to create payment: ${errorText}`);
-  }
-
   return res.json();
 }
 
@@ -106,18 +88,10 @@ export async function updatePayment(
     notes?: string;
   },
 ) {
-  const headers = await getHeaders();
-  const res = await fetch(`${API}/payments/${id}`, {
+  const res = await clientFetch(`/payments/${id}`, {
     method: "PATCH",
-    headers,
     body: JSON.stringify(data),
   });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`Failed to update payment: ${errorText}`);
-  }
-
   return res.json();
 }
 
@@ -132,7 +106,6 @@ export async function exportPayments({
   method?: string;
   query?: string;
 }) {
-  const headers = await getHeaders();
   const params = new URLSearchParams();
 
   if (startDate) params.append("startDate", startDate);
@@ -140,12 +113,7 @@ export async function exportPayments({
   if (method && method !== "all") params.append("method", method);
   if (query) params.append("query", query);
 
-  const res = await fetch(`${API}/exports/payments?${params.toString()}`, {
-    headers,
-  });
-
-  if (!res.ok) throw new Error("Failed to export payments");
-
+  const res = await clientFetch(`/exports/payments?${params.toString()}`);
   return res.blob();
 }
 
@@ -160,7 +128,6 @@ export async function exportInvoices({
   status?: string;
   query?: string;
 }) {
-  const headers = await getHeaders();
   const params = new URLSearchParams();
 
   if (startDate) params.append("startDate", startDate);
@@ -168,11 +135,6 @@ export async function exportInvoices({
   if (status && status !== "all") params.append("status", status);
   if (query) params.append("query", query);
 
-  const res = await fetch(`${API}/exports/invoices?${params.toString()}`, {
-    headers,
-  });
-
-  if (!res.ok) throw new Error("Failed to export invoices");
-
+  const res = await clientFetch(`/exports/invoices?${params.toString()}`);
   return res.blob();
 }

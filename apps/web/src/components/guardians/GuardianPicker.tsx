@@ -10,8 +10,8 @@ import {
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 
-import { searchGuardians } from "@/lib/api/guardian-client";
-import type { GuardianLite } from "@/lib/api/guardian-client";
+import { searchGuardians } from "@/lib/api/client/guardian";
+import type { GuardianLite } from "@/lib/api/client/guardian";
 import { GuardianCreateModal } from "./GuardianCreateModal";
 import { useEffect, useState } from "react";
 

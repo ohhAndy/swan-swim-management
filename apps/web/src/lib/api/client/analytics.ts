@@ -1,6 +1,4 @@
-import { getHeaders } from "./headers";
-
-const API = process.env.NEXT_PUBLIC_API_URL!;
+import { clientFetch } from "../_fetch/client";
 
 export type RevenueByLocation = {
   locationId: string;
@@ -15,29 +13,17 @@ export type RevenueByTerm = {
 };
 
 export async function getRevenueByLocation(): Promise<RevenueByLocation[]> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API}/analytics/financial/location`, {
-    headers,
+  const res = await clientFetch(`/analytics/financial/location`, {
     cache: "no-store",
   });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch revenue by location");
-  }
 
   return res.json();
 }
 
 export async function getRevenueByTerm(): Promise<RevenueByTerm[]> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API}/analytics/financial/term`, {
-    headers,
+  const res = await clientFetch(`/analytics/financial/term`, {
     cache: "no-store",
   });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch revenue by term");
-  }
 
   return res.json();
 }
@@ -53,22 +39,14 @@ export async function getTermFinancialDetails(
   startDate?: string,
   endDate?: string,
 ): Promise<TermFinancialDetails> {
-  const headers = await getHeaders();
   const searchParams = new URLSearchParams();
   if (startDate) searchParams.set("startDate", startDate);
   if (endDate) searchParams.set("endDate", endDate);
 
-  const res = await fetch(
-    `${API}/analytics/financial/term/${termId}?${searchParams.toString()}`,
-    {
-      headers,
-      cache: "no-store",
-    },
+  const res = await clientFetch(
+    `/analytics/financial/term/${termId}?${searchParams.toString()}`,
+    { cache: "no-store" },
   );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch term financial details");
-  }
 
   return res.json();
 }

@@ -7,7 +7,7 @@ import type { RosterResponse } from "@school/shared-types";
 import {
   upsertAttendance,
   updateMakeupStatus,
-} from "@/lib/api/attendance-client";
+} from "@/lib/api/client/attendance";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Button } from "../ui/button";
@@ -15,18 +15,18 @@ import { EnrollStudentDialog } from "./EnrollStudentDialog";
 import { ScheduleMakeupDialog } from "./ScheduleMakeUpDialog";
 import { CurrentUser } from "@/lib/auth/user";
 import { PermissionGate } from "../auth/PermissionGate";
-import { updateStudentNotes } from "@/lib/api/students-client";
+import { updateStudentNotes } from "@/lib/api/client/students";
 import { Loader2, Users } from "lucide-react";
 import OfferingDialog from "./OfferingInfoDialog";
-import { updateOfferingInfo } from "@/lib/api/schedule-client";
+import { updateOfferingInfo } from "@/lib/api/client/schedule";
 import { AssignInstructorDialog } from "./AssignInstructorDialog";
 import { ScheduleTrialDialog } from "./ScheduleTrialDialog";
-import { updateTrialStatus } from "@/lib/api/trial-client";
+import { updateTrialStatus } from "@/lib/api/client/trial";
 import { ConvertTrialDialog } from "./ConvertTrialDialog";
 import { Trash2 } from "lucide-react";
-import { deleteOffering } from "@/lib/api/schedule-client";
+import { deleteOffering } from "@/lib/api/client/schedule";
 import { useSlotDialogs } from "./useSlotDialogs";
-import { updateReportCardStatus } from "@/lib/api/enrollment-client";
+import { updateReportCardStatus } from "@/lib/api/client/enrollment";
 import { toast } from "sonner";
 
 export function SlotBlock({

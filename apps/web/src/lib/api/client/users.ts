@@ -1,7 +1,5 @@
-import { getHeaders } from "./headers";
+import { clientFetch } from "../_fetch/client";
 export type StaffRole = "admin" | "manager" | "supervisor" | "viewer";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export interface StaffUser {
   id: string;
@@ -11,10 +9,7 @@ export interface StaffUser {
 }
 
 export async function getStaffUsers(): Promise<StaffUser[]> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API_URL}/staff-users`, {
-    headers,
+  const res = await clientFetch(`/staff-users`, {
   });
-  if (!res.ok) throw new Error("Failed to fetch staff users");
   return res.json();
 }

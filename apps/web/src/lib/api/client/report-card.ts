@@ -1,7 +1,5 @@
-import { getHeaders } from "./headers";
-import { Level } from "./curriculum-client";
-
-const API_Base = process.env.NEXT_PUBLIC_API_URL!;
+import { clientFetch } from "../_fetch/client";
+import { Level } from "./curriculum";
 
 export interface ReportCardSkill {
   id: string;
@@ -58,29 +56,22 @@ export interface UpdateReportCardDto {
 }
 
 export async function getReportCards(): Promise<ReportCard[]> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API_Base}/report-cards`, { headers });
-  if (!res.ok) throw new Error("Failed to fetch report cards");
+  const res = await clientFetch(`/report-cards`);
   return res.json();
 }
 
 export async function getReportCard(id: string): Promise<ReportCard> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API_Base}/report-cards/${id}`, { headers });
-  if (!res.ok) throw new Error("Failed to fetch report card");
+  const res = await clientFetch(`/report-cards/${id}`);
   return res.json();
 }
 
 export async function createReportCard(
   data: CreateReportCardDto,
 ): Promise<ReportCard> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API_Base}/report-cards`, {
+  const res = await clientFetch(`/report-cards`, {
     method: "POST",
-    headers,
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create report card");
   return res.json();
 }
 
@@ -88,13 +79,10 @@ export async function updateReportCard(
   id: string,
   data: UpdateReportCardDto,
 ): Promise<ReportCard> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API_Base}/report-cards/${id}`, {
+  const res = await clientFetch(`/report-cards/${id}`, {
     method: "PATCH",
-    headers,
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update report card");
   return res.json();
 }
 
@@ -102,12 +90,9 @@ export async function sendEmailReportCard(
   id: string,
   pdfContent: string,
 ): Promise<{ success: boolean }> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API_Base}/report-cards/${id}/email`, {
+  const res = await clientFetch(`/report-cards/${id}/email`, {
     method: "POST",
-    headers,
     body: JSON.stringify({ pdfContent }),
   });
-  if (!res.ok) throw new Error("Failed to email report card");
   return res.json();
 }

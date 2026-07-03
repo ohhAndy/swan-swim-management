@@ -7,7 +7,7 @@ import {
   getPastTrials,
   getTrialStats,
   TrialStats,
-} from "@/lib/api/trial-client";
+} from "@/lib/api/client/trial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,

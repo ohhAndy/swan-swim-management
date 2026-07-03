@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { FormSchema } from "@/lib/zod/term";
 import type { FormInput, FormOutput } from "@/lib/zod/term";
-import { createTerm } from "@/lib/api/term-client";
+import { createTerm } from "@/lib/api/client/term";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

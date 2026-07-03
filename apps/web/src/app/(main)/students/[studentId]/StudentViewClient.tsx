@@ -40,10 +40,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { updateStudent, deleteStudent } from "@/lib/api/students-client";
-import { getLevels, Level } from "@/lib/api/curriculum-client";
-import { deleteEnrollment } from "@/lib/api/schedule-client";
-import { updateGuardian } from "@/lib/api/guardian-client";
+import { updateStudent, deleteStudent } from "@/lib/api/client/students";
+import { getLevels, Level } from "@/lib/api/client/curriculum";
+import { deleteEnrollment } from "@/lib/api/client/schedule";
+import { updateGuardian } from "@/lib/api/client/guardian";
 
 import { EmailGuardianDialog } from "@/components/guardians/EmailGuardianDialog";
 import { TransferEnrollmentDialog } from "@/components/schedule/TransferEnrollmentDialog";

@@ -12,9 +12,9 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search, UserPlus } from 'lucide-react';
-import { convertTrialToStudent } from '@/lib/api/trial-client';
-import { searchStudents } from '@/lib/api/students-client';
-import type { StudentLite } from '@/lib/api/students-client';
+import { convertTrialToStudent } from "@/lib/api/client/trial";
+import { searchStudents } from "@/lib/api/client/students";
+import type { StudentLite } from "@/lib/api/client/students";
 
 interface ConvertTrialDialogProps {
   open: boolean;

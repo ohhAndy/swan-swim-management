@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Image,
 } from "@react-pdf/renderer";
-import { Level } from "@/lib/api/curriculum-client";
+import { Level } from "@/lib/api/client/curriculum";
 
 // Register fonts (optional, using standard Helvetica for now to keep it simple,
 // or could register Inter if we had the font files locally/url)

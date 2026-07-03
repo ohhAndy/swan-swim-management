@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { getInvoices, type Invoice } from "@/lib/api/invoice-client";
+import { getInvoices, type Invoice } from "@/lib/api/client/invoice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,8 +29,8 @@ import {
   ArrowUpDown,
   Pencil,
 } from "lucide-react";
-import { exportInvoices } from "@/lib/api/payments";
-import { getLocations, Location } from "@/lib/api/location-client";
+import { exportInvoices } from "@/lib/api/client/payments";
+import { getLocations, Location } from "@/lib/api/client/location";
 import EditInvoiceDialog from "@/components/invoices/EditInvoiceDialog";
 
 export default function InvoicesListClient() {

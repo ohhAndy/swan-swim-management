@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import {
   getUninvoicedEnrollments,
   UninvoicedEnrollment,
-} from "@/lib/api/enrollments";
+} from "@/lib/api/client/enrollments";
 import {
   Table,
   TableBody,
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { getAllTerms } from "@/lib/api/schedule-client";
+import { getAllTerms } from "@/lib/api/client/schedule";
 import { Term } from "@school/shared-types";
 import {
   Select,

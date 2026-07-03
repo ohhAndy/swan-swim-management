@@ -18,9 +18,9 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { searchStudents } from "@/lib/api/students-client";
+import { searchStudents } from "@/lib/api/client/students";
 
-import { getLevels, Level } from "@/lib/api/curriculum-client";
+import { getLevels, Level } from "@/lib/api/client/curriculum";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { CurrentUser } from "@/lib/auth/user";
 

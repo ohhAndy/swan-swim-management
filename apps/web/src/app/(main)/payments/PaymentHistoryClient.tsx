@@ -6,7 +6,7 @@ import {
   exportPayments,
   type Payment,
   type PaginatedResponse,
-} from "@/lib/api/payments";
+} from "@/lib/api/client/payments";
 import {
   Table,
   TableBody,
@@ -34,9 +34,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { getLocations, Location } from "@/lib/api/location-client";
+import { getLocations, Location } from "@/lib/api/client/location";
 import EditInvoiceDialog from "@/components/invoices/EditInvoiceDialog";
-import { Invoice } from "@/lib/api/invoice-client";
+import { Invoice } from "@/lib/api/client/invoice";
 
 export default function PaymentHistoryClient() {
   const [data, setData] = useState<PaginatedResponse<Payment> | null>(null);

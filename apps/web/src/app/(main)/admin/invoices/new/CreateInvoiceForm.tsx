@@ -6,8 +6,8 @@ import {
   createInvoice,
   getUnInvoicedEnrollments,
   getInvoices,
-} from "@/lib/api/invoice-client";
-import { searchGuardians } from "@/lib/api/guardian-client";
+} from "@/lib/api/client/invoice";
+import { searchGuardians } from "@/lib/api/client/guardian";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/card";
 import { Plus, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import type { GuardianLite } from "@/lib/api/guardian-client";
+import type { GuardianLite } from "@/lib/api/client/guardian";
 import { DAY_LABELS } from "@/lib/schedule/slots";
 
 interface UnInvoicedEnrollment {

@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Payment, updatePayment } from "@/lib/api/payments";
+import { Payment, updatePayment } from "@/lib/api/client/payments";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 

@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { getGuardianById } from "@/lib/api/guardians";
+import { getGuardianById } from "@/lib/api/server/guardians";
 import GuardianViewClient from "./GuardianViewClient";
 import { getCurrentUser } from "@/lib/auth/user";
 import { Metadata } from "next";

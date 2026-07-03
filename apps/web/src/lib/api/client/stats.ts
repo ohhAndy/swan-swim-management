@@ -1,6 +1,4 @@
-import { getHeaders } from "./headers";
-
-const API = process.env.NEXT_PUBLIC_API_URL!;
+import { clientFetch } from "../_fetch/client";
 
 export interface DashboardStats {
   studentCount: number;
@@ -20,14 +18,8 @@ export interface DashboardStats {
 export async function getDashboardStats(
   termId: string
 ): Promise<DashboardStats> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API}/statistics/dashboard?termId=${termId}`, {
-    headers,
+  const res = await clientFetch(`/statistics/dashboard?termId=${termId}`, {
   });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch dashboard stats");
-  }
 
   return res.json();
 }

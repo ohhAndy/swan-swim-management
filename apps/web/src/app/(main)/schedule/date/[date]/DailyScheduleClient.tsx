@@ -2,10 +2,10 @@
 
 import { BackButton } from "@/components/nav/BackButton";
 import { format, addDays, subDays } from "date-fns";
-import { updateStudentNotes, updateStudent } from "@/lib/api/students-client";
-import { updateOfferingInfo } from "@/lib/api/schedule-client";
+import { updateStudentNotes, updateStudent } from "@/lib/api/client/students";
+import { updateOfferingInfo } from "@/lib/api/client/schedule";
 import { Input } from "@/components/ui/input";
-import { updateReportCardStatus } from "@/lib/api/enrollment-client";
+import { updateReportCardStatus } from "@/lib/api/client/enrollment";
 import { useRouter } from "next/navigation";
 import type { RosterItem } from "@/components/schedule/DailyClassRoster";
 import { DailyClassRoster } from "@/components/schedule/DailyClassRoster";
@@ -23,8 +23,8 @@ import {
 import {
   updateMakeupStatus,
   upsertAttendance,
-} from "@/lib/api/attendance-client";
-import { updateTrialStatus } from "@/lib/api/trial-client";
+} from "@/lib/api/client/attendance";
+import { updateTrialStatus } from "@/lib/api/client/trial";
 import { AssignInstructorDialog } from "@/components/schedule/AssignInstructorDialog";
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";

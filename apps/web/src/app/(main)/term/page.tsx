@@ -1,4 +1,4 @@
-import { getAllTerms } from "@/lib/api/schedule";
+import { getAllTerms } from "@/lib/api/server/schedule";
 import type { Term } from "@school/shared-types";
 import { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth/user";

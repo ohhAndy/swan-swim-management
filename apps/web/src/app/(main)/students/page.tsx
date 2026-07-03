@@ -1,4 +1,4 @@
-import { searchStudents } from "@/lib/api/students";
+import { searchStudents } from "@/lib/api/server/students";
 import StudentsListClient from "./StudentListClient";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";

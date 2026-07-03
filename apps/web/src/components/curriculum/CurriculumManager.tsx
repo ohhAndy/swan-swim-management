@@ -32,7 +32,7 @@ import {
   deleteSkill,
   Level,
   Skill,
-} from "@/lib/api/curriculum-client";
+} from "@/lib/api/client/curriculum";
 
 export function CurriculumManager() {
   const [levels, setLevels] = useState<Level[]>([]);

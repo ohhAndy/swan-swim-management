@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { getAuditLogs, AuditLog } from "@/lib/api/audit-logs-client";
+import { getAuditLogs, AuditLog } from "@/lib/api/client/audit-logs";
 import { getCurrentUserClient } from "@/lib/auth/user-client";
 import { useRouter } from "next/navigation";
 import {
@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { getAllStaffUsers, StaffUser } from "@/lib/api/staff-client";
+import { getAllStaffUsers, StaffUser } from "@/lib/api/client/staff";
 
 export default function AuditLogsPage() {
   const router = useRouter();

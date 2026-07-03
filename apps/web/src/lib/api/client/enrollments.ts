@@ -1,6 +1,4 @@
-import { getHeaders } from "./headers";
-
-const API = process.env.NEXT_PUBLIC_API_URL!;
+import { clientFetch } from "../_fetch/client";
 
 export interface UninvoicedEnrollment {
   id: string;
@@ -31,23 +29,16 @@ export async function getUninvoicedEnrollments(params?: {
   termId?: string;
   locationId?: string;
 }): Promise<UninvoicedEnrollment[]> {
-  const headers = await getHeaders();
-  // Remove location header to prevent implicit filtering
-  if ("x-location-id" in headers) {
-    delete headers["x-location-id"];
-  }
-
   const queryParams = new URLSearchParams();
   if (params?.termId) queryParams.append("termId", params.termId);
   if (params?.locationId) queryParams.append("locationId", params.locationId);
 
-  const res = await fetch(
-    `${API}/enrollments/uninvoiced?${queryParams.toString()}`,
+  const res = await clientFetch(
+    `/enrollments/uninvoiced?${queryParams.toString()}`,
     {
-      headers,
       cache: "no-store",
+      skipLocationHeader: true,
     },
   );
-  if (!res.ok) throw new Error("Failed to fetch uninvoiced enrollments");
   return res.json();
 }

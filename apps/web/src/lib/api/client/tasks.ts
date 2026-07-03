@@ -1,4 +1,4 @@
-import { getHeaders } from "./headers";
+import { clientFetch } from "../_fetch/client";
 
 export interface Task {
   id: string;
@@ -38,25 +38,17 @@ export interface UpdateTaskInput {
   dueDate?: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 export async function getTasks(): Promise<Task[]> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API_URL}/tasks`, {
-    headers,
+  const res = await clientFetch(`/tasks`, {
   });
-  if (!res.ok) throw new Error("Failed to fetch tasks");
   return res.json();
 }
 
 export async function createTask(data: CreateTaskInput): Promise<Task> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API_URL}/tasks`, {
+  const res = await clientFetch(`/tasks`, {
     method: "POST",
-    headers,
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create task");
   return res.json();
 }
 
@@ -64,21 +56,15 @@ export async function updateTask(
   id: string,
   data: UpdateTaskInput
 ): Promise<Task> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API_URL}/tasks/${id}`, {
+  const res = await clientFetch(`/tasks/${id}`, {
     method: "PATCH",
-    headers,
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update task");
   return res.json();
 }
 
 export async function deleteTask(id: string): Promise<void> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API_URL}/tasks/${id}`, {
+  await clientFetch(`/tasks/${id}`, {
     method: "DELETE",
-    headers,
   });
-  if (!res.ok) throw new Error("Failed to delete task");
 }

@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RecipientFilter } from "@/lib/api/communications-client";
-import { getLocations, Location } from "@/lib/api/location-client";
-import { getTerms, Term } from "@/lib/api/term-client";
-import { getInstructors } from "@/lib/api/instructors";
-import { getLevels, Level } from "@/lib/api/curriculum-client";
+import { RecipientFilter } from "@/lib/api/client/communications";
+import { getLocations, Location } from "@/lib/api/client/location";
+import { getTerms, Term } from "@/lib/api/client/term";
+import { getInstructors } from "@/lib/api/client/instructors";
+import { getLevels, Level } from "@/lib/api/client/curriculum";
 import {
   Select,
   SelectContent,

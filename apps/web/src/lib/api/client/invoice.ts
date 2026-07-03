@@ -1,6 +1,4 @@
-import { getHeaders } from "./headers";
-
-const API = process.env.NEXT_PUBLIC_API_URL!;
+import { clientFetch } from "../_fetch/client";
 
 export interface Guardian {
   id: string;
@@ -133,18 +131,10 @@ export interface CreatePaymentData {
 }
 
 export async function createInvoice(data: CreateInvoiceData): Promise<Invoice> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API}/invoices`, {
+  const res = await clientFetch(`/invoices`, {
     method: "POST",
-    headers,
     body: JSON.stringify(data),
   });
-
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "Failed to create invoice");
-  }
-
   return res.json();
 }
 
@@ -161,7 +151,6 @@ export async function getInvoices(params?: {
   includeAllLocations?: boolean;
   needsRecovery?: boolean;
 }) {
-  const headers = await getHeaders();
   const queryParams = new URLSearchParams();
 
   if (params?.search) queryParams.append("search", params.search);
@@ -177,34 +166,15 @@ export async function getInvoices(params?: {
     queryParams.append("includeAllLocations", "true");
   if (params?.needsRecovery) queryParams.append("needsRecovery", "true");
 
-  const res = await fetch(`${API}/invoices?${queryParams}`, {
-    headers,
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(
-      `Failed to fetch invoices (${res.status} ${res.statusText}): ${errorText}`,
-    );
-  }
-
+  const res = await clientFetch(`/invoices?${queryParams}`);
   return res.json();
 }
 
 export async function getInvoice(id: string): Promise<Invoice> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API}/invoices/${id}`, {
-    headers,
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch invoice");
-  }
-
+  const res = await clientFetch(`/invoices/${id}`);
   return res.json();
 }
 
-// Update invoice
 export async function updateInvoice(
   id: string,
   data: {
@@ -222,31 +192,15 @@ export async function updateInvoice(
     }[];
   },
 ): Promise<Invoice> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API}/invoices/${id}`, {
+  const res = await clientFetch(`/invoices/${id}`, {
     method: "PATCH",
-    headers,
     body: JSON.stringify(data),
   });
-
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "Failed to update invoice");
-  }
-
   return res.json();
 }
 
 export async function deleteInvoice(id: string): Promise<void> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API}/invoices/${id}`, {
-    method: "DELETE",
-    headers,
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to delete invoice");
-  }
+  await clientFetch(`/invoices/${id}`, { method: "DELETE" });
 }
 
 export async function getUnInvoicedEnrollments(params?: {
@@ -256,7 +210,6 @@ export async function getUnInvoicedEnrollments(params?: {
   limit?: number;
   includeAllLocations?: boolean;
 }) {
-  const headers = await getHeaders();
   const queryParams = new URLSearchParams();
 
   if (params?.guardianId) queryParams.append("guardianId", params.guardianId);
@@ -266,60 +219,27 @@ export async function getUnInvoicedEnrollments(params?: {
   if (params?.includeAllLocations)
     queryParams.append("includeAllLocations", "true");
 
-  const res = await fetch(
-    `${API}/invoices/un-invoiced-enrollments?${queryParams}`,
-    { headers },
+  const res = await clientFetch(
+    `/invoices/un-invoiced-enrollments?${queryParams}`,
   );
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(
-      `Failed to fetch un-invoiced enrollments (${res.status} ${res.statusText}): ${errorText}`,
-    );
-  }
-
   return res.json();
 }
 
 export async function createPayment(data: CreatePaymentData): Promise<Payment> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API}/payments`, {
+  const res = await clientFetch(`/payments`, {
     method: "POST",
-    headers,
     body: JSON.stringify(data),
   });
-
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "Failed to record payment");
-  }
-
   return res.json();
 }
 
 export async function getPaymentsByInvoice(
   invoiceId: string,
 ): Promise<Payment[]> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API}/payments/invoice/${invoiceId}`, {
-    headers,
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch payments");
-  }
-
+  const res = await clientFetch(`/payments/invoice/${invoiceId}`);
   return res.json();
 }
 
 export async function deletePayment(id: string): Promise<void> {
-  const headers = await getHeaders();
-  const res = await fetch(`${API}/payments/${id}`, {
-    method: "DELETE",
-    headers,
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to delete payment");
-  }
+  await clientFetch(`/payments/${id}`, { method: "DELETE" });
 }

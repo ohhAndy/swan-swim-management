@@ -7,8 +7,8 @@ import {
   getTasks,
   Task,
   updateTask,
-} from "@/lib/api/tasks-client";
-import { getStaffUsers, StaffUser } from "@/lib/api/users-client";
+} from "@/lib/api/client/tasks";
+import { getStaffUsers, StaffUser } from "@/lib/api/client/users";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -72,8 +72,8 @@ export default function TasksPage() {
     } else {
       // Create
       // Verify we have a create function exposed or call fetch directly.
-      // I created createTask in tasks-client.ts. I need to import it.
-      const { createTask } = await import("@/lib/api/tasks-client");
+      // I created createTask in client/tasks.ts. I need to import it.
+      const { createTask } = await import("@/lib/api/client/tasks");
       await createTask(data);
     }
     await loadData();

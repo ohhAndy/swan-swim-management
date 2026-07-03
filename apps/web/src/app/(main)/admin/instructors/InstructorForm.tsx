@@ -22,7 +22,7 @@ import {
   createInstructor,
   updateInstructor,
   type Instructor,
-} from "@/lib/api/instructors";
+} from "@/lib/api/client/instructors";
 import { Loader2, Plus, Trash } from "lucide-react";
 
 const formSchema = z.object({

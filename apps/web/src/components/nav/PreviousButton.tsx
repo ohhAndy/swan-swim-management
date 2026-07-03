@@ -1,5 +1,5 @@
 import { PreviousButtonClient } from "./PreviousButtonClient";
-import { getTimeSlotsByWeekday } from "@/lib/api/schedule";
+import { getTimeSlotsByWeekday } from "@/lib/api/server/schedule";
 
 async function calcPrev(weekday: number, slotTime: string, termId: string) {
   // 1. Fetch only current day

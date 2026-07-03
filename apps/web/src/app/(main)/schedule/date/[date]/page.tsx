@@ -1,4 +1,4 @@
-import { getDailySchedule } from "@/lib/api/schedule";
+import { getDailySchedule } from "@/lib/api/server/schedule";
 
 import DailyScheduleClient from "./DailyScheduleClient";
 

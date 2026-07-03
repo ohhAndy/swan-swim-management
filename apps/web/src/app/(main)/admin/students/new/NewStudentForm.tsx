@@ -1,12 +1,12 @@
 "use client";
 
-import { createStudent } from "@/lib/api/students-client";
+import { createStudent } from "@/lib/api/client/students";
 import { CreateStudentInput, CreateStudentSchema } from "@/lib/zod/student";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { getLevels, Level } from "@/lib/api/curriculum-client";
+import { getLevels, Level } from "@/lib/api/client/curriculum";
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
