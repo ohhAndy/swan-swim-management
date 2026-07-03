@@ -299,7 +299,7 @@ export default function PaymentHistoryClient() {
                               balance: 0,
                               calculatedStatus: "paid" as const,
                             };
-                            setEditingPaymentInvoice(partialInvoice as Invoice);
+                            setEditingPaymentInvoice(partialInvoice as unknown as Invoice);
                           }}
                         >
                           <Pencil className="h-4 w-4" />

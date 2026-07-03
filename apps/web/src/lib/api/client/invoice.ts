@@ -1,106 +1,27 @@
 import { clientFetch } from "../_fetch/client";
 
-export interface Guardian {
-  id: string;
-  fullName: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-}
-
-export interface Student {
-  id: string;
-  firstName: string;
-  lastName: string;
-  shortCode?: string;
-  dateOfBirth?: string;
-  level?: string;
-}
-
-export interface Term {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-}
-
-export interface ClassOffering {
-  id: string;
-  weekday: number;
-  startTime: string;
-  endTime: string;
-  title: string;
-  capacity: number;
-  term: Term;
-}
-
-export interface EnrollmentSkip {
-  id: string;
-  enrollmentId: string;
-  classSessionId: string;
-  date: string;
-}
-
-export interface Enrollment {
-  id: string;
-  studentId: string;
-  classOfferingId: string;
-  classRatio: string;
-  status: string;
-  student: Student;
-  offering: ClassOffering;
-  skips?: EnrollmentSkip[];
-  suggestedAmount?: number;
-}
-
-export interface InvoiceLineItem {
-  id: string;
-  enrollmentId?: string;
-  description: string;
-  amount: number;
-  enrollment?: Enrollment;
-}
-
-export interface Payment {
-  id: string;
-  amount: number;
-  paymentDate: string;
-  paymentMethod:
-    | "cash"
-    | "debit"
-    | "visa"
-    | "mastercard"
-    | "etransfer"
-    | "website"
-    | "other";
-  notes?: string;
-  createdAt: string;
-  createdByUser?: {
-    id: string;
-    fullName: string;
-  };
-}
-
-export interface Invoice {
-  id: string;
-  invoiceNumber?: string;
-  guardianId?: string;
-  totalAmount: number;
-  status: "paid" | "partial" | "void";
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-  guardian?: Guardian;
-  location?: {
-    id: string;
-    name: string;
-  };
-  lineItems: InvoiceLineItem[];
-  payments: Payment[];
-  amountPaid: number;
-  balance: number;
-  calculatedStatus: "paid" | "partial" | "void";
-}
+import type { 
+  Guardian, 
+  Student, 
+  Term, 
+  Offering as ClassOffering, 
+  EnrollmentSkip, 
+  Enrollment, 
+  InvoiceLineItem, 
+  Payment, 
+  Invoice 
+} from "../../types/models";
+export type { 
+  Guardian, 
+  Student, 
+  Term, 
+  ClassOffering, 
+  EnrollmentSkip, 
+  Enrollment, 
+  InvoiceLineItem, 
+  Payment, 
+  Invoice 
+};
 
 export interface CreateInvoiceData {
   invoiceNumber?: string;

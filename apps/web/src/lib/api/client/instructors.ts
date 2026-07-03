@@ -5,21 +5,16 @@ export interface Certificate {
   expirationDate?: string;
 }
 
-export interface Instructor {
-  id: string;
-  firstName: string;
-  lastName: string;
+import type { Instructor as PrismaInstructor } from "@prisma/client";
+
+export type Instructor = Omit<PrismaInstructor, "certificates" | "email" | "phone" | "gender" | "startDate" | "notes"> & {
   email?: string;
   phone?: string;
   gender?: string;
   startDate?: string;
-  languages?: string[];
-  certificates?: Certificate[];
   notes?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+  certificates?: Certificate[];
+};
 
 export interface CreateInstructorInput {
   firstName: string;

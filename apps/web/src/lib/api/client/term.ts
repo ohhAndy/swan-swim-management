@@ -1,12 +1,8 @@
 import type { FormOutput } from "../../zod/term";
 import { clientFetch } from "../_fetch/client";
 
-export interface Term {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-}
+import type { Term } from "@prisma/client";
+export type { Term };
 
 export async function createTerm(values: FormOutput) {
   const res = await clientFetch(`/terms`, {

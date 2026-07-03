@@ -1,16 +1,7 @@
 import { clientFetch } from "../_fetch/client";
 
-export interface InventoryItem {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  sku: string | null;
-  stock: number;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { InventoryItem } from "../../types/models";
+export type { InventoryItem };
 
 export interface CreateInventoryItemData {
   name: string;

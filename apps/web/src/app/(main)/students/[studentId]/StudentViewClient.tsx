@@ -51,7 +51,7 @@ import { ManageSkipsDialog } from "@/components/schedule/ManageSkipsDialog";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ReportCardForm } from "@/components/report-cards/ReportCardForm";
 
-import { Enrollment, Student } from "@/lib/constants/student";
+import type { Enrollment, Student } from "@/lib/types/models";
 import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
 import { z } from "zod";
 import { PermissionGate } from "@/components/auth/PermissionGate";
@@ -204,9 +204,9 @@ export default function StudentViewClient({
     offering: {
       id: string;
       title: string;
-      weekday: number;
-      startTime: string;
-      endTime: string;
+      weekday: number | null;
+      startTime: string | null;
+      endTime: string | null;
       termId: string;
       term: {
         id: string;
@@ -232,9 +232,9 @@ export default function StudentViewClient({
     offering: {
       id: string;
       title: string;
-      weekday: number;
-      startTime: string;
-      endTime: string;
+      weekday: number | null;
+      startTime: string | null;
+      endTime: string | null;
       term: { name: string };
       sessions: Array<{ id: string; date: string }>;
     };
@@ -860,7 +860,7 @@ export default function StudentViewClient({
                             </p>
 
                             <p className="text-sm text-gray-600 pt-2">
-                              {FULL_DAY_LABELS[enrollment.offering.weekday]}{" "}
+                              {FULL_DAY_LABELS[enrollment.offering.weekday ?? 0]}{" "}
                               {enrollment.offering.startTime}-
                               {enrollment.offering.endTime} (
                               {enrollment.classRatio})
@@ -1110,7 +1110,7 @@ export default function StudentViewClient({
                                 "Unknown Location"}
                             </p>
                             <p className="text-sm text-gray-500 mt-1">
-                              {FULL_DAY_LABELS[enrollment.offering.weekday]}{" "}
+                              {FULL_DAY_LABELS[enrollment.offering.weekday ?? 0]}{" "}
                               {enrollment.offering.startTime}–
                               {enrollment.offering.endTime}
                             </p>

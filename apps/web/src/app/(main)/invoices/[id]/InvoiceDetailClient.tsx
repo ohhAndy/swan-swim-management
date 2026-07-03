@@ -83,7 +83,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
   const [editDate, setEditDate] = useState("");
 
   // Use string for amount to allow easy decimal editing
-  interface EditableLineItem extends Omit<InvoiceLineItem, "amount"> {
+  interface EditableLineItem extends Omit<Invoice["lineItems"][0], "amount"> {
     amount: string;
   }
   const [editLineItems, setEditLineItems] = useState<EditableLineItem[]>([]);
@@ -140,7 +140,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
         createdAt: editDate && invoice ? `${editDate}T${new Date(invoice.createdAt).toISOString().split("T")[1] || "00:00:00.000Z"}` : undefined,
         lineItems: editLineItems.map((item) => ({
           id: item.id.startsWith("temp-") ? undefined : item.id,
-          enrollmentId: item.enrollmentId,
+          enrollmentId: item.enrollmentId ?? undefined,
           description: item.description,
           amount: parseFloat(item.amount) || 0,
         })),

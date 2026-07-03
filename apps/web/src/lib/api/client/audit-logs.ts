@@ -1,20 +1,6 @@
 import { clientFetch } from "../_fetch/client";
-
-export interface AuditLog {
-  id: string;
-  staffId: string;
-  action: string;
-  entityType: string;
-  entityId: string;
-  changes: Record<string, unknown> | null;
-  metadata: Record<string, unknown> | null;
-  createdAt: string;
-  staff: {
-    fullName: string;
-    email: string;
-    role: string;
-  };
-}
+import type { AuditLog } from "../../types/models";
+export type { AuditLog };
 
 export async function getAuditLogs(
   page = 1,

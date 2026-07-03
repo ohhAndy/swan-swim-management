@@ -40,9 +40,9 @@ interface TransferEnrollmentDialogProps {
     offering: {
       id: string;
       title: string;
-      weekday: number;
-      startTime: string;
-      endTime: string;
+      weekday: number | null;
+      startTime: string | null;
+      endTime: string | null;
       termId: string;
       term: {
         id: string;
@@ -57,9 +57,9 @@ interface TransferEnrollmentDialogProps {
 interface AvailableClass {
   id: string;
   title: string;
-  weekday: number;
-  startTime: string;
-  endTime: string;
+  weekday: number | null;
+  startTime: string | null;
+  endTime: string | null;
   capacity: number;
   termId: string;
   term: { id: string; name: string };
@@ -215,7 +215,7 @@ export function TransferEnrollmentDialog({
               </div>
               <div>
                 <strong>Schedule:</strong>{" "}
-                {FULL_DAY_LABELS[enrollment.offering.weekday]}{" "}
+                {FULL_DAY_LABELS[enrollment.offering.weekday ?? 0]}{" "}
                 {enrollment.offering.startTime}-{enrollment.offering.endTime}
               </div>
               <div>
@@ -246,7 +246,7 @@ export function TransferEnrollmentDialog({
                   <SelectContent className="max-h-60 overflow-y-auto">
                     {availableClasses.map((cls) => (
                       <SelectItem key={cls.id} value={cls.id}>
-                        {cls.title} - {FULL_DAY_LABELS[cls.weekday]}{" "}
+                        {cls.title} - {FULL_DAY_LABELS[cls.weekday ?? 0]}{" "}
                         {cls.startTime}-{cls.endTime} ({cls._count.enrollments}/
                         {cls.capacity})
                       </SelectItem>

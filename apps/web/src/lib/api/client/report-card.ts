@@ -1,37 +1,6 @@
 import { clientFetch } from "../_fetch/client";
-import { Level } from "./curriculum";
-
-export interface ReportCardSkill {
-  id: string;
-  reportCardId: string;
-  skillId: string;
-  status: "not_started" | "developing" | "mastered";
-  skill: {
-    id: string;
-    description: string;
-    order: number;
-    levelId: string;
-  };
-}
-
-export interface ReportCard {
-  id: string;
-  enrollmentId: string;
-  levelId: string | null;
-  status: "draft" | "completed" | "did_not_pass" | "sent";
-  comments: string | null;
-  createdAt: string;
-  updatedAt: string;
-  createdBy?: string | null;
-  createdByUser?: { fullName: string } | null;
-  updatedBy?: string | null;
-  updatedByUser?: { fullName: string } | null;
-  sentAt?: string | null;
-  sentById?: string | null;
-  sentByUser?: { fullName: string } | null;
-  level: Level | null;
-  reportCardSkills: ReportCardSkill[];
-}
+import type { ReportCard, ReportCardSkill } from "../../types/models";
+export type { ReportCard, ReportCardSkill };
 
 export interface CreateReportCardDto {
   enrollmentId: string;

@@ -1,10 +1,6 @@
 import { clientFetch } from "../_fetch/client";
-export interface Location {
-  id: string;
-  name: string;
-  slug: string;
-  address?: string;
-}
+import type { Location } from "@prisma/client";
+export type { Location };
 
 export async function getLocations(): Promise<Location[]> {
   const res = await clientFetch(`/locations`, {

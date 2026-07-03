@@ -1,25 +1,7 @@
 import { clientFetch } from "../_fetch/client";
 
-export interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  status: "pending" | "in_progress" | "completed" | "cancelled";
-  priority: "low" | "medium" | "high" | "urgent";
-  dueDate: string | null;
-  assignedToId: string | null;
-  createdById: string;
-  createdAt: string;
-  updatedAt: string;
-  assignedTo?: {
-    id: string;
-    fullName: string;
-  } | null;
-  createdBy?: {
-    id: string;
-    fullName: string;
-  };
-}
+import type { Task } from "../../types/models";
+export type { Task };
 
 export interface CreateTaskInput {
   title: string;

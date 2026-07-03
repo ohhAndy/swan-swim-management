@@ -1,9 +1,5 @@
-export type StaffRole =
-  | "super_admin"
-  | "admin"
-  | "manager"
-  | "supervisor"
-  | "viewer";
+import type { StaffRole } from "@prisma/client";
+export type { StaffRole };
 
 // Permission checking functions
 export function canViewStudents(): boolean {

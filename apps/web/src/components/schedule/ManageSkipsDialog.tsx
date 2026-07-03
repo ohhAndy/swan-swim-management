@@ -16,7 +16,6 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { updateEnrollmentSkips } from "@/lib/api/client/enrollment";
-import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
 
 interface Attendance {
   id: string;
@@ -33,9 +32,9 @@ interface ManageSkipsDialogProps {
     offering: {
       id: string;
       title: string;
-      weekday: number;
-      startTime: string;
-      endTime: string;
+      weekday: number | null;
+      startTime: string | null;
+      endTime: string | null;
       term: { name: string };
       sessions: Array<{ id: string; date: string }>;
     };

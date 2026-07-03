@@ -1,12 +1,6 @@
 import { clientFetch } from "../_fetch/client";
-export type StaffRole = "admin" | "manager" | "supervisor" | "viewer";
-
-export interface StaffUser {
-  id: string;
-  fullName: string;
-  email: string;
-  role: StaffRole;
-}
+import type { StaffUser, StaffRole } from "@prisma/client";
+export type { StaffUser, StaffRole };
 
 export async function getStaffUsers(): Promise<StaffUser[]> {
   const res = await clientFetch(`/staff-users`, {

@@ -17,22 +17,8 @@ export interface CreateSkillDto {
 
 export type UpdateSkillDto = Partial<CreateSkillDto>;
 
-export interface Skill {
-  id: string;
-  description: string;
-  order: number;
-  levelId: string;
-}
-
-export interface Level {
-  id: string;
-  name: string;
-  description?: string;
-  color?: string;
-  category?: string | null;
-  order: number;
-  skills: Skill[];
-}
+import type { Skill, Level } from "../../types/models";
+export type { Skill, Level };
 
 export async function getLevels(): Promise<Level[]> {
   const res = await clientFetch(`/levels`);
