@@ -14,7 +14,8 @@
     "db:generate": "npm --prefix packages/db run generate",
     "db:migrate": "npm --prefix packages/db run migrate:dev",
     "db:studio": "npm --prefix packages/db run studio",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "postinstall": "npm run db:generate"
   },
   "devDependencies": {
     "dotenv-cli": "^10.0.0",
