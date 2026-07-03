@@ -8,8 +8,8 @@ import {
   Task,
   updateTask,
 } from "@/lib/api/client/tasks";
-import { getStaffUsers, StaffUser } from "@/lib/api/client/users";
-import { useEffect, useState } from "react";
+import { getStaffUsers } from "@/lib/api/client/users";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { TaskCard } from "@/components/tasks/TaskCard";
@@ -22,12 +22,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function TasksPage() {
   const { user } = useGetCurrentUser();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: tasksData, isLoading: tasksLoading } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: getTasks,
+  });
+
+  const { data: staffData, isLoading: staffLoading } = useQuery({
+    queryKey: ["staffUsers"],
+    queryFn: getStaffUsers,
+  });
+
+  const tasks = tasksData || [];
+  const staffUsers = staffData || [];
+  const loading = tasksLoading || staffLoading;
+
   const [filter, setFilter] = useState<"all" | "my_tasks" | "created_by_me">(
     "my_tasks"
   );
@@ -37,26 +51,6 @@ export default function TasksPage() {
 
   const canCreate = user?.role === "admin" || user?.role === "manager";
   const canEdit = canCreate; // Simplify for now
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  async function loadData() {
-    try {
-      setLoading(true);
-      const [fetchedTasks, fetchedStaff] = await Promise.all([
-        getTasks(),
-        getStaffUsers(),
-      ]);
-      setTasks(fetchedTasks);
-      setStaffUsers(fetchedStaff);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const filteredTasks = tasks.filter((task) => {
     if (filter === "my_tasks") return task.assignedToId === user?.staffUserId;
@@ -76,18 +70,18 @@ export default function TasksPage() {
       const { createTask } = await import("@/lib/api/client/tasks");
       await createTask(data);
     }
-    await loadData();
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this task?")) return;
     await deleteTask(id);
-    await loadData();
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
   };
 
   const handleStatusChange = async (id: string, status: Task["status"]) => {
     await updateTask(id, { status });
-    await loadData();
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
   };
 
   if (loading) {

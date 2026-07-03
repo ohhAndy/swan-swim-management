@@ -53,16 +53,10 @@ interface StudentsResponse {
 export default function StudentsListClient({
   initialData,
   initialQuery,
-  initialPage,
-  initialEnrollmentStatus,
-  initialLevel,
   user,
 }: {
   initialData: StudentsResponse;
   initialQuery: string;
-  initialPage: number;
-  initialEnrollmentStatus: string;
-  initialLevel: string;
   user: CurrentUser;
 }) {
   const router = useRouter();

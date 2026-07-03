@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
@@ -14,6 +15,8 @@ import { AuthenticatedUser, StaffUserWithLocations } from "../auth/auth.types";
 
 @Injectable()
 export class StudentsService {
+  private readonly logger = new Logger(StudentsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   private async autoShortCode(firstName: string, lastName: string) {
@@ -699,7 +702,7 @@ export class StudentsService {
         },
       });
     } catch (error) {
-      console.error("Failed to deactivate expired enrollments:", error);
+      this.logger.error("Failed to deactivate expired enrollments", error instanceof Error ? error.stack : error);
     }
   }
 }

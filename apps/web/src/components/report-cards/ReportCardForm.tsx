@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 
 import { getLevels, Level } from "@/lib/api/client/curriculum";
-import { StaffRole } from "@/lib/auth/permissions";
+
 import {
   createReportCard,
   updateReportCard,
@@ -61,8 +61,6 @@ interface ReportCardFormProps {
   studentLevelId?: string;
   studentName: string;
   termName: string;
-  instructorName: string;
-  userRole?: StaffRole;
   onClose?: () => void;
 }
 
@@ -71,8 +69,6 @@ export function ReportCardForm({
   studentLevelId,
   studentName,
   termName,
-  instructorName,
-  userRole,
   onClose,
 }: ReportCardFormProps) {
   const [levels, setLevels] = useState<Level[]>([]);
@@ -115,7 +111,6 @@ export function ReportCardForm({
           skillGrades={skillgrades}
           comments={comments}
           termName={termName}
-          instructorName={instructorName}
         />,
       ).toBlob();
 
@@ -568,7 +563,6 @@ export function ReportCardForm({
                     skillGrades={skillgrades}
                     comments={comments}
                     termName={termName}
-                    instructorName={instructorName}
                   />
                 </PDFViewer>
               </div>

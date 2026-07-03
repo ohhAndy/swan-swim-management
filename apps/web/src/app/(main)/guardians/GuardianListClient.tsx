@@ -38,14 +38,10 @@ interface GuardiansResponse {
 export default function GuardianListClient({
   initialData,
   initialQuery,
-  initialPage,
-  initialWaiverStatus,
   user,
 }: {
   initialData: GuardiansResponse;
   initialQuery: string;
-  initialPage: number;
-  initialWaiverStatus?: "signed" | "pending";
   user: CurrentUser;
 }) {
   const router = useRouter();

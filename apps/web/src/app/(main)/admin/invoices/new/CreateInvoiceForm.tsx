@@ -167,6 +167,22 @@ export default function CreateInvoiceForm() {
 
   // Load enrollments when guardian selected
   useEffect(() => {
+    async function loadEnrollments() {
+      if (!selectedGuardian) return;
+
+      try {
+        const result = await getUnInvoicedEnrollments({
+          guardianId: selectedGuardian.id,
+          limit: 100,
+          includeAllLocations: true,
+        });
+        setEnrollments(result.data || []);
+      } catch (error) {
+        console.error("Failed to load enrollments:", error);
+        toast.error("Failed to load enrollments");
+      }
+    }
+
     if (selectedGuardian) {
       setSkipGuardian(false);
       loadEnrollments();
@@ -182,22 +198,6 @@ export default function CreateInvoiceForm() {
       setSelectedGuardian(null);
     }
   }, [skipGuardian]);
-
-  async function loadEnrollments() {
-    if (!selectedGuardian) return;
-
-    try {
-      const result = await getUnInvoicedEnrollments({
-        guardianId: selectedGuardian.id,
-        limit: 100,
-        includeAllLocations: true,
-      });
-      setEnrollments(result.data || []);
-    } catch (error) {
-      console.error("Failed to load enrollments:", error);
-      toast.error("Failed to load enrollments");
-    }
-  }
 
   function toggleEnrollment(enrollmentId: string) {
     const newSelected = new Set(selectedEnrollments);

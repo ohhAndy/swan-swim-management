@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -70,26 +70,7 @@ export function ScheduleMakeupDialog({
     }
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-
-        if (document.activeElement?.tagName === "INPUT" && q.trim()) {
-          doSearch();
-        } else if (picked && !loading) {
-          submit();
-        }
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, q, picked, loading]);
-
-  async function doSearch() {
+  const doSearch = useCallback(async () => {
     try {
       setErr(null);
       const r = await searchStudents({ query: q });
@@ -97,9 +78,9 @@ export function ScheduleMakeupDialog({
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Search failed");
     }
-  }
+  }, [q]);
 
-  async function submit() {
+  const submit = useCallback(async () => {
     if (!picked || !selectedDate) return;
 
     try {
@@ -128,7 +109,26 @@ export function ScheduleMakeupDialog({
     } finally {
       setLoading(false);
     }
-  }
+  }, [picked, selectedDate, rosters, classRatio, onSuccess, onOpenChange]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+
+        if (document.activeElement?.tagName === "INPUT" && q.trim()) {
+          doSearch();
+        } else if (picked && !loading) {
+          submit();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, q, picked, loading, doSearch, submit]);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "";

@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { RosterItem } from "./DailyClassRosterTypes";
+import { hasMinRole, StaffRole } from "@/lib/auth/permissions";
 
 export function AttendanceButton({
   item,
@@ -20,6 +21,7 @@ export function AttendanceButton({
   onUpdate: (s: string) => void;
   userRole?: string;
 }) {
+
   // Determine current status label/color
   let label = "Mark";
   let variant: "default" | "outline" | "ghost" | "secondary" | "destructive" =
@@ -127,8 +129,7 @@ export function AttendanceButton({
           item.status === "converted" ||
           (item.type === "student" &&
             item.enrollmentStatus !== "active" &&
-            userRole !== "admin" &&
-            userRole !== "super_admin")
+            !hasMinRole(userRole as StaffRole, "admin"))
         }
       >
         <Button

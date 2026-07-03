@@ -33,10 +33,8 @@ export function DailyClassRoster({
   onLevelUpdate,
   onAttendanceUpdate,
   onRemarksUpdate,
-  onReportCardUpdate,
   userRole,
   termName,
-  instructorName,
 }: Props) {
   const router = useRouter();
   const [levels, setLevels] = useState<Level[]>([]);
@@ -126,8 +124,6 @@ export function DailyClassRoster({
               }
               studentName={activeReportCardEnrollment.name}
               termName={termName || "Current Term"}
-              instructorName={instructorName || "No Instructor"}
-              userRole={userRole}
               onClose={() => {
                 setActiveReportCardEnrollment(null);
                 router.refresh();

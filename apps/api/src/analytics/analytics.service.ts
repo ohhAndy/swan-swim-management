@@ -1,9 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class AnalyticsService {
+  private readonly logger = new Logger(AnalyticsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async getRevenueByLocation() {
@@ -167,7 +169,7 @@ export class AnalyticsService {
       },
     };
 
-    console.log("getTermFinancialDetails", { termId, startDate, endDate });
+    this.logger.log(`getTermFinancialDetails termId=${termId} startDate=${startDate} endDate=${endDate}`);
 
     if (startDate) {
       whereClause.paymentDate = {
@@ -212,7 +214,7 @@ export class AnalyticsService {
       },
     });
 
-    console.log(`Found ${payments.length} payments for term ${termId}`);
+    this.logger.log(`Found ${payments.length} payments for term ${termId}`);
 
     const revenueByWeekday: Record<string, number> = {
       Monday: 0,

@@ -49,7 +49,7 @@ export function LocationSwitcher() {
                 <CommandItem
                   key={location.id}
                   value={location.name}
-                  onSelect={(currentValue) => {
+                  onSelect={() => {
                     setCurrentLocationId(location.id);
                     setOpen(false);
                   }}

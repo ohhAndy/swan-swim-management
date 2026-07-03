@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { HelpCircle, CalendarCheck, CalendarClock } from "lucide-react";
 import Link from "next/link";
 import RemarksDialog from "./RemarksDialog";
-import { StaffRole } from "@/lib/auth/permissions";
+import { StaffRole, hasMinRole } from "@/lib/auth/permissions";
 import {
   Tooltip,
   TooltipContent,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/tooltip";
 import { RosterItem } from "./DailyClassRosterTypes";
 import { AttendanceButton } from "./AttendanceButton";
+import { getReportCardStatusConfig } from "@/lib/utils/student-helpers";
 
 export type DailyClassRosterMobileProps = {
   roster: RosterItem[];
@@ -94,20 +95,13 @@ export function DailyClassRosterMobile({
                     Trial
                   </Badge>
                 )}
-                {/* Next Term Status Icons (Mobile) */}
                 {item.type === "student" &&
-                  (userRole === "super_admin" ||
-                    userRole === "admin" ||
-                    userRole === "manager" ||
-                    userRole === "supervisor") &&
+                  hasMinRole(userRole, "supervisor") &&
                   item.nextTermStatus === "paid" && (
                     <CalendarCheck className="w-4 h-4 text-green-600 ml-1" />
                   )}
                 {item.type === "student" &&
-                  (userRole === "super_admin" ||
-                    userRole === "admin" ||
-                    userRole === "manager" ||
-                    userRole === "supervisor") &&
+                  hasMinRole(userRole, "supervisor") &&
                   item.nextTermStatus === "enrolled" && (
                     <CalendarClock className="w-4 h-4 text-orange-500 ml-1" />
                   )}
@@ -119,30 +113,10 @@ export function DailyClassRosterMobile({
                       variant="outline"
                       className={cn(
                         "text-[10px] h-5 cursor-pointer ml-1 transition-colors hover:opacity-90",
-                        item.reportCardStatus === "completed" ||
-                          item.reportCardStatus === "sent" ||
-                          item.reportCardStatus === "given"
-                          ? "bg-green-100 text-green-700 border-green-200"
-                          : item.reportCardStatus === "created" ||
-                            item.reportCardStatus === "draft"
-                            ? "bg-blue-100 text-blue-700 border-blue-200"
-                            : item.reportCardStatus === "did_not_pass"
-                              ? "bg-red-100 text-red-700 border-red-200"
-                              : "bg-gray-100 text-gray-500",
+                        getReportCardStatusConfig(item.reportCardStatus, "mobile").className,
                       )}
                     >
-                      {item.reportCardStatus === "completed"
-                        ? "RC Completed"
-                        : item.reportCardStatus === "sent"
-                          ? "RC Sent"
-                          : item.reportCardStatus === "given"
-                            ? "RC Given"
-                            : item.reportCardStatus === "created" ||
-                              item.reportCardStatus === "draft"
-                              ? "RC Draft"
-                              : item.reportCardStatus === "did_not_pass"
-                                ? "RC Fail"
-                                : "No RC"}
+                      {getReportCardStatusConfig(item.reportCardStatus, "mobile").label}
                     </Badge>
                   </div>
                 )}
@@ -226,8 +200,7 @@ export function DailyClassRosterMobile({
                   updating !== null ||
                   (item.type === "student" &&
                     item.enrollmentStatus !== "active" &&
-                    userRole !== "admin" &&
-                    userRole !== "super_admin")
+                    !hasMinRole(userRole, "admin"))
                 }
               >
                 <Badge

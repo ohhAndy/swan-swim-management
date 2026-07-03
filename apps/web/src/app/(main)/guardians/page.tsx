@@ -56,8 +56,6 @@ export default async function GuardiansPage({
         <GuardianListClient
           initialData={guardiansData}
           initialQuery={query}
-          initialPage={page}
-          initialWaiverStatus={waiverStatus}
           user={user}
         />
       </Suspense>

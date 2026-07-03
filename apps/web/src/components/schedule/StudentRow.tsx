@@ -1,5 +1,6 @@
 import { Row } from "./grid-types";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { LEVEL_MAP } from "@/lib/constants/levels";
 import {
   DropdownMenu,
@@ -22,7 +23,7 @@ import {
   CalendarX,
   CalendarCheck,
 } from "lucide-react";
-import { calcAge, markClass } from "@/lib/utils/student-helpers";
+import { calcAge, markClass, getReportCardStatusConfig } from "@/lib/utils/student-helpers";
 import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
 import { ReportCardForm } from "../report-cards/ReportCardForm";
 import { useState } from "react";
@@ -131,8 +132,6 @@ interface StudentRowProps {
     status: string,
   ) => Promise<void>;
   onSaveRemarks: (enrollmentId: string, remarks: string) => Promise<void>;
-  onReportCardUpdate?: (enrollmentId: string, status: string) => Promise<void>;
-  reportCardOverrides?: Record<string, string | undefined>;
   userRole: StaffRole;
   termName: string;
   instructorName: string;
@@ -147,15 +146,12 @@ export function StudentRow({
   canEdit,
   onAttendanceUpdate,
   onSaveRemarks,
-  onReportCardUpdate,
-  reportCardOverrides,
   userRole,
   termName,
-  instructorName,
 }: StudentRowProps) {
+  const router = useRouter();
   const [isReportCardOpen, setIsReportCardOpen] = useState(false);
   const currentReportCardStatus =
-    reportCardOverrides?.[row.enrollmentId] ??
     row.reportCardStatus ??
     "not_created";
 
@@ -231,14 +227,7 @@ export function StudentRow({
             onClick={() => setIsReportCardOpen(true)}
             disabled={!canEdit}
             className={`w-full h-full text-[10px] font-medium flex items-center justify-center transition-colors min-h-[36px] ${
-              currentReportCardStatus === "not_created"
-                ? "bg-white text-gray-400 hover:bg-gray-50"
-                : currentReportCardStatus === "created" ||
-                  currentReportCardStatus === "draft"
-                  ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                  : currentReportCardStatus === "did_not_pass"
-                    ? "bg-red-100 text-red-700 hover:bg-red-200"
-                    : "bg-green-100 text-green-700 hover:bg-green-200"
+              getReportCardStatusConfig(currentReportCardStatus, "row").className
             }`}
             title={
               currentReportCardStatus === "completed" || currentReportCardStatus === "sent"
@@ -246,19 +235,7 @@ export function StudentRow({
                 : "Click to grade/edit report card"
             }
           >
-            {currentReportCardStatus === "created"
-              ? "Created"
-              : currentReportCardStatus === "draft"
-                ? "Draft"
-                : currentReportCardStatus === "sent"
-                  ? "Sent"
-                  : currentReportCardStatus === "completed"
-                    ? "Completed"
-                    : currentReportCardStatus === "did_not_pass"
-                      ? "Did Not Pass"
-                      : currentReportCardStatus === "given"
-                        ? "Given"
-                        : "None"}
+            {getReportCardStatusConfig(currentReportCardStatus, "row").label}
           </button>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogTitle className="sr-only">Report Card</DialogTitle>
@@ -267,9 +244,10 @@ export function StudentRow({
               studentLevelId={row.levelId || undefined}
               studentName={row.name}
               termName={termName}
-              instructorName={instructorName}
-              userRole={userRole}
-              onClose={() => setIsReportCardOpen(false)}
+              onClose={() => {
+                setIsReportCardOpen(false);
+                router.refresh();
+              }}
             />
           </DialogContent>
         </Dialog>

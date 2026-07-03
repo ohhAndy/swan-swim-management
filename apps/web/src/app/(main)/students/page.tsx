@@ -55,9 +55,6 @@ export default async function StudentsPage({
         <StudentsListClient
           initialData={studentsData}
           initialQuery={query}
-          initialPage={page}
-          initialEnrollmentStatus={enrollmentStatus}
-          initialLevel={level}
           user={user}
         />
       </Suspense>

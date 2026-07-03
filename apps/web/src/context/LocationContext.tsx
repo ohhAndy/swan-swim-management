@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Location {
   id: string;
@@ -21,6 +23,8 @@ const LocationContext = createContext<LocationContextType | undefined>(
 );
 
 export function LocationProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [locations, setLocations] = useState<Location[]>([]);
   const [currentLocationId, setCurrentLocationId] = useState<string | null>(
     null,
@@ -56,7 +60,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
           if (data.length > 0) {
             // Retrieve stored location
-            const stored = localStorage.getItem("swan_location_id");
+            const match = document.cookie.match(/(^|;)\s*swan_location_id\s*=\s*([^;]+)/);
+            const stored = match ? match[2] : null;
             const found = data.find((l: Location) => l.id === stored);
 
             if (found) {
@@ -64,7 +69,6 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
             } else {
               // Default to first accessible location
               setCurrentLocationId(data[0].id);
-              localStorage.setItem("swan_location_id", data[0].id);
               document.cookie = `swan_location_id=${data[0].id}; path=/; max-age=31536000`;
             }
           }
@@ -82,7 +86,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     // Subscribe to auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         fetchLocations();
       } else if (event === "SIGNED_OUT") {
@@ -98,9 +102,9 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
   const handleSetLocation = (id: string) => {
     setCurrentLocationId(id);
-    localStorage.setItem("swan_location_id", id);
     document.cookie = `swan_location_id=${id}; path=/; max-age=31536000`;
-    window.location.reload();
+    queryClient.invalidateQueries();
+    router.refresh();
   };
 
   return (

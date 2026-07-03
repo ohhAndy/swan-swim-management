@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -93,31 +93,7 @@ export function TransferEnrollmentDialog({
     ? selectedClass._count.enrollments >= selectedClass.capacity
     : false;
 
-  // Fetch available classes when dialog opens
-  useEffect(() => {
-    if (open) {
-      fetchAvailableClasses();
-      setSelectedClassId("");
-      setSelectedSkips(new Set());
-      setTransferNotes("");
-      setError(null);
-    }
-  }, [open]);
-
-  // Auto-suggest skips when class is selected
-  useEffect(() => {
-    if (selectedClass) {
-      autoSuggestSkips();
-    }
-  }, [selectedClassId]);
-
-  useEffect(() => {
-    if (open) {
-      fetchAvailableClasses();
-    }
-  }, [levelFilter]);
-
-  async function fetchAvailableClasses() {
+  const fetchAvailableClasses = useCallback(async () => {
     try {
       setFetchingClasses(true);
       setError(null);
@@ -132,9 +108,9 @@ export function TransferEnrollmentDialog({
     } finally {
       setFetchingClasses(false);
     }
-  }
+  }, [enrollment.offering.termId, enrollment.offeringId, levelFilter]);
 
-  function autoSuggestSkips() {
+  const autoSuggestSkips = useCallback(() => {
     if (!selectedClass) return;
 
     // Suggest skipping the first N sessions (where N = attended sessions count)
@@ -148,7 +124,31 @@ export function TransferEnrollmentDialog({
     }
 
     setSelectedSkips(suggestedSkips);
-  }
+  }, [selectedClass, attendedCount]);
+
+  // Reset dialog state when dialog opens
+  useEffect(() => {
+    if (open) {
+      setSelectedClassId("");
+      setSelectedSkips(new Set());
+      setTransferNotes("");
+      setError(null);
+    }
+  }, [open]);
+
+  // Fetch available classes when dialog opens or level filter changes
+  useEffect(() => {
+    if (open) {
+      fetchAvailableClasses();
+    }
+  }, [open, fetchAvailableClasses]);
+
+  // Auto-suggest skips when class is selected
+  useEffect(() => {
+    if (selectedClass) {
+      autoSuggestSkips();
+    }
+  }, [selectedClass, autoSuggestSkips]);
 
   function handleLevelFilterChange(value: string) {
     setLevelFilter(value);

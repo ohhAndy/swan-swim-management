@@ -21,12 +21,12 @@ export default function RootLayout({
       <body
         className={`${fredoka.className} min-h-screen bg-slate-100 text-slate-900`}
       >
-        <LocationProvider>
-          <QueryProvider>
+        <QueryProvider>
+          <LocationProvider>
             <main className="mx-auto max-w-5xl p-6">{children}</main>
             <Toaster richColors position="top-center" />
-          </QueryProvider>
-        </LocationProvider>
+          </LocationProvider>
+        </QueryProvider>
       </body>
     </html>
   );

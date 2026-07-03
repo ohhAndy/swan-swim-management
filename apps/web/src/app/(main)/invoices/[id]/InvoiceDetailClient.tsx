@@ -10,7 +10,6 @@ import {
   createPayment,
   deletePayment,
   type Invoice,
-  type InvoiceLineItem,
 } from "@/lib/api/client/invoice";
 import { Payment } from "@/lib/api/client/payments";
 import EditPaymentDialog from "@/components/payments/EditPaymentDialog";

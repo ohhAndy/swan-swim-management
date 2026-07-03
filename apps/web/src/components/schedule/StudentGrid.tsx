@@ -96,7 +96,6 @@ export function StudentGrid({
   onTrialClick,
   onTrialConvert,
   onRemarksUpdate,
-  onReportCardUpdate,
   user,
   termName,
   instructorName,
@@ -119,7 +118,6 @@ export function StudentGrid({
     parentPhone: string;
   }) => void;
   onRemarksUpdate?: (enrollmentId: string, notes: string) => Promise<void>;
-  onReportCardUpdate?: (enrollmentId: string, status: string) => Promise<void>;
   user: CurrentUser;
   termName: string;
   instructorName: string;
@@ -136,9 +134,7 @@ export function StudentGrid({
   const [trialOverrides, setTrialOverrides] = useState<
     Record<string, string | undefined>
   >({});
-  const [reportCardOverrides, setReportCardOverrides] = useState<
-    Record<string, string | undefined>
-  >({});
+
 
   const rows = useMemo(() => buildRow(rosters), [rosters]);
   const makeUps = useMemo(() => buildMakeUps(rosters), [rosters]);
@@ -286,30 +282,6 @@ export function StudentGrid({
     }
   };
 
-  const handleReportCardUpdate = async (
-    enrollmentId: string,
-    status: string,
-  ) => {
-    if (!onReportCardUpdate) return;
-
-    setReportCardOverrides((prev) => ({ ...prev, [enrollmentId]: status }));
-    const updateKey = `report-${enrollmentId}`;
-    setUpdating(updateKey);
-
-    try {
-      await onReportCardUpdate(enrollmentId, status);
-    } catch (error) {
-      console.error("Failed to update report card status:", error);
-      toast.error("Failed to update report card status");
-      setReportCardOverrides((prev) => {
-        const next = { ...prev };
-        delete next[enrollmentId];
-        return next;
-      });
-    } finally {
-      setUpdating(null);
-    }
-  };
 
   const canEdit: boolean = hasPermission(user.role, "markAttendance");
 
@@ -364,8 +336,6 @@ export function StudentGrid({
           canEdit={canEdit}
           onAttendanceUpdate={handleAttendanceUpdate}
           onSaveRemarks={handleSaveRemarks}
-          onReportCardUpdate={handleReportCardUpdate}
-          reportCardOverrides={reportCardOverrides}
           userRole={user.role}
           termName={termName}
           instructorName={instructorName}

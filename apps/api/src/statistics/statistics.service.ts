@@ -1,10 +1,12 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { AuthenticatedUser } from "../auth/auth.types";
 
 @Injectable()
 export class StatisticsService {
+  private readonly logger = new Logger(StatisticsService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async getDashboardStats(
@@ -156,9 +158,9 @@ export class StatisticsService {
         },
       };
     } catch (error) {
-      console.error(
-        `[Stats] Error calculating dashboard stats for term ${termId}:`,
-        error,
+      this.logger.error(
+        `Error calculating dashboard stats for term ${termId}`,
+        error instanceof Error ? error.stack : error,
       );
       throw error;
     }

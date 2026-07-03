@@ -143,7 +143,6 @@ interface ReportCardPdfProps {
   skillGrades: Record<string, "not_started" | "developing" | "mastered">;
   comments: string;
   termName: string;
-  instructorName: string;
 }
 
 const formatGrade = (grade: "not_started" | "developing" | "mastered") => {
@@ -165,7 +164,6 @@ export const ReportCardPdf = ({
   skillGrades,
   comments,
   termName,
-  instructorName,
 }: ReportCardPdfProps) => {
   const currentDate = new Date().toLocaleDateString("en-US", {
     month: "long",

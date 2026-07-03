@@ -2,7 +2,7 @@
 
 import { enrollStudentWithSkips } from "@/lib/api/client/schedule";
 import { searchStudents, StudentLite } from "@/lib/api/client/students";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -80,26 +80,7 @@ export function EnrollStudentDialog({
     }
   }, [open, isoDates]);
 
-  useEffect(() => {
-    if (!open) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-
-        if (document.activeElement?.tagName === "INPUT" && q.trim()) {
-          doSearch();
-        } else if (picked && !loading) {
-          submit();
-        }
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, q, picked, loading]);
-
-  async function doSearch() {
+  const doSearch = useCallback(async () => {
     try {
       setErr(null);
       const res = await searchStudents({ query: q, page: 1, pageSize: 20 });
@@ -107,9 +88,9 @@ export function EnrollStudentDialog({
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Search Failed");
     }
-  }
+  }, [q]);
 
-  async function submit() {
+  const submit = useCallback(async () => {
     if (!picked) return;
 
     try {
@@ -132,7 +113,26 @@ export function EnrollStudentDialog({
     } finally {
       setLoading(false);
     }
-  }
+  }, [picked, isoDates, selectedDates, offeringId, classRatio, onSuccess, onOpenChange]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+
+        if (document.activeElement?.tagName === "INPUT" && q.trim()) {
+          doSearch();
+        } else if (picked && !loading) {
+          submit();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, q, picked, loading, doSearch, submit]);
 
   const toggleDate = (date: string) => {
     const newSelected = new Set(selectedDates);

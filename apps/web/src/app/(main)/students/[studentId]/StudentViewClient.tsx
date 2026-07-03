@@ -1310,8 +1310,6 @@ export default function StudentViewClient({
               studentLevelId={student.levelId || undefined}
               studentName={selectedReportCardEnrollment.studentName}
               termName={selectedReportCardEnrollment.termName}
-              instructorName={selectedReportCardEnrollment.instructorName}
-              userRole={user.role}
               onClose={() => {
                 setIsReportCardOpen(false);
                 setSelectedReportCardEnrollment(null);

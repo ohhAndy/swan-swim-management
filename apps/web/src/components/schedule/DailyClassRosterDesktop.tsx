@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { CalendarCheck, CalendarClock, CalendarX } from "lucide-react";
 import Link from "next/link";
 import RemarksDialog from "./RemarksDialog";
-import { StaffRole } from "@/lib/auth/permissions";
+import { StaffRole, hasMinRole } from "@/lib/auth/permissions";
 import {
   Tooltip,
   TooltipContent,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/tooltip";
 import { RosterItem } from "./DailyClassRosterTypes";
 import { AttendanceButton } from "./AttendanceButton";
+import { getReportCardStatusConfig } from "@/lib/utils/student-helpers";
 
 export type DailyClassRosterDesktopProps = {
   roster: RosterItem[];
@@ -111,10 +112,7 @@ export function DailyClassRosterDesktop({
                       </Badge>
                     )}
                     {item.type === "student" &&
-                      (userRole === "super_admin" ||
-                        userRole === "admin" ||
-                        userRole === "manager" ||
-                        userRole === "supervisor") &&
+                      hasMinRole(userRole, "supervisor") &&
                       item.nextTermStatus === "paid" && (
                         <TooltipProvider>
                           <Tooltip>
@@ -130,10 +128,7 @@ export function DailyClassRosterDesktop({
                         </TooltipProvider>
                       )}
                     {item.type === "student" &&
-                      (userRole === "super_admin" ||
-                        userRole === "admin" ||
-                        userRole === "manager" ||
-                        userRole === "supervisor") &&
+                      hasMinRole(userRole, "supervisor") &&
                       item.nextTermStatus === "enrolled" && (
                         <TooltipProvider>
                           <Tooltip>
@@ -149,10 +144,7 @@ export function DailyClassRosterDesktop({
                         </TooltipProvider>
                       )}
                     {item.type === "student" &&
-                      (userRole === "super_admin" ||
-                        userRole === "admin" ||
-                        userRole === "manager" ||
-                        userRole === "supervisor") &&
+                      hasMinRole(userRole, "supervisor") &&
                       (!item.nextTermStatus ||
                         item.nextTermStatus === "not_registered") && (
                         <TooltipProvider>
@@ -236,8 +228,7 @@ export function DailyClassRosterDesktop({
                       updating !== null ||
                       (item.type === "student" &&
                         item.enrollmentStatus !== "active" &&
-                        userRole !== "admin" &&
-                        userRole !== "super_admin")
+                        !hasMinRole(userRole, "admin"))
                     }
                   >
                     <Button
@@ -293,30 +284,10 @@ export function DailyClassRosterDesktop({
                     onClick={() => setActiveReportCardEnrollment(item)}
                     className={cn(
                       "text-xs px-2 py-1 rounded border min-w-[80px] font-medium transition-colors hover:opacity-90",
-                      item.reportCardStatus === "completed" ||
-                        item.reportCardStatus === "sent" ||
-                        item.reportCardStatus === "given"
-                        ? "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                        : item.reportCardStatus === "created" ||
-                          item.reportCardStatus === "draft"
-                          ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                          : item.reportCardStatus === "did_not_pass"
-                            ? "bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
-                            : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100",
+                      getReportCardStatusConfig(item.reportCardStatus, "desktop").className,
                     )}
                   >
-                    {item.reportCardStatus === "completed"
-                      ? "Completed"
-                      : item.reportCardStatus === "sent"
-                        ? "Sent"
-                        : item.reportCardStatus === "given"
-                          ? "Given"
-                          : item.reportCardStatus === "created" ||
-                            item.reportCardStatus === "draft"
-                            ? "Draft"
-                            : item.reportCardStatus === "did_not_pass"
-                              ? "Did Not Pass"
-                              : "None"}
+                    {getReportCardStatusConfig(item.reportCardStatus, "desktop").label}
                   </button>
                 ) : item.type === "makeup" && item.normalSession ? (
                   <span className="text-xs font-medium text-muted-foreground whitespace-nowrap bg-muted px-2 py-1 rounded">

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
 import { getTermAvailability, getTermTitle } from "@/lib/api/client/schedule";
+import { useQuery } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -28,21 +27,6 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { BackButton } from "@/components/nav/BackButton";
 
-type AvailabilityData = Record<
-  number,
-  Array<{
-    offeringId: string;
-    title: string;
-    time: string;
-    capacity: number;
-    sessions: Array<{
-      date: string;
-      openSeats: number;
-    }>;
-    instructors: string[];
-  }>
->;
-
 const getSeatsColor = (seats: number) => {
   if (seats >= 3) return "text-green-600 bg-green-50";
   if (seats === 2) return "text-blue-600 bg-blue-50";
@@ -60,15 +44,28 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
   const selectedInstructor = searchParams.get("instructor") || "all";
   const selectedTime = searchParams.get("time") || "all";
 
-  const [data, setData] = useState<AvailabilityData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [termName, setTermName] = useState("");
+  const { data: termNameData } = useQuery({
+    queryKey: ["termTitle", termId],
+    queryFn: () => getTermTitle(termId),
+    enabled: !!termId,
+  });
+
+  const { data: availabilityData, isLoading } = useQuery({
+    queryKey: ["termAvailability", termId, level, weekday],
+    queryFn: () =>
+      getTermAvailability(
+        termId,
+        level === "all" ? undefined : level,
+        weekday === "all" ? undefined : Number(weekday),
+      ),
+    enabled: !!termId,
+  });
+
+  const data = availabilityData || null;
+  const loading = isLoading;
+  const termName = termNameData || "";
 
   const allLevels = ["PS", "SW", "Adult"];
-
-  useEffect(() => {
-    getTermTitle(termId).then(setTermName).catch(console.error);
-  }, [termId]);
 
   const setFilter = (name: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -83,26 +80,6 @@ export default function AvailabilityClient({ termId }: { termId: string }) {
     }
     router.replace(`${pathname}?${params.toString()}`);
   };
-
-  useEffect(() => {
-    async function fetch() {
-      setLoading(true);
-      try {
-        const res = await getTermAvailability(
-          termId,
-          level === "all" ? undefined : level,
-          weekday === "all" ? undefined : Number(weekday),
-        );
-        setData(res);
-      } catch (error) {
-        console.error("Failed to fetch availability", error);
-        toast.error("Failed to fetch availability");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetch();
-  }, [termId, level, weekday]);
 
   const weekdays = [0, 1, 2, 3, 4, 5, 6]; // Sun-Sat
 

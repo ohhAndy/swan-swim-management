@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -33,10 +33,18 @@ import {
   Level,
   Skill,
 } from "@/lib/api/client/curriculum";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function CurriculumManager() {
-  const [levels, setLevels] = useState<Level[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: levelsData, isLoading } = useQuery({
+    queryKey: ["levels"],
+    queryFn: getLevels,
+  });
+
+  const levels = levelsData || [];
+  const loading = isLoading;
+
   const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>(
     {},
   );
@@ -59,20 +67,6 @@ export function CurriculumManager() {
   const [skillForm, setSkillForm] = useState({ description: "", order: 0 });
   const [isSubmittingSkill, setIsSubmittingSkill] = useState(false);
 
-  useEffect(() => {
-    fetchLevels();
-  }, []);
-
-  const fetchLevels = async () => {
-    try {
-      const data = await getLevels();
-      setLevels(data);
-    } catch (error) {
-      console.error("Failed to fetch levels", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const toggleLevel = (levelId: string) => {
     setExpandedLevels((prev) => ({ ...prev, [levelId]: !prev[levelId] }));
@@ -111,7 +105,7 @@ export function CurriculumManager() {
       } else {
         await createLevel(levelForm);
       }
-      await fetchLevels();
+      queryClient.invalidateQueries({ queryKey: ["levels"] });
       setIsLevelDialogOpen(false);
     } catch (error) {
       console.error("Failed to save level", error);
@@ -131,7 +125,7 @@ export function CurriculumManager() {
       return;
     try {
       await deleteLevel(id);
-      await fetchLevels();
+      queryClient.invalidateQueries({ queryKey: ["levels"] });
     } catch (error) {
       console.error("Failed to delete level", error);
     }
@@ -165,7 +159,7 @@ export function CurriculumManager() {
       } else {
         await createSkill({ ...skillForm, levelId: selectedLevelId });
       }
-      await fetchLevels(); // Refresh to show new skill
+      queryClient.invalidateQueries({ queryKey: ["levels"] }); // Refresh to show new skill
       setIsSkillDialogOpen(false);
     } catch (error) {
       console.error("Failed to save skill", error);
@@ -179,7 +173,7 @@ export function CurriculumManager() {
     if (!confirm("Delete this skill?")) return;
     try {
       await deleteSkill(id);
-      await fetchLevels();
+      queryClient.invalidateQueries({ queryKey: ["levels"] });
     } catch (error) {
       console.error("Failed to delete skill", error);
     }

@@ -15,7 +15,8 @@ export async function getHeaders() {
   }
 
   if (typeof window !== "undefined") {
-    const locationId = localStorage.getItem("swan_location_id");
+    const match = document.cookie.match(/(^|;)\s*swan_location_id\s*=\s*([^;]+)/);
+    const locationId = match ? match[2] : null;
     if (locationId) {
       headers["x-location-id"] = locationId;
     }

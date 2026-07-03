@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { DashboardStats, getDashboardStats } from "@/lib/api/client/stats";
+import { getDashboardStats } from "@/lib/api/client/stats";
 import { Users, AlertCircle, CalendarClock, Activity } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 
@@ -21,27 +21,13 @@ export function StatsOverview({
   prevTermId?: string;
   nextTermId?: string;
 }) {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ["dashboardStats", termId],
+    queryFn: () => getDashboardStats(termId),
+    enabled: !!termId,
+  });
 
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const data = await getDashboardStats(termId);
-        setStats(data);
-      } catch (error) {
-        console.error("Failed to load dashboard stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (termId) {
-      fetchStats();
-    }
-  }, [termId]);
-
-  if (loading) {
+  if (isLoading) {
     return <StatsSkeleton />;
   }
 
