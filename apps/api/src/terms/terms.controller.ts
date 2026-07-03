@@ -7,6 +7,7 @@ import {
   Post,
   UseGuards,
   Query,
+  NotFoundException,
 } from "@nestjs/common";
 import { TermsService } from "./terms.service";
 import type { SlotPage, Term } from "@school/shared-types";
@@ -44,8 +45,12 @@ export class TermsController {
   }
 
   @Get(":termId")
-  async getTermTitle(@Param("termId") termId: string): Promise<string | null> {
-    return this.termsService.getTermTitle(termId);
+  async getTermTitle(@Param("termId") termId: string): Promise<string> {
+    const title = await this.termsService.getTermTitle(termId);
+    if (!title) {
+      throw new NotFoundException(`Term with ID ${termId} not found`);
+    }
+    return title;
   }
 
   @Get(":termId/schedule/weekday/:weekday/slots")
