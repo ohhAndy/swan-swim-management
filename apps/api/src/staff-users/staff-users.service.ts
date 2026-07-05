@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class StaffUsersService {
@@ -55,7 +55,7 @@ export class StaffUsersService {
       role?: "admin" | "manager" | "supervisor" | "viewer";
       accessSchedule?: Record<string, { start: string; end: string }[]>;
     },
-    adminUser: AuthenticatedUser,
+    adminUser: RequestStaffUser,
   ) {
     const newUser = await this.prisma.staffUser.create({
       data: {
@@ -68,22 +68,17 @@ export class StaffUsersService {
       },
     });
 
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: adminUser.authId },
+    await this.auditLogsService.create({
+      staffId: adminUser.id,
+      action: "create",
+      entityType: "staff_user",
+      entityId: newUser.id,
+      changes: {
+        email: newUser.email,
+        role: newUser.role,
+        fullName: newUser.fullName,
+      },
     });
-    if (staffUser) {
-      await this.auditLogsService.create({
-        staffId: staffUser.id,
-        action: "create",
-        entityType: "staff_user",
-        entityId: newUser.id,
-        changes: {
-          email: newUser.email,
-          role: newUser.role,
-          fullName: newUser.fullName,
-        },
-      });
-    }
 
     return newUser;
   }
@@ -96,7 +91,7 @@ export class StaffUsersService {
       active?: boolean;
       accessSchedule?: Record<string, { start: string; end: string }[]>;
     },
-    adminUser: AuthenticatedUser,
+    adminUser: RequestStaffUser,
   ) {
     const updatedUser = await this.prisma.staffUser.update({
       where: { id },
@@ -106,18 +101,13 @@ export class StaffUsersService {
       },
     });
 
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: adminUser.authId },
+    await this.auditLogsService.create({
+      staffId: adminUser.id,
+      action: "update",
+      entityType: "staff_user",
+      entityId: id,
+      changes: data as Prisma.InputJsonValue,
     });
-    if (staffUser) {
-      await this.auditLogsService.create({
-        staffId: staffUser.id,
-        action: "update",
-        entityType: "staff_user",
-        entityId: id,
-        changes: data as Prisma.InputJsonValue,
-      });
-    }
 
     return updatedUser;
   }

@@ -24,8 +24,8 @@ import { BulkTransferDto, bulkTransferSchema } from "./dto/bulk-transfer.dto";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser } from "../auth/current-user.decorator";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("enrollments")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -43,9 +43,9 @@ export class EnrollmentsController {
   async enrollWithSkips(
     @Body(new ZodValidationPipe(EnrollWithSkipSchema))
     body: EnrollWithSkipInput,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.enrollmentsService.enrollWithSkips(body, user);
+    return this.enrollmentsService.enrollWithSkips(body, staffUser);
   }
 
   @Post(":id/transfer")
@@ -54,18 +54,18 @@ export class EnrollmentsController {
     @Param("id") id: string,
     @Body(new ZodValidationPipe(transferEnrollmentSchema))
     body: TransferEnrollmentDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.enrollmentsService.transferEnrollment(id, body, user);
+    return this.enrollmentsService.transferEnrollment(id, body, staffUser);
   }
 
   @Post("bulk-transfer")
   @Roles("super_admin", "admin")
   async bulkTransferEnrollments(
     @Body(new ZodValidationPipe(bulkTransferSchema)) body: BulkTransferDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.enrollmentsService.bulkTransfer(body.transfers, user);
+    return this.enrollmentsService.bulkTransfer(body.transfers, staffUser);
   }
 
   @Put(":id/remarks")
@@ -73,9 +73,9 @@ export class EnrollmentsController {
   async updateRemarks(
     @Param("id") id: string,
     @Body() body: { remarks: string },
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.enrollmentsService.updateRemarks(id, body, user);
+    return this.enrollmentsService.updateRemarks(id, body, staffUser);
   }
 
   @Put(":id/report-card-status")
@@ -83,12 +83,12 @@ export class EnrollmentsController {
   async updateReportCardStatus(
     @Param("id") id: string,
     @Body() body: { status: string },
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.enrollmentsService.updateReportCardStatus(
       id,
       body.status,
-      user,
+      staffUser,
     );
   }
 
@@ -97,20 +97,21 @@ export class EnrollmentsController {
   async updateSkips(
     @Param("id") id: string,
     @Body() body: { skippedSessionIds: string[] },
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.enrollmentsService.updateSkips(
       id,
       body.skippedSessionIds,
-      user,
+      staffUser,
     );
   }
+
   @Delete(":id")
   @Roles("super_admin", "admin", "manager")
   async deleteEnrollment(
     @Param("id") id: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.enrollmentsService.deleteEnrollment(id, user);
+    return this.enrollmentsService.deleteEnrollment(id, staffUser);
   }
 }

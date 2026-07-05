@@ -7,8 +7,8 @@ import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { UseGuards } from "@nestjs/common";
-import { CurrentUser } from "../auth/current-user.decorator";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("enrollments/:enrollmentId/skips")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -20,9 +20,9 @@ export class SkipsController {
   async add(
     @Param("enrollmentId") enrollmentId: string,
     @Body(new ZodValidationPipe(addSkipSchema)) body: AddSkipInput,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.skipsService.addSkip(enrollmentId, body, user);
+    return this.skipsService.addSkip(enrollmentId, body, staffUser);
   }
 
   @Delete(":classSessionId")
@@ -30,8 +30,8 @@ export class SkipsController {
   async delete(
     @Param("enrollmentId") enrollmentId: string,
     @Param("classSessionId") classSessionId: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.skipsService.deleteSkip(enrollmentId, classSessionId, user);
+    return this.skipsService.deleteSkip(enrollmentId, classSessionId, staffUser);
   }
 }

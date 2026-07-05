@@ -11,7 +11,7 @@ import {
   UpdateStudentDto,
 } from "./dto/schemas.dto";
 import { Prisma } from "@prisma/client";
-import { AuthenticatedUser, StaffUserWithLocations } from "../auth/auth.types";
+import { RequestStaffUser, StaffUserWithLocations } from "../auth/auth.types";
 
 @Injectable()
 export class StudentsService {
@@ -384,14 +384,9 @@ export class StudentsService {
     return student;
   }
 
-  async create(dto: CreateStudentDto, user: AuthenticatedUser) {
+  async create(dto: CreateStudentDto, staffUser: RequestStaffUser) {
     const { guardianId, shortCode, firstName, lastName, level, birthdate } =
       dto;
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     const generatedShortCode =
       shortCode ?? (await this.autoShortCode(firstName, lastName));
@@ -449,13 +444,8 @@ export class StudentsService {
     });
   }
 
-  async update(id: string, dto: UpdateStudentDto, user: AuthenticatedUser) {
+  async update(id: string, dto: UpdateStudentDto, staffUser: RequestStaffUser) {
     await this.ensureExists(id);
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     // Get existing student data to track changes
     const existing = await this.prisma.student.findUnique({
@@ -575,11 +565,7 @@ export class StudentsService {
     }
   }
 
-  async updateNotes(studentId: string, notes: string, user: AuthenticatedUser) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
+  async updateNotes(studentId: string, notes: string, staffUser: RequestStaffUser) {
 
     const student = await this.prisma.student.findUnique({
       where: { id: studentId },
@@ -617,13 +603,8 @@ export class StudentsService {
     return { success: true, notes: updated.notes };
   }
 
-  async delete(id: string, user: AuthenticatedUser) {
+  async delete(id: string, staffUser: RequestStaffUser) {
     await this.ensureExists(id);
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     const c = await this.prisma.enrollment.count({ where: { studentId: id } });
     if (c > 0) throw new BadRequestException("Student is currently enrolled!");

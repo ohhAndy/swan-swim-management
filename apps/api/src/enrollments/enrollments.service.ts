@@ -9,7 +9,7 @@ import { EnrollWithSkipInput } from "./dto/enrollment.dto";
 import { TransferEnrollmentDto } from "./dto/transfer.dto";
 import { UnInvoicedEnrollmentsQueryDto } from "../invoices/dto/uninvoiced-enrollments-query.dto";
 import { Prisma } from "@prisma/client";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class EnrollmentsService {
@@ -18,12 +18,8 @@ export class EnrollmentsService {
   async updateRemarks(
     enrollmentId: string,
     body: { remarks: string },
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     const currEnrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
@@ -63,14 +59,9 @@ export class EnrollmentsService {
   async transferEnrollment(
     enrollmentId: string,
     dto: TransferEnrollmentDto,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
     const { targetOfferingId, skippedSessionIds, transferNotes } = dto;
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     const currEnrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
@@ -318,13 +309,8 @@ export class EnrollmentsService {
     });
   }
 
-  async enrollWithSkips(input: EnrollWithSkipInput, user: AuthenticatedUser) {
+  async enrollWithSkips(input: EnrollWithSkipInput, staffUser: RequestStaffUser) {
     const { studentId, offeringId, skippedDates, classRatio } = input;
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     const student = await this.prisma.student.findUnique({
       where: { id: studentId },
@@ -422,12 +408,8 @@ export class EnrollmentsService {
   async updateReportCardStatus(
     enrollmentId: string,
     status: string,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     const curr = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
@@ -457,12 +439,8 @@ export class EnrollmentsService {
   async updateSkips(
     enrollmentId: string,
     skippedSessionIds: string[],
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
@@ -540,10 +518,7 @@ export class EnrollmentsService {
     return { success: true };
   }
 
-  async deleteEnrollment(id: string, user: AuthenticatedUser) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
+  async deleteEnrollment(id: string, staffUser: RequestStaffUser) {
     if (!staffUser) return;
 
     const enrollment = await this.prisma.enrollment.findUnique({
@@ -634,7 +609,7 @@ export class EnrollmentsService {
       targetOfferingId: string;
       transferNotes?: string;
     }[],
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
     const results: unknown[] = [];
     const errors: { enrollmentId: string; error: string }[] = [];
@@ -648,7 +623,7 @@ export class EnrollmentsService {
             skippedSessionIds: [],
             transferNotes: t.transferNotes,
           },
-          user,
+          staffUser,
         );
         results.push(result);
       } catch (err: unknown) {

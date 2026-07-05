@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class StatisticsService {
@@ -11,21 +11,12 @@ export class StatisticsService {
 
   async getDashboardStats(
     termId: string,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
     locationId?: string,
   ) {
     try {
       if (!termId) {
         throw new Error("Term ID is required");
-      }
-
-      const staffUser = await this.prisma.staffUser.findUnique({
-        where: { authId: user.authId },
-        include: { accessibleLocations: true },
-      });
-
-      if (!staffUser) {
-        throw new Error("User not found");
       }
 
       const validatedLocationId = validateLocationAccess(staffUser, locationId);

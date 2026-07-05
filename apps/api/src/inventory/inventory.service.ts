@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class InventoryService {
@@ -51,13 +51,9 @@ export class InventoryService {
     return item;
   }
 
-  async create(data: Prisma.InventoryItemCreateInput, user: AuthenticatedUser) {
+  async create(data: Prisma.InventoryItemCreateInput, staffUser: RequestStaffUser) {
     const item = await this.prisma.inventoryItem.create({
       data,
-    });
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
     });
 
     if (staffUser) {
@@ -76,15 +72,11 @@ export class InventoryService {
   async update(
     id: string,
     data: Prisma.InventoryItemUpdateInput,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
     const item = await this.prisma.inventoryItem.update({
       where: { id },
       data,
-    });
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
     });
 
     if (staffUser) {
@@ -100,7 +92,7 @@ export class InventoryService {
     return item;
   }
 
-  async delete(id: string, user: AuthenticatedUser) {
+  async delete(id: string, staffUser: RequestStaffUser) {
     const item = await this.prisma.inventoryItem.findUnique({ where: { id } });
     if (!item) throw new NotFoundException("Item not found");
 
@@ -121,10 +113,6 @@ export class InventoryService {
     const updated = await this.prisma.inventoryItem.update({
       where: { id },
       data: { active: false },
-    });
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
     });
 
     if (staffUser) {

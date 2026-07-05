@@ -13,8 +13,8 @@ import { OfferingsService } from "./offerings.service";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser } from "../auth/current-user.decorator";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("offerings")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -39,9 +39,9 @@ export class OfferingsController {
   async updateOfferingInfo(
     @Param("offeringId") offeringId: string,
     @Body() body: { title: string },
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.offeringsService.updateOfferingInfo(offeringId, body, user);
+    return this.offeringsService.updateOfferingInfo(offeringId, body, staffUser);
   }
 
   @Post()
@@ -59,17 +59,17 @@ export class OfferingsController {
       notes?: string;
       sessions?: { date: string; startTime: string; endTime: string }[];
     },
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.offeringsService.createOffering(body, user);
+    return this.offeringsService.createOffering(body, staffUser);
   }
 
   @Delete(":offeringId")
   @Roles("super_admin", "admin", "manager")
   async deleteOffering(
     @Param("offeringId") offeringId: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.offeringsService.deleteOffering(offeringId, user);
+    return this.offeringsService.deleteOffering(offeringId, staffUser);
   }
 }

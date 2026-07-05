@@ -7,11 +7,12 @@ import {
   UpsertAttendanceInput,
   UpsertAttendanceSchema,
 } from "./dto/attendance.dto";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
+import { RequestStaffUser } from "../auth/auth.types";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser } from "../auth/current-user.decorator";
-import { AuthenticatedUser } from "../auth/auth.types";
+
 
 @Controller("attendance")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -23,9 +24,9 @@ export class AttendanceController {
   async upsert(
     @Body(new ZodValidationPipe(UpsertAttendanceSchema))
     body: UpsertAttendanceInput,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.attendanceService.upsert(body, user);
+    return this.attendanceService.upsert(body, staffUser);
   }
 
   @Patch("makeup")
@@ -33,8 +34,8 @@ export class AttendanceController {
   async updateMakeUp(
     @Body(new ZodValidationPipe(UpdateMakeupAttendanceSchema))
     body: UpdateMakeupAttendanceInput,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.attendanceService.updateMakeup(body, user);
+    return this.attendanceService.updateMakeup(body, staffUser);
   }
 }

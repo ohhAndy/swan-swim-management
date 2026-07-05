@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { StatisticsService } from "./statistics.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { createPrismaMock, MockPrismaService } from "../prisma/prisma.mock";
+import { RequestStaffUser } from "../auth/auth.types";
 
 describe("StatisticsService", () => {
   let service: StatisticsService;
@@ -25,17 +26,21 @@ describe("StatisticsService", () => {
   });
 
   describe("getDashboardStats", () => {
+    const mockStaffUser: RequestStaffUser = {
+      id: "staff1",
+      authId: "user1",
+      email: "test@test.com",
+      fullName: "Test Staff",
+      role: "admin",
+      active: true,
+      accessSchedule: {},
+      accessibleLocations: [{ id: "loc1" }],
+    };
+
     it("should throw error if termId is missing", async () => {
       await expect(
-        service.getDashboardStats("", { authId: "user1", email: "test@test.com" })
+        service.getDashboardStats("", mockStaffUser)
       ).rejects.toThrow(/Term ID is required/);
-    });
-
-    it("should throw error if user not found", async () => {
-      prismaMock.staffUser.findUnique.mockResolvedValue(null);
-      await expect(
-        service.getDashboardStats("term1", { authId: "user1", email: "test@test.com" })
-      ).rejects.toThrow(/User not found/);
     });
   });
 });

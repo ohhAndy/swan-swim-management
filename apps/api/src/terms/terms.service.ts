@@ -14,7 +14,7 @@ import type {
 } from "@school/shared-types";
 import { CreateTermInput } from "./dto/create-term.dto";
 import { SessionStatus, Prisma } from "@prisma/client";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 // Use UTC for date matching to ensure consistency
 function getUTCDayKey(d: Date): string {
@@ -84,18 +84,12 @@ export class TermsService {
 
   async createTermWithSchedule(
     input: CreateTermInput,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
     locationId?: string,
   ) {
     const { name, slug, startDate, endDate, weeks = 8, templates } = input;
     const start = new Date(startDate);
     const end = new Date(endDate);
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-      include: { accessibleLocations: true },
-    });
-    if (!staffUser) return;
 
     // Validate Location Access
     let assignedLocationId: string | null = null;

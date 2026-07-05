@@ -14,8 +14,8 @@ import { UpdateReportCardDto } from "./dto/update-report-card.dto";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser } from "../auth/current-user.decorator";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("report-cards")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -26,9 +26,9 @@ export class ReportCardsController {
   @Post()
   create(
     @Body() createReportCardDto: CreateReportCardDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.reportCardsService.create(createReportCardDto, user);
+    return this.reportCardsService.create(createReportCardDto, staffUser);
   }
 
   @Get()
@@ -45,22 +45,25 @@ export class ReportCardsController {
   update(
     @Param("id") id: string,
     @Body() updateReportCardDto: UpdateReportCardDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.reportCardsService.update(id, updateReportCardDto, user);
+    return this.reportCardsService.update(id, updateReportCardDto, staffUser);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.reportCardsService.remove(id);
+  remove(
+    @Param("id") id: string,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
+  ) {
+    return this.reportCardsService.remove(id, staffUser);
   }
 
   @Post(":id/email")
   email(
     @Param("id") id: string,
     @Body() body: { pdfContent: string },
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.reportCardsService.emailReportCard(id, body.pdfContent, user);
+    return this.reportCardsService.emailReportCard(id, body.pdfContent, staffUser);
   }
 }

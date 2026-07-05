@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { RecipientFilterDto, SendEmailDto } from "./dto/communications.dto";
 import { Prisma } from "@prisma/client";
+import { RequestStaffUser } from "../auth/auth.types";
 
 import { Resend } from "resend";
 
@@ -117,7 +118,7 @@ export class CommunicationsService {
     return Array.from(uniqueGuardians.values());
   }
 
-  async sendEmail(dto: SendEmailDto) {
+  async sendEmail(dto: SendEmailDto, staffUser?: RequestStaffUser) {
     const { recipients, subject, body, attachments } = dto;
 
     this.logger.log(`Sending Email to ${recipients.length} recipients`);
@@ -169,6 +170,23 @@ export class CommunicationsService {
           errors[0].error,
         );
         // We could throw or return partial success. For now, if any fail, we log.
+      }
+
+      if (staffUser) {
+        await this.prisma.auditLog.create({
+          data: {
+            staffId: staffUser.id,
+            action: "Send Email",
+            entityType: "Communication",
+            entityId: recipients.length === 1 ? recipients[0] : "bulk",
+            metadata: {
+              subject,
+              recipientCount: recipients.length,
+              recipients: recipients,
+              successCount: recipients.length - errors.length,
+            },
+          },
+        });
       }
 
       return {

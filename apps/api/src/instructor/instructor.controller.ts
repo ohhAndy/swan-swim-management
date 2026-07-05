@@ -17,8 +17,8 @@ import { UpdateInstructorDto } from "./dto/update-instructor.dto";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser } from "../auth/current-user.decorator";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("instructors")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -30,9 +30,9 @@ export class InstructorsController {
   @Roles("super_admin", "admin", "manager")
   create(
     @Body() createInstructorDto: CreateInstructorDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.instructorsService.create(createInstructorDto, user);
+    return this.instructorsService.create(createInstructorDto, staffUser);
   }
 
   @Get()
@@ -52,14 +52,14 @@ export class InstructorsController {
   update(
     @Param("id") id: string,
     @Body() updateInstructorDto: UpdateInstructorDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.instructorsService.update(id, updateInstructorDto, user);
+    return this.instructorsService.update(id, updateInstructorDto, staffUser);
   }
 
   @Delete(":id")
   @Roles("super_admin", "admin", "manager")
-  remove(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
-    return this.instructorsService.remove(id, user);
+  remove(@Param("id") id: string, @CurrentStaffUser() staffUser: RequestStaffUser) {
+    return this.instructorsService.remove(id, staffUser);
   }
 }

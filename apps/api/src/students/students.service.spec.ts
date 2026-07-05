@@ -67,9 +67,13 @@ describe("StudentsService", () => {
 
       const staffUser: StaffUserWithLocations = {
         id: "admin-id",
+        authId: "admin-auth",
+        email: "admin@test.com",
+        fullName: "Admin User",
         role: "admin",
         active: true,
         accessSchedule: {},
+        accessibleLocations: [],
       };
 
       const result = await service.getById("student-1", staffUser);
@@ -126,9 +130,13 @@ describe("StudentsService", () => {
 
       const staffUser: StaffUserWithLocations = {
         id: "super-id",
+        authId: "super-auth",
+        email: "super@test.com",
+        fullName: "Supervisor User",
         role: "supervisor",
         active: true,
         accessSchedule: {},
+        accessibleLocations: [],
       };
 
       const result = await service.getById("student-1", staffUser);

@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { calculateClassUsage } from "../common/capacity.utils";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class OfferingsService {
@@ -15,12 +15,8 @@ export class OfferingsService {
   async updateOfferingInfo(
     offeringId: string,
     body: { title: string },
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     const offering = await this.prisma.classOffering.findUnique({
       where: { id: offeringId },
@@ -113,12 +109,8 @@ export class OfferingsService {
       notes?: string;
       sessions?: { date: string; startTime: string; endTime: string }[];
     },
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     if (
       data.type === "flexible" &&
@@ -232,10 +224,7 @@ export class OfferingsService {
     });
   }
 
-  async deleteOffering(offeringId: string, user: AuthenticatedUser) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
+  async deleteOffering(offeringId: string, staffUser: RequestStaffUser) {
     // Check for enrollments
     const enrollments = await this.prisma.enrollment.count({
       where: { offeringId, status: "active" },

@@ -3,7 +3,7 @@ import { AttendanceService } from "./attendance.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { createPrismaMock, MockPrismaService } from "../prisma/prisma.mock";
 import { AttendanceStatus } from "@prisma/client";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 describe("AttendanceService", () => {
   let service: AttendanceService;
@@ -31,12 +31,20 @@ describe("AttendanceService", () => {
   });
 
   describe("upsert", () => {
-    const mockUser: AuthenticatedUser = { authId: "user1", email: "test@test.com" };
+    const mockStaffUser: RequestStaffUser = {
+      id: "staff1",
+      authId: "user1",
+      email: "test@test.com",
+      fullName: "Test Staff",
+      role: "admin",
+      active: true,
+      accessSchedule: {},
+      accessibleLocations: [{ id: "loc1" }],
+    };
 
     it("should successfully upsert an attendance record", async () => {
-      prismaMock.staffUser.findUnique.mockResolvedValue({ id: "staff1" });
       prismaMock.attendance.findUnique.mockResolvedValue(null);
-      
+
       const mockUpserted = {
         enrollmentId: "enr1",
         sessionId: "sess1",
@@ -49,7 +57,7 @@ describe("AttendanceService", () => {
         enrollmentId: "enr1",
         classSessionId: "sess1",
         status: AttendanceStatus.present
-      }, mockUser);
+      }, mockStaffUser);
 
       expect(result).toBeDefined();
       expect(prismaMock.attendance.upsert).toHaveBeenCalledWith(
@@ -63,19 +71,18 @@ describe("AttendanceService", () => {
     });
 
     it("should delete attendance record if status is empty string", async () => {
-      prismaMock.staffUser.findUnique.mockResolvedValue({ id: "staff1" });
       prismaMock.attendance.findUnique.mockResolvedValue({
         enrollmentId: "enr1",
-        sessionId: "sess1",
+        classSessionId: "sess1",
         status: AttendanceStatus.absent
-      });
+      } as any);
 
       // Pass "" as status to trigger deletion logic
       const result = await service.upsert({
         enrollmentId: "enr1",
         classSessionId: "sess1",
         status: "" as AttendanceStatus
-      }, mockUser);
+      }, mockStaffUser);
 
       expect(result).toEqual({ success: true });
       expect(prismaMock.attendance.delete).toHaveBeenCalledWith({

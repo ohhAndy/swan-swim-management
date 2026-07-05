@@ -17,9 +17,9 @@ import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-quer
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser } from "../auth/current-user.decorator";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("invoices")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -31,7 +31,7 @@ export class InvoicesController {
   @Roles("super_admin", "admin", "manager")
   async create(
     @Body() createInvoiceDto: CreateInvoiceDto,
-    @CurrentUser() staffUser: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
     @CurrentLocationId() locationId?: string,
   ) {
     return this.invoicesService.create(createInvoiceDto, staffUser, locationId);
@@ -42,7 +42,7 @@ export class InvoicesController {
   @Roles("super_admin", "admin", "manager")
   async findAll(
     @Query() query: InvoiceQueryDto,
-    @CurrentUser() staffUser: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
     @CurrentLocationId() locationId?: string,
   ) {
     return this.invoicesService.findAll(query, staffUser, locationId);
@@ -53,7 +53,7 @@ export class InvoicesController {
   @Roles("super_admin", "admin", "manager")
   async getUnInvoicedEnrollments(
     @Query() query: UnInvoicedEnrollmentsQueryDto,
-    @CurrentUser() staffUser: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
     @CurrentLocationId() locationId?: string,
   ) {
     return this.invoicesService.getUnInvoicedEnrollments(
@@ -76,7 +76,7 @@ export class InvoicesController {
   async update(
     @Param("id") id: string,
     @Body() updateInvoiceDto: UpdateInvoiceDto,
-    @CurrentUser() staffUser: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.invoicesService.update(id, updateInvoiceDto, staffUser);
   }
@@ -86,7 +86,7 @@ export class InvoicesController {
   @Roles("super_admin", "admin")
   async remove(
     @Param("id") id: string,
-    @CurrentUser() staffUser: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.invoicesService.remove(id, staffUser);
   }

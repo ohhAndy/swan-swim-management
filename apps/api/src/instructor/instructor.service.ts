@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateInstructorDto } from "./dto/create-instructor.dto";
 import { UpdateInstructorDto } from "./dto/update-instructor.dto";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class InstructorsService {
@@ -11,14 +11,8 @@ export class InstructorsService {
 
   async create(
     createInstructorDto: CreateInstructorDto,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) {
-      throw new NotFoundException("Staff user not found");
-    }
 
     const instructor = await this.prisma.instructor.create({
       data: {
@@ -62,14 +56,8 @@ export class InstructorsService {
   async update(
     id: string,
     updateInstructorDto: UpdateInstructorDto,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) {
-      throw new NotFoundException("Staff user not found");
-    }
 
     const instructor = await this.prisma.instructor.update({
       where: { id },
@@ -93,7 +81,7 @@ export class InstructorsService {
     return instructor;
   }
 
-  async remove(id: string, removedBy: AuthenticatedUser) {
+  async remove(id: string, removedBy: RequestStaffUser) {
     // Soft delete by setting isActive to false, or hard delete?
     // User asked to verify separate lifecycle. Usually soft delete is better, but allow hard delete if no relations?
     // Plan said "Delete (soft)".

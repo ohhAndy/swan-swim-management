@@ -10,7 +10,7 @@ import {
   UpdateGuardianDto,
 } from "./dto/schemas.dto";
 import { Prisma } from "@prisma/client";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class GuardiansService {
@@ -207,13 +207,8 @@ export class GuardiansService {
     return guardian;
   }
 
-  async create(dto: CreateGuardianDto, user: AuthenticatedUser) {
+  async create(dto: CreateGuardianDto, staffUser: RequestStaffUser) {
     const { fullName, shortCode, email, phone, notes, waiverSigned } = dto;
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     const generatedShortCode =
       shortCode ?? (await this.autoShortCode(fullName));
@@ -273,13 +268,8 @@ export class GuardiansService {
     });
   }
 
-  async update(id: string, dto: UpdateGuardianDto, user: AuthenticatedUser) {
+  async update(id: string, dto: UpdateGuardianDto, staffUser: RequestStaffUser) {
     await this.ensureExists(id);
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     // Get existing guardian data to track changes
     const existing = await this.prisma.guardian.findUnique({
@@ -384,13 +374,8 @@ export class GuardiansService {
     }
   }
 
-  async delete(id: string, user: AuthenticatedUser) {
+  async delete(id: string, staffUser: RequestStaffUser) {
     await this.ensureExists(id);
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     const c = await this.prisma.student.count({ where: { guardianId: id } });
     if (c > 0)

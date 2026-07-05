@@ -13,9 +13,9 @@ import { TrialBookingsService } from "./trial-bookings.service";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser } from "../auth/current-user.decorator";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { TrialStatus } from "@prisma/client";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("trial-bookings")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -52,7 +52,7 @@ export class TrialBookingsController {
       notes?: string;
       classRatio?: string;
     },
-    @CurrentUser() staffUser: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.service.createTrialBooking(
       body.classSessionId,
@@ -70,7 +70,7 @@ export class TrialBookingsController {
   async updateStatus(
     @Param("id") id: string,
     @Body() body: { status: TrialStatus },
-    @CurrentUser() staffUser: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.service.updateTrialStatus(id, body.status, staffUser);
   }
@@ -80,7 +80,7 @@ export class TrialBookingsController {
   async updateNotes(
     @Param("id") id: string,
     @Body() body: { notes: string | null },
-    @CurrentUser() staffUser: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.service.updateTrialNotes(id, body.notes, staffUser);
   }
@@ -90,7 +90,7 @@ export class TrialBookingsController {
   async convertToStudent(
     @Param("id") id: string,
     @Body() body: { studentId: string },
-    @CurrentUser() staffUser: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.service.convertToStudent(id, body.studentId, staffUser);
   }
@@ -99,7 +99,7 @@ export class TrialBookingsController {
   @Roles("super_admin", "admin", "manager")
   async deleteTrialBooking(
     @Param("id") id: string,
-    @CurrentUser() staffUser: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.service.deleteTrialBooking(id, staffUser);
   }

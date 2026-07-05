@@ -3,7 +3,7 @@ import { InvoicesService } from "./invoices.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { createPrismaMock, MockPrismaService } from "../prisma/prisma.mock";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 describe("InvoicesService", () => {
   let service: InvoicesService;
@@ -67,17 +67,25 @@ describe("InvoicesService", () => {
   });
 
   describe("remove", () => {
-    const mockUser: AuthenticatedUser = { authId: "user1", email: "test@test.com" };
+    const mockStaffUser: RequestStaffUser = {
+      id: "staff1",
+      authId: "user1",
+      email: "test@test.com",
+      fullName: "Test Staff",
+      role: "admin",
+      active: true,
+      accessSchedule: {},
+      accessibleLocations: [{ id: "loc1" }],
+    };
 
     it("should successfully remove an invoice and log it", async () => {
-      prismaMock.staffUser.findUnique.mockResolvedValue({ id: "staff1" });
       prismaMock.invoice.findUnique.mockResolvedValue({
         id: "inv1",
         status: "partial"
-      });
-      prismaMock.invoice.delete.mockResolvedValue({ id: "inv1" });
+      } as any);
+      prismaMock.invoice.delete.mockResolvedValue({ id: "inv1" } as any);
 
-      await service.remove("inv1", mockUser);
+      await service.remove("inv1", mockStaffUser);
 
       expect(prismaMock.invoice.delete).toHaveBeenCalledWith({
         where: { id: "inv1" }

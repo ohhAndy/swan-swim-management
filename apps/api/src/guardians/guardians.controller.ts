@@ -22,8 +22,8 @@ import {
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser } from "../auth/current-user.decorator";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("guardians")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -47,9 +47,9 @@ export class GuardiansController {
   @Roles("super_admin", "admin", "manager")
   async create(
     @Body(new ZodValidationPipe(createGuardianSchema)) body: CreateGuardianDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.guardiansService.create(body, user);
+    return this.guardiansService.create(body, staffUser);
   }
 
   @Patch(":id")
@@ -57,17 +57,17 @@ export class GuardiansController {
   async update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(updateGuardianSchema)) body: UpdateGuardianDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.guardiansService.update(id, body, user);
+    return this.guardiansService.update(id, body, staffUser);
   }
 
   @Delete(":id")
   @Roles("super_admin", "admin", "manager")
   async delete(
     @Param("id") id: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.guardiansService.delete(id, user);
+    return this.guardiansService.delete(id, staffUser);
   }
 }

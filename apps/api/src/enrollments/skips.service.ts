@@ -8,7 +8,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import type { AddSkipInput } from "./dto/skips.dto";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class SkipsService {
@@ -20,7 +20,7 @@ export class SkipsService {
   async addSkip(
     enrollmentId: string,
     dto: AddSkipInput,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
@@ -44,10 +44,7 @@ export class SkipsService {
         "Only active or inactive enrollments can be skipped",
       );
 
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) throw new ForbiddenException("Staff user not found");
+
 
     if (
       enrollment.status === "inactive" &&
@@ -103,7 +100,7 @@ export class SkipsService {
   async deleteSkip(
     enrollmentId: string,
     classSessionId: string,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
@@ -117,10 +114,7 @@ export class SkipsService {
       );
     }
 
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) throw new ForbiddenException("Staff user not found");
+
 
     if (
       enrollment.status === "inactive" &&

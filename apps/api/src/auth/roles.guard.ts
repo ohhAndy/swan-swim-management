@@ -51,7 +51,18 @@ export class RolesGuard implements CanActivate {
     // Fetch staff user from database
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
-      select: { role: true, active: true, accessSchedule: true },
+      select: {
+        id: true,
+        authId: true,
+        email: true,
+        fullName: true,
+        role: true,
+        active: true,
+        accessSchedule: true,
+        accessibleLocations: {
+          select: { id: true },
+        },
+      },
     });
 
     if (!staffUser || !staffUser.active) {

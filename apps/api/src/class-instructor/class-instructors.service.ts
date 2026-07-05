@@ -4,7 +4,7 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class ClassInstructorsService {
@@ -13,14 +13,8 @@ export class ClassInstructorsService {
   async assignInstructor(
     classOfferingId: string,
     instructorId: string,
-    assignedByKey: AuthenticatedUser,
+    user: RequestStaffUser,
   ) {
-    const user = await this.prisma.staffUser.findUnique({
-      where: { authId: assignedByKey.authId },
-    });
-    if (!user) {
-      throw new NotFoundException("User not found");
-    }
 
     // Verify class offering exists
     const classOffering = await this.prisma.classOffering.findUnique({
@@ -91,13 +85,7 @@ export class ClassInstructorsService {
     });
   }
 
-  async removeInstructor(assignmentId: string, removedBy: AuthenticatedUser) {
-    const user = await this.prisma.staffUser.findUnique({
-      where: { authId: removedBy.authId },
-    });
-    if (!user) {
-      throw new NotFoundException("User not found");
-    }
+  async removeInstructor(assignmentId: string, user: RequestStaffUser) {
 
     const assignment = await this.prisma.classInstructor.findUnique({
       where: { id: assignmentId },

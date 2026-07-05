@@ -11,11 +11,12 @@ import {
 import { TasksService } from "./tasks.service";
 import { CreateTaskDto } from "./dto/create-task.dto";
 import { UpdateTaskDto } from "./dto/update-task.dto";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { CurrentUser } from "../auth/current-user.decorator";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
+import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
+
 
 @Controller("tasks")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -26,21 +27,21 @@ export class TasksController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   create(
     @Body() createTaskDto: CreateTaskDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.tasksService.create(createTaskDto, user);
+    return this.tasksService.create(createTaskDto, staffUser);
   }
 
   @Get()
   @Roles("super_admin", "admin", "manager", "supervisor")
-  findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.tasksService.findAll(user);
+  findAll(@CurrentStaffUser() staffUser: RequestStaffUser) {
+    return this.tasksService.findAll(staffUser);
   }
 
   @Get(":id")
   @Roles("super_admin", "admin", "manager", "supervisor")
-  findOne(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
-    return this.tasksService.findOne(id, user);
+  findOne(@Param("id") id: string, @CurrentStaffUser() staffUser: RequestStaffUser) {
+    return this.tasksService.findOne(id, staffUser);
   }
 
   @Patch(":id")
@@ -48,14 +49,14 @@ export class TasksController {
   update(
     @Param("id") id: string,
     @Body() updateTaskDto: UpdateTaskDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.tasksService.update(id, updateTaskDto, user);
+    return this.tasksService.update(id, updateTaskDto, staffUser);
   }
 
   @Delete(":id")
   @Roles("super_admin", "admin", "manager")
-  remove(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser) {
-    return this.tasksService.remove(id, user);
+  remove(@Param("id") id: string, @CurrentStaffUser() staffUser: RequestStaffUser) {
+    return this.tasksService.remove(id, staffUser);
   }
 }

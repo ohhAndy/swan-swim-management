@@ -3,8 +3,8 @@ import { MakeupsService } from "./makeups.service";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser } from "../auth/current-user.decorator";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("makeups")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -21,8 +21,8 @@ export class MakeupsController {
       notes?: string;
       classRatio?: string;
     },
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.makeupsService.scheduleMakeUp(body, user);
+    return this.makeupsService.scheduleMakeUp(body, staffUser);
   }
 }

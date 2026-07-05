@@ -3,11 +3,11 @@ import { StaffUsersService } from "./staff-users.service";
 import { Public } from "../auth/public.decorator";
 
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser } from "../auth/current-user.decorator";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { UseGuards } from "@nestjs/common";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("staff-users")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -37,7 +37,7 @@ export class StaffUsersController {
       role?: "admin" | "manager" | "supervisor" | "viewer";
       accessSchedule?: Record<string, { start: string; end: string }[]>;
     },
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() user: RequestStaffUser,
   ) {
     return this.staffUsersService.createStaffUser(body, user);
   }
@@ -53,7 +53,7 @@ export class StaffUsersController {
       active?: boolean;
       accessSchedule?: Record<string, { start: string; end: string }[]>;
     },
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() user: RequestStaffUser,
   ) {
     return this.staffUsersService.updateStaffUser(id, body, user);
   }

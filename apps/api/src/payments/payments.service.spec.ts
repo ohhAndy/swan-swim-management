@@ -4,7 +4,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { createPrismaMock, MockPrismaService } from "../prisma/prisma.mock";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 import { PaymentMethod } from "@prisma/client";
 
 describe("PaymentsService", () => {
@@ -34,33 +34,38 @@ describe("PaymentsService", () => {
   });
 
   describe("create", () => {
-    const mockUser: AuthenticatedUser = { authId: "user1", email: "test@test.com" };
+    const mockStaffUser: RequestStaffUser = {
+      id: "staff1",
+      authId: "user1",
+      email: "test@test.com",
+      fullName: "Test Staff",
+      role: "admin",
+      active: true,
+      accessSchedule: {},
+      accessibleLocations: [{ id: "loc1" }],
+    };
 
     it("should throw NotFoundException if invoice does not exist", async () => {
-      prismaMock.staffUser.findUnique.mockResolvedValue({ id: "staff1" });
       prismaMock.invoice.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.create({ invoiceId: "inv1", amount: 100, paymentDate: "2024-01-01", paymentMethod: PaymentMethod.visa, notes: "" }, mockUser),
+        service.create({ invoiceId: "inv1", amount: 100, paymentDate: "2024-01-01", paymentMethod: PaymentMethod.visa, notes: "" }, mockStaffUser),
       ).rejects.toThrow(NotFoundException);
     });
 
     it("should throw BadRequestException if invoice is voided", async () => {
-      prismaMock.staffUser.findUnique.mockResolvedValue({ id: "staff1" });
       prismaMock.invoice.findUnique.mockResolvedValue({
         id: "inv1",
         status: "void",
         payments: [],
-      });
+      } as any);
 
       await expect(
-        service.create({ invoiceId: "inv1", amount: 100, paymentDate: "2024-01-01", paymentMethod: PaymentMethod.visa, notes: "" }, mockUser),
+        service.create({ invoiceId: "inv1", amount: 100, paymentDate: "2024-01-01", paymentMethod: PaymentMethod.visa, notes: "" }, mockStaffUser),
       ).rejects.toThrow(BadRequestException);
     });
 
     it("should successfully create payment and update invoice status to paid", async () => {
-      prismaMock.staffUser.findUnique.mockResolvedValue({ id: "staff1" });
-      
       const mockInvoice = {
         id: "inv1",
         status: "partial",
@@ -68,13 +73,13 @@ describe("PaymentsService", () => {
         payments: [{ amount: 100 }], // 100 already paid
       };
       
-      prismaMock.invoice.findUnique.mockResolvedValue(mockInvoice);
-      prismaMock.payment.create.mockResolvedValue({ id: "pay1", amount: 100 });
-      prismaMock.invoice.update.mockResolvedValue({ ...mockInvoice, status: "paid" });
+      prismaMock.invoice.findUnique.mockResolvedValue(mockInvoice as any);
+      prismaMock.payment.create.mockResolvedValue({ id: "pay1", amount: 100 } as any);
+      prismaMock.invoice.update.mockResolvedValue({ ...mockInvoice, status: "paid" } as any);
 
       const result = await service.create(
         { invoiceId: "inv1", amount: 100, paymentDate: "2024-01-01", paymentMethod: PaymentMethod.visa, notes: "Final payment" },
-        mockUser
+        mockStaffUser
       );
 
       expect(result).toBeDefined();
@@ -96,6 +101,17 @@ describe("PaymentsService", () => {
   });
 
   describe("remove", () => {
+    const mockStaffUser: RequestStaffUser = {
+      id: "staff1",
+      authId: "user1",
+      email: "test@test.com",
+      fullName: "Test Staff",
+      role: "admin",
+      active: true,
+      accessSchedule: {},
+      accessibleLocations: [{ id: "loc1" }],
+    };
+
     it("should recalculate invoice status when a payment is deleted", async () => {
       const mockPayment = {
         id: "pay1",
@@ -112,10 +128,10 @@ describe("PaymentsService", () => {
         }
       };
 
-      prismaMock.payment.findUnique.mockResolvedValue(mockPayment);
-      prismaMock.payment.delete.mockResolvedValue(mockPayment);
+      prismaMock.payment.findUnique.mockResolvedValue(mockPayment as any);
+      prismaMock.payment.delete.mockResolvedValue(mockPayment as any);
 
-      await service.remove("pay1");
+      await service.remove("pay1", mockStaffUser);
 
       expect(prismaMock.payment.delete).toHaveBeenCalledWith({ where: { id: "pay1" } });
       

@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { countUsedSeatsForSession } from "../sessions/sessions.helpers";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class MakeupsService {
@@ -15,15 +15,9 @@ export class MakeupsService {
       notes?: string;
       classRatio?: string;
     },
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
     const { studentId, classSessionId, notes } = input;
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-      include: { accessibleLocations: true },
-    });
-    if (!staffUser) return;
 
     return this.prisma.$transaction(async (tx) => {
       const session = await tx.classSession.findUnique({

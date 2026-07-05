@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 import {
   UpdateMakeupAttendanceInput,
   UpsertAttendanceInput,
@@ -10,11 +10,7 @@ import {
 export class AttendanceService {
   constructor(private prisma: PrismaService) {}
 
-  async upsert(data: UpsertAttendanceInput, user: AuthenticatedUser) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
+  async upsert(data: UpsertAttendanceInput, staffUser: RequestStaffUser) {
 
     // Get existing attendance record if it exists
     const existing = await this.prisma.attendance.findUnique({
@@ -112,12 +108,8 @@ export class AttendanceService {
 
   async updateMakeup(
     data: UpdateMakeupAttendanceInput,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     // Get existing make-up booking
     const existing = await this.prisma.makeUpBooking.findUnique({

@@ -9,7 +9,7 @@ import { CreatePaymentDto } from "./dto/create-payment.dto";
 import { UpdatePaymentDto } from "./dto/update-payment.dto";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class PaymentsService {
@@ -92,11 +92,7 @@ export class PaymentsService {
   }
 
   // Record a payment
-  async create(createPaymentDto: CreatePaymentDto, user: AuthenticatedUser) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
+  async create(createPaymentDto: CreatePaymentDto, staffUser: RequestStaffUser) {
     // Check if invoice exists
     const invoice = await this.prisma.invoice.findUnique({
       where: { id: createPaymentDto.invoiceId },
@@ -207,7 +203,7 @@ export class PaymentsService {
   }
 
   // Delete payment (admin only, recalculates invoice status)
-  async remove(id: string, user?: AuthenticatedUser) {
+  async remove(id: string, staffUser: RequestStaffUser) {
     const payment = await this.prisma.payment.findUnique({
       where: { id },
       include: { invoice: { include: { payments: true } } },
@@ -248,11 +244,7 @@ export class PaymentsService {
     // Log the deletion
     // Payment is deleted, but we can log that it happened.
     // We need user context for this.
-    if (user) {
-      const staffUser = await this.prisma.staffUser.findUnique({
-        where: { authId: user.authId },
-      });
-      if (staffUser) {
+    if (staffUser) {
         await this.auditLogsService.create({
           staffId: staffUser.id,
           action: "delete",
@@ -264,13 +256,12 @@ export class PaymentsService {
           },
         });
       }
-    }
 
     return { message: "Payment deleted successfully" };
   }
 
   // Update payment
-  async update(id: string, updatePaymentDto: UpdatePaymentDto, user: AuthenticatedUser) {
+  async update(id: string, updatePaymentDto: UpdatePaymentDto, staffUser: RequestStaffUser) {
     const payment = await this.prisma.payment.findUnique({
       where: { id },
       include: { invoice: { include: { payments: true } } },
@@ -313,10 +304,6 @@ export class PaymentsService {
         `Refund amount exceeds total payments. Cannot update to less than $${-otherPaymentsTotal}.`,
       );
     }
-
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
 
     // Update the payment
     const updatedPayment = await this.prisma.payment.update({

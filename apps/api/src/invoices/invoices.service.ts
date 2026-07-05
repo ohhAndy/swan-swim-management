@@ -14,7 +14,7 @@ import { Prisma } from "@prisma/client";
 import { CreateInvoiceLineItemDto } from "./dto/create-invoice.dto";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 export interface EnrollmentForCalculation {
   classRatio?: string | null;
@@ -54,14 +54,9 @@ export class InvoicesService {
   // Create invoice with line items
   async create(
     createInvoiceDto: CreateInvoiceDto,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
     locationId?: string,
   ) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-      include: { accessibleLocations: true },
-    });
-    if (!staffUser) return;
 
     // Validate Location Access
     const assignedLocationId =
@@ -234,14 +229,9 @@ export class InvoicesService {
   // List invoices with filters
   async findAll(
     query: InvoiceQueryDto,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
     locationId?: string,
   ) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-      include: { accessibleLocations: true },
-    });
-    if (!staffUser) throw new ForbiddenException("User not found");
 
     const validatedLocationId = validateLocationAccess(staffUser, locationId);
     const page = parseInt(query.page ?? "") || 1;
@@ -351,12 +341,8 @@ export class InvoicesService {
   async update(
     id: string,
     updateInvoiceDto: UpdateInvoiceDto,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
   ) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-    });
-    if (!staffUser) return;
 
     const { lineItems, ...updateData } = updateInvoiceDto;
 
@@ -473,14 +459,9 @@ export class InvoicesService {
   // Get un-invoiced enrollments
   async getUnInvoicedEnrollments(
     query: UnInvoicedEnrollmentsQueryDto,
-    user: AuthenticatedUser,
+    staffUser: RequestStaffUser,
     locationId?: string,
   ) {
-    const staffUser = await this.prisma.staffUser.findUnique({
-      where: { authId: user.authId },
-      include: { accessibleLocations: true },
-    });
-    if (!staffUser) throw new ForbiddenException("User not found");
 
     const validatedLocationId = validateLocationAccess(staffUser, locationId);
     const page = parseInt(query.page ?? "") || 1;
@@ -595,7 +576,7 @@ export class InvoicesService {
   }
 
   // Delete invoice (admin only, cascades to line items and payments)
-  async remove(id: string, user?: AuthenticatedUser) {
+  async remove(id: string, staffUser: RequestStaffUser) {
     // We need user context for audit logs.
     // If not provided (legacy calls?), we might skip or fail?
     // Assuming controller will be updated to pass it.
@@ -609,11 +590,7 @@ export class InvoicesService {
       where: { id },
     });
 
-    if (user && invoice) {
-      const staffUser = await this.prisma.staffUser.findUnique({
-        where: { authId: user.authId },
-      });
-      if (staffUser) {
+    if (staffUser && invoice) {
         await this.auditLogsService.create({
           staffId: staffUser.id,
           action: "delete",
@@ -625,7 +602,6 @@ export class InvoicesService {
           },
         });
       }
-    }
 
     return { message: "Invoice deleted successfully" };
   }

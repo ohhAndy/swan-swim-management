@@ -9,21 +9,20 @@ export interface AuthenticatedUser {
   email: string;
 }
 
-/**
- * Represents the staff user info attached by RolesGuard.
- * Set on request.staffUser after DB lookup.
- */
 export interface RequestStaffUser {
+  id: string;
+  authId: string;
+  email: string;
+  fullName: string;
   role: string;
   active: boolean;
   accessSchedule: Prisma.JsonValue;
+  accessibleLocations?: { id: string }[];
 }
 
 /**
  * Represents the staff user with location access info.
  * Used when the service needs to check location-scoped access.
  */
-export interface StaffUserWithLocations extends RequestStaffUser {
-  id: string;
-  accessibleLocations?: { id: string }[];
-}
+export type StaffUserWithLocations = RequestStaffUser;
+

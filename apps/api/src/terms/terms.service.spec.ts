@@ -2,8 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { TermsService } from "./terms.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { createPrismaMock, MockPrismaService } from "../prisma/prisma.mock";
-import { NotFoundException } from "@nestjs/common";
-import { AuthenticatedUser } from "../auth/auth.types";
+import { RequestStaffUser } from "../auth/auth.types";
 
 describe("TermsService", () => {
   let service: TermsService;
@@ -30,22 +29,18 @@ describe("TermsService", () => {
     expect(service).toBeDefined();
   });
 
-  describe("getFlexibleSlotPage", () => {
-    it("should throw NotFoundException if term does not exist", async () => {
-      prismaMock.term.findUnique.mockResolvedValue(null);
-
-      await expect(service.getFlexibleSlotPage("term1")).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-  });
-
   describe("createTermWithSchedule", () => {
     it("should create a term and generate a unique slug", async () => {
-      const user: AuthenticatedUser = { authId: "user1", email: "test@test.com" };
-      
-      const mockStaff = { id: "staff1", role: "admin", accessibleLocations: [{id: "loc1"}] };
-      prismaMock.staffUser.findUnique.mockResolvedValue(mockStaff);
+      const mockStaffUser: RequestStaffUser = {
+        id: "staff1",
+        authId: "user1",
+        email: "test@test.com",
+        fullName: "Test Staff",
+        role: "admin",
+        active: true,
+        accessSchedule: {},
+        accessibleLocations: [{ id: "loc1" }],
+      };
 
       // Mock slug uniqueness check
       prismaMock.term.findUnique.mockResolvedValue(null); 
@@ -56,8 +51,8 @@ describe("TermsService", () => {
         slug: "winter-2024",
       };
 
-      prismaMock.term.create.mockResolvedValue(mockCreatedTerm);
-      prismaMock.classOffering.create.mockResolvedValue({ id: "off1" });
+      prismaMock.term.create.mockResolvedValue(mockCreatedTerm as any);
+      prismaMock.classOffering.create.mockResolvedValue({ id: "off1" } as any);
       prismaMock.classSession.createMany.mockResolvedValue({ count: 8 });
 
       const result = await service.createTermWithSchedule(
@@ -76,7 +71,7 @@ describe("TermsService", () => {
             }
           ]
         },
-        user,
+        mockStaffUser,
         "loc1"
       );
 

@@ -23,8 +23,8 @@ import {
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { CurrentUser, CurrentStaffUser } from "../auth/current-user.decorator";
-import { AuthenticatedUser, StaffUserWithLocations } from "../auth/auth.types";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
+import { RequestStaffUser, StaffUserWithLocations } from "../auth/auth.types";
 
 @Controller("students")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -51,9 +51,9 @@ export class StudentsController {
   @Roles("super_admin", "admin", "manager")
   async create(
     @Body(new ZodValidationPipe(createStudentSchema)) body: CreateStudentDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.studentsService.create(body, user);
+    return this.studentsService.create(body, staffUser);
   }
 
   @Patch(":id")
@@ -61,9 +61,9 @@ export class StudentsController {
   async update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(updateStudentSchema)) body: UpdateStudentDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.studentsService.update(id, body, user);
+    return this.studentsService.update(id, body, staffUser);
   }
 
   @Put(":id/notes")
@@ -71,17 +71,17 @@ export class StudentsController {
   async updateNotes(
     @Param("id") id: string,
     @Body() body: { notes: string },
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.studentsService.updateNotes(id, body.notes, user);
+    return this.studentsService.updateNotes(id, body.notes, staffUser);
   }
 
   @Delete(":id")
   @Roles("super_admin", "admin", "manager")
   async delete(
     @Param("id") id: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.studentsService.delete(id, user);
+    return this.studentsService.delete(id, staffUser);
   }
 }
