@@ -1,5 +1,10 @@
 /**
  * Standardizes the calculation of class capacity and filled seats based on custom weighting rules.
+ * 
+ * [WARNING] Duplicated Logic:
+ * This function must remain 100% identical to the frontend logic in
+ * apps/web/src/lib/capacity.ts. If you edit the capacity weights or
+ * effective capacity thresholds here, you MUST update them there as well.
  *
  * Rules:
  * 1. Usage Weights:

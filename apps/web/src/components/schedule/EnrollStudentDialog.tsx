@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { HOLIDAYS } from "@/lib/schedule/slots";
+import { calcAge } from "@/lib/utils/student-helpers";
 
 interface EnrollStudentDialogProps {
   open: boolean;
@@ -30,22 +31,6 @@ interface EnrollStudentDialogProps {
   offeringId: string;
   isoDates: string[];
   onSuccess: () => void;
-}
-
-function calcAge(birthdateString: string): number {
-  const birthdate = new Date(birthdateString);
-  const today = new Date();
-
-  let age = today.getFullYear() - birthdate.getFullYear();
-
-  const hadBirthdayThisYear =
-    today.getMonth() > birthdate.getMonth() ||
-    (today.getMonth() === birthdate.getMonth() &&
-      today.getDate() >= birthdate.getDate());
-
-  if (!hadBirthdayThisYear) age--;
-
-  return age;
 }
 
 export function EnrollStudentDialog({

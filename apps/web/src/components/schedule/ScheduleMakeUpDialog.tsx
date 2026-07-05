@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { searchStudents, StudentLite } from "@/lib/api/client/students";
 import { scheduleMakeUp } from "@/lib/api/client/schedule";
 import type { RosterResponse } from "@school/shared-types";
+import { calcAge } from "@/lib/utils/student-helpers";
 
 interface ScheduleMakeupDialogProps {
   open: boolean;
@@ -28,22 +29,6 @@ interface ScheduleMakeupDialogProps {
   selectedDate: string | null; // ISO date string like "2024-09-15T04:00:00.000Z"
   rosters: RosterResponse[];
   onSuccess: () => void;
-}
-
-function calcAge(birthdateString: string): number {
-  const birthdate = new Date(birthdateString);
-  const today = new Date();
-
-  let age = today.getFullYear() - birthdate.getFullYear();
-
-  const hadBirthdayThisYear =
-    today.getMonth() > birthdate.getMonth() ||
-    (today.getMonth() === birthdate.getMonth() &&
-      today.getDate() >= birthdate.getDate());
-
-  if (!hadBirthdayThisYear) age--;
-
-  return age;
 }
 
 export function ScheduleMakeupDialog({
