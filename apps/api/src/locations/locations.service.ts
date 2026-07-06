@@ -13,6 +13,12 @@ export class LocationsService {
       });
     }
 
-    return staffUser.accessibleLocations || [];
+    const locationIds = staffUser.accessibleLocations?.map((l) => l.id) || [];
+    return this.prisma.location.findMany({
+      where: {
+        id: { in: locationIds },
+      },
+      orderBy: { name: "asc" },
+    });
   }
 }
