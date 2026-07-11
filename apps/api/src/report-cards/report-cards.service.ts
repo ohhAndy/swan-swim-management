@@ -219,15 +219,6 @@ export class ReportCardsService {
       );
     }
 
-    // Enforce that if role is supervisor, they can only modify a report card they created
-    if (
-      staffUser.role === "supervisor" &&
-      existing.createdBy !== staffUser.id
-    ) {
-      throw new ForbiddenException(
-        "Supervisors can only modify report cards they created",
-      );
-    }
 
     await this.prisma.$transaction(async (tx) => {
       // First update the report card basic data

@@ -110,6 +110,43 @@ describe("ReportCardsController (e2e)", () => {
       const dbReportCard = await prisma.reportCard.findUnique({ where: { id: testReportCardId } });
       expect(dbReportCard?.comments).toBe("Good job");
     });
+
+    it("should allow supervisor to update a report card created by someone else", async () => {
+      const creator = await prisma.staffUser.create({
+        data: {
+          authId: "test-creator",
+          email: "creator@test.com",
+          role: "admin",
+          fullName: "Test Creator",
+          active: true,
+        },
+      });
+
+      await prisma.staffUser.create({
+        data: {
+          authId: "test-supervisor",
+          email: "supervisor@test.com",
+          role: "supervisor",
+          fullName: "Test Supervisor",
+          active: true,
+        },
+      });
+
+      await prisma.reportCard.update({
+        where: { id: testReportCardId },
+        data: { createdBy: creator.id }
+      });
+
+      await request(app.getHttpServer())
+        .patch(`/report-cards/${testReportCardId}`)
+        .set("x-mock-auth-id", "test-supervisor")
+        .set("x-mock-email", "supervisor@test.com")
+        .send({ comments: "Supervisor updated this" })
+        .expect(200);
+
+      const dbReportCard = await prisma.reportCard.findUnique({ where: { id: testReportCardId } });
+      expect(dbReportCard?.comments).toBe("Supervisor updated this");
+    });
   });
 
   describe("POST /report-cards/:id/email", () => {
