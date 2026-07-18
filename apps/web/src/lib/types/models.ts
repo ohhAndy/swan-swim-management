@@ -121,12 +121,13 @@ export type Makeup = Serialize<Prisma.MakeUpBookingGetPayload<{
     classSession: {
       include: {
         offering: {
-          select: { title: true; weekday: true; startTime: true; endTime: true; termId: true };
+          select: { id: true; title: true; weekday: true; startTime: true; endTime: true; termId: true };
         };
       };
     };
   };
 }>>;
+
 
 // Base Enrollment payload
 const _enrollmentInclude = {
@@ -174,7 +175,7 @@ export type Student = Serialize<Prisma.StudentGetPayload<{
         classSession: {
           include: {
             offering: {
-              select: { title: true; weekday: true; startTime: true; endTime: true; termId: true };
+              select: { id: true; title: true; weekday: true; startTime: true; endTime: true; termId: true };
             };
           };
         };

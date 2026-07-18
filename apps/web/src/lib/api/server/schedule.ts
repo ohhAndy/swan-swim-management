@@ -50,6 +50,12 @@ export async function getAllTerms(): Promise<Term[]> {
   return res.json();
 }
 
+/** Returns all terms across every location — bypasses the location filter. */
+export async function getAllTermsUnfiltered(): Promise<Term[]> {
+  const res = await serverFetch(`/terms/all`, { skipLocationHeader: true });
+  return res.json();
+}
+
 export async function scheduleMakeUp(payload: {
   studentId: string;
   classSessionId: string;

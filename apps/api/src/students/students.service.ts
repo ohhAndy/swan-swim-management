@@ -334,6 +334,7 @@ export class StudentsService {
                 date: true,
                 offering: {
                   select: {
+                    id: true,
                     title: true,
                     weekday: true,
                     startTime: true,
