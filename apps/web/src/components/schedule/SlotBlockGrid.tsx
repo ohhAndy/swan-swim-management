@@ -18,7 +18,7 @@ interface SlotBlockGridProps {
 export function SlotBlockGrid({ blocks, isoDates, user, termName }: SlotBlockGridProps) {
   const [reorganizeMode, setReorganizeMode] = useState(false);
 
-  const canReorganize = ["admin", "super_admin"].includes(user.role);
+  const canReorganize = ["admin", "super_admin", "manager"].includes(user.role);
 
   const reorganizeOfferings = useMemo(
     () => buildReorganizeState(blocks),

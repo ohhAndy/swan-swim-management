@@ -60,7 +60,7 @@ export class EnrollmentsController {
   }
 
   @Post("bulk-transfer")
-  @Roles("super_admin", "admin")
+  @Roles("super_admin", "admin", "manager")
   async bulkTransferEnrollments(
     @Body(new ZodValidationPipe(bulkTransferSchema)) body: BulkTransferDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
