@@ -61,7 +61,7 @@ export async function createInvoice(data: CreateInvoiceData): Promise<Invoice> {
 
 export async function getInvoices(params?: {
   search?: string;
-  status?: "paid" | "partial" | "void" | "all";
+  status?: "paid" | "partial" | "void" | "refunded" | "all";
   guardianId?: string;
   startDate?: string;
   endDate?: string;
@@ -102,7 +102,7 @@ export async function updateInvoice(
     invoiceNumber?: string;
     locationId?: string;
     totalAmount?: number;
-    status?: "paid" | "partial" | "void";
+    status?: "paid" | "partial" | "void" | "refunded";
     notes?: string;
     createdAt?: string;
     lineItems?: {

@@ -93,7 +93,7 @@ export type Invoice = Serialize<Prisma.InvoiceGetPayload<{
 }>> & {
   amountPaid: number;
   balance: number;
-  calculatedStatus: "paid" | "partial" | "void";
+  calculatedStatus: "paid" | "partial" | "void" | "refunded";
 };
 
 export type InvoiceLineItem = Serialize<Prisma.InvoiceLineItemGetPayload<{

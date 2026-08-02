@@ -22,6 +22,7 @@ import {
   CalendarClock,
   CalendarX,
   CalendarCheck,
+  RotateCcw,
 } from "lucide-react";
 import { calcAge, markClass, getReportCardStatusConfig } from "@/lib/utils/student-helpers";
 import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
@@ -103,6 +104,23 @@ function getPaymentStatus(
           </TooltipTrigger>
           <TooltipContent>
             <p>Invoice Voided</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  if (status === "refunded") {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center">
+              <RotateCcw className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Refunded (Invoice #{invoiceNumber})</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

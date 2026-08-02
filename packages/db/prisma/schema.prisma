@@ -486,6 +486,7 @@ enum InvoiceStatus {
   paid
   partial
   void
+  refunded
 }
 
 enum PaymentMethod {

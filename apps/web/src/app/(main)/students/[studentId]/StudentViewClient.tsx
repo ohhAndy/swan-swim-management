@@ -58,7 +58,7 @@ import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
 import { z } from "zod";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { CurrentUser } from "@/lib/auth/user";
-import { DollarSign, AlertCircle, CheckCircle } from "lucide-react";
+import { DollarSign, AlertCircle, CheckCircle, RotateCcw } from "lucide-react";
 
 const EditStudentSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -129,6 +129,16 @@ function getInvoiceStatusBadge(enrollment: Enrollment, userRole: string) {
       <Badge variant="outline" className="flex items-center gap-1">
         <AlertCircle className="w-3 h-3 shrink-0" />
         Void
+      </Badge>
+    );
+  } else if (invoice.status === "refunded") {
+    badgeContent = (
+      <Badge
+        variant="outline"
+        className="border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800 flex items-center gap-1"
+      >
+        <RotateCcw className="w-3 h-3 shrink-0" />
+        Refunded
       </Badge>
     );
   }

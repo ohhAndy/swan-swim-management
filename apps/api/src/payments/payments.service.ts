@@ -144,8 +144,14 @@ export class PaymentsService {
 
     // Update invoice status based on new payment total
     const totalPaid = currentAmountPaid + createPaymentDto.amount;
-    const newStatus =
-      totalPaid >= Number(invoice.totalAmount) ? "paid" : "partial";
+    let newStatus: "paid" | "partial" | "refunded" = "partial";
+    if (totalPaid >= Number(invoice.totalAmount)) {
+      newStatus = "paid";
+    } else if (totalPaid <= 0 && (invoice.payments.length + 1) > 0) {
+      newStatus = "refunded";
+    } else {
+      newStatus = "partial";
+    }
 
     await this.prisma.invoice.update({
       where: { id: createPaymentDto.invoiceId },
@@ -227,13 +233,15 @@ export class PaymentsService {
       0,
     );
 
-    let newStatus: "paid" | "partial" | "void" = "partial";
+    let newStatus: "paid" | "partial" | "void" | "refunded" = "partial";
     if (payment.invoice.status === "void") {
       newStatus = "void";
     } else if (totalPaid >= Number(payment.invoice.totalAmount)) {
       newStatus = "paid";
-    } else if (totalPaid === 0) {
-      newStatus = "partial"; // Or could be 'unpaid' if you add that status
+    } else if (totalPaid <= 0 && remainingPayments.length > 0) {
+      newStatus = "refunded";
+    } else {
+      newStatus = "partial";
     }
 
     await this.prisma.invoice.update({
@@ -327,8 +335,14 @@ export class PaymentsService {
 
     // Recalculate Invoice Status
     const totalPaid = otherPaymentsTotal + newAmount;
-    const newStatus =
-      totalPaid >= Number(payment.invoice.totalAmount) ? "paid" : "partial";
+    let newStatus: "paid" | "partial" | "refunded" = "partial";
+    if (totalPaid >= Number(payment.invoice.totalAmount)) {
+      newStatus = "paid";
+    } else if (totalPaid <= 0 && payment.invoice.payments.length > 0) {
+      newStatus = "refunded";
+    } else {
+      newStatus = "partial";
+    }
 
     if (newStatus !== payment.invoice.status) {
       await this.prisma.invoice.update({

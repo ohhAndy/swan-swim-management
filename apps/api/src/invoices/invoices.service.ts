@@ -299,7 +299,7 @@ export class InvoicesService {
     if (query.needsRecovery === "true") {
       where.lineItems = { none: {} };
       where.totalAmount = { gt: 0 };
-      where.status = { not: "void" };
+      where.status = { notIn: ["void", "refunded"] };
     }
 
     const orderBy: Prisma.InvoiceOrderByWithRelationInput[] = [
@@ -623,11 +623,13 @@ export class InvoicesService {
 
     const balance = Number(invoice.totalAmount) - amountPaid;
 
-    // Auto-calculate status based on payments (unless manually voided)
+    // Auto-calculate status based on payments (unless manually voided or refunded)
     let calculatedStatus = invoice.status;
     if (invoice.status !== "void") {
       if (amountPaid >= Number(invoice.totalAmount)) {
         calculatedStatus = "paid";
+      } else if (amountPaid <= 0 && (invoice.payments?.length ?? 0) > 0) {
+        calculatedStatus = "refunded";
       } else if (amountPaid > 0) {
         calculatedStatus = "partial";
       }

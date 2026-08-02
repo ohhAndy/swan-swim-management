@@ -58,7 +58,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Trash2, Plus, Pencil } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Plus, Pencil, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -76,7 +76,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
   // Edit form state
   const [editInvoiceNumber, setEditInvoiceNumber] = useState("");
   const [editNotes, setEditNotes] = useState("");
-  const [editStatus, setEditStatus] = useState<"paid" | "partial" | "void">(
+  const [editStatus, setEditStatus] = useState<"paid" | "partial" | "void" | "refunded">(
     "partial",
   );
   const [editDate, setEditDate] = useState("");
@@ -222,6 +222,17 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
   }
 
   function getStatusBadge(status: string) {
+    if (status === "refunded") {
+      return (
+        <Badge
+          variant="outline"
+          className="border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800 flex items-center gap-1 w-fit hover:bg-purple-100"
+        >
+          <RotateCcw className="w-3 h-3 shrink-0" />
+          REFUNDED
+        </Badge>
+      );
+    }
     const variants = {
       paid: "default",
       partial: "secondary",
@@ -425,7 +436,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
               <Select
                 value={editStatus}
                 onValueChange={(v) =>
-                  setEditStatus(v as "paid" | "partial" | "void")
+                  setEditStatus(v as "paid" | "partial" | "void" | "refunded")
                 }
               >
                 <SelectTrigger>
@@ -434,6 +445,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
                 <SelectContent>
                   <SelectItem value="paid">Paid</SelectItem>
                   <SelectItem value="partial">Partial</SelectItem>
+                  <SelectItem value="refunded">Refunded</SelectItem>
                   <SelectItem value="void">Void</SelectItem>
                 </SelectContent>
               </Select>

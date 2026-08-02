@@ -28,6 +28,7 @@ import {
   FileSpreadsheet,
   ArrowUpDown,
   Pencil,
+  RotateCcw,
 } from "lucide-react";
 import { exportInvoices } from "@/lib/api/client/payments";
 import { getLocations, Location } from "@/lib/api/client/location";
@@ -111,7 +112,7 @@ export default function InvoicesListClient() {
       setLoading(true);
       const result = await getInvoices({
         search: search || undefined,
-        status: statusFilter as "paid" | "partial" | "void" | "all",
+        status: statusFilter as "paid" | "partial" | "void" | "refunded" | "all",
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         page,
@@ -134,6 +135,17 @@ export default function InvoicesListClient() {
   }, [loadInvoices]);
 
   function getStatusBadge(status: string) {
+    if (status === "refunded") {
+      return (
+        <Badge
+          variant="outline"
+          className="border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800 flex items-center gap-1 w-fit"
+        >
+          <RotateCcw className="w-3 h-3 shrink-0" />
+          REFUNDED
+        </Badge>
+      );
+    }
     const variants = {
       paid: "default",
       partial: "secondary",
@@ -211,8 +223,9 @@ export default function InvoicesListClient() {
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="paid">Paid</SelectItem>
-            <SelectItem value="void">Void</SelectItem>
             <SelectItem value="partial">Partial</SelectItem>
+            <SelectItem value="refunded">Refunded</SelectItem>
+            <SelectItem value="void">Void</SelectItem>
           </SelectContent>
         </Select>
 
