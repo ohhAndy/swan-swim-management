@@ -86,4 +86,76 @@ describe("TermsService", () => {
       );
     });
   });
+
+  describe("slotByWeekdayAndTime - nextTermStatus filtering", () => {
+    it("should filter future terms and next term enrollments to regular offerings only", async () => {
+      prismaMock.term.findUnique.mockResolvedValue({
+        id: "term1",
+        name: "Term 1",
+        startDate: new Date("2026-01-01"),
+        locationId: "loc1",
+      } as any);
+
+      prismaMock.classOffering.findMany.mockResolvedValue([
+        { id: "off1", capacity: 4, title: "Mon 4pm", termId: "term1", weekday: 1 },
+      ] as any);
+
+      prismaMock.classSession.findMany.mockResolvedValue([
+        {
+          id: "sess1",
+          offeringId: "off1",
+          date: new Date("2026-01-05"),
+          startTime: "16:00",
+          endTime: "16:45",
+          status: "scheduled",
+          offering: { instructors: [] },
+        },
+      ] as any);
+
+      prismaMock.enrollment.findMany.mockResolvedValue([
+        {
+          id: "enr1",
+          studentId: "stud1",
+          offeringId: "off1",
+          status: "active",
+          student: { id: "stud1", firstName: "Jane", lastName: "Doe" },
+        },
+      ] as any);
+
+      prismaMock.attendance.findMany.mockResolvedValue([]);
+      prismaMock.makeUpBooking.findMany.mockResolvedValue([]);
+      prismaMock.trialBooking.findMany.mockResolvedValue([]);
+      prismaMock.enrollmentSkip.findMany.mockResolvedValue([]);
+
+      prismaMock.term.findMany.mockResolvedValue([
+        { id: "term2", startDate: new Date("2026-04-01") },
+      ] as any);
+
+      await service.slotByWeekdayAndTime(1, "term1", "16:00", "16:45");
+
+      expect(prismaMock.term.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            offerings: {
+              some: {
+                type: "regular",
+              },
+            },
+          }),
+        }),
+      );
+
+      expect(prismaMock.enrollment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            offering: {
+              termId: { in: ["term2"] },
+              type: "regular",
+            },
+          }),
+        }),
+      );
+    });
+  });
 });
+

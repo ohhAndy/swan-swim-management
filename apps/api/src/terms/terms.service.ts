@@ -574,7 +574,7 @@ export class TermsService {
 
         if (!currentTerm) return [];
 
-        // Find all future terms (Local OR Global)
+        // Find all future terms containing regular offerings (Local OR Global)
         const futureTerms = await this.prisma.term.findMany({
           where: {
             startDate: { gt: currentTerm.startDate },
@@ -582,6 +582,11 @@ export class TermsService {
               { locationId: currentTerm.locationId },
               { locationId: null }, // Include global terms
             ],
+            offerings: {
+              some: {
+                type: "regular",
+              },
+            },
           },
           orderBy: { startDate: "asc" },
           select: { id: true, startDate: true },
@@ -618,7 +623,10 @@ export class TermsService {
       nextTermIds.length > 0
         ? await this.prisma.enrollment.findMany({
             where: {
-              offering: { termId: { in: nextTermIds } },
+              offering: {
+                termId: { in: nextTermIds },
+                type: "regular",
+              },
               studentId: { in: studentIds },
               status: "active",
             },
@@ -1092,7 +1100,13 @@ export class TermsService {
         const res = await this.prisma.enrollment.findMany({
           where: {
             studentId: { in: studentIds },
-            offering: { term: { startDate: { gt: targetDate } } },
+            offering: {
+              type: "regular",
+              term: {
+                startDate: { gt: targetDate },
+                offerings: { some: { type: "regular" } },
+              },
+            },
             status: "active",
           },
           select: {
