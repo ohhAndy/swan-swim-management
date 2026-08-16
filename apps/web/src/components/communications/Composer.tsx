@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { SendEmailRequest } from "@/lib/api/client/communications";
+import {
+  SendEmailRequest,
+  SendEmailResponse,
+} from "@/lib/api/client/communications";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -12,14 +16,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Paperclip, X } from "lucide-react";
+import {
+  Paperclip,
+  X,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  RefreshCw,
+  History,
+} from "lucide-react";
 
 interface ComposerProps {
   recipientCount: number;
   recipientEmails: string[];
-  onSend: (data: SendEmailRequest) => Promise<unknown>;
+  onSend: (data: SendEmailRequest) => Promise<SendEmailResponse>;
   title?: string;
   onViewRecipients?: () => void;
+  recipientLabel?: string;
+  onViewHistory?: () => void;
+  onRetryFailed?: (failedEmails: string[]) => void;
 }
 
 export function Composer({
@@ -29,11 +44,13 @@ export function Composer({
   title = "Compose Email",
   onViewRecipients,
   recipientLabel,
-}: ComposerProps & { recipientLabel?: string }) {
+  onViewHistory,
+  onRetryFailed,
+}: ComposerProps) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [sendResult, setSendResult] = useState<SendEmailResponse | null>(null);
   const [files, setFiles] = useState<File[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,17 +67,6 @@ export function Composer({
       fileInputRef.current.click();
     }
   };
-  // ...
-  <Button
-    variant="outline"
-    size="sm"
-    type="button"
-    onClick={handleAttachClick}
-    className="gap-2"
-  >
-    <Paperclip className="h-4 w-4" />
-    Attach Files
-  </Button>;
 
   const convertFileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -68,7 +74,6 @@ export function Composer({
       reader.readAsDataURL(file);
       reader.onload = () => {
         if (typeof reader.result === "string") {
-          // Remove data URL prefix (e.g. "data:image/png;base64,")
           const base64 = reader.result.split(",")[1];
           resolve(base64);
         } else {
@@ -92,16 +97,14 @@ export function Composer({
         })),
       );
 
-      await onSend({
+      const result = await onSend({
         recipients: recipientEmails,
         subject,
         body,
         attachments,
       });
-      setSent(true);
-      setSubject("");
-      setBody("");
-      setFiles([]);
+
+      setSendResult(result);
     } catch (e) {
       console.error(e);
       alert("Failed to send email");
@@ -110,20 +113,153 @@ export function Composer({
     }
   };
 
-  if (sent) {
+  const handleResetForNew = () => {
+    setSendResult(null);
+    setSubject("");
+    setBody("");
+    setFiles([]);
+  };
+
+  const handleRetryFailedRecipients = () => {
+    if (!sendResult) return;
+    const failedEmails = sendResult.results
+      .filter((r) => r.status === "failed")
+      .map((r) => r.email);
+
+    if (onRetryFailed) {
+      onRetryFailed(failedEmails);
+    }
+    setSendResult(null);
+  };
+
+  // Render Send Status Report
+  if (sendResult) {
+    const isSuccess = sendResult.status === "sent" || sendResult.status === "delivered";
+    const isPartial = sendResult.status === "partial";
+    const isFailure = sendResult.status === "failed";
+
     return (
-      <Card className="w-full">
-        <CardContent className="pt-6 text-center text-green-600">
-          <p className="text-xl font-semibold">Email Queued Successfully!</p>
-          <p>Sent to {recipientCount} recipients.</p>
-          <Button
-            variant="outline"
-            onClick={() => setSent(false)}
-            className="mt-4"
-          >
-            Send Another
-          </Button>
+      <Card className="w-full border shadow-sm">
+        <CardHeader className="pb-3 border-b bg-slate-50/50">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-3">
+              {isSuccess && (
+                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+              )}
+              {isPartial && (
+                <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+              )}
+              {isFailure && (
+                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                  <XCircle className="h-6 w-6" />
+                </div>
+              )}
+              <div>
+                <CardTitle className="text-lg">
+                  {isSuccess
+                    ? `Emails Sent Successfully (${sendResult.total})`
+                    : isPartial
+                      ? `Partially Sent: ${sendResult.successCount} of ${sendResult.total} Succeeded`
+                      : `Email Sending Failed (${sendResult.failureCount} Failed)`}
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Subject: &quot;{subject}&quot;
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {sendResult.mock && (
+                <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 text-xs">
+                  Mock Mode (No Resend API Key)
+                </Badge>
+              )}
+              <Badge
+                variant={isSuccess ? "default" : isPartial ? "secondary" : "destructive"}
+                className="capitalize"
+              >
+                {sendResult.status}
+              </Badge>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="pt-4 space-y-4">
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+              Recipient Delivery Breakdown ({sendResult.results.length})
+            </h4>
+            <div className="border rounded-md divide-y max-h-60 overflow-y-auto">
+              {sendResult.results.map((r, i) => (
+                <div
+                  key={i}
+                  className="p-3 text-xs sm:text-sm flex items-center justify-between hover:bg-slate-50 transition-colors"
+                >
+                  <div className="space-y-0.5 min-w-0 pr-2">
+                    <div className="font-medium text-slate-800 truncate font-mono">
+                      {r.email}
+                    </div>
+                    {r.error ? (
+                      <div className="text-xs text-red-600 truncate">
+                        Error: {r.error}
+                      </div>
+                    ) : r.resendId ? (
+                      <div className="text-xs text-slate-400 font-mono truncate">
+                        Resend ID: {r.resendId}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <Badge
+                    variant={r.status === "sent" || r.status === "delivered" ? "outline" : "destructive"}
+                    className={
+                      r.status === "sent" || r.status === "delivered"
+                        ? "text-green-700 bg-green-50 border-green-200 capitalize text-xs shrink-0"
+                        : "capitalize text-xs shrink-0"
+                    }
+                  >
+                    {r.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </div>
         </CardContent>
+
+        <CardFooter className="flex flex-wrap items-center justify-between gap-2 border-t pt-4 bg-slate-50/30">
+          <div className="flex items-center gap-2">
+            {sendResult.failureCount > 0 && onRetryFailed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRetryFailedRecipients}
+                className="gap-1.5 text-amber-700 hover:text-amber-800 hover:bg-amber-50 border-amber-200"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry Failed Recipients ({sendResult.failureCount})
+              </Button>
+            )}
+            {onViewHistory && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onViewHistory}
+                className="gap-1.5 text-slate-600 hover:text-slate-900"
+              >
+                <History className="h-4 w-4" />
+                View in Sent History
+              </Button>
+            )}
+          </div>
+
+          <Button onClick={handleResetForNew} size="sm">
+            Compose Another Email
+          </Button>
+        </CardFooter>
       </Card>
     );
   }

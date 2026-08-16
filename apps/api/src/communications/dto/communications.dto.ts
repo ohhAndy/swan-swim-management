@@ -28,3 +28,14 @@ export const SendEmailSchema = z.object({
 });
 
 export class SendEmailDto extends createZodDto(SendEmailSchema) {}
+
+export const GetCommunicationHistorySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  search: z.string().optional(),
+  status: z.enum(["all", "sent", "partial", "failed", "delivered"]).optional(),
+});
+
+export class GetCommunicationHistoryDto extends createZodDto(
+  GetCommunicationHistorySchema,
+) {}

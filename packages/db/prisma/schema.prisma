@@ -87,6 +87,7 @@ model StaffUser {
   reportCardsCreated           ReportCard[]          @relation("ReportCardCreatedBy")
   reportCardsUpdated           ReportCard[]          @relation("ReportCardUpdatedBy")
   reportCardsSent              ReportCard[]          @relation("ReportCardSentBy")
+  communicationsSent           CommunicationLog[]    @relation("CommunicationSentBy")
 }
 
 model AuditLog {
@@ -623,4 +624,32 @@ enum SkillStatus {
   not_started // "Not Started" / Bad
   developing  // "Developing" / Ok
   mastered    // "Mastered" / Good
+}
+
+enum CommunicationStatus {
+  sent
+  partial
+  failed
+  delivered
+}
+
+model CommunicationLog {
+  id              String              @id @default(cuid())
+  staffId         String?
+  subject         String
+  body            String              @db.Text
+  status          CommunicationStatus @default(sent)
+  recipientCount  Int                 @default(0)
+  successCount    Int                 @default(0)
+  failureCount    Int                 @default(0)
+  attachmentCount Int                 @default(0)
+  recipients      Json
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  staff           StaffUser?          @relation("CommunicationSentBy", fields: [staffId], references: [id])
+
+  @@index([staffId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("communication_logs")
 }
