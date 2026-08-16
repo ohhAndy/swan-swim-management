@@ -152,69 +152,128 @@ export class CommunicationsService {
         });
       }
     } else {
-      // Chunk recipients into batches of up to 100 (Resend Batch API limit)
-      const BATCH_SIZE = 100;
-      const chunks: string[][] = [];
-      for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-        chunks.push(recipients.slice(i, i + BATCH_SIZE));
-      }
+      const hasAttachments = attachments && attachments.length > 0;
 
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-
-        // If not the first chunk, add a small throttle delay between requests to never exceed 10 req/sec
-        if (i > 0) {
-          await new Promise((resolve) => setTimeout(resolve, 300));
+      if (hasAttachments) {
+        // Resend Batch API does NOT support attachments.
+        // Send individually via resend.emails.send in throttled sub-batches (5 concurrent at a time) to stay safely under 10 req/sec.
+        const SUB_BATCH_SIZE = 5;
+        const subBatches: string[][] = [];
+        for (let i = 0; i < recipients.length; i += SUB_BATCH_SIZE) {
+          subBatches.push(recipients.slice(i, i + SUB_BATCH_SIZE));
         }
 
-        try {
-          const batchPayload = chunk.map((recipient) => ({
-            from,
-            to: recipient,
-            subject,
-            html: `<div style="white-space: pre-wrap; font-family: sans-serif;">${body}</div>`,
-            attachments: attachments?.map((a) => ({
-              filename: a.filename,
-              content: Buffer.from(a.content, "base64"),
-            })),
-          }));
+        for (let i = 0; i < subBatches.length; i++) {
+          const subBatch = subBatches[i];
 
-          const res = await this.resend.batch.send(batchPayload);
+          if (i > 0) {
+            await new Promise((resolve) => setTimeout(resolve, 250));
+          }
 
-          if (res.error) {
-            this.logger.error(`Batch send error for chunk ${i}:`, res.error);
+          const results = await Promise.all(
+            subBatch.map(async (recipient) => {
+              try {
+                const res = await this.resend.emails.send({
+                  from,
+                  to: recipient,
+                  subject,
+                  html: `<div style="white-space: pre-wrap; font-family: sans-serif;">${body}</div>`,
+                  attachments: attachments.map((a) => ({
+                    filename: a.filename,
+                    content: Buffer.from(a.content, "base64"),
+                  })),
+                });
+
+                if (res.error) {
+                  return {
+                    email: recipient,
+                    status: "failed" as const,
+                    error: res.error.message || JSON.stringify(res.error),
+                    updatedAt: new Date().toISOString(),
+                  };
+                }
+
+                return {
+                  email: recipient,
+                  status: "sent" as const,
+                  resendId: res.data?.id,
+                  updatedAt: new Date().toISOString(),
+                };
+              } catch (err) {
+                const message =
+                  err instanceof Error ? err.message : "Unknown send failure";
+                return {
+                  email: recipient,
+                  status: "failed" as const,
+                  error: message,
+                  updatedAt: new Date().toISOString(),
+                };
+              }
+            }),
+          );
+
+          recipientResults.push(...results);
+        }
+      } else {
+        // No attachments: use Resend Batch API in chunks of up to 100
+        const BATCH_SIZE = 100;
+        const chunks: string[][] = [];
+        for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+          chunks.push(recipients.slice(i, i + BATCH_SIZE));
+        }
+
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
+
+          if (i > 0) {
+            await new Promise((resolve) => setTimeout(resolve, 300));
+          }
+
+          try {
+            const batchPayload = chunk.map((recipient) => ({
+              from,
+              to: recipient,
+              subject,
+              html: `<div style="white-space: pre-wrap; font-family: sans-serif;">${body}</div>`,
+            }));
+
+            const res = await this.resend.batch.send(batchPayload);
+
+            if (res.error) {
+              this.logger.error(`Batch send error for chunk ${i}:`, res.error);
+              for (const recipient of chunk) {
+                recipientResults.push({
+                  email: recipient,
+                  status: "failed",
+                  error: res.error.message || JSON.stringify(res.error),
+                  updatedAt: new Date().toISOString(),
+                });
+              }
+            } else if (res.data?.data) {
+              const responseList = res.data.data;
+              for (let j = 0; j < chunk.length; j++) {
+                const recipient = chunk[j];
+                const item = responseList[j];
+                recipientResults.push({
+                  email: recipient,
+                  status: "sent",
+                  resendId: item?.id,
+                  updatedAt: new Date().toISOString(),
+                });
+              }
+            }
+          } catch (err) {
+            const message =
+              err instanceof Error ? err.message : "Batch request failed";
+            this.logger.error(`Exception during batch send for chunk ${i}:`, err);
             for (const recipient of chunk) {
               recipientResults.push({
                 email: recipient,
                 status: "failed",
-                error: res.error.message || JSON.stringify(res.error),
+                error: message,
                 updatedAt: new Date().toISOString(),
               });
             }
-          } else if (res.data?.data) {
-            // Map returned Resend IDs back to recipients in the chunk
-            const responseList = res.data.data;
-            for (let j = 0; j < chunk.length; j++) {
-              const recipient = chunk[j];
-              const item = responseList[j];
-              recipientResults.push({
-                email: recipient,
-                status: "sent",
-                resendId: item?.id,
-                updatedAt: new Date().toISOString(),
-              });
-            }
-          }
-        } catch (err) {
-          const message = err instanceof Error ? err.message : "Batch request failed";
-          this.logger.error(`Exception during batch send for chunk ${i}:`, err);
-          for (const recipient of chunk) {
-            recipientResults.push({
-              email: recipient,
-              status: "failed",
-              error: message,
-              updatedAt: new Date().toISOString(),
-            });
           }
         }
       }
