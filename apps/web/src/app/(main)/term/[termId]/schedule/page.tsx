@@ -71,6 +71,10 @@ export default async function TimeSlotsPage({
     timeSlotsByDay[index] = slots;
   });
   const termTitle = fetchTitle === "" ? null : fetchTitle;
+  const hasRegularSlots = weeklySlots.some(
+    (slots) => Array.isArray(slots) && slots.length > 0,
+  );
+  const showRegularGrid = hasRegularSlots || flexibleBlocks.length === 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -97,7 +101,7 @@ export default async function TimeSlotsPage({
           </div>
         </div>
       </div>
-      {flexibleBlocks.length === 0 && (
+      {showRegularGrid && (
         <ScheduleGrid timeSlotsByDay={timeSlotsByDay} termId={termId} userRole={user.role} />
       )}
 
