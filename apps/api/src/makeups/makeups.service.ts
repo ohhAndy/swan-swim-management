@@ -34,11 +34,11 @@ export class MakeupsService {
         },
       });
       if (!session) throw new BadRequestException("Session not found");
-      if (session.offering.type === "flexible") {
-        throw new BadRequestException(
-          "Make-ups are not allowed for flexible courses",
-        );
-      }
+      // if (session.offering.type === "flexible") {
+      //   throw new BadRequestException(
+      //     "Make-ups are not allowed for flexible courses",
+      //   );
+      // }
 
       // Validate Location Access
       validateLocationAccess(
