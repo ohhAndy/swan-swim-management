@@ -13,6 +13,7 @@
     "lint": "turbo run lint",
     "db:generate": "npm --prefix packages/db run generate",
     "db:migrate": "npm --prefix packages/db run migrate:dev",
+    "db:push": "npm --prefix packages/db run push",
     "db:studio": "npm --prefix packages/db run studio",
     "check-types": "tsc --noEmit",
     "postinstall": "npm run db:generate"

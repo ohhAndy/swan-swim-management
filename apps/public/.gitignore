@@ -1,21 +1,27 @@
+# dependencies
 node_modules
-.pnp
-.pnp.js
-package-lock.json
+/.pnp
+.pnp.*
 
+# testing
+/coverage
+
+# next.js
 .next/
 out/
-dist/
-.turbo/
+
+# production
 build/
+dist/
 
 # misc
 .DS_Store
 *.pem
-*.pdf
 
 # debug
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # local env files
 .env*.local
@@ -27,6 +33,3 @@ npm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-# backups
-backups/
