@@ -18,6 +18,7 @@ model Location {
   invoices            Invoice[]
   terms               Term[]
   staffUsers          StaffUser[]           @relation("LocationToStaffUser")
+  trialRequests       TrialRequest[]
 
   @@map("locations")
 }
@@ -88,6 +89,7 @@ model StaffUser {
   reportCardsUpdated           ReportCard[]          @relation("ReportCardUpdatedBy")
   reportCardsSent              ReportCard[]          @relation("ReportCardSentBy")
   communicationsSent           CommunicationLog[]    @relation("CommunicationSentBy")
+  trialRequestsReviewed        TrialRequest[]        @relation("TrialRequestReviewedBy")
 }
 
 model AuditLog {
@@ -537,6 +539,39 @@ enum TaskPriority {
   medium
   high
   urgent
+}
+
+enum TrialRequestStatus {
+  pending
+  approved
+  declined
+  spam
+}
+
+model TrialRequest {
+  id              String             @id @default(uuid())
+  parentName      String
+  parentPhone     String
+  parentEmail     String?
+  childName       String
+  childAge        Int
+  preferredDates  Json               // Array of ISO date strings selected by parent
+  notes           String?
+  status          TrialRequestStatus @default(pending)
+  submittedAt     DateTime           @default(now())
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  reviewedByUser  StaffUser?         @relation("TrialRequestReviewedBy", fields: [reviewedBy], references: [id])
+  ipAddress       String?
+  cookieId        String?
+  locationId      String?
+  location        Location?          @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  @@index([parentPhone])
+  @@index([status])
+  @@index([submittedAt])
+  @@index([locationId])
+  @@map("trial_requests")
 }
 
 // Report Card System

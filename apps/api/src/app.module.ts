@@ -33,6 +33,7 @@ import { RolesGuard } from "./auth/roles.guard";
 import { LevelsModule } from './levels/levels.module';
 import { SkillsModule } from './skills/skills.module';
 import { ReportCardsModule } from './report-cards/report-cards.module';
+import { PublicModule } from './public/public.module';
 
 @Module({
   imports: [
@@ -75,6 +76,7 @@ import { ReportCardsModule } from './report-cards/report-cards.module';
     LevelsModule,
     SkillsModule,
     ReportCardsModule,
+    PublicModule,
   ],
   providers: [
     {
