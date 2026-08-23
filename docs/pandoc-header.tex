@@ -1,0 +1,21 @@
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{float}
+
+% Table styling with clean alternating rows and comfortable cell padding
+\definecolor{tableheaderbg}{HTML}{F1F5F9}
+\definecolor{tablerowalt}{HTML}{F8FAFC}
+
+\renewcommand{\arraystretch}{1.35}
+
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{%
+  \rowcolors{2}{tablerowalt}{white}%
+}
+
+% Keep figures from causing accidental full-page float breaks
+\makeatletter
+\def\fps@figure{H}
+\makeatother
