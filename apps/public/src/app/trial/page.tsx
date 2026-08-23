@@ -1,0 +1,57 @@
+import type { Metadata } from "next";
+import { Droplets } from "lucide-react";
+import { TrialForm } from "@/components/trial/TrialForm";
+
+export const metadata: Metadata = {
+  title: "Book a Free Trial — Swan Swim School",
+  description:
+    "Book a free trial swim lesson at Swan Swim School. Fill out a quick form and we'll get back to you within 24 hours.",
+};
+
+export default function TrialPage() {
+  return (
+    <>
+      {/* Hero */}
+      <section className="relative pt-32 pb-20 bg-gradient-to-br from-brand-700 via-brand-600 to-brand-800 overflow-hidden">
+        <div className="absolute top-20 right-10 w-72 h-72 bg-brand-400/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-teal-400/10 rounded-full blur-3xl" />
+
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg
+            viewBox="0 0 1440 80"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full h-auto"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M0,32 C480,80 960,0 1440,32 L1440,80 L0,80 Z"
+              fill="white"
+            />
+          </svg>
+        </div>
+
+        <div className="section-container relative z-10 text-center">
+          <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-6">
+            <Droplets size={16} />
+            No Commitment Required
+          </span>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+            Book a Free Trial
+          </h1>
+          <p className="text-white/80 text-lg max-w-2xl mx-auto">
+            Tell us about your child and pick your preferred dates.
+            We&apos;ll get back to you within 24 hours to confirm.
+          </p>
+        </div>
+      </section>
+
+      {/* Form Section */}
+      <section className="py-16 bg-white">
+        <div className="section-container max-w-2xl">
+          <TrialForm />
+        </div>
+      </section>
+    </>
+  );
+}
