@@ -198,22 +198,22 @@ export class PublicService {
     // Fallback if database locations table is not populated yet
     return [
       {
-        id: "markham",
-        name: "Markham Campus",
+        id: "markham_branch",
+        name: "Markham",
         slug: "markham",
-        address: "100 Town Centre Blvd, Markham, ON L3R 9W3",
+        address: "8500 Warden Ave",
       },
       {
-        id: "newmarket",
-        name: "Newmarket Aquatic Center",
+        id: "loc_main_branch_001",
+        name: "Newmarket",
         slug: "newmarket",
-        address: "17600 Yonge St, Newmarket, ON L3Y 4Z1",
+        address: "17215 Lesile St",
       },
       {
-        id: "richmond-hill",
-        name: "Richmond Hill Facility",
-        slug: "richmond-hill",
-        address: "10268 Yonge St, Richmond Hill, ON L4C 3B7",
+        id: "AGC_branch",
+        name: "Swim Team",
+        slug: "Angus-glen",
+        address: "3990 Major Mackenzie Drive East",
       },
     ];
   }

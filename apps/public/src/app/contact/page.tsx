@@ -5,7 +5,7 @@ import { ContactLocations } from "@/components/contact/ContactLocations";
 export const metadata: Metadata = {
   title: "Contact & Locations — Swan Swim School",
   description:
-    "Find Swan Swim School locations in Markham, Newmarket, and Richmond Hill. Check hours, phone numbers, addresses, and directions.",
+    "Find Swan Swim School locations in Newmarket, Markham, and Angus Glen. Check hours, phone numbers, addresses, and directions.",
 };
 
 export default function ContactPage() {

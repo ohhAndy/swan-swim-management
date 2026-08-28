@@ -34,25 +34,25 @@ export interface LocationOption {
 
 export const TRIAL_LOCATIONS: LocationOption[] = [
   {
-    id: "markham",
+    id: "markham_branch",
     slug: "markham",
-    name: "Markham Campus",
-    address: "100 Town Centre Blvd",
+    name: "Markham",
+    address: "8500 Warden Ave",
     city: "Markham",
   },
   {
-    id: "newmarket",
+    id: "loc_main_branch_001",
     slug: "newmarket",
-    name: "Newmarket Aquatic Center",
-    address: "17600 Yonge St",
+    name: "Newmarket",
+    address: "17215 Lesile St",
     city: "Newmarket",
   },
   {
-    id: "richmond-hill",
-    slug: "richmond-hill",
-    name: "Richmond Hill Facility",
-    address: "10268 Yonge St",
-    city: "Richmond Hill",
+    id: "AGC_branch",
+    slug: "Angus-glen",
+    name: "Swim Team",
+    address: "3990 Major Mackenzie Drive East",
+    city: "Markham",
   },
 ];
 
@@ -85,6 +85,7 @@ function TrialFormInner() {
   const searchParams = useSearchParams();
   const locationParam = searchParams.get("location");
 
+  const [locations, setLocations] = useState<LocationOption[]>(TRIAL_LOCATIONS);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     locationSlug: "markham",
@@ -97,17 +98,41 @@ function TrialFormInner() {
     notes: "",
   });
 
+  // Fetch dynamic locations from Supabase via API
+  useEffect(() => {
+    async function loadLocations() {
+      try {
+        const data = await fetchPublicAPI<
+          Array<{ id: string; name: string; slug: string; address?: string | null }>
+        >("/locations");
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: LocationOption[] = data.map((l) => ({
+            id: l.id,
+            slug: l.slug || l.id,
+            name: l.name,
+            address: l.address || "",
+            city: l.slug?.toLowerCase().includes("newmarket") ? "Newmarket" : "Markham",
+          }));
+          setLocations(mapped);
+        }
+      } catch (e) {
+        console.error("Failed to load trial locations:", e);
+      }
+    }
+    loadLocations();
+  }, []);
+
   // Sync initial location from URL param if available
   useEffect(() => {
     if (locationParam) {
-      const match = TRIAL_LOCATIONS.find(
+      const match = locations.find(
         (l) => l.slug.toLowerCase() === locationParam.toLowerCase() || l.id === locationParam
       );
       if (match) {
         setFormData((prev) => ({ ...prev, locationSlug: match.slug }));
       }
     }
-  }, [locationParam]);
+  }, [locationParam, locations]);
 
   const [availableDates, setAvailableDates] = useState<TrialDate[]>([]);
   const [loadingDates, setLoadingDates] = useState(true);
@@ -165,8 +190,8 @@ function TrialFormInner() {
   };
 
   const selectedLocation =
-    TRIAL_LOCATIONS.find((l) => l.slug === formData.locationSlug) ||
-    TRIAL_LOCATIONS[0];
+    locations.find((l) => l.slug === formData.locationSlug) ||
+    locations[0];
 
   const validateStep = (stepNum: number): boolean => {
     const errors: Record<string, string> = {};
@@ -380,7 +405,7 @@ function TrialFormInner() {
               Preferred Pool Location *
             </label>
             <div className="grid sm:grid-cols-3 gap-3">
-              {TRIAL_LOCATIONS.map((loc) => {
+              {locations.map((loc) => {
                 const isSelected = formData.locationSlug === loc.slug;
                 return (
                   <button

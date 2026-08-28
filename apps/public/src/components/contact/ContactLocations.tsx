@@ -9,14 +9,12 @@ import {
   Clock,
   ExternalLink,
   ArrowRight,
-  Waves,
-  Car,
-  Wifi,
   Sparkles,
 } from "lucide-react";
 
 export interface LocationInfo {
   id: string;
+  slug: string;
   name: string;
   badge?: string;
   tagline: string;
@@ -25,7 +23,7 @@ export interface LocationInfo {
   province: string;
   postalCode: string;
   phone: string;
-  email: string;
+  email?: string;
   hours: { day: string; hours: string }[];
   features: string[];
   poolDetails: {
@@ -37,47 +35,16 @@ export interface LocationInfo {
 
 export const LOCATIONS: LocationInfo[] = [
   {
-    id: "markham",
-    name: "Markham",
-    badge: "Flagship Location",
-    tagline: "Main Campus & Olympic-Standard Heated Facility",
-    address: "100 Town Centre Blvd",
-    city: "Markham",
-    province: "ON",
-    postalCode: "L3R 9W3",
-    phone: "(905) 555-0142",
-    email: "markham@swanswimschool.com",
-    features: [
-      "Dedicated 25m heated saltwater pool (88°F / 31°C)",
-      "Viewing gallery with high-speed guest Wi-Fi",
-      "Private family changing suites & lockers",
-      "Spacious free on-site parking lot",
-    ],
-    poolDetails: {
-      temp: "88°F (31°C)",
-      length: "25m 4-Lane",
-      type: "Saltwater Purified",
-    },
-    hours: [
-      { day: "Monday", hours: "3:00 PM – 8:30 PM" },
-      { day: "Tuesday", hours: "3:00 PM – 8:30 PM" },
-      { day: "Wednesday", hours: "3:00 PM – 8:30 PM" },
-      { day: "Thursday", hours: "3:00 PM – 8:30 PM" },
-      { day: "Friday", hours: "3:00 PM – 8:00 PM" },
-      { day: "Saturday", hours: "8:30 AM – 5:30 PM" },
-      { day: "Sunday", hours: "9:00 AM – 4:00 PM" },
-    ],
-  },
-  {
     id: "newmarket",
+    slug: "newmarket",
     name: "Newmarket",
-    badge: "York Region Campus",
-    tagline: "Modern Aquatic Center & Family Facility",
+    badge: "Flagship Location",
+    tagline: "Premier Aquatic Center & Flagship Family Facility",
     address: "17215 Lesile St",
     city: "Newmarket",
     province: "ON",
     postalCode: "L3Y 4Z1",
-    phone: "(905) 555-0188",
+    phone: "(289) 763-9339",
     email: "newmarket@swanswimschool.com",
     features: [
       "Warm therapeutic water temperature (90°F / 32°C)",
@@ -87,8 +54,8 @@ export const LOCATIONS: LocationInfo[] = [
     ],
     poolDetails: {
       temp: "90°F (32°C)",
-      length: "20m 3-Lane",
-      type: "UV & Salt Filtered",
+      length: "25m 3-Lane",
+      type: "Liquid Chlorine",
     },
     hours: [
       { day: "Monday", hours: "3:30 PM – 8:00 PM" },
@@ -101,49 +68,86 @@ export const LOCATIONS: LocationInfo[] = [
     ],
   },
   {
-    id: "richmond-hill",
-    name: "Richmond Hill",
-    badge: "New Location",
-    tagline: "State-of-the-Art Training & Stroke Clinic Facility",
-    address: "10268 Yonge St",
-    city: "Richmond Hill",
+    id: "markham",
+    slug: "markham",
+    name: "Markham",
+    badge: "Markham Campus",
+    tagline: "Olympic-Standard Heated Facility & Main Academy",
+    address: "8500 Warden Ave",
+    city: "Markham",
     province: "ON",
-    postalCode: "L4C 3B7",
-    phone: "(905) 555-0199",
-    email: "richmondhill@swanswimschool.com",
+    postalCode: "L6G 1A5",
+    phone: "(905) 555-0142",
+    email: "markham@swanswimschool.com",
     features: [
-      "Dual teaching & deep-water skill zones",
-      "Glass-enclosed observation deck",
-      "Accessible ADA compliant pool entry ramps",
-      "Convenient curbside drop-off loop",
+      "Dedicated 25m heated pool (88°F / 31°C)",
+      "Viewing gallery with high-speed guest Wi-Fi",
+      "Private family changing suites & lockers",
+      "Spacious free on-site parking lot",
     ],
     poolDetails: {
-      temp: "89°F (31.5°C)",
+      temp: "88°F (31°C)",
       length: "25m 4-Lane",
-      type: "Ozone Salt Purified",
+      type: "Liquid Chlorine",
     },
     hours: [
-      { day: "Monday", hours: "3:00 PM – 8:00 PM" },
-      { day: "Tuesday", hours: "3:00 PM – 8:00 PM" },
-      { day: "Wednesday", hours: "3:00 PM – 8:00 PM" },
-      { day: "Thursday", hours: "3:00 PM – 8:00 PM" },
-      { day: "Friday", hours: "3:00 PM – 7:00 PM" },
-      { day: "Saturday", hours: "9:00 AM – 5:00 PM" },
-      { day: "Sunday", hours: "9:30 AM – 3:00 PM" },
+      { day: "Monday", hours: "4:00 PM – 8:30 PM" },
+      { day: "Tuesday", hours: "4:00 PM – 8:30 PM" },
+      { day: "Wednesday", hours: "4:00 PM – 8:30 PM" },
+      { day: "Thursday", hours: "4:00 PM – 8:30 PM" },
+      { day: "Friday", hours: "Closed" },
+      { day: "Saturday", hours: "Closed" },
+      { day: "Sunday", hours: "Closed" },
+    ],
+  },
+  {
+    id: "angus-glen",
+    slug: "Angus-glen",
+    name: "Swim Team",
+    badge: "Competitive Facility",
+    tagline: "Angus Glen Aquatic Center & High Performance Stroke Clinic",
+    address: "3990 Major Mackenzie Drive East",
+    city: "Markham",
+    province: "ON",
+    postalCode: "L6C 1P8",
+    phone: "(289) 763-9339",
+    features: [
+      "Olympic-spec competition pool & timing systems",
+      "Advanced video stroke analysis station",
+      "Dedicated dryland strength & warm-up area",
+      "Spectator seating and accessible facility amenities",
+    ],
+    poolDetails: {
+      temp: "84°F (29°C)",
+      length: "25m 6-Lane",
+      type: "Liquid Chlorine",
+    },
+    hours: [
+      { day: "Monday", hours: "Closed" },
+      { day: "Tuesday", hours: "Closed" },
+      { day: "Wednesday", hours: "Closed" },
+      { day: "Thursday", hours: "Closed" },
+      { day: "Friday", hours: "Closed" },
+      { day: "Saturday", hours: "Closed" },
+      { day: "Sunday", hours: "3:00 PM – 5:00 PM" },
     ],
   },
 ];
 
 export function ContactLocations() {
-  const [activeLocationId, setActiveLocationId] = useState<string>("markham");
+  const [activeLocationId, setActiveLocationId] = useState<string>("newmarket");
 
   const activeLocation =
-    LOCATIONS.find((loc) => loc.id === activeLocationId) || LOCATIONS[0];
+    LOCATIONS.find(
+      (loc) => loc.id === activeLocationId || loc.slug === activeLocationId,
+    ) || LOCATIONS[0];
 
   const fullAddress = `${activeLocation.address}, ${activeLocation.city}, ${activeLocation.province} ${activeLocation.postalCode}`;
+
   const mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(
     fullAddress,
   )}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+
   const directionsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     fullAddress,
   )}`;
@@ -179,7 +183,7 @@ export function ContactLocations() {
                         : "bg-slate-200/70 text-slate-600"
                     }`}
                   >
-                    {loc.name === "Richmond Hill" ? "New" : loc.name}
+                    {loc.badge}
                   </span>
                 )}
               </button>
@@ -206,7 +210,7 @@ export function ContactLocations() {
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-slate-900">
-              Swan Swim Academy — {activeLocation.name}
+              Swan Swim School — {activeLocation.name}
             </h2>
             <p className="text-slate-600 text-sm mt-1">
               {activeLocation.tagline}
@@ -242,7 +246,11 @@ export function ContactLocations() {
           </div>
 
           {/* Contact Details Grid */}
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div
+            className={`grid ${
+              activeLocation.email ? "sm:grid-cols-2" : "grid-cols-1"
+            } gap-4`}
+          >
             {/* Phone */}
             <a
               href={`tel:${activeLocation.phone.replace(/[^0-9+]/g, "")}`}
@@ -264,26 +272,28 @@ export function ContactLocations() {
               </div>
             </a>
 
-            {/* Email */}
-            <a
-              href={`mailto:${activeLocation.email}`}
-              className="glass-card p-5 flex items-start gap-3.5 group hover:border-brand-200 transition-all"
-            >
-              <div className="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center shrink-0 group-hover:bg-brand-100 transition-colors">
-                <Mail size={20} className="text-brand-500" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-semibold text-slate-900 text-sm">
-                  Location Email
-                </h3>
-                <p className="text-brand-600 font-semibold text-sm truncate mt-0.5">
-                  {activeLocation.email}
-                </p>
-                <p className="text-slate-400 text-xs mt-0.5">
-                  Replies within a few hours
-                </p>
-              </div>
-            </a>
+            {/* Email (if available) */}
+            {activeLocation.email && (
+              <a
+                href={`mailto:${activeLocation.email}`}
+                className="glass-card p-5 flex items-start gap-3.5 group hover:border-brand-200 transition-all"
+              >
+                <div className="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center shrink-0 group-hover:bg-brand-100 transition-colors">
+                  <Mail size={20} className="text-brand-500" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-slate-900 text-sm">
+                    Location Email
+                  </h3>
+                  <p className="text-brand-600 font-semibold text-sm truncate mt-0.5">
+                    {activeLocation.email}
+                  </p>
+                  <p className="text-slate-400 text-xs mt-0.5">
+                    Replies within a few hours
+                  </p>
+                </div>
+              </a>
+            )}
           </div>
 
           {/* Address Card with Get Directions Link */}
@@ -392,7 +402,13 @@ export function ContactLocations() {
                   <span className="text-slate-600 font-medium text-sm">
                     {schedule.day}
                   </span>
-                  <span className="text-slate-900 font-semibold text-sm">
+                  <span
+                    className={
+                      schedule.hours === "Closed"
+                        ? "text-slate-400 font-medium text-sm"
+                        : "text-slate-900 font-semibold text-sm"
+                    }
+                  >
                     {schedule.hours}
                   </span>
                 </div>
@@ -413,7 +429,7 @@ export function ContactLocations() {
               level assessment with our certified instructors.
             </p>
             <Link
-              href={`/trial?location=${activeLocation.id}`}
+              href={`/trial?location=${activeLocation.slug || activeLocation.id}`}
               className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-6 rounded-xl font-display font-bold text-sm bg-white text-brand-700 hover:bg-brand-50 transition-all shadow-md group"
             >
               <span>Book Free Trial at {activeLocation.name}</span>
