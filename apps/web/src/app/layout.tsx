@@ -4,6 +4,8 @@ import { LocationProvider } from "@/context/LocationContext";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { Fredoka } from "next/font/google";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 const fredoka = Fredoka({ subsets: ["latin"], weight: "400" });
 
 export const metadata: Metadata = {
@@ -25,6 +27,8 @@ export default function RootLayout({
           <LocationProvider>
             <main className="mx-auto max-w-5xl p-6">{children}</main>
             <Toaster richColors position="top-center" />
+            <Analytics />
+            <SpeedInsights />
           </LocationProvider>
         </QueryProvider>
       </body>
