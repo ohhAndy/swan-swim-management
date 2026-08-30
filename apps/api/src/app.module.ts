@@ -27,6 +27,7 @@ import { InventoryModule } from "./inventory/inventory.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { CommunicationsModule } from "./communications/communications.module";
 import { APP_GUARD } from "@nestjs/core";
+import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { SupabaseAuthGuard } from "./auth/supabase-auth.guard";
 import { RolesGuard } from "./auth/roles.guard";
@@ -41,6 +42,7 @@ import { PublicModule } from './public/public.module';
       isGlobal: true, // ensures env vars are accessible anywhere
       envFilePath: [".env", "apps/api/.env"], // support multiple fallback paths
     }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
         ttl: 60000,

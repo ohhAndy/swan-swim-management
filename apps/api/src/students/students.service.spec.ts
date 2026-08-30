@@ -61,8 +61,6 @@ describe("StudentsService", () => {
         ],
       } as unknown as Awaited<ReturnType<typeof service.getById>>;
 
-      // Need to mock deactivateExpiredEnrollments since getById calls it
-      prismaMock.enrollment.updateMany.mockResolvedValue({ count: 0 });
       prismaMock.student.findUnique.mockResolvedValue(mockStudent);
 
       const staffUser: StaffUserWithLocations = {
@@ -125,7 +123,6 @@ describe("StudentsService", () => {
         ],
       } as unknown as Awaited<ReturnType<typeof service.getById>>;
 
-      prismaMock.enrollment.updateMany.mockResolvedValue({ count: 0 });
       prismaMock.student.findUnique.mockResolvedValue(mockStudent);
 
       const staffUser: StaffUserWithLocations = {

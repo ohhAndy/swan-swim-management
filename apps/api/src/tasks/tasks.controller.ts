@@ -18,10 +18,21 @@ import { RequestStaffUser } from "../auth/auth.types";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 
 
+import { CronTasksService } from "./cron-tasks.service";
+
 @Controller("tasks")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+  constructor(
+    private readonly tasksService: TasksService,
+    private readonly cronTasksService: CronTasksService,
+  ) {}
+
+  @Post("cron/deactivate-expired")
+  @Roles("super_admin", "admin")
+  triggerDeactivateExpired() {
+    return this.cronTasksService.deactivateExpiredEnrollments();
+  }
 
   @Post()
   @Roles("super_admin", "admin", "manager", "supervisor")

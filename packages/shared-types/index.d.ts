@@ -98,3 +98,22 @@ export interface InstructorInfo {
   staffUserId: string;
   staffName: string;
 }
+
+/**
+ * Standard ratio to capacity weights mapping
+ */
+export const CLASS_RATIO_WEIGHTS: Record<string, number>;
+
+/**
+ * Helper to get the numeric seat weight for a class ratio
+ */
+export function getRatioWeight(ratio?: string | null): number;
+
+/**
+ * Standard calculation for class capacity, filled seats, and open seats
+ */
+export function calculateClassUsage(
+  enrollments: { classRatio: string | null }[],
+  instructorCount: number,
+  baseCapacity: number
+): { filled: number; effectiveCapacity: number; openSeats: number };

@@ -3,6 +3,7 @@ import { PublicService } from "./public.service";
 import { Public } from "../auth/public.decorator";
 import { Throttle } from "@nestjs/throttler";
 import { Request } from "express";
+import { SubmitTrialRequestDto } from "./dto/trial-request.dto";
 
 @Controller("public")
 @Public()
@@ -27,19 +28,7 @@ export class PublicController {
   @Post("trial-requests")
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute per IP
   async submitTrialRequest(
-    @Body()
-    body: {
-      parentName: string;
-      parentPhone: string;
-      parentEmail?: string;
-      childName: string;
-      childAge: number;
-      preferredDates: string[];
-      locationId?: string;
-      locationSlug?: string;
-      notes?: string;
-      cookieId?: string;
-    },
+    @Body() body: SubmitTrialRequestDto,
     @Ip() ip: string,
     @Req() req: Request,
   ) {

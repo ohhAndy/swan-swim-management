@@ -13,9 +13,9 @@ import { json, urlencoded } from "express";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Increase body size limit for report card images
-  app.use(json({ limit: "50mb" }));
-  app.use(urlencoded({ extended: true, limit: "50mb" }));
+  // Set reasonable body size limit (supports images & attachments without excessive memory usage)
+  app.use(json({ limit: "10mb" }));
+  app.use(urlencoded({ extended: true, limit: "10mb" }));
 
   const httpAdapter = app.get(HttpAdapterHost);
   app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));

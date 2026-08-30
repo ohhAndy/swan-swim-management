@@ -34,7 +34,6 @@ export class StudentsService {
   }
 
   async searchOrList(params: SearchStudentsDto) {
-    await this.deactivateExpiredEnrollments();
     const {
       query,
       page = 1,
@@ -151,7 +150,6 @@ export class StudentsService {
   }
 
   async getById(id: string, staffUser?: StaffUserWithLocations) {
-    await this.deactivateExpiredEnrollments();
     const student = await this.prisma.student.findUnique({
       where: { id },
       select: {
@@ -661,30 +659,5 @@ export class StudentsService {
       select: { id: true },
     });
     if (!ok) throw new NotFoundException("Student not found");
-  }
-
-  private async deactivateExpiredEnrollments() {
-    try {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-
-      await this.prisma.enrollment.updateMany({
-        where: {
-          status: "active",
-          offering: {
-            term: {
-              endDate: {
-                lt: todayStart,
-              },
-            },
-          },
-        },
-        data: {
-          status: "inactive",
-        },
-      });
-    } catch (error) {
-      this.logger.error("Failed to deactivate expired enrollments", error instanceof Error ? error.stack : error);
-    }
   }
 }

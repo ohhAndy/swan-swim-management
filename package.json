@@ -24,7 +24,6 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "react-to-print": "^3.2.0",
     "zod": "^4.3.5"
   }
 }

@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { RequestStaffUser } from "../auth/auth.types";
+import { getRatioWeight } from "../common/capacity.utils";
 
 @Injectable()
 export class StatisticsService {
@@ -40,21 +41,9 @@ export class StatisticsService {
         0,
       );
 
-      const getEnrollmentWeight = (ratio: string) => {
-        switch (ratio) {
-          case "1:1":
-            return 3;
-          case "2:1":
-            return 1.5;
-          case "3:1":
-          default:
-            return 1;
-        }
-      };
-
       const totalEnrollments = offerings.reduce((sum, off) => {
         const offeringWeight = off.enrollments.reduce(
-          (w, e) => w + getEnrollmentWeight(e.classRatio || "3:1"),
+          (w, e) => w + getRatioWeight(e.classRatio),
           0,
         );
         return sum + offeringWeight;

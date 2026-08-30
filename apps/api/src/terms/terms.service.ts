@@ -15,6 +15,7 @@ import type {
 import { CreateTermInput } from "./dto/create-term.dto";
 import { SessionStatus, Prisma } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
+import { getRatioWeight } from "../common/capacity.utils";
 
 // Use UTC for date matching to ensure consistency
 function getUTCDayKey(d: Date): string {
@@ -749,9 +750,7 @@ export class TermsService {
               !isExcused &&
               !isAbsent
             ) {
-              const ratio = enr.classRatio || "3:1";
-              regularWeighted +=
-                ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
+              regularWeighted += getRatioWeight(enr.classRatio);
             }
           }
 
@@ -760,8 +759,7 @@ export class TermsService {
           let makeupWeighted = 0;
           for (const m of sessionMakeUps) {
             if (["scheduled", "attended"].includes(m.status)) {
-              const ratio = m.classRatio || "3:1";
-              makeupWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
+              makeupWeighted += getRatioWeight(m.classRatio);
             }
           }
 
@@ -770,8 +768,7 @@ export class TermsService {
           let trialsWeighted = 0;
           for (const t of sessionTrials) {
             if (["scheduled", "attended"].includes(t.status)) {
-              const ratio = t.classRatio || "3:1";
-              trialsWeighted += ratio === "1:1" ? 3 : ratio === "2:1" ? 1.5 : 1;
+              trialsWeighted += getRatioWeight(t.classRatio);
             }
           }
 
@@ -837,9 +834,7 @@ export class TermsService {
               classRatio: e.classRatio,
               reportCardStatus: e.reportCardStatus,
               nextTermStatus: (() => {
-                const nextEnr = nextTermEnrollments.find(
-                  (ne) => ne.studentId === e.student.id,
-                );
+                const nextEnr = nextTermEnrollmentMap.get(e.student.id);
                 if (!nextEnr) return "not_registered";
                 return nextEnr.invoiceLineItem?.invoice.status === "paid"
                   ? "paid"
