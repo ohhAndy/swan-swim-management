@@ -19,14 +19,25 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Swan Swim School — Learn to Swim with Confidence",
+  title: "Swan Swim School — Swim Like No Other | Markham & Newmarket",
   description:
-    "Expert swim lessons for all ages. Small class ratios, experienced instructors, and a safe learning environment. Book a free trial today!",
-  keywords: ["swim school", "swim lessons", "learn to swim", "kids swimming", "swimming classes"],
+    "Swim lessons for all ages in Markham & Newmarket. Small 3:1 class ratios, certified instructors, warm water pools, and 4.9★ on Google (350+ reviews). Book a free trial today!",
+  keywords: [
+    "swim school",
+    "swim lessons",
+    "learn to swim",
+    "kids swimming",
+    "swimming classes",
+    "swim lessons Markham",
+    "swim lessons Newmarket",
+    "swim school York Region",
+    "swimming classes Markham Ontario",
+    "swimming classes Newmarket Ontario",
+  ],
   openGraph: {
-    title: "Swan Swim School — Learn to Swim with Confidence",
+    title: "Swan Swim School — Swim Like No Other | Markham & Newmarket",
     description:
-      "Expert swim lessons for all ages. Small class ratios, experienced instructors, and a safe learning environment.",
+      "Small class ratios, certified instructors, and warm pool water. 4.9★ rated swim school serving Markham & Newmarket.",
     type: "website",
   },
 };

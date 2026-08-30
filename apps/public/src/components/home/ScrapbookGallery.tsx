@@ -36,7 +36,7 @@ export function ScrapbookGallery() {
       delay: 240,
     },
     {
-      caption: "Level 2 Ribbon Day! Beaming with pride 🏅",
+      caption: "Level 2 complete! Report card sent and a very proud kid. 🏅",
       subtext: "Graduation Celebration",
       image:
         "https://images.unsplash.com/photo-1560090995-01632a28895b?auto=format&fit=crop&w=700&q=80",

@@ -34,11 +34,11 @@ export default function HomePage() {
             </div>
 
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold !text-white mb-6 tracking-tight">
-              See Your Child Smile with Pride
+              Come see what it means to swim like no other.
             </h2>
             <p className="text-white/90 text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed font-normal">
-              Join us for a complimentary 30-minute trial class. Experience our warm 90°F water,
-              meet your instructor, and watch your child discover the joy of swimming.
+              Book a complimentary 30-minute trial class. No obligation, no pressure —
+              just you, your child, and a coach who's ready to meet them where they are.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

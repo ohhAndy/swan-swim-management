@@ -72,18 +72,19 @@ export default function AboutPage() {
               </h2>
               <div className="space-y-4 text-slate-600 leading-relaxed text-base">
                 <p>
-                  Swan Swim School was founded on a simple belief: swimming is a vital life skill
-                  best learned through patience, small ratios, and a warm, supportive environment.
+                  Swan Swim School was founded on a simple belief: every child deserves
+                  to feel safe and celebrated in the water. Swimming is a life skill, and
+                  life skills should never be rushed.
                 </p>
                 <p>
-                  Many children struggle in traditional large-group swim lessons due to cold pool water,
-                  crowded lanes, and noisy environments. We redesigned the swim lesson experience from the
-                  ground up — maintaining our teaching pools at a comfortable 90°F, capping class ratios
-                  at 3:1 for young learners, and utilizing certified, compassionate instructors.
+                  Where other schools run large, loud classes, we do the opposite. Our
+                  pools stay warm, our class sizes stay small, and our instructors stay
+                  patient — because that's the only way a child truly learns to love
+                  the water rather than just tolerate it.
                 </p>
                 <p>
-                  Today, we are honored to serve over 1,500 families across Markham and Newmarket,
-                  guiding students from their very first splashes to competitive racing readiness.
+                  From a child's very first splash to racing across the pool with
+                  confidence, we're here for every step of that journey.
                 </p>
               </div>
 
@@ -124,11 +125,12 @@ export default function AboutPage() {
               <div className="absolute -bottom-6 -left-6 bg-white rounded-2xl p-5 shadow-xl border border-slate-100 max-w-xs hidden sm:block">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex text-amber-400">★★★★★</div>
-                  <span className="text-xs font-bold text-slate-800">4.9 / 5 Rating</span>
+                  <span className="text-xs font-bold text-slate-800">Google Review</span>
                 </div>
                 <p className="text-slate-600 text-xs italic">
-                  &ldquo;The best decision we made for our daughter. Gentle, encouraging, and highly effective.&rdquo;
+                  &ldquo;My kid has been with Swan for the past one year and he is able to swim across the pool gracefully now.&rdquo;
                 </p>
+                <p className="text-slate-400 text-[11px] font-semibold mt-2">— Akshaya K., Markham</p>
               </div>
             </div>
           </div>
@@ -163,7 +165,7 @@ export default function AboutPage() {
               {
                 icon: Target,
                 title: "Progressive Curriculum",
-                desc: "Clear benchmarks, continuous assessment, and celebratory ribbons make milestones rewarding.",
+                desc: "Clear benchmarks, continuous assessment, and emailed report cards make every milestone feel rewarding and visible.",
               },
               {
                 icon: Heart,

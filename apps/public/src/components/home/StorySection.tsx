@@ -31,10 +31,10 @@ export function StorySection() {
                   
                   <div className="absolute bottom-6 left-6 right-6 text-white">
                     <p className="font-serif italic text-lg text-slate-100 mb-1">
-                      &ldquo;When a child trusts their coach, fear disappears in minutes.&rdquo;
+                      &ldquo;The moment a child stops being scared of the water is the moment everything changes.&rdquo;
                     </p>
                     <p className="text-xs font-semibold uppercase tracking-wider text-teal-300">
-                      Swan Teaching Philosophy
+                      Mo & Farhad, Swan Swim School
                     </p>
                   </div>
                 </div>
@@ -58,15 +58,14 @@ export function StorySection() {
             <ScrollReveal animation="fade-up" delay={150}>
               <div className="space-y-4 text-slate-700 text-base sm:text-lg leading-relaxed mb-8 font-normal">
                 <p>
-                  Putting your face in the water or letting go of the wall can feel like a mountain
-                  for a young child. Traditional swim classes often rush drills, leading to tears
-                  and reluctance to come back next week.
+                  For a lot of kids, the idea of putting their face in the water or letting go
+                  of the wall is genuinely terrifying. Rushing them through drills doesn't help
+                  — it just teaches them to dread next week's class.
                 </p>
                 <p>
-                  At Swan, we take a completely different path. We meet your child where they are —
-                  using water games, bubble songs, and constant reassurance. Because our water is
-                  always a warm 90°F and classes are capped at 3 students, children feel safe,
-                  supported, and excited for every lesson.
+                  At Swan, we meet every child where they are. Water games, steady encouragement,
+                  warm pool water, and classes capped at 3 students mean no child gets left behind
+                  or lost in the noise. Progress happens at their pace — and it sticks.
                 </p>
               </div>
             </ScrollReveal>
@@ -107,9 +106,9 @@ export function StorySection() {
                     <Check size={16} strokeWidth={3} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-sm sm:text-base">Big Milestones & Official Ribbons</h4>
+                    <h4 className="font-bold text-slate-900 text-sm sm:text-base">Milestone Tracking with Report Cards</h4>
                     <p className="text-slate-600 text-xs sm:text-sm mt-0.5">
-                      Every skill breakthrough is celebrated with ribbons, photos, and report cards that make kids beam with pride.
+                      Every skill milestone is tracked and celebrated. Parents receive detailed report cards so they can see exactly how far their child has come.
                     </p>
                   </div>
                 </div>

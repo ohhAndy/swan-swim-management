@@ -78,14 +78,14 @@ export function ParentStories() {
                   d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
                 />
               </svg>
-              <span>4.9 ★★★★★ on Google Reviews (198+ Reviews)</span>
+              <span>4.9 ★★★★★ on Google Reviews (350+ Reviews)</span>
             </div>
 
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold !text-white mb-4 tracking-tight">
               Stories from <span className="text-amber-300 font-serif italic font-normal">Proud Parents</span>
             </h2>
             <p className="text-slate-200 text-base sm:text-lg mb-6">
-              Click any review card below to verify that specific review directly on Google.
+              Real families, real words — click any card to verify the review on Google.
             </p>
 
             {/* Direct Google Maps Links */}

@@ -1,7 +1,7 @@
 # Project Proposal: Swan Swim School Digital Growth Platform
 
 **Client:** Swan Swim School  
-**Document Version:** 2.1 (Business Scope, Commercials & Implementation Plan)  
+**Document Version:** 2.2 (Business Scope, Commercials & Implementation Plan)  
 **Status:** Proposal & Scope of Work  
 
 ---
@@ -18,8 +18,8 @@ This project delivers a **complete, custom digital platform** designed to achiev
 
 To deliver immediate business value while maintaining smooth operations, the project is structured into **two strategic phases**:
 
-* **Phase 1: High-Converting Marketing Website, FAQ Hub & Instant Trial Engine ($2,000)**  
-  A modern, mobile-first brand website (6 dedicated pages including Curriculum, FAQ, and Facility), paired with a frictionless 4-step trial booking engine that connects directly to the school's live database.
+* **Phase 1: High-Converting Marketing Website, Interactive Level Quiz, Pricing & Instant Trial Engine ($2,000)**  
+  A modern, mobile-first brand website (6 dedicated pages including Curriculum, Pricing, Coach Bios, FAQ, and Facility), an interactive "Find Your Level" quiz, transparent tuition schedules, and a frictionless 4-step trial booking engine connected directly to the school's database.
 * **Phase 2: Parent Portal, Online Deposits & Staff Operations Hub ($8,000)**  
   A dedicated portal allowing parents to manage all children under one account, book classes, submit registration deposits, and request make-ups—paired with centralized staff approval queues that automate roster updates and Stripe digital receipts.
 
@@ -35,14 +35,25 @@ Create an authoritative, welcoming digital presence that builds immediate trust 
 ### Deliverables & Key Inclusions
 
 #### 1. Public Marketing Website (`apps/public`)
-* **Homepage (`/`)**: High-impact brand hero, key differentiators (warm 88°F pool, 3:1 small class ratios, certified instructors), program showcases, parent testimonials, and prominent trial booking calls-to-action.
+* **Homepage (`/`)**: High-impact brand hero, key differentiators (warm 88°F pool, 3:1 small class ratios, certified instructors), program showcases, coach highlights, parent testimonials, and prominent trial booking calls-to-action.
 * **Programs & Curriculum (`/programs`)**: Transparent breakdown of skill tiers (Parent & Tot, Preschool Swimmers, Skill Builders, Advanced, Private Lessons) detailing age ranges, coach ratios, class durations, and learning milestones.
+* **Transparent Pricing & Tuition List (`/programs` / Dedicated Pricing Section)**:
+  * Clear, easy-to-read pricing matrix by program tier and class format (1:1 Private, 2:1 Semi-Private, 3:1 Small Group).
+  * Monthly and semester tuition breakdowns, billing schedules, and registration details—eliminating price ambiguity and accelerating parent sign-up decisions.
 * **Frequently Asked Questions Hub (`/faq`)**: Interactive, searchable FAQ portal answering top parent questions regarding readiness, pool temperature, what to bring, class ratios, deposits, and make-up policies—eliminating repetitive customer service phone calls.
-* **About Us & Safe Facility (`/about`)**: School mission, coaching philosophy, facility safety protocols, and instructor credentials.
+* **About Us, Safe Facility & Coach Bios (`/about`)**:
+  * School mission, facility safety standards, water sanitation protocols, and teaching philosophy.
+  * **Coach Bios & Credentials Showcase**: Instructor profiles highlighting certifications (Lifeguard, CPR/AED, WSI), coaching backgrounds, specialties, and personal bios to establish deep trust with parents.
 * **Contact & Operating Hours (`/contact`)**: Interactive location details, phone/email contact channels, and class schedules by day of the week.
 * **Multi-Device Optimization**: Tailored, lightning-fast layouts across iPhone, Android, iPad, and desktop screens.
 
-#### 2. Instant Trial Booking Engine (`/trial`)
+#### 2. Interactive "Find Your Level" Swim Quiz
+* **Quick 30-Second Parent Assessment**:
+  * Short, mobile-friendly 3–4 question evaluator asking about the child's age, comfort in water, floating/submersion skills, and stroke independence.
+  * Instant, personalized program recommendation matching the child to the exact right swim level (e.g., Parent & Tot vs. Preschool vs. Skill Builder).
+  * Direct 1-click handoff from quiz results into the trial booking engine with pre-filled level recommendations.
+
+#### 3. Instant Trial Booking Engine (`/trial`)
 * **Guided 4-Step Parent Experience**:
   1. *Parent Contact Information* (Name, phone, email)
   2. *Child Profile & Swim Level* (Name, age, swim comfort level)
@@ -51,7 +62,7 @@ Create an authoritative, welcoming digital presence that builds immediate trust 
 * **Real-Time Capacity Check**: Automatically queries open pool slots to prevent overbooking trial spots.
 * **Smart Lead Protection**: Built-in duplicate detection and spam filtering to ensure staff only review genuine family leads.
 
-#### 3. Lead Management Backend Integration
+#### 4. Lead Management Backend Integration
 * Direct pipeline routing every trial inquiry straight into the internal staff operations system for one-click confirmation and follow-up.
 
 ---
@@ -98,7 +109,7 @@ To provide clear commercial context, below is an industry comparison of what thi
 
 | Project Scope / Component Area | Typical Agency Turnkey Pricing | Offered Partner Package | Direct Value & Savings |
 | :--- | :---: | :---: | :---: |
-| **Phase 1: Marketing Website, FAQ Hub & Trial Engine**\newline • Custom brand design system & 6 responsive pages\newline • Real-time 30-day dynamic trial booking engine\newline • Searchable FAQ portal & spam-protected lead routing | $5,000 – $6,500 | **$2,000** | **Save ~$3,500+ (60%+ off)** |
+| **Phase 1: Marketing Website, Level Quiz, Pricing & Trial Engine**\newline • Custom brand design system & 6 responsive pages\newline • Interactive 30-sec "Find Your Level" swim quiz\newline • Transparent tuition pricing schedule & coach bios\newline • Real-time 30-day dynamic trial booking engine\newline • Searchable FAQ portal & spam-protected lead routing | $5,000 – $6,500 | **$2,000** | **Save ~$3,500+ (60%+ off)** |
 | **Phase 2: Parent Portal, Request Workflows & Stripe**\newline • Secure parent login & multi-child family hub\newline • Deposit-backed class registration & Stripe checkout\newline • Automated payment receipts & make-up request flow | $8,000 – $10,500 | **$4,500** | **Save ~$4,000+ (45%+ off)** |
 | **Phase 2: Staff Operations Hub in Admin App**\newline • Centralized trial review & 1-click booking queue\newline • Deposit-verified enrollment & capacity management\newline • Make-up class assignment & full system testing | $5,000 – $7,000 | **$3,500** | **Save ~$2,500+ (40%+ off)** |
 | **Total Platform Value** | **$18,000 – $24,000**\newline *(Typical Agency Avg: $20,000)* | **$10,000 Flat**\newline *(Phase 1: $2k + Phase 2: $8k)* | **Total Savings: ~$10,000**\newline *(50% Direct Savings)* |
@@ -114,7 +125,7 @@ Unlike open-ended agency billing where costs inflate as details evolve, this pro
 
 | Phase | Core Deliverables | Flat Investment |
 | :--- | :--- | :---: |
-| **Phase 1** | **Public Website, FAQ Portal & Trial Lead Engine**\newline • 6 fully responsive pages (Home, Programs, About, FAQ, Contact, Trial)\newline • Dynamic 30-day live calendar trial booking system\newline • Searchable interactive FAQ with category filtering\newline • Backend APIs, lead routing & live production launch | **$2,000** |
+| **Phase 1** | **Public Website, Level Quiz, Pricing, FAQ & Trial Lead Engine**\newline • 6 fully responsive pages (Home, Programs, About, FAQ, Contact, Trial)\newline • Interactive "Find Your Level" assessment quiz\newline • Transparent tuition pricing matrix & Coach bios showcase\newline • Dynamic 30-day live calendar trial booking system\newline • Searchable interactive FAQ with category filtering\newline • Backend APIs, lead routing & live production launch | **$2,000** |
 | **Phase 2** | **Parent Portal, Deposit-Backed Registration & Staff Hub**\newline • Parent login & multi-child family profile hub\newline • Class schedule selection with Stripe deposit checkout\newline • Centralized staff review queues for trials, placements & make-ups\newline • Automated Stripe email receipts & end-to-end testing | **$8,000** |
 | **Complete Platform** | **Full Digital Operating System** | **$10,000** |
 
@@ -160,3 +171,24 @@ To ensure timely delivery and maintain project momentum, the client is responsib
 * **Page Content & Program Details**: Copy, descriptions, and specific information for the marketing pages (exact program tiers, term dates, tuition prices, facility details, instructor bios, operating hours, and location addresses).
 * **Photography & Media**: High-resolution photos of the facility, pool deck, and coaching staff (placeholders will be used during early development if photography is in progress).
 * **Timely Feedback & Approvals**: Prompt review and sign-off on design layouts and feature milestones to keep the project on track.
+
+---
+
+## 8. Project Authorization & Signatures
+
+By signing below, both parties agree to the project scope, milestone investment schedule ($10,000 flat total: $2,000 for Phase 1, $8,000 for Phase 2), monthly hosting & maintenance fee ($200/mo upon Phase 1 launch), and responsibilities outlined in this document.
+
+\vspace{0.5cm}
+
+| **Client Authorization** | **Service Provider Authorization** |
+| :--- | :--- |
+| **Swan Swim School** | **Developer / Project Lead** |
+| | |
+| Signature: ___________________________ | Signature: ___________________________ |
+| | |
+| Printed Name: ________________________ | Printed Name: ________________________ |
+| | |
+| Title: _______________________________ | Title: _______________________________ |
+| | |
+| Date: ________________________________ | Date: ________________________________ |
+

@@ -76,7 +76,7 @@ const programs = [
     image:
       "https://images.unsplash.com/photo-1519315901367-f34ff9154487?auto=format&fit=crop&w=700&q=80",
     description:
-      "A structured, milestone-based curriculum where students master stroke biomechanics, rotary breathing, and endurance. Each milestone is celebrated with official skill ribbons.",
+      "A structured, milestone-based curriculum where students master stroke biomechanics, rotary breathing, and endurance. Every milestone is tracked and parents receive detailed report cards.",
     skills: [
       "Freestyle with bilateral side breathing",
       "Backstroke body rotation & kick power",

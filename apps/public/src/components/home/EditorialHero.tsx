@@ -20,16 +20,16 @@ export function EditorialHero() {
               {/* Pill badge */}
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-semibold mb-6 shadow-sm">
                 <span className="flex h-2 w-2 rounded-full bg-teal-300 animate-pulse" />
-                Now Enrolling in Markham & Newmarket
+                Now Enrolling — Markham & Newmarket
               </div>
             </ScrollReveal>
 
             {/* Headline with Gold Highlight */}
             <ScrollReveal animation="fade-up" delay={100}>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-[4.25rem] font-bold text-white leading-[1.08] tracking-tight mb-6">
-                Water confidence starts with a{" "}
+                Swim like{" "}
                 <span className="relative inline-block text-amber-300 italic font-serif font-normal">
-                  smile
+                  no other
                   <svg
                     className="absolute -bottom-1 sm:-bottom-2 left-0 right-0 w-full h-2.5 sm:h-3 text-amber-300"
                     viewBox="0 0 100 20"
@@ -44,16 +44,16 @@ export function EditorialHero() {
                     />
                   </svg>
                 </span>
-                , not a splash.
+                .
               </h1>
             </ScrollReveal>
 
             {/* Subtitle */}
             <ScrollReveal animation="fade-up" delay={200}>
               <p className="text-lg sm:text-xl text-white/90 max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed font-normal">
-                We remember when the pool felt big and scary. At Swan, warm 90°F water,
-                gentle coaches, and tiny 3:1 classes turn first-day jitters into beaming,
-                proud breakthroughs.
+                At Swan, small class sizes, warm water, and coaches who genuinely care
+                combine to create a swim experience your child will actually look forward to —
+                every single week.
               </p>
             </ScrollReveal>
 
@@ -89,7 +89,7 @@ export function EditorialHero() {
                 </div>
                 <div className="flex items-center gap-1.5 bg-black/20 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10">
                   <Star size={15} className="fill-amber-300 text-amber-300" />
-                  <span>4.9★ (1,500+ Families)</span>
+                  <span>4.9★ on Google (350+ Reviews)</span>
                 </div>
               </div>
             </ScrollReveal>
@@ -116,7 +116,7 @@ export function EditorialHero() {
                   
                   <div className="absolute bottom-4 left-4 right-4 text-white">
                     <p className="text-xs font-semibold uppercase tracking-wider text-teal-300">
-                      Day 1 to Ribbon Day
+                      Day 1 to Swimming Independently
                     </p>
                     <p className="font-display font-bold text-lg text-white">
                       Gentle encouragement every step of the way
