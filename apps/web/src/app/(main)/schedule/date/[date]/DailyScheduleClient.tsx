@@ -5,7 +5,7 @@ import { format, addDays, subDays } from "date-fns";
 import { updateStudentNotes, updateStudent } from "@/lib/api/client/students";
 import { updateOfferingInfo } from "@/lib/api/client/schedule";
 import { Input } from "@/components/ui/input";
-import { updateReportCardStatus } from "@/lib/api/client/enrollment";
+import { updateReportCardStatus } from "@/lib/api/client/enrollments";
 import { useRouter } from "next/navigation";
 import type { RosterItem } from "@/components/schedule/DailyClassRoster";
 import { DailyClassRoster } from "@/components/schedule/DailyClassRoster";

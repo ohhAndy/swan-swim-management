@@ -1,13 +1,15 @@
 import { clientFetch } from "../_fetch/client";
+import type { Instructor as PrismaInstructor } from "@prisma/client";
 
 export interface Certificate {
   name: string;
   expirationDate?: string;
 }
 
-import type { Instructor as PrismaInstructor } from "@prisma/client";
-
-export type Instructor = Omit<PrismaInstructor, "certificates" | "email" | "phone" | "gender" | "startDate" | "notes"> & {
+export type Instructor = Omit<
+  PrismaInstructor,
+  "certificates" | "email" | "phone" | "gender" | "startDate" | "notes"
+> & {
   email?: string;
   phone?: string;
   gender?: string;
@@ -30,6 +32,17 @@ export interface CreateInstructorInput {
 }
 
 export type UpdateInstructorInput = Partial<CreateInstructorInput>;
+
+export interface InstructorAssignment {
+  id: string;
+  classOfferingId: string;
+  instructorId: string;
+  assignedAt: string;
+  assignedBy: string | null;
+  removedAt: string | null;
+  removedBy: string | null;
+  instructor: Instructor;
+}
 
 export const getInstructors = async (activeOnly = false) => {
   const res = await clientFetch(
@@ -77,3 +90,32 @@ export const searchInstructors = async (query: string) => {
       i.lastName.toLowerCase().includes(lowerQuery),
   );
 };
+
+export async function assignInstructor(
+  classOfferingId: string,
+  instructorId: string,
+): Promise<InstructorAssignment> {
+  const response = await clientFetch(`/class-instructors`, {
+    method: "POST",
+    body: JSON.stringify({ classOfferingId, instructorId }),
+  });
+  return response.json();
+}
+
+export async function removeInstructor(
+  assignmentId: string,
+): Promise<InstructorAssignment> {
+  const response = await clientFetch(`/class-instructors/${assignmentId}`, {
+    method: "DELETE",
+  });
+  return response.json();
+}
+
+export async function getActiveInstructors(
+  classOfferingId: string,
+): Promise<InstructorAssignment[]> {
+  const response = await clientFetch(
+    `/class-instructors/class/${classOfferingId}`,
+  );
+  return response.json();
+}

@@ -181,7 +181,7 @@ export class PublicService {
    * Returns list of public locations for trial booking & contact.
    */
   async getLocations() {
-    const locations = await this.prisma.location.findMany({
+    return this.prisma.location.findMany({
       orderBy: { name: "asc" },
       select: {
         id: true,
@@ -190,32 +190,6 @@ export class PublicService {
         address: true,
       },
     });
-
-    if (locations.length > 0) {
-      return locations;
-    }
-
-    // Fallback if database locations table is not populated yet
-    return [
-      {
-        id: "markham_branch",
-        name: "Markham",
-        slug: "markham",
-        address: "8500 Warden Ave",
-      },
-      {
-        id: "loc_main_branch_001",
-        name: "Newmarket",
-        slug: "newmarket",
-        address: "17215 Lesile St",
-      },
-      {
-        id: "AGC_branch",
-        name: "Swim Team",
-        slug: "Angus-glen",
-        address: "3990 Major Mackenzie Drive East",
-      },
-    ];
   }
 
   /**

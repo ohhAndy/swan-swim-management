@@ -22,12 +22,17 @@ export class StudentsService {
   private async autoShortCode(firstName: string, lastName: string) {
     const base = (
       firstName.substring(0, 3) + lastName.substring(0, 2)
-    ).toUpperCase();
-    let code = base || "S";
+    ).toUpperCase() || "S";
+
+    const existing = await this.prisma.student.findMany({
+      where: { shortCode: { startsWith: base } },
+      select: { shortCode: true },
+    });
+
+    const existingCodes = new Set(existing.map((s) => s.shortCode));
+    let code = base;
     let n = 1;
-    while (
-      await this.prisma.student.findUnique({ where: { shortCode: code } })
-    ) {
+    while (existingCodes.has(code)) {
       code = `${base}${++n}`;
     }
     return code;

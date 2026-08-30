@@ -21,8 +21,9 @@ import { Loader2, X } from "lucide-react";
 import {
   assignInstructor,
   removeInstructor,
-} from "@/lib/api/client/instructor";
-import { getInstructors, type Instructor } from "@/lib/api/client/instructors";
+  getInstructors,
+  type Instructor,
+} from "@/lib/api/client/instructors";
 import type { InstructorInfo } from "@school/shared-types";
 
 interface AssignInstructorDialogProps {

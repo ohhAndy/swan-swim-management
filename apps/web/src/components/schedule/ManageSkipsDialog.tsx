@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { updateEnrollmentSkips } from "@/lib/api/client/enrollment";
+import { updateEnrollmentSkips } from "@/lib/api/client/enrollments";
 
 interface Attendance {
   id: string;
