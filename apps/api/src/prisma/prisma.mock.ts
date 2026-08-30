@@ -24,8 +24,12 @@ export const createPrismaMock = (): MockPrismaService => {
   const handler: ProxyHandler<Record<string, unknown>> = {
     get: function (target: Record<string, unknown>, prop: string | symbol) {
       if (prop === "$transaction") {
-        // Return a mock function that just calls the callback with the SAME proxy instance
-        return jest.fn(async (cb: (tx: unknown) => Promise<unknown>) => cb(proxy));
+        if (!cache["$transaction"]) {
+          cache["$transaction"] = jest.fn(
+            async (cb: (tx: unknown) => Promise<unknown>) => cb(proxy),
+          );
+        }
+        return cache["$transaction"];
       }
       const key = String(prop);
       if (!cache[key]) {

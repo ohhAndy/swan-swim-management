@@ -88,5 +88,108 @@ describe("EnrollmentsService", () => {
 
       await expect(service.transferEnrollment("enr1", { targetOfferingId: "off1", skippedSessionIds: [] }, mockStaffUser)).rejects.toThrow(NotFoundException);
     });
+
+    it("should successfully transfer enrollment inside a transaction", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({
+        id: "enr1",
+        status: "active",
+        studentId: "student1",
+        offeringId: "off1",
+        classRatio: "3:1",
+        offering: { termId: "term1" },
+        student: { firstName: "Jane", lastName: "Doe" },
+      } as any);
+
+      prismaMock.classOffering.findUnique.mockResolvedValue({
+        id: "off2",
+        termId: "term1",
+      } as any);
+
+      prismaMock.enrollment.findFirst
+        .mockResolvedValueOnce(null) // no existing active
+        .mockResolvedValueOnce(null); // no existing inactive
+
+      prismaMock.classSession.findMany.mockResolvedValue([]);
+      prismaMock.attendance.findMany.mockResolvedValue([]);
+      prismaMock.enrollmentSkip.findMany.mockResolvedValue([]);
+      prismaMock.enrollment.create.mockResolvedValue({ id: "enr2" } as any);
+      prismaMock.enrollment.update.mockResolvedValue({ id: "enr1" } as any);
+      prismaMock.auditLog.create.mockResolvedValue({} as any);
+
+      const result = await service.transferEnrollment(
+        "enr1",
+        { targetOfferingId: "off2", skippedSessionIds: [] },
+        mockStaffUser,
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.oldEnrollmentId).toBe("enr1");
+      expect(result.newEnrollmentId).toBe("enr2");
+      expect(prismaMock.$transaction).toHaveBeenCalled();
+    });
+  });
+
+  describe("bulkTransfer", () => {
+    const mockStaffUser: RequestStaffUser = {
+      id: "staff1",
+      authId: "user1",
+      email: "test@test.com",
+      fullName: "Test Staff",
+      role: "admin",
+      active: true,
+      accessSchedule: {},
+      accessibleLocations: [{ id: "loc1" }],
+    };
+
+    it("should return succeeded: 0 for empty transfer list", async () => {
+      const result = await service.bulkTransfer([], mockStaffUser);
+      expect(result).toEqual({ succeeded: 0, results: [] });
+    });
+
+    it("should process multiple transfers in a single atomic transaction", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue({
+        id: "enr1",
+        status: "active",
+        studentId: "student1",
+        offeringId: "off1",
+        classRatio: "3:1",
+        offering: { termId: "term1" },
+        student: { firstName: "Jane", lastName: "Doe" },
+      } as any);
+
+      prismaMock.classOffering.findUnique.mockResolvedValue({
+        id: "off2",
+        termId: "term1",
+      } as any);
+
+      prismaMock.enrollment.findFirst.mockResolvedValue(null);
+      prismaMock.classSession.findMany.mockResolvedValue([]);
+      prismaMock.attendance.findMany.mockResolvedValue([]);
+      prismaMock.enrollmentSkip.findMany.mockResolvedValue([]);
+      prismaMock.enrollment.create.mockResolvedValue({ id: "enr-new" } as any);
+      prismaMock.enrollment.update.mockResolvedValue({ id: "enr1" } as any);
+      prismaMock.auditLog.create.mockResolvedValue({} as any);
+
+      const result = await service.bulkTransfer(
+        [
+          { enrollmentId: "enr1", targetOfferingId: "off2" },
+        ],
+        mockStaffUser,
+      );
+
+      expect(result.succeeded).toBe(1);
+      expect(prismaMock.$transaction).toHaveBeenCalled();
+    });
+
+    it("should fail the entire batch if one transfer errors out", async () => {
+      prismaMock.enrollment.findUnique.mockResolvedValue(null); // Will throw NotFoundException
+
+      await expect(
+        service.bulkTransfer(
+          [{ enrollmentId: "enr-invalid", targetOfferingId: "off2" }],
+          mockStaffUser,
+        ),
+      ).rejects.toThrow(NotFoundException);
+    });
   });
 });
