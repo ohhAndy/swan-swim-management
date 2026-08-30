@@ -9,11 +9,14 @@ import { PrismaService } from "../prisma/prisma.service";
 import { CommunicationsService } from "../communications/communications.service";
 import { RequestStaffUser } from "../auth/auth.types";
 
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
 @Injectable()
 export class ReportCardsService {
   constructor(
     private prisma: PrismaService,
     private communicationsService: CommunicationsService,
+    private auditLogsService: AuditLogsService,
   ) {}
 
   async create(
@@ -81,8 +84,8 @@ export class ReportCardsService {
         }
       }
 
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Create Report Card",
           entityType: "ReportCard",
@@ -93,7 +96,8 @@ export class ReportCardsService {
             status: reportCard.status,
           },
         },
-      });
+        tx,
+      );
 
       return reportCard;
     });
@@ -301,8 +305,8 @@ export class ReportCardsService {
         }
       }
 
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Update Report Card",
           entityType: "ReportCard",
@@ -315,7 +319,8 @@ export class ReportCardsService {
             status: { from: existing.status, to: reportCard.status },
           },
         },
-      });
+        tx,
+      );
     });
 
     return this.findOne(id);
@@ -334,8 +339,8 @@ export class ReportCardsService {
         where: { id },
       });
 
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Delete Report Card",
           entityType: "ReportCard",
@@ -345,7 +350,8 @@ export class ReportCardsService {
             status: reportCard.status,
           },
         },
-      });
+        tx,
+      );
 
       return reportCard;
     });
@@ -402,8 +408,8 @@ export class ReportCardsService {
       });
 
       // Write Audit Log
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Send Report Card",
           entityType: "ReportCard",
@@ -413,7 +419,8 @@ export class ReportCardsService {
             studentName: `${student.firstName} ${student.lastName}`,
           },
         },
-      });
+        tx,
+      );
     });
 
     return { success: true };

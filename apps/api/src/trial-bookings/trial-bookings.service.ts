@@ -7,9 +7,14 @@ import { PrismaService } from "../prisma/prisma.service";
 import { TrialStatus } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
 
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
 @Injectable()
 export class TrialBookingsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auditLogsService: AuditLogsService,
+  ) {}
 
   async createTrialBooking(
     classSessionId: string,
@@ -78,8 +83,8 @@ export class TrialBookingsService {
       });
 
       // Create audit log
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Create Trial Booking",
           entityType: "TrialBooking",
@@ -92,7 +97,8 @@ export class TrialBookingsService {
             offeringTitle: trial.classSession.offering.title,
           },
         },
-      });
+        tx,
+      );
 
       return trial;
     });
@@ -133,8 +139,8 @@ export class TrialBookingsService {
     // We cast to string because the enum won't technically allow empty string, but runtime value from UI might be empty
     if (!status || (status as unknown as string) === "") {
       return this.prisma.$transaction(async (tx) => {
-        await tx.auditLog.create({
-          data: {
+        await this.auditLogsService.create(
+          {
             staffId: staffUser.id,
             action: "Delete Trial Booking",
             entityType: "TrialBooking",
@@ -146,7 +152,8 @@ export class TrialBookingsService {
               status: trial.status,
             },
           },
-        });
+          tx,
+        );
 
         return tx.trialBooking.delete({
           where: { id: trialId },
@@ -171,8 +178,8 @@ export class TrialBookingsService {
       });
 
       // Create audit log
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Update Trial Status",
           entityType: "TrialBooking",
@@ -185,7 +192,8 @@ export class TrialBookingsService {
             offeringTitle: trial.classSession.offering.title,
           },
         },
-      });
+        tx,
+      );
 
       return updated;
     });
@@ -234,8 +242,8 @@ export class TrialBookingsService {
       });
 
       // Create audit log
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Update Trial Notes",
           entityType: "TrialBooking",
@@ -248,7 +256,8 @@ export class TrialBookingsService {
             offeringTitle: trial.classSession.offering.title,
           },
         },
-      });
+        tx,
+      );
 
       return updated;
     });
@@ -305,8 +314,8 @@ export class TrialBookingsService {
       });
 
       // Create audit log
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Convert Trial to Student",
           entityType: "TrialBooking",
@@ -317,7 +326,8 @@ export class TrialBookingsService {
             studentName: `${student.firstName} ${student.lastName}`,
           },
         },
-      });
+        tx,
+      );
 
       return updated;
     });
@@ -337,8 +347,8 @@ export class TrialBookingsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Delete Trial Booking",
           entityType: "TrialBooking",
@@ -350,7 +360,8 @@ export class TrialBookingsService {
             status: trial.status,
           },
         },
-      });
+        tx,
+      );
 
       return tx.trialBooking.delete({
         where: { id: trialId },

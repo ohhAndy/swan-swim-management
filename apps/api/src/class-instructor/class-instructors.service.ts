@@ -6,9 +6,14 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { RequestStaffUser } from "../auth/auth.types";
 
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
 @Injectable()
 export class ClassInstructorsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auditLogsService: AuditLogsService,
+  ) {}
 
   async assignInstructor(
     classOfferingId: string,
@@ -67,8 +72,8 @@ export class ClassInstructorsService {
       });
 
       // Create audit log
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: user.id,
           action: "Assign Instructor",
           entityType: "ClassInstructor",
@@ -79,7 +84,8 @@ export class ClassInstructorsService {
             instructorId: instructor.id,
           },
         },
-      });
+        tx,
+      );
 
       return assignment;
     });
@@ -129,8 +135,8 @@ export class ClassInstructorsService {
       });
 
       // Create audit log
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: user.id,
           action: "Remove Instructor",
           entityType: "ClassInstructor",
@@ -141,7 +147,8 @@ export class ClassInstructorsService {
             instructorId: assignment.instructor.id,
           },
         },
-      });
+        tx,
+      );
 
       return updated;
     });

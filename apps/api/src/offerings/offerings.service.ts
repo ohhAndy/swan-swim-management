@@ -8,9 +8,14 @@ import { PrismaService } from "../prisma/prisma.service";
 import { calculateClassUsage } from "../common/capacity.utils";
 import { RequestStaffUser } from "../auth/auth.types";
 
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
 @Injectable()
 export class OfferingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogsService: AuditLogsService,
+  ) {}
 
   async updateOfferingInfo(
     offeringId: string,
@@ -30,21 +35,19 @@ export class OfferingsService {
       },
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        staffId: staffUser.id,
-        action: "Update Offering Info",
-        entityType: "ClassOffering",
-        entityId: updatedOffering.id,
-        changes: {
-          status: {
-            from: { title: offering.title },
-            to: { title: updatedOffering.title },
-          },
+    await this.auditLogsService.create({
+      staffId: staffUser.id,
+      action: "Update Offering Info",
+      entityType: "ClassOffering",
+      entityId: updatedOffering.id,
+      changes: {
+        status: {
+          from: { title: offering.title },
+          to: { title: updatedOffering.title },
         },
-        metadata: {
-          offeringId: updatedOffering.id,
-        },
+      },
+      metadata: {
+        termId: offering.termId,
       },
     });
 
@@ -207,8 +210,8 @@ export class OfferingsService {
       }
 
       // 3. Audit
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Create Class Offering",
           entityType: "ClassOffering",
@@ -218,7 +221,8 @@ export class OfferingsService {
             termId: term.id,
           },
         },
-      });
+        tx,
+      );
 
       return offering;
     });
@@ -249,8 +253,8 @@ export class OfferingsService {
       });
 
       if (staffUser) {
-        await tx.auditLog.create({
-          data: {
+        await this.auditLogsService.create(
+          {
             staffId: staffUser.id,
             action: "Delete Class Offering",
             entityType: "ClassOffering",
@@ -259,7 +263,8 @@ export class OfferingsService {
               title: deleted.title,
             },
           },
-        });
+          tx,
+        );
       }
 
       return deleted;

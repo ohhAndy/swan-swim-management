@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { EnrollmentsService } from "./enrollments.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { createPrismaMock, MockPrismaService } from "../prisma/prisma.mock";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
 import { RequestStaffUser } from "../auth/auth.types";
@@ -15,6 +16,7 @@ describe("EnrollmentsService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EnrollmentsService,
+        AuditLogsService,
         { provide: PrismaService, useValue: prismaMock },
       ],
     }).compile();

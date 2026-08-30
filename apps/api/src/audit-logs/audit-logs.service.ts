@@ -2,6 +2,15 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 
+export interface CreateAuditLogData {
+  staffId: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  changes?: Prisma.InputJsonValue;
+  metadata?: Prisma.InputJsonValue;
+}
+
 @Injectable()
 export class AuditLogsService {
   constructor(private prisma: PrismaService) {}
@@ -32,15 +41,9 @@ export class AuditLogsService {
     return this.prisma.auditLog.count({ where });
   }
 
-  async create(data: {
-    staffId: string;
-    action: string;
-    entityType: string;
-    entityId: string;
-    changes?: Prisma.InputJsonValue;
-    metadata?: Prisma.InputJsonValue;
-  }) {
-    return this.prisma.auditLog.create({
+  async create(data: CreateAuditLogData, tx?: Prisma.TransactionClient) {
+    const client = tx ?? this.prisma;
+    return client.auditLog.create({
       data: {
         staffId: data.staffId,
         action: data.action,

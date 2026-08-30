@@ -1,13 +1,17 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { CreateInstructorDto } from "./dto/create-instructor.dto";
 import { UpdateInstructorDto } from "./dto/update-instructor.dto";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class InstructorsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auditLogsService: AuditLogsService,
+  ) {}
 
   async create(
     createInstructorDto: CreateInstructorDto,
@@ -21,15 +25,13 @@ export class InstructorsService {
     });
 
     // Audit Log
-    await this.prisma.auditLog.create({
-      data: {
-        staffId: staffUser.id,
-        action: "Create Instructor",
-        entityType: "Instructor",
-        entityId: instructor.id,
-        metadata: {
-          name: `${instructor.firstName} ${instructor.lastName}`,
-        },
+    await this.auditLogsService.create({
+      staffId: staffUser.id,
+      action: "Create Instructor",
+      entityType: "Instructor",
+      entityId: instructor.id,
+      metadata: {
+        name: `${instructor.firstName} ${instructor.lastName}`,
       },
     });
 
@@ -38,14 +40,25 @@ export class InstructorsService {
 
   async findAll(activeOnly = false) {
     return this.prisma.instructor.findMany({
-      where: activeOnly ? { isActive: true } : {},
-      orderBy: { lastName: "asc" },
+      where: activeOnly ? { isActive: true } : undefined,
+      orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
     });
   }
 
   async findOne(id: string) {
     const instructor = await this.prisma.instructor.findUnique({
       where: { id },
+      include: {
+        assignments: {
+          include: {
+            classOffering: {
+              include: {
+                term: true,
+              },
+            },
+          },
+        },
+      },
     });
     if (!instructor) {
       throw new NotFoundException(`Instructor with ID ${id} not found`);
@@ -65,16 +78,14 @@ export class InstructorsService {
     });
 
     // Audit Log
-    await this.prisma.auditLog.create({
-      data: {
-        staffId: staffUser.id,
-        action: "Update Instructor",
-        entityType: "Instructor",
-        entityId: instructor.id,
-        metadata: {
-          name: `${instructor.firstName} ${instructor.lastName}`,
-          changes: updateInstructorDto as Prisma.InputJsonValue,
-        },
+    await this.auditLogsService.create({
+      staffId: staffUser.id,
+      action: "Update Instructor",
+      entityType: "Instructor",
+      entityId: instructor.id,
+      metadata: {
+        name: `${instructor.firstName} ${instructor.lastName}`,
+        changes: updateInstructorDto as Prisma.InputJsonValue,
       },
     });
 

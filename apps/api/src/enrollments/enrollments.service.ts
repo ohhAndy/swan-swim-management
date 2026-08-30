@@ -11,9 +11,14 @@ import { UnInvoicedEnrollmentsQueryDto } from "../invoices/dto/uninvoiced-enroll
 import { Prisma } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
 
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
 @Injectable()
 export class EnrollmentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auditLogsService: AuditLogsService,
+  ) {}
 
   async updateRemarks(
     enrollmentId: string,
@@ -37,15 +42,13 @@ export class EnrollmentsService {
         },
       });
 
-      await this.prisma.auditLog.create({
-        data: {
-          staffId: staffUser.id,
-          action: "Update Remarks",
-          entityType: "Enrollment",
-          entityId: updated.id,
-          changes: {
-            status: { from: currEnrollment.notes, to: updated.notes },
-          },
+      await this.auditLogsService.create({
+        staffId: staffUser.id,
+        action: "Update Remarks",
+        entityType: "Enrollment",
+        entityId: updated.id,
+        changes: {
+          status: { from: currEnrollment.notes, to: updated.notes },
         },
       });
     }
@@ -265,8 +268,8 @@ export class EnrollmentsService {
     }
 
     // Create audit log for transfer
-    await tx.auditLog.create({
-      data: {
+    await this.auditLogsService.create(
+      {
         staffId: staffUser.id,
         action: "Transfer Enrollment",
         entityType: "Enrollment",
@@ -288,11 +291,12 @@ export class EnrollmentsService {
           transferNotes: transferNotes || null,
         },
       },
-    });
+      tx,
+    );
 
     // Create audit log for new enrollment creation
-    await tx.auditLog.create({
-      data: {
+    await this.auditLogsService.create(
+      {
         staffId: staffUser.id,
         action: "Create Enrollment",
         entityType: "Enrollment",
@@ -309,7 +313,8 @@ export class EnrollmentsService {
           skipsCreated: skippedSessionIds.length,
         },
       },
-    });
+      tx,
+    );
 
     return {
       success: true,
@@ -386,8 +391,8 @@ export class EnrollmentsService {
       }
 
       // Create audit log for enrollment
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Enroll Student",
           entityType: "Enrollment",
@@ -404,7 +409,8 @@ export class EnrollmentsService {
             skipsCreated: skippedDates.length,
           },
         },
-      });
+        tx,
+      );
 
       return {
         success: true,
@@ -430,15 +436,13 @@ export class EnrollmentsService {
       data: { reportCardStatus: status },
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        staffId: staffUser.id,
-        action: "Update Report Card Status",
-        entityType: "Enrollment",
-        entityId: enrollmentId,
-        changes: {
-          status: { from: curr.reportCardStatus, to: status },
-        },
+    await this.auditLogsService.create({
+      staffId: staffUser.id,
+      action: "Update Report Card Status",
+      entityType: "Enrollment",
+      entityId: enrollmentId,
+      changes: {
+        status: { from: curr.reportCardStatus, to: status },
       },
     });
 
@@ -506,8 +510,8 @@ export class EnrollmentsService {
       }
 
       // 3. Audit Log
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Update Enrollment Skips",
           entityType: "Enrollment",
@@ -521,7 +525,8 @@ export class EnrollmentsService {
             count: skippedSessionIds.length,
           },
         },
-      });
+        tx,
+      );
     });
 
     return { success: true };
@@ -548,8 +553,8 @@ export class EnrollmentsService {
         where: { id },
       });
 
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Delete Enrollment",
           entityType: "Enrollment",
@@ -563,7 +568,8 @@ export class EnrollmentsService {
             offeringId: enrollment.offeringId,
           },
         },
-      });
+        tx,
+      );
     });
 
     return { success: true };

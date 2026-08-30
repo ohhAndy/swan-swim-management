@@ -11,10 +11,14 @@ import {
 } from "./dto/schemas.dto";
 import { Prisma } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
 
 @Injectable()
 export class GuardiansService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogsService: AuditLogsService,
+  ) {}
 
   async searchOrList(params: SearchGuardianDto) {
     const { query, page = 1, pageSize = 20, waiverStatus } = params;
@@ -241,8 +245,8 @@ export class GuardiansService {
       });
 
       // Create audit log for guardian creation
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Create Guardian",
           entityType: "Guardian",
@@ -252,7 +256,6 @@ export class GuardiansService {
             shortCode: { from: null, to: generatedShortCode },
             email: { from: null, to: email },
             phone: { from: null, to: phone },
-
             notes: { from: null, to: notes ?? null },
             waiverSigned: { from: null, to: waiverSigned ?? false },
           },
@@ -262,7 +265,8 @@ export class GuardiansService {
             email: email,
           },
         },
-      });
+        tx,
+      );
 
       return guardian;
     });
@@ -353,8 +357,8 @@ export class GuardiansService {
 
         // Only create audit log if something actually changed
         if (Object.keys(changes).length > 0) {
-          await tx.auditLog.create({
-            data: {
+          await this.auditLogsService.create(
+            {
               staffId: staffUser.id,
               action: "Update Guardian",
               entityType: "Guardian",
@@ -366,7 +370,8 @@ export class GuardiansService {
                 email: updated.email,
               },
             },
-          });
+            tx,
+          );
         }
 
         return updated;
@@ -398,8 +403,8 @@ export class GuardiansService {
     if (guardian) {
       return await this.prisma.$transaction(async (tx) => {
         // Create audit log before deletion
-        await tx.auditLog.create({
-          data: {
+        await this.auditLogsService.create(
+          {
             staffId: staffUser.id,
             action: "Delete Guardian",
             entityType: "Guardian",
@@ -420,7 +425,8 @@ export class GuardiansService {
               deletedAt: new Date().toISOString(),
             },
           },
-        });
+          tx,
+        );
 
         await tx.guardian.delete({ where: { id } });
 

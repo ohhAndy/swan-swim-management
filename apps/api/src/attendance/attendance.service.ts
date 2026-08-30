@@ -6,9 +6,14 @@ import {
   UpsertAttendanceInput,
 } from "./dto/attendance.dto";
 
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
 @Injectable()
 export class AttendanceService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auditLogsService: AuditLogsService,
+  ) {}
 
   async upsert(data: UpsertAttendanceInput, staffUser: RequestStaffUser) {
 
@@ -35,22 +40,20 @@ export class AttendanceService {
         });
 
         // Log the deletion
-        await this.prisma.auditLog.create({
-          data: {
-            staffId: staffUser.id,
-            action: "Unmark Attendance",
-            entityType: "Attendance",
-            entityId: existing.id,
-            changes: {
-              status: { from: existing.status, to: null },
-            },
-            metadata: {
-              enrollmentId: data.enrollmentId,
-              classSessionId: data.classSessionId,
-              notes: existing.notes,
-              markedBy: existing.markedBy,
-              markedAt: existing.markedAt?.toISOString(),
-            },
+        await this.auditLogsService.create({
+          staffId: staffUser.id,
+          action: "Unmark Attendance",
+          entityType: "Attendance",
+          entityId: existing.id,
+          changes: {
+            status: { from: existing.status, to: null },
+          },
+          metadata: {
+            enrollmentId: data.enrollmentId,
+            classSessionId: data.classSessionId,
+            notes: existing.notes,
+            markedBy: existing.markedBy,
+            markedAt: existing.markedAt?.toISOString(),
           },
         });
       }
@@ -79,26 +82,24 @@ export class AttendanceService {
       });
 
       // Log the change
-      await this.prisma.auditLog.create({
-        data: {
-          staffId: staffUser.id,
-          action: existing ? "Update Attendance" : "Mark Attendance",
-          entityType: "Attendance",
-          entityId: attendance.id,
-          changes: existing
-            ? {
-                status: { from: existing.status, to: attendance.status },
-                ...(existing.notes !== data.notes && {
-                  notes: { from: existing.notes, to: data.notes },
-                }),
-              }
-            : {
-                status: { from: null, to: attendance.status },
-              },
-          metadata: {
-            enrollmentId: data.enrollmentId,
-            classSessionId: data.classSessionId,
-          },
+      await this.auditLogsService.create({
+        staffId: staffUser.id,
+        action: existing ? "Update Attendance" : "Mark Attendance",
+        entityType: "Attendance",
+        entityId: attendance.id,
+        changes: existing
+          ? {
+              status: { from: existing.status, to: attendance.status },
+              ...(existing.notes !== data.notes && {
+                notes: { from: existing.notes, to: data.notes },
+              }),
+            }
+          : {
+              status: { from: null, to: attendance.status },
+            },
+        metadata: {
+          enrollmentId: data.enrollmentId,
+          classSessionId: data.classSessionId,
         },
       });
     }
@@ -127,19 +128,17 @@ export class AttendanceService {
       });
 
       // Log the deletion
-      await this.prisma.auditLog.create({
-        data: {
-          staffId: staffUser.id,
-          action: "Cancel Makeup",
-          entityType: "MakeUpBooking",
-          entityId: existing.id,
-          changes: {
-            status: { from: existing.status, to: null },
-          },
-          metadata: {
-            studentId: existing.studentId,
-            sessionId: existing.classSessionId,
-          },
+      await this.auditLogsService.create({
+        staffId: staffUser.id,
+        action: "Cancel Makeup",
+        entityType: "MakeUpBooking",
+        entityId: existing.id,
+        changes: {
+          status: { from: existing.status, to: null },
+        },
+        metadata: {
+          studentId: existing.studentId,
+          sessionId: existing.classSessionId,
         },
       });
     } else {
@@ -153,19 +152,17 @@ export class AttendanceService {
       });
 
       // Log the change
-      await this.prisma.auditLog.create({
-        data: {
-          staffId: staffUser.id,
-          action: "Update Makeup Status",
-          entityType: "MakeUpBooking",
-          entityId: updated.id,
-          changes: {
-            status: { from: existing.status, to: updated.status },
-          },
-          metadata: {
-            studentId: existing.studentId,
-            sessionId: existing.classSessionId,
-          },
+      await this.auditLogsService.create({
+        staffId: staffUser.id,
+        action: "Update Makeup Status",
+        entityType: "MakeUpBooking",
+        entityId: updated.id,
+        changes: {
+          status: { from: existing.status, to: updated.status },
+        },
+        metadata: {
+          studentId: existing.studentId,
+          sessionId: existing.classSessionId,
         },
       });
     }

@@ -5,9 +5,14 @@ import { CreateTaskDto } from "./dto/create-task.dto";
 import { UpdateTaskDto } from "./dto/update-task.dto";
 import { RequestStaffUser } from "../auth/auth.types";
 
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
 @Injectable()
 export class TasksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogsService: AuditLogsService,
+  ) {}
 
   async create(createTaskDto: CreateTaskDto, staffUser: RequestStaffUser) {
 
@@ -29,8 +34,8 @@ export class TasksService {
         },
       });
 
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Create Task",
           entityType: "Task",
@@ -41,7 +46,8 @@ export class TasksService {
             priority: task.priority,
           },
         },
-      });
+        tx,
+      );
 
       return task;
     });
@@ -128,8 +134,8 @@ export class TasksService {
         },
       });
 
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Update Task",
           entityType: "Task",
@@ -139,7 +145,8 @@ export class TasksService {
             changes: updateTaskDto as Prisma.InputJsonValue,
           },
         },
-      });
+        tx,
+      );
 
       return task;
     });
@@ -151,8 +158,8 @@ export class TasksService {
     if (!task) return; // Or throw
 
     return this.prisma.$transaction(async (tx) => {
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Delete Task",
           entityType: "Task",
@@ -161,7 +168,8 @@ export class TasksService {
             title: task.title,
           },
         },
-      });
+        tx,
+      );
 
       return tx.task.delete({
         where: { id },

@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import {
   RecipientFilterDto,
   SendEmailDto,
@@ -22,7 +23,10 @@ export class CommunicationsService {
   private readonly logger = new Logger(CommunicationsService.name);
   private readonly resend: Resend;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogsService: AuditLogsService,
+  ) {
     this.resend = new Resend(process.env.RESEND_API_KEY);
   }
 
@@ -306,20 +310,18 @@ export class CommunicationsService {
 
     // Also record in AuditLog
     if (staffUser) {
-      await this.prisma.auditLog.create({
-        data: {
-          staffId: staffUser.id,
-          action: "Send Email",
-          entityType: "Communication",
-          entityId: log.id,
-          metadata: {
-            subject,
-            recipientCount: recipients.length,
-            successCount,
-            failureCount,
-            status: overallStatus,
-            mock: isMock,
-          },
+      await this.auditLogsService.create({
+        staffId: staffUser.id,
+        action: "Send Email",
+        entityType: "Communication",
+        entityId: log.id,
+        metadata: {
+          subject,
+          recipientCount: recipients.length,
+          successCount,
+          failureCount,
+          status: overallStatus,
+          mock: isMock,
         },
       });
     }

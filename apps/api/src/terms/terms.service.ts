@@ -5,6 +5,7 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import type {
   MakeupLite,
   RosterResponse,
@@ -64,7 +65,10 @@ function formatTime(time: string): string {
 @Injectable()
 export class TermsService {
   //Create a prismaservice to use
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auditLogsService: AuditLogsService,
+  ) {}
 
   private slugify(name: string) {
     return name
@@ -140,8 +144,8 @@ export class TermsService {
           },
         });
 
-        await tx.auditLog.create({
-          data: {
+        await this.auditLogsService.create(
+          {
             staffId: staffUser.id,
             action: "Create Term",
             entityType: "Term",
@@ -150,7 +154,8 @@ export class TermsService {
               title: newTerm.name,
             },
           },
-        });
+          tx,
+        );
 
         //Create Offerings (Day and Time Slot)
         const offerings = await Promise.all(

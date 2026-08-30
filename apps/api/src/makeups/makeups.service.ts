@@ -1,12 +1,16 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { countUsedSeatsForSession } from "../sessions/sessions.helpers";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class MakeupsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogsService: AuditLogsService,
+  ) {}
 
   async scheduleMakeUp(
     input: {
@@ -77,8 +81,8 @@ export class MakeupsService {
         select: { id: true, status: true, student: true, classSession: true },
       });
 
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Schedule Makeup",
           entityType: "MakeUpBooking",
@@ -91,7 +95,8 @@ export class MakeupsService {
             date: booking.classSession.date,
           },
         },
-      });
+        tx,
+      );
 
       return { makeUpId: booking.id, status: booking.status };
     });

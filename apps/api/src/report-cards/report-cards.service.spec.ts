@@ -7,6 +7,8 @@ import { RequestStaffUser } from "../auth/auth.types";
 import { ReportCardStatus } from "@prisma/client";
 import { NotFoundException } from "@nestjs/common";
 
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
 describe("ReportCardsService", () => {
   let service: ReportCardsService;
   let prismaMock: MockPrismaService;
@@ -32,6 +34,7 @@ describe("ReportCardsService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ReportCardsService,
+        AuditLogsService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: CommunicationsService, useValue: communicationsServiceMock },
       ],

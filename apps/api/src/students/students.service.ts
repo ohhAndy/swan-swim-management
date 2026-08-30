@@ -13,11 +13,16 @@ import {
 import { Prisma } from "@prisma/client";
 import { RequestStaffUser, StaffUserWithLocations } from "../auth/auth.types";
 
+import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
 @Injectable()
 export class StudentsService {
   private readonly logger = new Logger(StudentsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogsService: AuditLogsService,
+  ) {}
 
   private async autoShortCode(firstName: string, lastName: string) {
     const base = (
@@ -423,8 +428,8 @@ export class StudentsService {
       });
 
       // Create audit log for student creation
-      await tx.auditLog.create({
-        data: {
+      await this.auditLogsService.create(
+        {
           staffId: staffUser.id,
           action: "Create Student",
           entityType: "Student",
@@ -439,10 +444,11 @@ export class StudentsService {
           },
           metadata: {
             studentName: `${firstName} ${lastName}`,
-            shortCode: generatedShortCode,
+            guardianId,
           },
         },
-      });
+        tx,
+      );
 
       return student;
     });
@@ -544,8 +550,8 @@ export class StudentsService {
 
         // Only create audit log if something actually changed
         if (Object.keys(changes).length > 0) {
-          await tx.auditLog.create({
-            data: {
+          await this.auditLogsService.create(
+            {
               staffId: staffUser.id,
               action: "Update Student",
               entityType: "Student",
@@ -556,7 +562,8 @@ export class StudentsService {
                 shortCode: updated.shortCode,
               },
             },
-          });
+            tx,
+          );
         }
 
         // Track notes change in audit log changes object
@@ -588,19 +595,17 @@ export class StudentsService {
       data: { notes },
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        staffId: staffUser.id,
-        action: "Update Student Notes",
-        entityType: "Student",
-        entityId: studentId,
-        changes: {
-          notes: { from: student.notes, to: notes },
-        },
-        metadata: {
-          studentName: `${student.firstName} ${student.lastName}`,
-          shortCode: student.shortCode,
-        },
+    await this.auditLogsService.create({
+      staffId: staffUser.id,
+      action: "Update Student Notes",
+      entityType: "Student",
+      entityId: studentId,
+      changes: {
+        notes: { from: student.notes, to: notes },
+      },
+      metadata: {
+        studentName: `${student.firstName} ${student.lastName}`,
+        shortCode: student.shortCode,
       },
     });
 
@@ -629,8 +634,8 @@ export class StudentsService {
     if (student) {
       return await this.prisma.$transaction(async (tx) => {
         // Create audit log before deletion
-        await tx.auditLog.create({
-          data: {
+        await this.auditLogsService.create(
+          {
             staffId: staffUser.id,
             action: "Delete Student",
             entityType: "Student",
@@ -646,10 +651,10 @@ export class StudentsService {
             metadata: {
               studentName: `${student.firstName} ${student.lastName}`,
               shortCode: student.shortCode,
-              deletedAt: new Date().toISOString(),
             },
           },
-        });
+          tx,
+        );
 
         await tx.student.delete({ where: { id } });
 
