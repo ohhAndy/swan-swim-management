@@ -45,7 +45,7 @@ describe("TermsService", () => {
       };
 
       // Mock slug uniqueness check
-      prismaMock.term.findUnique.mockResolvedValue(null); 
+      prismaMock.term.findUnique.mockResolvedValue(null);
 
       const mockCreatedTerm = {
         id: "term1",
@@ -70,94 +70,47 @@ describe("TermsService", () => {
               startTime: "16:00",
               duration: 30,
               capacity: 4,
-            }
-          ]
+            },
+          ],
         },
         mockStaffUser,
-        "loc1"
+        "loc1",
       );
 
-      expect(result).toEqual(mockCreatedTerm.id);
+      expect(result).toEqual(mockCreatedTerm);
       expect(prismaMock.term.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             slug: "winter-2024",
-            name: "Winter 2024"
+            name: "Winter 2024",
           }),
         }),
       );
     });
   });
 
-  describe("slotByWeekdayAndTime - nextTermStatus filtering", () => {
-    it("should filter future terms and next term enrollments to regular offerings only", async () => {
-      prismaMock.term.findUnique.mockResolvedValue({
-        id: "term1",
-        name: "Term 1",
-        startDate: new Date("2026-01-01"),
-        locationId: "loc1",
-      } as any);
-
-      prismaMock.classOffering.findMany.mockResolvedValue([
-        { id: "off1", capacity: 4, title: "Mon 4pm", termId: "term1", weekday: 1 },
-      ] as any);
-
-      prismaMock.classSession.findMany.mockResolvedValue([
-        {
-          id: "sess1",
-          offeringId: "off1",
-          date: new Date("2026-01-05"),
-          startTime: "16:00",
-          endTime: "16:45",
-          status: "scheduled",
-          offering: { instructors: [] },
-        },
-      ] as any);
-
-      prismaMock.enrollment.findMany.mockResolvedValue([
-        {
-          id: "enr1",
-          studentId: "stud1",
-          offeringId: "off1",
-          status: "active",
-          student: { id: "stud1", firstName: "Jane", lastName: "Doe" },
-        },
-      ] as any);
-
-      prismaMock.attendance.findMany.mockResolvedValue([]);
-      prismaMock.makeUpBooking.findMany.mockResolvedValue([]);
-      prismaMock.trialBooking.findMany.mockResolvedValue([]);
-      prismaMock.enrollmentSkip.findMany.mockResolvedValue([]);
-
+  describe("getAllTerms", () => {
+    it("should return terms list with string IDs", async () => {
       prismaMock.term.findMany.mockResolvedValue([
-        { id: "term2", startDate: new Date("2026-04-01") },
+        { id: BigInt(1), name: "Fall 2026", locationId: BigInt(10) },
       ] as any);
 
-      await service.slotByWeekdayAndTime(1, "term1", "16:00", "16:45");
+      const result = await service.getAllTerms("10");
+      expect(result).toEqual([
+        { id: "1", name: "Fall 2026", locationId: "10" },
+      ]);
+    });
+  });
 
-      expect(prismaMock.term.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            offerings: {
-              some: {
-                type: "regular",
-              },
-            },
-          }),
-        }),
-      );
+  describe("getSlotsForWeekday", () => {
+    it("should return distinct formatted time slots", async () => {
+      prismaMock.classOffering.findMany.mockResolvedValue([
+        { startTime: "16:00", endTime: "16:30" },
+        { startTime: "16:30", endTime: "17:00" },
+      ] as any);
 
-      expect(prismaMock.enrollment.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            offering: {
-              termId: { in: ["term2"] },
-              type: "regular",
-            },
-          }),
-        }),
-      );
+      const result = await service.getSlotsForWeekday("term1", 1);
+      expect(result).toEqual(["16:00-16:30", "16:30-17:00"]);
     });
   });
 });
-

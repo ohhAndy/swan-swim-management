@@ -10,6 +10,8 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { TermsService } from "./terms.service";
+import { TermScheduleService } from "./term-schedule.service";
+import { TermAvailabilityService } from "./term-availability.service";
 import type { SlotPage, Term } from "@school/shared-types";
 import { CreateTermSchema } from "./dto/create-term.dto";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
@@ -22,7 +24,11 @@ import { RequestStaffUser } from "../auth/auth.types";
 @Controller("terms")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
 export class TermsController {
-  constructor(private readonly termsService: TermsService) {}
+  constructor(
+    private readonly termsService: TermsService,
+    private readonly termScheduleService: TermScheduleService,
+    private readonly termAvailabilityService: TermAvailabilityService,
+  ) {}
 
   @Post()
   @Roles("super_admin", "admin")
@@ -86,7 +92,12 @@ export class TermsController {
     @Param("start") start: string,
     @Param("end") end: string,
   ): Promise<SlotPage> {
-    return this.termsService.slotByWeekdayAndTime(weekday, termId, start, end);
+    return this.termScheduleService.slotByWeekdayAndTime(
+      weekday,
+      termId,
+      start,
+      end,
+    );
   }
 
   @Get("schedule/date/:date")
@@ -94,7 +105,10 @@ export class TermsController {
     @Param("date") date: string,
     @CurrentLocationId() locationId?: string,
   ) {
-    return this.termsService.getDailySchedule(locationId ?? null, date);
+    return this.termScheduleService.getDailySchedule(
+      locationId ?? null,
+      date,
+    );
   }
 
   @Get(":termId/availability")
@@ -104,11 +118,11 @@ export class TermsController {
     @Query("weekday") weekday?: string,
   ) {
     const wd = weekday ? Number(weekday) : undefined;
-    return this.termsService.getTermAvailability(termId, level, wd);
+    return this.termAvailabilityService.getTermAvailability(termId, level, wd);
   }
 
   @Get(":termId/flexible-schedule")
   async getFlexibleSchedule(@Param("termId") termId: string) {
-    return this.termsService.getFlexibleSlotPage(termId);
+    return this.termScheduleService.getFlexibleSlotPage(termId);
   }
 }

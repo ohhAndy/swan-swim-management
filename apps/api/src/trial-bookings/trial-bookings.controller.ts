@@ -1,4 +1,3 @@
-// apps/api/src/trial-bookings/trial-bookings.controller.ts
 import {
   Controller,
   Post,
