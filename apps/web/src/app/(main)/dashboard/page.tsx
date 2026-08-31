@@ -50,11 +50,20 @@ export default async function DashboardPage({ searchParams }: Props) {
       if (!t.startDate || !t.endDate) return false;
       const start = new Date(t.startDate);
       const end = new Date(t.endDate);
+      start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
       return now >= start && now <= end;
     });
 
-    termToUse = currentTerm || sortedTerms[0]; // sortedTerms[0] is newest because of sort
+    // If currently in a break between terms, pick the most recent term that has started
+    const mostRecentActiveOrPastTerm = sortedTerms.find((t) => {
+      if (!t.startDate) return false;
+      const start = new Date(t.startDate);
+      start.setHours(0, 0, 0, 0);
+      return now >= start;
+    });
+
+    termToUse = currentTerm || mostRecentActiveOrPastTerm || sortedTerms[0];
   }
 
   // 3. Find next and previous terms

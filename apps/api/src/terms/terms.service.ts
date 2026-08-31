@@ -153,6 +153,8 @@ export class TermsService {
     return terms.map((t) => ({
       id: t.id.toString(),
       name: t.name,
+      startDate: t.startDate,
+      endDate: t.endDate,
       locationId: t.locationId ? t.locationId.toString() : null,
     }));
   }
