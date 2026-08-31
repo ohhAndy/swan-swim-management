@@ -49,19 +49,19 @@ export default async function TermPage() {
     {} as Record<string, Term[]>,
   );
 
-  // Sort years ascending (oldest first)
+  // Sort years descending (newest first)
   const sortedYears = Object.keys(groupByYear).sort((a, b) => {
     if (a === "Other") return 1;
     if (b === "Other") return -1;
-    return a.localeCompare(b);
+    return b.localeCompare(a);
   });
 
-  // Sort terms within each year by startDate ascending
+  // Sort terms within each year by startDate descending (newest first)
   Object.keys(groupByYear).forEach((year) => {
     groupByYear[year].sort((a, b) => {
       const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
       const dateB = b.startDate ? new Date(b.startDate).getTime() : 0;
-      return dateA - dateB;
+      return dateB - dateA;
     });
   });
 
