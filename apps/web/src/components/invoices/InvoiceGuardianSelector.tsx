@@ -1,8 +1,6 @@
 "use client";
 
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,93 +33,93 @@ export function InvoiceGuardianSelector({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Guardian</CardTitle>
+        <CardTitle>1. Select Guardian</CardTitle>
         <CardDescription>
-          Select the guardian responsible for this invoice
+          Search for the parent/guardian to bill
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!skipGuardian && (
-          <div>
-            <Label htmlFor="guardianSearch">Search Guardian</Label>
+        {!selectedGuardian ? (
+          <>
             <Input
-              id="guardianSearch"
-              placeholder="Type to search by name or email..."
+              placeholder="Search by name, email, or phone number..."
               value={guardianSearch}
               onChange={(e) => setGuardianSearch(e.target.value)}
-              disabled={!!selectedGuardian}
             />
-            {guardians.length > 0 && !selectedGuardian && (
-              <div className="mt-2 border rounded-md divide-y max-h-48 overflow-y-auto">
+            {guardians.length > 0 && (
+              <div className="border rounded-lg divide-y max-h-60 overflow-y-auto">
                 {guardians.map((guardian) => (
-                  <div
+                  <button
                     key={guardian.id}
-                    className="p-2 hover:bg-muted cursor-pointer flex justify-between items-center"
+                    type="button"
                     onClick={() => {
                       setSelectedGuardian(guardian);
                       setGuardianSearch("");
                     }}
+                    className="w-full p-3 text-left hover:bg-muted transition-colors flex flex-col items-start"
                   >
-                    <div>
-                      <p className="font-medium">{guardian.fullName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {guardian.email} • {guardian.phone}
-                      </p>
-                      {guardian.students && guardian.students.length > 0 && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Children:{" "}
-                          {guardian.students
-                            .map((s) => `${s.firstName} ${s.lastName}`)
-                            .join(", ")}
-                        </p>
-                      )}
+                    <div className="font-medium">{guardian.fullName}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {guardian.email}
+                      {guardian.phone ? ` • ${guardian.phone}` : ""}
                     </div>
-                    <Button size="sm" variant="ghost">
-                      Select
-                    </Button>
-                  </div>
+                    {guardian.students && guardian.students.length > 0 && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Students:{" "}
+                        {guardian.students
+                          .map((s) => `${s.firstName} ${s.lastName}`)
+                          .join(", ")}
+                      </div>
+                    )}
+                  </button>
                 ))}
               </div>
             )}
-            {selectedGuardian && (
-              <div className="mt-2 p-3 bg-muted rounded-md flex justify-between items-center">
-                <div>
-                  <p className="font-medium">{selectedGuardian.fullName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedGuardian.email} • {selectedGuardian.phone}
-                  </p>
-                  {selectedGuardian.students &&
-                    selectedGuardian.students.length > 0 && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Children:{" "}
-                        {selectedGuardian.students
-                          .map((s) => `${s.firstName} ${s.lastName}`)
-                          .join(", ")}
-                      </p>
-                    )}
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSelectedGuardian(null)}
-                >
-                  Change
-                </Button>
-              </div>
+            {guardianSearch.trim().length >= 2 && guardians.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-2">
+                No guardians found matching &quot;{guardianSearch}&quot;
+              </p>
             )}
+          </>
+        ) : (
+          <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+            <div>
+              <div className="font-medium">{selectedGuardian.fullName}</div>
+              <div className="text-sm text-muted-foreground">
+                {selectedGuardian.email}
+                {selectedGuardian.phone ? ` • ${selectedGuardian.phone}` : ""}
+              </div>
+              {selectedGuardian.students &&
+                selectedGuardian.students.length > 0 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Students:{" "}
+                    {selectedGuardian.students
+                      .map((s) => `${s.firstName} ${s.lastName}`)
+                      .join(", ")}
+                  </div>
+                )}
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedGuardian(null)}
+            >
+              Change
+            </Button>
           </div>
         )}
-
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="skipGuardian"
-            checked={skipGuardian}
-            onCheckedChange={(checked) => setSkipGuardian(checked as boolean)}
-          />
-          <Label htmlFor="skipGuardian" className="cursor-pointer text-sm">
-            Create invoice without assigning a guardian
-          </Label>
-        </div>
+        {!selectedGuardian && !skipGuardian && (
+          <div className="flex justify-center border-t pt-4 mt-4">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setSkipGuardian(true)}
+            >
+              Skip / Create Invoice without Guardian
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

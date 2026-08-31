@@ -64,12 +64,27 @@ export default function CreateInvoiceForm() {
     }
   }, []);
 
-  // Search guardians
+  // Search guardians with debouncing & race-condition cancellation
   useEffect(() => {
-    if (guardianSearch.length >= 2) {
-      searchGuardians(guardianSearch).then((results) => {
-        setGuardians(results || []);
-      });
+    let cancel = false;
+    const query = guardianSearch.trim();
+    if (query.length >= 2) {
+      const timer = setTimeout(async () => {
+        try {
+          const results = await searchGuardians(query);
+          if (!cancel) {
+            setGuardians(results || []);
+          }
+        } catch (error) {
+          if (!cancel) {
+            console.error("Failed to search guardians:", error);
+          }
+        }
+      }, 250);
+      return () => {
+        cancel = true;
+        clearTimeout(timer);
+      };
     } else {
       setGuardians([]);
     }
@@ -334,87 +349,93 @@ export default function CreateInvoiceForm() {
         setSkipGuardian={setSkipGuardian}
       />
 
-      {/* Uninvoiced Enrollments */}
-      <InvoiceEnrollmentsPicker
-        enrollments={enrollments}
-        selectedEnrollments={selectedEnrollments}
-        toggleEnrollment={toggleEnrollment}
-        enrollmentAmounts={enrollmentAmounts}
-        setEnrollmentAmounts={setEnrollmentAmounts}
-      />
-
-      {/* Custom Line Items */}
-      <InvoiceCustomLineItems
-        customLineItems={customLineItems}
-        addCustomLineItem={addCustomLineItem}
-        updateCustomLineItem={updateCustomLineItem}
-        removeCustomLineItem={removeCustomLineItem}
-      />
-
-      {/* Invoice Details & Notes */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Invoice Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="invoiceNumber">Invoice Number (Optional)</Label>
-              <Input
-                id="invoiceNumber"
-                placeholder="Leave blank for auto-generation"
-                value={invoiceNumber}
-                onChange={(e) => setInvoiceNumber(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="invoiceDate">Invoice Date</Label>
-              <Input
-                id="invoiceDate"
-                type="date"
-                value={invoiceDate}
-                onChange={(e) => setInvoiceDate(e.target.value)}
-              />
-            </div>
-          </div>
-          <div>
-            <Label htmlFor="notes">Notes (Optional)</Label>
-            <Textarea
-              id="notes"
-              placeholder="Add any notes for this invoice..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
+      {(selectedGuardian || skipGuardian) && (
+        <>
+          {/* Uninvoiced Enrollments */}
+          {selectedGuardian && (
+            <InvoiceEnrollmentsPicker
+              enrollments={enrollments}
+              selectedEnrollments={selectedEnrollments}
+              toggleEnrollment={toggleEnrollment}
+              enrollmentAmounts={enrollmentAmounts}
+              setEnrollmentAmounts={setEnrollmentAmounts}
             />
-          </div>
-        </CardContent>
-      </Card>
+          )}
 
-      {/* Total & Submit */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-sm text-muted-foreground">Total Amount</p>
-              <p className="text-3xl font-bold">
-                ${calculateTotal().toFixed(2)}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Creating..." : "Create Invoice"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          {/* Custom Line Items */}
+          <InvoiceCustomLineItems
+            customLineItems={customLineItems}
+            addCustomLineItem={addCustomLineItem}
+            updateCustomLineItem={updateCustomLineItem}
+            removeCustomLineItem={removeCustomLineItem}
+          />
+
+          {/* Invoice Details & Notes */}
+          <Card>
+            <CardHeader>
+              <CardTitle>4. Invoice Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="invoiceNumber">Invoice Number (Optional)</Label>
+                  <Input
+                    id="invoiceNumber"
+                    placeholder="Leave blank for auto-generation"
+                    value={invoiceNumber}
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="invoiceDate">Invoice Date</Label>
+                  <Input
+                    id="invoiceDate"
+                    type="date"
+                    value={invoiceDate}
+                    onChange={(e) => setInvoiceDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="notes">Notes (Optional)</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Add any notes for this invoice..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total & Submit */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Amount</p>
+                  <p className="text-3xl font-bold">
+                    ${calculateTotal().toFixed(2)}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.back()}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? "Creating..." : "Create Invoice"}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </form>
   );
 }

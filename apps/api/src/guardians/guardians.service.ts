@@ -23,44 +23,102 @@ export class GuardiansService {
   async searchOrList(params: SearchGuardianDto) {
     const { query, page = 1, pageSize = 20, waiverStatus } = params;
 
+    const trimmedQuery = query?.trim();
+    const digitsOnly = trimmedQuery ? trimmedQuery.replace(/\D/g, "") : "";
+
+    const phoneQueries: Prisma.GuardianWhereInput[] = [];
+    if (trimmedQuery) {
+      phoneQueries.push({
+        phone: { contains: trimmedQuery, mode: "insensitive" },
+      });
+    }
+    if (digitsOnly && digitsOnly.length >= 3 && digitsOnly !== trimmedQuery) {
+      phoneQueries.push({
+        phone: { contains: digitsOnly, mode: "insensitive" },
+      });
+
+      if (digitsOnly.length === 10) {
+        phoneQueries.push(
+          {
+            phone: {
+              contains: `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`,
+              mode: "insensitive",
+            },
+          },
+          {
+            phone: {
+              contains: `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`,
+              mode: "insensitive",
+            },
+          },
+          {
+            phone: {
+              contains: `(${digitsOnly.slice(0, 3)})${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6)}`,
+              mode: "insensitive",
+            },
+          },
+          {
+            phone: {
+              contains: `${digitsOnly.slice(0, 3)} ${digitsOnly.slice(3, 6)} ${digitsOnly.slice(6)}`,
+              mode: "insensitive",
+            },
+          },
+        );
+      } else if (digitsOnly.length === 7) {
+        phoneQueries.push(
+          {
+            phone: {
+              contains: `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3)}`,
+              mode: "insensitive",
+            },
+          },
+          {
+            phone: {
+              contains: `${digitsOnly.slice(0, 3)} ${digitsOnly.slice(3)}`,
+              mode: "insensitive",
+            },
+          },
+        );
+      }
+    }
+
     const where: Prisma.GuardianWhereInput = {
-      ...(query
+      ...(trimmedQuery
         ? {
             OR: [
-              { fullName: { contains: query, mode: "insensitive" } },
-              { email: { contains: query, mode: "insensitive" } },
-              { shortCode: { contains: query, mode: "insensitive" } },
-              { phone: { contains: query, mode: "insensitive" } },
+              { fullName: { contains: trimmedQuery, mode: "insensitive" } },
+              { email: { contains: trimmedQuery, mode: "insensitive" } },
+              { shortCode: { contains: trimmedQuery, mode: "insensitive" } },
+              ...phoneQueries,
               {
                 students: {
                   some: {
                     OR: [
                       {
                         firstName: {
-                          contains: query.trim(),
+                          contains: trimmedQuery,
                           mode: "insensitive",
                         },
                       },
                       {
                         lastName: {
-                          contains: query.trim(),
+                          contains: trimmedQuery,
                           mode: "insensitive",
                         },
                       },
-                      ...(query.trim().indexOf(" ") > 0
+                      ...(trimmedQuery.indexOf(" ") > 0
                         ? [
                             {
                               AND: [
                                 {
                                   firstName: {
-                                    contains: query.trim().split(/\s+/)[0],
+                                    contains: trimmedQuery.split(/\s+/)[0],
                                     mode: "insensitive" as Prisma.QueryMode,
                                   },
                                 },
                                 {
                                   lastName: {
-                                    contains: query
-                                      .trim()
+                                    contains: trimmedQuery
                                       .split(/\s+/)
                                       .slice(1)
                                       .join(" "),
