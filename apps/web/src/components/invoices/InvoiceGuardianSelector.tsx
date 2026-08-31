@@ -67,6 +67,14 @@ export function InvoiceGuardianSelector({
                       <p className="text-sm text-muted-foreground">
                         {guardian.email} • {guardian.phone}
                       </p>
+                      {guardian.students && guardian.students.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Children:{" "}
+                          {guardian.students
+                            .map((s) => `${s.firstName} ${s.lastName}`)
+                            .join(", ")}
+                        </p>
+                      )}
                     </div>
                     <Button size="sm" variant="ghost">
                       Select
@@ -82,6 +90,15 @@ export function InvoiceGuardianSelector({
                   <p className="text-sm text-muted-foreground">
                     {selectedGuardian.email} • {selectedGuardian.phone}
                   </p>
+                  {selectedGuardian.students &&
+                    selectedGuardian.students.length > 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Children:{" "}
+                        {selectedGuardian.students
+                          .map((s) => `${s.firstName} ${s.lastName}`)
+                          .join(", ")}
+                      </p>
+                    )}
                 </div>
                 <Button
                   size="sm"
