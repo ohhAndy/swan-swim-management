@@ -1,0 +1,346 @@
+"use client";
+
+import { useState } from "react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { formatCurrency, formatDate } from "./invoice-detail.utils";
+import EditPaymentDialog from "@/components/payments/EditPaymentDialog";
+import { createPayment, deletePayment, type Invoice } from "@/lib/api/client/invoice";
+import { Payment } from "@/lib/api/client/payments";
+import { toast } from "sonner";
+
+interface InvoicePaymentsTableProps {
+  invoice: Invoice;
+  userRole: string;
+  onRefresh: () => void;
+}
+
+export function InvoicePaymentsTable({
+  invoice,
+  userRole,
+  onRefresh,
+}: InvoicePaymentsTableProps) {
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentDate, setPaymentDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
+  const [paymentMethod, setPaymentMethod] = useState<
+    "cash" | "debit" | "visa" | "mastercard" | "etransfer" | "website" | "other"
+  >("cash");
+  const [paymentNotes, setPaymentNotes] = useState("");
+  const [submittingPayment, setSubmittingPayment] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+
+  const handleRecordPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amount = parseFloat(paymentAmount);
+    if (isNaN(amount)) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
+    if (amount > invoice.balance) {
+      toast.error(
+        `Payment cannot exceed balance of $${invoice.balance.toFixed(2)}`,
+      );
+      return;
+    }
+
+    setSubmittingPayment(true);
+    try {
+      await createPayment({
+        invoiceId: invoice.id,
+        amount,
+        paymentDate,
+        paymentMethod,
+        notes: paymentNotes || undefined,
+      });
+      toast.success("Payment recorded");
+      setShowPaymentDialog(false);
+      setPaymentAmount("");
+      setPaymentNotes("");
+      onRefresh();
+    } catch (error) {
+      console.error("Failed to record payment:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to record payment",
+      );
+    } finally {
+      setSubmittingPayment(false);
+    }
+  };
+
+  const handleDeletePayment = async (paymentId: string) => {
+    try {
+      await deletePayment(paymentId);
+      toast.success("Payment deleted");
+      onRefresh();
+    } catch (error) {
+      console.error("Failed to delete payment:", error);
+      toast.error("Failed to delete payment");
+    }
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Payment History</CardTitle>
+              <CardDescription>
+                {invoice.payments.length} payment(s) recorded
+              </CardDescription>
+            </div>
+            {invoice.status !== "void" && (
+              <Dialog
+                open={showPaymentDialog}
+                onOpenChange={setShowPaymentDialog}
+              >
+                <Button
+                  onClick={() => {
+                    setPaymentAmount(invoice.balance.toString());
+                    setPaymentDate(
+                      new Date(invoice.createdAt).toISOString().split("T")[0],
+                    );
+                    setShowPaymentDialog(true);
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Record Payment
+                </Button>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Record Payment</DialogTitle>
+                    <DialogDescription>
+                      Balance due: {formatCurrency(invoice.balance)}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleRecordPayment} className="space-y-4">
+                    <div>
+                      <Label htmlFor="paymentAmount">Amount</Label>
+                      <Input
+                        id="paymentAmount"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={paymentAmount}
+                        onChange={(e) => setPaymentAmount(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="paymentDate">Payment Date</Label>
+                      <Input
+                        id="paymentDate"
+                        type="date"
+                        value={paymentDate}
+                        onChange={(e) => setPaymentDate(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="paymentMethod">Payment Method</Label>
+                      <Select
+                        value={paymentMethod}
+                        onValueChange={(v) =>
+                          setPaymentMethod(
+                            v as
+                              | "cash"
+                              | "debit"
+                              | "visa"
+                              | "mastercard"
+                              | "etransfer"
+                              | "website"
+                              | "other",
+                          )
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cash">Cash</SelectItem>
+                          <SelectItem value="debit">Debit</SelectItem>
+                          <SelectItem value="visa">Visa</SelectItem>
+                          <SelectItem value="mastercard">Mastercard</SelectItem>
+                          <SelectItem value="etransfer">E-Transfer</SelectItem>
+                          <SelectItem value="website">Website</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="paymentNotes">Notes (Optional)</Label>
+                      <Textarea
+                        id="paymentNotes"
+                        placeholder="e.g., Check #1234"
+                        value={paymentNotes}
+                        onChange={(e) => setPaymentNotes(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowPaymentDialog(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={submittingPayment}>
+                        {submittingPayment ? "Recording..." : "Record Payment"}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {invoice.payments.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No payments recorded yet
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Notes</TableHead>
+                  {(userRole === "admin" || userRole === "super_admin") && (
+                    <TableHead></TableHead>
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invoice.payments.map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell>{formatDate(payment.paymentDate)}</TableCell>
+                    <TableCell className="font-medium">
+                      {formatCurrency(payment.amount)}
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {payment.paymentMethod}
+                    </TableCell>
+                    <TableCell>{payment.notes || "-"}</TableCell>
+                    {(userRole === "admin" ||
+                      userRole === "super_admin" ||
+                      userRole === "manager") && (
+                      <TableCell className="flex justify-end gap-2">
+                        {(userRole === "admin" ||
+                          userRole === "super_admin" ||
+                          userRole === "manager") && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setEditingPayment(payment as unknown as Payment)
+                            }
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {(userRole === "admin" ||
+                          userRole === "super_admin") && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Delete Payment?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will remove this payment record and
+                                  update the invoice balance.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    handleDeletePayment(payment.id)
+                                  }
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {editingPayment && (
+        <EditPaymentDialog
+          open={!!editingPayment}
+          onOpenChange={(open) => {
+            if (!open) setEditingPayment(null);
+          }}
+          payment={editingPayment}
+          onSuccess={() => {
+            onRefresh();
+          }}
+        />
+      )}
+    </>
+  );
+}

@@ -2,63 +2,34 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   createInvoice,
   getUnInvoicedEnrollments,
   getInvoices,
 } from "@/lib/api/client/invoice";
-import { searchGuardians } from "@/lib/api/client/guardian";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Plus, Trash2, ArrowLeft } from "lucide-react";
-import { toast } from "sonner";
-import type { GuardianLite } from "@/lib/api/client/guardian";
+import { searchGuardians, GuardianLite } from "@/lib/api/client/guardian";
 import { DAY_LABELS } from "@/lib/schedule/slots";
-
-interface UnInvoicedEnrollment {
-  id: string;
-  classRatio: string;
-  suggestedAmount: number;
-  totalSessions: number;
-  student: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    level: string;
-  };
-  offering: {
-    id: string;
-    weekday: number;
-    startTime: string;
-    term: {
-      name: string;
-      location?: {
-        name: string;
-      };
-    };
-  };
-  enrollmentSkips: {
-    id: string;
-    enrollmentId: string;
-    classSessionId: string;
-  }[];
-}
-
-interface LineItem {
-  enrollmentId?: string;
-  description: string;
-  amount: number;
-}
+import { InvoiceGuardianSelector } from "@/components/invoices/InvoiceGuardianSelector";
+import {
+  InvoiceEnrollmentsPicker,
+  UnInvoicedEnrollment,
+} from "@/components/invoices/InvoiceEnrollmentsPicker";
+import {
+  InvoiceCustomLineItems,
+  CustomLineItem,
+} from "@/components/invoices/InvoiceCustomLineItems";
 
 export default function CreateInvoiceForm() {
   const router = useRouter();
@@ -75,7 +46,7 @@ export default function CreateInvoiceForm() {
   );
   const [skipGuardian, setSkipGuardian] = useState(false);
 
-  const [customLineItems, setCustomLineItems] = useState<LineItem[]>([]);
+  const [customLineItems, setCustomLineItems] = useState<CustomLineItem[]>([]);
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(
     new Date().toISOString().split("T")[0],
@@ -131,7 +102,6 @@ export default function CreateInvoiceForm() {
         });
 
         if (result.data && result.data.length > 0) {
-          // Find the first invoice that matches our sequence pattern (letters optionally followed by digits, or pure digits)
           let matchFound = false;
           for (const lastInvoice of result.data) {
             if (lastInvoice.invoiceNumber) {
@@ -145,7 +115,7 @@ export default function CreateInvoiceForm() {
                   .padStart(match[2].length, "0");
                 setInvoiceNumber(`${prefix}${paddedNumber}`);
                 matchFound = true;
-                break; // Stop looking once we find a sequence-based invoice
+                break;
               }
             }
           }
@@ -154,7 +124,6 @@ export default function CreateInvoiceForm() {
             setInvoiceNumber("#00001");
           }
         } else {
-          // Default start if no invoices exist
           setInvoiceNumber("#00001");
         }
       } catch (error) {
@@ -215,7 +184,7 @@ export default function CreateInvoiceForm() {
 
   function updateCustomLineItem(
     index: number,
-    field: string,
+    field: "description" | "amount",
     value: number | string,
   ) {
     const updated = [...customLineItems];
@@ -228,7 +197,6 @@ export default function CreateInvoiceForm() {
   }
 
   function calculateTotal(): number {
-    // Sum selected enrollments
     const enrollmentTotal = enrollments
       .filter((e) => selectedEnrollments.has(e.id))
       .reduce((sum, e) => {
@@ -238,7 +206,6 @@ export default function CreateInvoiceForm() {
         return sum + (isNaN(val) ? 0 : val);
       }, 0);
 
-    // Sum custom line items
     const customTotal = customLineItems.reduce(
       (sum, item) => sum + item.amount,
       0,
@@ -263,7 +230,7 @@ export default function CreateInvoiceForm() {
     setLoading(true);
 
     try {
-      const lineItems: LineItem[] = [];
+      const lineItems: CustomLineItem[] = [];
 
       // Add enrollment line items
       enrollments
@@ -345,286 +312,109 @@ export default function CreateInvoiceForm() {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
+
       {/* Header */}
       <div className="flex items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold">Create Invoice</h1>
           <p className="text-muted-foreground">
-            Select enrollments and add custom items
+            Generate a new invoice for enrollments or custom line items
           </p>
         </div>
       </div>
 
       {/* Guardian Selection */}
+      <InvoiceGuardianSelector
+        guardianSearch={guardianSearch}
+        setGuardianSearch={setGuardianSearch}
+        guardians={guardians}
+        selectedGuardian={selectedGuardian}
+        setSelectedGuardian={setSelectedGuardian}
+        skipGuardian={skipGuardian}
+        setSkipGuardian={setSkipGuardian}
+      />
+
+      {/* Uninvoiced Enrollments */}
+      <InvoiceEnrollmentsPicker
+        enrollments={enrollments}
+        selectedEnrollments={selectedEnrollments}
+        toggleEnrollment={toggleEnrollment}
+        enrollmentAmounts={enrollmentAmounts}
+        setEnrollmentAmounts={setEnrollmentAmounts}
+      />
+
+      {/* Custom Line Items */}
+      <InvoiceCustomLineItems
+        customLineItems={customLineItems}
+        addCustomLineItem={addCustomLineItem}
+        updateCustomLineItem={updateCustomLineItem}
+        removeCustomLineItem={removeCustomLineItem}
+      />
+
+      {/* Invoice Details & Notes */}
       <Card>
         <CardHeader>
-          <CardTitle>1. Select Guardian</CardTitle>
-          <CardDescription>
-            Search for the parent/guardian to bill
-          </CardDescription>
+          <CardTitle>Invoice Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!selectedGuardian ? (
-            <>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="invoiceNumber">Invoice Number (Optional)</Label>
               <Input
-                placeholder="Search by name or email..."
-                value={guardianSearch}
-                onChange={(e) => setGuardianSearch(e.target.value)}
+                id="invoiceNumber"
+                placeholder="Leave blank for auto-generation"
+                value={invoiceNumber}
+                onChange={(e) => setInvoiceNumber(e.target.value)}
               />
-              {guardians.length > 0 && (
-                <div className="border rounded-lg divide-y max-h-60 overflow-y-auto">
-                  {guardians.map((guardian) => (
-                    <button
-                      key={guardian.id}
-                      type="button"
-                      onClick={() => setSelectedGuardian(guardian)}
-                      className="w-full p-3 text-left hover:bg-muted transition-colors"
-                    >
-                      <div className="font-medium">{guardian.fullName}</div>
-                      {guardian.email && (
-                        <div className="text-sm text-muted-foreground">
-                          {guardian.email}
-                        </div>
-                      )}
-                      {guardian.students && guardian.students.length > 0 && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Students:{" "}
-                          {guardian.students
-                            .map((s) => `${s.firstName} ${s.lastName}`)
-                            .join(", ")}
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
-                <div className="font-medium">{selectedGuardian.fullName}</div>
-                {selectedGuardian.email && (
-                  <div className="text-sm text-muted-foreground">
-                    {selectedGuardian.email}
-                  </div>
-                )}
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedGuardian(null)}
-              >
-                Change
-              </Button>
             </div>
-          )}
-          {!selectedGuardian && !skipGuardian && (
-            <div className="flex justify-center border-t pt-4 mt-4">
-              <Button variant="ghost" onClick={() => setSkipGuardian(true)}>
-                Skip / Create Invoice without Guardian
-              </Button>
+            <div>
+              <Label htmlFor="invoiceDate">Invoice Date</Label>
+              <Input
+                id="invoiceDate"
+                type="date"
+                value={invoiceDate}
+                onChange={(e) => setInvoiceDate(e.target.value)}
+              />
             </div>
-          )}
+          </div>
+          <div>
+            <Label htmlFor="notes">Notes (Optional)</Label>
+            <Textarea
+              id="notes"
+              placeholder="Add any notes for this invoice..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+            />
+          </div>
         </CardContent>
       </Card>
 
-      {(selectedGuardian || skipGuardian) && (
-        <>
-          {/* Enrollments - Only show if Guardian Selected */}
-          {selectedGuardian && (
-            <Card>
-              <CardHeader>
-                <CardTitle>2. Select Enrollments</CardTitle>
-                <CardDescription>
-                  Un-invoiced enrollments for this guardian
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {enrollments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No un-invoiced enrollments found
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {enrollments.map((enrollment) => (
-                      <div
-                        key={enrollment.id}
-                        className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50"
-                      >
-                        <Checkbox
-                          checked={selectedEnrollments.has(enrollment.id)}
-                          onCheckedChange={() =>
-                            toggleEnrollment(enrollment.id)
-                          }
-                        />
-                        <div className="flex-1">
-                          <div className="font-medium">
-                            {enrollment.student.firstName}{" "}
-                            {enrollment.student.lastName}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {DAY_LABELS[enrollment.offering.weekday]}{" "}
-                            {enrollment.offering.startTime} -{" "}
-                            {enrollment.student.level} -{" "}
-                            {enrollment.offering.term.name}
-                            {enrollment.offering.term.location?.name &&
-                              ` (${enrollment.offering.term.location.name})`}
-                          </div>
-                          <div className="text-sm">
-                            {enrollment.classRatio} •{" "}
-                            {enrollment.totalSessions -
-                              (enrollment.enrollmentSkips
-                                ? enrollment.enrollmentSkips.length
-                                : 0)}{" "}
-                            weeks
-                          </div>
-                        </div>
-                        <div className="text-right w-32">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={
-                              enrollmentAmounts[enrollment.id] ??
-                              enrollment.suggestedAmount
-                            }
-                            onChange={(e) => {
-                              setEnrollmentAmounts({
-                                ...enrollmentAmounts,
-                                [enrollment.id]: e.target.value,
-                              });
-                            }}
-                            className="h-8 text-right"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Custom Line Items */}
-          <Card>
-            <CardHeader>
-              <CardTitle>3. Add Custom Items (Optional)</CardTitle>
-              <CardDescription>
-                Add fees, discounts, or other charges
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {customLineItems.map((item, index) => (
-                <div key={index} className="flex gap-3">
-                  <div className="flex-1">
-                    <Input
-                      placeholder="Description (e.g., Swim cap)"
-                      value={item.description}
-                      onChange={(e) =>
-                        updateCustomLineItem(
-                          index,
-                          "description",
-                          e.target.value,
-                        )
-                      }
-                    />
-                  </div>
-                  <div className="w-32">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="Amount"
-                      value={item.amount || ""}
-                      onChange={(e) =>
-                        updateCustomLineItem(
-                          index,
-                          "amount",
-                          parseFloat(e.target.value) || 0,
-                        )
-                      }
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeCustomLineItem(index)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
+      {/* Total & Submit */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Amount</p>
+              <p className="text-3xl font-bold">
+                ${calculateTotal().toFixed(2)}
+              </p>
+            </div>
+            <div className="flex gap-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={addCustomLineItem}
-                className="w-full"
+                onClick={() => router.back()}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Custom Item
+                Cancel
               </Button>
-            </CardContent>
-          </Card>
-
-          {/* Invoice Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>4. Invoice Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="invoiceNumber">Invoice Number (Optional)</Label>
-                <Input
-                  id="invoiceNumber"
-                  placeholder="Enter invoice number"
-                  value={invoiceNumber}
-                  onChange={(e) => setInvoiceNumber(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="invoiceDate">Invoice Date</Label>
-                <Input
-                  id="invoiceDate"
-                  type="date"
-                  value={invoiceDate}
-                  onChange={(e) => setInvoiceDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="notes">Notes (Optional)</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Add any notes about this invoice"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                />
-              </div>
-              <div className="pt-4 border-t">
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Total Amount:</span>
-                  <span>${calculateTotal().toFixed(2)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Submit */}
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Create Invoice"}
-            </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Creating..." : "Create Invoice"}
+              </Button>
+            </div>
           </div>
-        </>
-      )}
+        </CardContent>
+      </Card>
     </form>
   );
 }

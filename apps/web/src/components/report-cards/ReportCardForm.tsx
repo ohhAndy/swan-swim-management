@@ -22,16 +22,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Loader2,
-  CheckCircle2,
-  Circle,
-  HelpCircle,
   Save,
   Eye,
   Mail,
 } from "lucide-react";
-
 import { getLevels, Level } from "@/lib/api/client/curriculum";
-
 import {
   createReportCard,
   updateReportCard,
@@ -40,7 +35,6 @@ import {
   getReportCard,
   sendEmailReportCard,
 } from "@/lib/api/client/report-card";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -52,9 +46,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ReportCardPdf } from "./ReportCardPdf";
-import { PDFViewer } from "@react-pdf/renderer";
+import { ReportCardSkillsGrid } from "./ReportCardSkillsGrid";
+import { ReportCardPdfPreviewDialog } from "./ReportCardPdfPreviewDialog";
 
 interface ReportCardFormProps {
   enrollmentId: string;
@@ -76,12 +70,10 @@ export function ReportCardForm({
   const [saving, setSaving] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
   const [skillgrades, setSkillGrades] = useState<
     Record<string, "not_started" | "developing" | "mastered">
   >({});
-
-  /* const componentRef = useRef<HTMLDivElement>(null); */
-  /* Replaced with direct PDF generation */
 
   // Form State
   const [existingReportCard, setExistingReportCard] =
@@ -92,56 +84,11 @@ export function ReportCardForm({
   >("draft");
   const [comments, setComments] = useState("");
 
-  const handleEmail = async () => {
-    if (!existingReportCard) {
-      toast.error("Please save the report card first.");
-      return;
-    }
-    if (!selectedLevel) return;
-
-    setSendingEmail(true);
-    try {
-      // Generate PDF Blob using @react-pdf/renderer
-      const { pdf } = await import("@react-pdf/renderer");
-
-      const blob = await pdf(
-        <ReportCardPdf
-          studentName={studentName}
-          level={selectedLevel}
-          skillGrades={skillgrades}
-          comments={comments}
-          termName={termName}
-        />,
-      ).toBlob();
-
-      // Convert Blob to Base64
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = async () => {
-        const base64data = reader.result as string;
-        // Remove data:application/pdf;base64, prefix
-        const pdfBase64 = base64data.split(",")[1];
-
-        await sendEmailReportCard(existingReportCard.id, pdfBase64);
-        toast.success("Email sent successfully!");
-        // Refetch the report card so sentAt + sentByUser are populated in the UI
-        const updated = await getReportCard(existingReportCard.id);
-        setExistingReportCard(updated);
-        setStatus("sent");
-      };
-    } catch (error) {
-      console.error("Failed to send email", error);
-      toast.error("Failed to send email.");
-    } finally {
-      setSendingEmail(false);
-    }
-  };
-
   const loadData = useCallback(async () => {
     try {
       const [levelsData, reportCardsData] = await Promise.all([
         getLevels(),
-        getReportCards(), // Optimally this would filter by enrollmentId on the backend
+        getReportCards(),
       ]);
 
       setLevels(levelsData);
@@ -202,21 +149,11 @@ export function ReportCardForm({
     {} as Record<string, Level[]>,
   );
 
-  const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
-
   const handleGradeChange = (
     skillId: string,
     grade: "not_started" | "developing" | "mastered",
   ) => {
     setSkillGrades((prev) => ({ ...prev, [skillId]: grade }));
-  };
-
-  const handleSaveClick = () => {
-    if (status === "completed") {
-      setSubmitConfirmOpen(true);
-    } else {
-      handleSave();
-    }
   };
 
   const handleSave = async () => {
@@ -228,9 +165,9 @@ export function ReportCardForm({
       levelId: selectedLevelId,
       status,
       comments,
-      skills: Object.entries(skillgrades).map(([skillId, status]) => ({
+      skills: Object.entries(skillgrades).map(([skillId, statusVal]) => ({
         skillId,
-        status,
+        status: statusVal,
       })),
     };
 
@@ -239,17 +176,64 @@ export function ReportCardForm({
         await updateReportCard(existingReportCard.id, data);
       } else {
         const newCard = await createReportCard(data);
-        setExistingReportCard(newCard); // Set it so we can email immediately after save
+        setExistingReportCard(newCard);
       }
       toast.success("Report card saved successfully.");
-      // if (onClose) onClose();
-      // Optionally reload data here
       loadData();
     } catch (error) {
       console.error("Failed to save report card", error);
       toast.error("Failed to save report card.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (status === "completed") {
+      setSubmitConfirmOpen(true);
+    } else {
+      handleSave();
+    }
+  };
+
+  const handleEmail = async () => {
+    if (!existingReportCard) {
+      toast.error("Please save the report card first.");
+      return;
+    }
+    if (!selectedLevel) return;
+
+    setSendingEmail(true);
+    try {
+      const { pdf } = await import("@react-pdf/renderer");
+
+      const blob = await pdf(
+        <ReportCardPdf
+          studentName={studentName}
+          level={selectedLevel}
+          skillGrades={skillgrades}
+          comments={comments}
+          termName={termName}
+        />,
+      ).toBlob();
+
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = async () => {
+        const base64data = reader.result as string;
+        const pdfBase64 = base64data.split(",")[1];
+
+        await sendEmailReportCard(existingReportCard.id, pdfBase64);
+        toast.success("Email sent successfully!");
+        const updated = await getReportCard(existingReportCard.id);
+        setExistingReportCard(updated);
+        setStatus("sent");
+      };
+    } catch (error) {
+      console.error("Failed to send email", error);
+      toast.error("Failed to send email.");
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -391,213 +375,93 @@ export function ReportCardForm({
         </div>
 
         {selectedLevel && (
-          <div className="border rounded-md p-4 bg-muted/5 space-y-4">
-            <h3 className="font-semibold text-lg flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: selectedLevel.color || "#3b82f6" }}
-              />
-              {selectedLevel.name} Skills
-            </h3>
-
-            <div className="space-y-3">
-              {selectedLevel.skills.length === 0 ? (
-                <p className="text-muted-foreground italic">
-                  No skills defined for this level.
-                </p>
-              ) : (
-                selectedLevel.skills.map((skill) => (
-                  <div
-                    key={skill.id}
-                    className="flex items-center justify-between p-3 bg-background rounded border"
-                  >
-                    <span className="font-medium text-sm">
-                      {skill.description}
-                    </span>
-                    <div className="flex gap-1">
-                      {[
-                        {
-                          val: "not_started",
-                          icon: HelpCircle,
-                          label: "Not Started",
-                          color: "text-red-500",
-                          bg: "bg-red-100 dark:bg-red-900/30",
-                        },
-                        {
-                          val: "developing",
-                          icon: Circle,
-                          label: "Developing",
-                          color: "text-yellow-500",
-                          bg: "bg-yellow-100 dark:bg-yellow-900/30",
-                        },
-                        {
-                          val: "mastered",
-                          icon: CheckCircle2,
-                          label: "Mastered",
-                          color: "text-green-600",
-                          bg: "bg-green-100 dark:bg-green-900/30",
-                        },
-                      ].map((option) => (
-                        <Button
-                          key={option.val}
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            "px-2 h-8 transition-all hover:opacity-80",
-                            skillgrades[skill.id] === option.val
-                              ? `${option.bg} shadow-sm ring-1 ring-primary/10`
-                              : "hover:bg-muted opacity-50 hover:opacity-100",
-                          )}
-                          onClick={() =>
-                            handleGradeChange(
-                              skill.id,
-                              option.val as
-                                | "not_started"
-                                | "developing"
-                                | "mastered",
-                            )
-                          }
-                          disabled={isReadOnly}
-                          title={option.label}
-                        >
-                          <option.icon
-                            className={cn(
-                              "h-5 w-5",
-                              skillgrades[skill.id] === option.val
-                                ? option.color
-                                : "text-muted-foreground",
-                            )}
-                          />
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <ReportCardSkillsGrid
+            selectedLevel={selectedLevel}
+            skillgrades={skillgrades}
+            onGradeChange={handleGradeChange}
+            disabled={isReadOnly}
+          />
         )}
 
         <div className="space-y-2">
-          <Label>Comments</Label>
+          <Label>Instructor Comments / Recommendations</Label>
           <Textarea
             value={comments}
             onChange={(e) => setComments(e.target.value)}
-            placeholder="Additional feedback for the student..."
-            className="min-h-[100px]"
+            placeholder="Write general feedback, achievements, or things to work on..."
+            rows={4}
             disabled={isReadOnly}
           />
         </div>
 
-        {status === "completed" && !isReadOnly && (
-          <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-md text-sm flex items-start gap-3">
-            <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
-            <div>
-              Saving as <strong>Completed</strong> will automatically upgrade
-              the student to the next level.
-            </div>
-          </div>
-        )}
-
-        <div className="flex justify-between items-center pt-4">
-          <Button
-            variant="secondary"
-            onClick={() => setShowPreview(true)}
-            disabled={!selectedLevel}
-          >
-            <Eye className="mr-2 h-4 w-4" /> Preview
-          </Button>
-          <div className="flex gap-3 ml-auto">
+        <div className="flex justify-between items-center pt-4 border-t">
+          <div className="flex gap-2">
             {onClose && (
-              <Button variant="outline" onClick={onClose}>
-                Cancel
+              <Button variant="outline" onClick={onClose} disabled={saving}>
+                Close
               </Button>
             )}
-            <Button onClick={handleSaveClick} disabled={saving || isReadOnly}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <Save className="mr-2 h-4 w-4" />{" "}
-              {status === "completed"
-                ? "Submit & Complete"
-                : "Save Report Card"}
+            <Button
+              variant="outline"
+              onClick={() => setShowPreview(true)}
+              disabled={!selectedLevel}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Preview PDF
             </Button>
+          </div>
+
+          <div className="flex gap-2">
+            {existingReportCard && existingReportCard.status !== "sent" && (
+              <Button
+                variant="secondary"
+                onClick={handleEmail}
+                disabled={sendingEmail || saving}
+              >
+                {sendingEmail ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Mail className="h-4 w-4 mr-2" />
+                )}
+                Email to Guardian
+              </Button>
+            )}
+
+            {!isReadOnly && (
+              <Button onClick={handleSaveClick} disabled={saving}>
+                {saving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Save Report Card
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
 
-      <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-[800px] w-full h-[90vh] flex flex-col p-6">
-          <DialogTitle className="sr-only">Report Card Preview</DialogTitle>
-          {selectedLevel && (
-            <div className="flex-1 flex flex-col gap-4 min-h-0 w-full h-full">
-              <div className="flex justify-start gap-2 print:hidden shrink-0">
-                <Button
-                  onClick={handleEmail}
-                  variant="outline"
-                  disabled={
-                    sendingEmail ||
-                    !existingReportCard ||
-                    status !== "completed"
-                  }
-                >
-                  {sendingEmail ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Mail className="mr-2 h-4 w-4" />
-                  )}
-                  {status === "sent" ? "Email Sent" : "Email Guardians"}
-                </Button>
-              </div>
+      <ReportCardPdfPreviewDialog
+        open={showPreview}
+        onOpenChange={setShowPreview}
+        studentName={studentName}
+        selectedLevel={selectedLevel}
+        skillgrades={skillgrades}
+        comments={comments}
+        termName={termName}
+      />
 
-              <div
-                className="border rounded-md overflow-hidden w-full"
-                style={{ height: "calc(90vh - 120px)" }}
-              >
-                <PDFViewer
-                  width="100%"
-                  height="100%"
-                  className="w-full h-full border-none"
-                >
-                  <ReportCardPdf
-                    studentName={studentName}
-                    level={selectedLevel}
-                    skillGrades={skillgrades}
-                    comments={comments}
-                    termName={termName}
-                  />
-                </PDFViewer>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={submitConfirmOpen} onOpenChange={setSubmitConfirmOpen}>
+      <AlertDialog
+        open={submitConfirmOpen}
+        onOpenChange={setSubmitConfirmOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Submit & Complete Report Card?</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3 text-sm text-muted-foreground">
-                <div>
-                  Are you sure you want to mark this report card as{" "}
-                  <strong>Completed</strong>?
-                </div>
-                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-md text-xs flex items-start gap-2">
-                  <span className="shrink-0 mt-0.5">⚠️</span>
-                  <div>
-                    <strong>Once submitted, this action is final:</strong>
-                    <ul className="list-disc pl-4 mt-1 space-y-0.5 text-amber-900 font-normal">
-                      <li>
-                        The report card will become read-only and cannot be
-                        changed.
-                      </li>
-                      <li>
-                        The student will be automatically upgraded to the next
-                        level.
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+            <AlertDialogTitle>Complete Report Card?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Marking this report card as &quot;Completed&quot; will advance the
+              student to the next swim level and lock the report card from
+              further edits. Are you sure you want to proceed?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -607,9 +471,8 @@ export function ReportCardForm({
                 setSubmitConfirmOpen(false);
                 handleSave();
               }}
-              className="bg-green-600 text-white hover:bg-green-700"
             >
-              Confirm & Submit
+              Yes, Complete Report Card
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
