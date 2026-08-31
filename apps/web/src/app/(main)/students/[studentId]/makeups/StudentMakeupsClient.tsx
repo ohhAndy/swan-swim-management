@@ -34,7 +34,6 @@ import { FULL_DAY_LABELS, formatTime } from "@/lib/schedule/slots";
 
 interface StudentMakeupsClientProps {
   student: Student;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   terms: SerializedTerm[];
   user: CurrentUser;
 }
@@ -78,15 +77,6 @@ function getStatusConfig(status: string) {
   }
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-CA", {
-    timeZone: "UTC",
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 function MakeupCard({ makeup }: { makeup: MakeUp }) {
   const statusConfig = getStatusConfig(makeup.status);
