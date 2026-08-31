@@ -117,3 +117,24 @@ export function calculateClassUsage(
   instructorCount: number,
   baseCapacity: number
 ): { filled: number; effectiveCapacity: number; openSeats: number };
+
+/**
+ * Standard ratio to tuition pricing rates mapping
+ */
+export const CLASS_RATIO_RATES: Record<string, number>;
+
+/**
+ * Helper to get the tuition rate per session for a class ratio
+ */
+export function getRatioRate(ratio?: string | null): number;
+
+/**
+ * Calculate suggested tuition for an enrollment given ratio, total sessions, and skips
+ */
+export function calculateEnrollmentTuition(
+  ratio: string | null | undefined,
+  totalSessions: number,
+  skippedSessions?: number
+): number;
+
+

@@ -54,8 +54,13 @@ export default function UninvoicedList() {
         const res = await getUninvoicedEnrollments({
           termId: selectedTermId === "all" ? undefined : selectedTermId,
         });
-        console.log(res);
-        setData(res);
+        if (Array.isArray(res)) {
+          setData(res);
+        } else if (res && Array.isArray(res.data)) {
+          setData(res.data);
+        } else {
+          setData([]);
+        }
       } catch (error) {
         console.error("Failed to fetch uninvoiced enrollments:", error);
       } finally {

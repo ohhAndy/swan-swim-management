@@ -12,9 +12,10 @@ import { InvoiceQueryDto } from "./dto/invoice-query.dto";
 import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-query.dto";
 import { Prisma } from "@prisma/client";
 import { CreateInvoiceLineItemDto } from "./dto/create-invoice.dto";
-
+import { calculateEnrollmentTuition } from "@school/shared-types";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { RequestStaffUser } from "../auth/auth.types";
+import { EnrollmentsService } from "../enrollments/enrollments.service";
 
 export interface EnrollmentForCalculation {
   classRatio?: string | null;
@@ -30,25 +31,21 @@ export class InvoicesService {
   constructor(
     private prisma: PrismaService,
     private auditLogsService: AuditLogsService,
+    private enrollmentsService: EnrollmentsService,
   ) {}
 
   // Calculate suggested amount for an enrollment based on class ratio and skips
   calculateEnrollmentAmount(enrollment: EnrollmentForCalculation): number {
-    const rates = {
-      "3:1": 50,
-      "2:1": 73,
-      "1:1": 140,
-    };
-
-    const rate = rates[enrollment.classRatio as keyof typeof rates] || 50; // Default to 3:1 if unknown
     const totalWeeks =
       enrollment.offering?.sessions?.length ||
       enrollment.totalSessions ||
-      0; // Default to 0 if we can't determine the sessions
+      0;
     const skippedWeeks = enrollment.enrollmentSkips?.length || 0;
-    const attendingWeeks = totalWeeks - skippedWeeks;
-
-    return rate * attendingWeeks;
+    return calculateEnrollmentTuition(
+      enrollment.classRatio,
+      totalWeeks,
+      skippedWeeks,
+    );
   }
 
   // Create invoice with line items
@@ -456,123 +453,17 @@ export class InvoicesService {
     return this.enrichInvoice(invoice);
   }
 
-  // Get un-invoiced enrollments
+  // Get un-invoiced enrollments (delegated to EnrollmentsService domain owner)
   async getUnInvoicedEnrollments(
     query: UnInvoicedEnrollmentsQueryDto,
     staffUser: RequestStaffUser,
     locationId?: string,
   ) {
-
-    const validatedLocationId = validateLocationAccess(staffUser, locationId);
-    const page = parseInt(query.page ?? "") || 1;
-    const limit = parseInt(query.limit ?? "") || 50;
-    const skip = (page - 1) * limit;
-
-    const where: Prisma.EnrollmentWhereInput = {
-      invoiceLineItem: null, // Not linked to any invoice
-      status: { in: ["active", "inactive"] }, // Active or inactive enrollments
-    };
-
-    if (query.guardianId) {
-      where.student = {
-        guardianId: query.guardianId,
-      };
-    }
-
-    if (query.termId) {
-      where.offering = {
-        termId: query.termId,
-      };
-    }
-
-    const includeAllLocations = query.includeAllLocations === "true";
-
-    // Only filter by specific location if NOT including all, or if strictly required by validation
-    // We still run validation to ensure the user isn't spoofing the header if provided
-    if (validatedLocationId && !includeAllLocations) {
-      if (where.offering) {
-        where.offering = {
-          AND: [where.offering, { term: { locationId: validatedLocationId } }],
-        };
-      } else {
-        where.offering = {
-          term: { locationId: validatedLocationId },
-        };
-      }
-    } else if (
-      includeAllLocations &&
-      !["admin", "super_admin"].includes(staffUser.role)
-    ) {
-      // If including all locations but user is NOT admin/super_admin, restrict to accessible locations
-      const accessibleLocationIds = staffUser.accessibleLocations.map(
-        (l: { id: string }) => l.id,
-      );
-
-      const locationFilter = {
-        term: { locationId: { in: accessibleLocationIds } },
-      };
-
-      if (where.offering) {
-        where.offering = {
-          AND: [where.offering, locationFilter],
-        };
-      } else {
-        where.offering = locationFilter;
-      }
-    }
-
-    const [enrollments, total] = await Promise.all([
-      this.prisma.enrollment.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: [{ student: { guardianId: "asc" } }, { createdAt: "desc" }],
-        include: {
-          student: {
-            include: {
-              guardian: true,
-            },
-          },
-          offering: {
-            include: {
-              term: {
-                include: {
-                  location: true,
-                },
-              },
-              sessions: {
-                select: { id: true },
-              },
-            },
-          },
-          enrollmentSkips: true,
-        },
-      }),
-      this.prisma.enrollment.count({ where }),
-    ]);
-
-    // Enrich with suggested amounts
-    const enrichedEnrollments = enrollments.map((enrollment) => {
-      const totalSessions = enrollment.offering.sessions.length;
-      return {
-        ...enrollment,
-        totalSessions,
-        suggestedAmount: this.calculateEnrollmentAmount({
-          ...enrollment,
-          totalSessions,
-        }),
-      };
-    });
-
-    return {
-      data: enrichedEnrollments,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return this.enrollmentsService.getUnInvoicedEnrollments(
+      query,
+      staffUser,
+      locationId,
+    );
   }
 
   // Delete invoice (admin only, cascades to line items and payments)

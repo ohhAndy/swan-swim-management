@@ -10,7 +10,7 @@ import {
   Query,
 } from "@nestjs/common";
 import { EnrollmentsService } from "./enrollments.service";
-import { UnInvoicedEnrollmentsQueryDto } from "../invoices/dto/uninvoiced-enrollments-query.dto";
+import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-query.dto";
 import {
   EnrollWithSkipInput,
   EnrollWithSkipSchema,
@@ -25,6 +25,7 @@ import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
+import { CurrentLocationId } from "../auth/current-location.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("enrollments")
@@ -34,8 +35,12 @@ export class EnrollmentsController {
 
   @Get("uninvoiced")
   @Roles("super_admin", "admin", "manager")
-  async findUninvoiced(@Query() query: UnInvoicedEnrollmentsQueryDto) {
-    return this.enrollmentsService.findUninvoiced(query);
+  async findUninvoiced(
+    @Query() query: UnInvoicedEnrollmentsQueryDto,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
+    @CurrentLocationId() locationId?: string,
+  ) {
+    return this.enrollmentsService.findUninvoiced(query, staffUser, locationId);
   }
 
   @Post("with-skip")

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calculateClassUsage = exports.getRatioWeight = exports.CLASS_RATIO_WEIGHTS = void 0;
+exports.calculateEnrollmentTuition = exports.getRatioRate = exports.CLASS_RATIO_RATES = exports.calculateClassUsage = exports.getRatioWeight = exports.CLASS_RATIO_WEIGHTS = void 0;
 
 exports.CLASS_RATIO_WEIGHTS = {
   "1:1": 3.0,
@@ -34,3 +34,24 @@ function calculateClassUsage(enrollments, instructorCount, baseCapacity) {
   };
 }
 exports.calculateClassUsage = calculateClassUsage;
+
+exports.CLASS_RATIO_RATES = {
+  "3:1": 50,
+  "2:1": 73,
+  "1:1": 140,
+};
+
+function getRatioRate(ratio) {
+  if (!ratio) return 50;
+  return exports.CLASS_RATIO_RATES[ratio] ?? 50;
+}
+exports.getRatioRate = getRatioRate;
+
+function calculateEnrollmentTuition(ratio, totalSessions, skippedSessions) {
+  var rate = getRatioRate(ratio);
+  var total = totalSessions || 0;
+  var skipped = skippedSessions || 0;
+  var attending = Math.max(0, total - skipped);
+  return rate * attending;
+}
+exports.calculateEnrollmentTuition = calculateEnrollmentTuition;

@@ -25,10 +25,20 @@ export interface UninvoicedEnrollment {
   };
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export async function getUninvoicedEnrollments(params?: {
   termId?: string;
   locationId?: string;
-}): Promise<UninvoicedEnrollment[]> {
+}): Promise<PaginatedResponse<UninvoicedEnrollment> | UninvoicedEnrollment[]> {
   const queryParams = new URLSearchParams();
   if (params?.termId) queryParams.append("termId", params.termId);
   if (params?.locationId) queryParams.append("locationId", params.locationId);

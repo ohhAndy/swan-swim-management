@@ -4,21 +4,25 @@ import { PrismaService } from "../prisma/prisma.service";
 import { createPrismaMock, MockPrismaService } from "../prisma/prisma.mock";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { RequestStaffUser } from "../auth/auth.types";
+import { EnrollmentsService } from "../enrollments/enrollments.service";
 
 describe("InvoicesService", () => {
   let service: InvoicesService;
   let prismaMock: MockPrismaService;
   let auditLogsService: Partial<AuditLogsService>;
+  let enrollmentsService: Partial<EnrollmentsService>;
 
   beforeEach(async () => {
     prismaMock = createPrismaMock();
     auditLogsService = { create: jest.fn() };
+    enrollmentsService = { getUnInvoicedEnrollments: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InvoicesService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: AuditLogsService, useValue: auditLogsService },
+        { provide: EnrollmentsService, useValue: enrollmentsService },
       ],
     }).compile();
 
@@ -38,7 +42,7 @@ describe("InvoicesService", () => {
       const result = service.calculateEnrollmentAmount({
         classRatio: "3:1",
         offering: { sessions: new Array(8) },
-        enrollmentSkips: []
+        enrollmentSkips: [],
       });
       // 8 sessions * 50 = 400
       expect(result).toBe(400);
@@ -48,7 +52,7 @@ describe("InvoicesService", () => {
       const result = service.calculateEnrollmentAmount({
         classRatio: "2:1",
         offering: { sessions: new Array(10) },
-        enrollmentSkips: new Array(2)
+        enrollmentSkips: new Array(2),
       });
       // 10 sessions - 2 skips = 8 billable sessions
       // 8 * 73 = 584
@@ -59,10 +63,37 @@ describe("InvoicesService", () => {
       const result = service.calculateEnrollmentAmount({
         classRatio: "unknown",
         offering: { sessions: new Array(5) },
-        enrollmentSkips: []
+        enrollmentSkips: [],
       });
       // 5 sessions * 50 = 250
       expect(result).toBe(250);
+    });
+  });
+
+  describe("getUnInvoicedEnrollments", () => {
+    it("should delegate to EnrollmentsService", async () => {
+      const mockStaffUser: RequestStaffUser = {
+        id: "staff1",
+        authId: "user1",
+        email: "test@test.com",
+        fullName: "Test Staff",
+        role: "admin",
+        active: true,
+        accessSchedule: {},
+        accessibleLocations: [{ id: "loc1" }],
+      };
+
+      (enrollmentsService.getUnInvoicedEnrollments as jest.Mock).mockResolvedValue({
+        data: [],
+        pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
+      });
+
+      const result = await service.getUnInvoicedEnrollments({}, mockStaffUser, "loc1");
+      expect(enrollmentsService.getUnInvoicedEnrollments).toHaveBeenCalledWith({}, mockStaffUser, "loc1");
+      expect(result).toEqual({
+        data: [],
+        pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
+      });
     });
   });
 
@@ -81,14 +112,14 @@ describe("InvoicesService", () => {
     it("should successfully remove an invoice and log it", async () => {
       prismaMock.invoice.findUnique.mockResolvedValue({
         id: "inv1",
-        status: "partial"
+        status: "partial",
       } as any);
       prismaMock.invoice.delete.mockResolvedValue({ id: "inv1" } as any);
 
       await service.remove("inv1", mockStaffUser);
 
       expect(prismaMock.invoice.delete).toHaveBeenCalledWith({
-        where: { id: "inv1" }
+        where: { id: "inv1" },
       });
       expect(auditLogsService.create).toHaveBeenCalled();
     });

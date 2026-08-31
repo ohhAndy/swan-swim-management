@@ -7,10 +7,11 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { EnrollWithSkipInput } from "./dto/enrollment.dto";
 import { TransferEnrollmentDto } from "./dto/transfer.dto";
-import { UnInvoicedEnrollmentsQueryDto } from "../invoices/dto/uninvoiced-enrollments-query.dto";
+import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-query.dto";
 import { Prisma } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
-
+import { validateLocationAccess } from "../common/helpers/location-access.helper";
+import { calculateEnrollmentTuition } from "@school/shared-types";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 
 @Injectable()
@@ -574,48 +575,133 @@ export class EnrollmentsService {
 
     return { success: true };
   }
-  async findUninvoiced(query?: UnInvoicedEnrollmentsQueryDto) {
+  // Get un-invoiced enrollments with location access, pagination, and tuition calculation
+  async getUnInvoicedEnrollments(
+    query?: UnInvoicedEnrollmentsQueryDto,
+    staffUser?: RequestStaffUser,
+    locationId?: string,
+  ) {
+    const validatedLocationId = staffUser
+      ? validateLocationAccess(staffUser, locationId)
+      : locationId;
+    const page = parseInt(query?.page ?? "") || 1;
+    const limit = parseInt(query?.limit ?? "") || 50;
+    const skip = (page - 1) * limit;
+
     const where: Prisma.EnrollmentWhereInput = {
+      invoiceLineItem: null, // Not linked to any invoice
       status: { in: ["active", "inactive"] },
-      invoiceLineItem: null,
     };
 
-    const offeringWhere: Prisma.ClassOfferingWhereInput = {};
+    if (query?.guardianId) {
+      where.student = {
+        guardianId: query.guardianId,
+      };
+    }
 
     if (query?.termId) {
-      offeringWhere.termId = query.termId;
+      where.offering = {
+        termId: query.termId,
+      };
     }
 
-    if (query?.locationId) {
-      offeringWhere.term = { locationId: query.locationId };
+    const includeAllLocations = query?.includeAllLocations === "true";
+    const isAdmin =
+      staffUser && ["admin", "super_admin"].includes(staffUser.role);
+
+    if (isAdmin) {
+      // For Admins/Super Admins:
+      // They see all locations by default (e.g. creating invoice workflow).
+      // Only filter by location if an explicit locationId query param is provided.
+      if (query?.locationId && query.locationId !== "all") {
+        const locationFilter = { term: { locationId: query.locationId } };
+        where.offering = where.offering
+          ? { AND: [where.offering, locationFilter] }
+          : locationFilter;
+      }
+    } else {
+      // For Managers / Non-Admins:
+      // Always location-specific.
+      if (validatedLocationId && !includeAllLocations) {
+        const locationFilter = { term: { locationId: validatedLocationId } };
+        where.offering = where.offering
+          ? { AND: [where.offering, locationFilter] }
+          : locationFilter;
+      } else if (staffUser) {
+        const accessibleLocationIds = staffUser.accessibleLocations.map(
+          (l: { id: string }) => l.id,
+        );
+        const locationFilter = {
+          term: { locationId: { in: accessibleLocationIds } },
+        };
+        where.offering = where.offering
+          ? { AND: [where.offering, locationFilter] }
+          : locationFilter;
+      }
     }
 
-    if (Object.keys(offeringWhere).length > 0) {
-      where.offering = offeringWhere;
-    }
-
-    return this.prisma.enrollment.findMany({
-      where,
-      include: {
-        student: {
-          include: {
-            guardian: true,
+    const [enrollments, total] = await Promise.all([
+      this.prisma.enrollment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [{ student: { guardianId: "asc" } }, { createdAt: "desc" }],
+        include: {
+          student: {
+            include: {
+              guardian: true,
+            },
           },
-        },
-        offering: {
-          include: {
-            term: {
-              include: {
-                location: true,
+          offering: {
+            include: {
+              term: {
+                include: {
+                  location: true,
+                },
+              },
+              sessions: {
+                select: { id: true },
               },
             },
           },
+          enrollmentSkips: true,
         },
-      },
-      orderBy: {
-        enrollDate: "desc",
-      },
+      }),
+      this.prisma.enrollment.count({ where }),
+    ]);
+
+    // Enrich with suggested tuition amounts using centralized calculation
+    const enrichedEnrollments = enrollments.map((enrollment) => {
+      const totalSessions = enrollment.offering.sessions.length;
+      const skippedSessions = enrollment.enrollmentSkips.length;
+      return {
+        ...enrollment,
+        totalSessions,
+        suggestedAmount: calculateEnrollmentTuition(
+          enrollment.classRatio,
+          totalSessions,
+          skippedSessions,
+        ),
+      };
     });
+
+    return {
+      data: enrichedEnrollments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async findUninvoiced(
+    query?: UnInvoicedEnrollmentsQueryDto,
+    staffUser?: RequestStaffUser,
+    locationId?: string,
+  ) {
+    return this.getUnInvoicedEnrollments(query, staffUser, locationId);
   }
 
   async bulkTransfer(

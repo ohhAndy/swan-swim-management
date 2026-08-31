@@ -142,6 +142,9 @@ export async function getUnInvoicedEnrollments(params?: {
 
   const res = await clientFetch(
     `/invoices/un-invoiced-enrollments?${queryParams}`,
+    {
+      skipLocationHeader: true,
+    },
   );
   return res.json();
 }

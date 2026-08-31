@@ -194,4 +194,70 @@ describe("EnrollmentsService", () => {
       ).rejects.toThrow(NotFoundException);
     });
   });
+
+  describe("getUnInvoicedEnrollments", () => {
+    const mockStaffUser: RequestStaffUser = {
+      id: "staff1",
+      authId: "user1",
+      email: "test@test.com",
+      fullName: "Test Staff",
+      role: "admin",
+      active: true,
+      accessSchedule: {},
+      accessibleLocations: [{ id: "loc1" }],
+    };
+
+    it("should allow admins to see all locations by default even when locationId is passed", async () => {
+      prismaMock.enrollment.findMany.mockResolvedValue([]);
+      prismaMock.enrollment.count.mockResolvedValue(0);
+
+      await service.getUnInvoicedEnrollments(
+        { guardianId: "g1" },
+        mockStaffUser,
+        "loc1",
+      );
+
+      // Where clause should NOT filter by locationId since admin sees all locations by default
+      expect(prismaMock.enrollment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            invoiceLineItem: null,
+            student: { guardianId: "g1" },
+          }),
+        }),
+      );
+      const findManyCall = (prismaMock.enrollment.findMany as jest.Mock).mock.calls[0][0];
+      expect(findManyCall.where.offering).toBeUndefined();
+    });
+
+    it("should restrict managers to their validated location", async () => {
+      const mockManagerUser: RequestStaffUser = {
+        id: "staff2",
+        authId: "user2",
+        email: "manager@test.com",
+        fullName: "Test Manager",
+        role: "manager",
+        active: true,
+        accessSchedule: {},
+        accessibleLocations: [{ id: "loc1" }],
+      };
+
+      prismaMock.enrollment.findMany.mockResolvedValue([]);
+      prismaMock.enrollment.count.mockResolvedValue(0);
+
+      await service.getUnInvoicedEnrollments(
+        { guardianId: "g1" },
+        mockManagerUser,
+        "loc1",
+      );
+
+      expect(prismaMock.enrollment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            offering: { term: { locationId: "loc1" } },
+          }),
+        }),
+      );
+    });
+  });
 });

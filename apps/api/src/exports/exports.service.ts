@@ -3,6 +3,8 @@ import { PrismaService } from "../prisma/prisma.service";
 import * as ExcelJS from "exceljs";
 import { Prisma, PaymentMethod, InvoiceStatus } from "@prisma/client";
 
+const MAX_EXPORT_LIMIT = 10000;
+
 @Injectable()
 export class ExportsService {
   constructor(private prisma: PrismaService) {}
@@ -45,6 +47,7 @@ export class ExportsService {
 
     const payments = await this.prisma.payment.findMany({
       where,
+      take: MAX_EXPORT_LIMIT,
       orderBy: { paymentDate: "desc" },
       include: {
         invoice: {
@@ -123,6 +126,7 @@ export class ExportsService {
 
     const invoices = await this.prisma.invoice.findMany({
       where,
+      take: MAX_EXPORT_LIMIT,
       orderBy: { createdAt: "desc" },
       include: {
         guardian: true,
