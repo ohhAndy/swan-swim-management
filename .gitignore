@@ -30,3 +30,6 @@ next-env.d.ts
 
 # backups
 backups/
+
+# local agent configs
+.agents/**/mcp_config.json
