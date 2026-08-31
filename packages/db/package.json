@@ -9,12 +9,12 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
-    "@prisma/config": "^7.2.0",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "@prisma/config": "^7.10.0",
     "dotenv": "^17.2.3",
     "pg": "^8.21.0",
-    "prisma": "^7.8.0"
+    "prisma": "^7.10.0"
   },
   "devDependencies": {
     "@types/pg": "^8.20.0"
