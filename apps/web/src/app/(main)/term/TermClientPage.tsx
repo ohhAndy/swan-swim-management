@@ -23,6 +23,15 @@ export default function TermSlot({
     return now >= start && now <= end;
   };
 
+  const getDisplayName = (name: string) => {
+    if (!year || year === "Other") return name;
+    const cleaned = name
+      .replace(new RegExp(`^${year}\\s*[-–—:]?\\s*`, "i"), "")
+      .replace(new RegExp(`\\s*[-–—:]?\\s*${year}$`, "i"), "")
+      .trim();
+    return cleaned || name;
+  };
+
   return (
     <Card className="w-full rounded-sm">
       <CardHeader className="text-lg font-semibold text-center font-fredoka">
@@ -32,6 +41,7 @@ export default function TermSlot({
         <div className="flex flex-col gap-2 items-center">
           {termOptions.map((t) => {
             const current = isCurrent(t);
+            const displayName = getDisplayName(t.name);
             return (
               <Button
                 key={t.id}
@@ -45,7 +55,7 @@ export default function TermSlot({
               >
                 <Link href={`/term/${t.id}/schedule/`}>
                   <span className="text-center align-middle text-sm break-words whitespace-normal leading-tight">
-                    {t.name}
+                    {displayName}
                   </span>
                 </Link>
               </Button>
