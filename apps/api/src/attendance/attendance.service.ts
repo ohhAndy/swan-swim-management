@@ -7,12 +7,14 @@ import {
 } from "./dto/attendance.dto";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
+import { TokensService } from "../tokens/tokens.service";
 
 @Injectable()
 export class AttendanceService {
   constructor(
     private prisma: PrismaService,
     private auditLogsService: AuditLogsService,
+    private tokensService: TokensService,
   ) {}
 
   async upsert(data: UpsertAttendanceInput, staffUser: RequestStaffUser) {
@@ -111,62 +113,126 @@ export class AttendanceService {
     data: UpdateMakeupAttendanceInput,
     staffUser: RequestStaffUser,
   ) {
-
-    // Get existing make-up booking
+    // Get existing make-up booking with session offering term
     const existing = await this.prisma.makeUpBooking.findUnique({
       where: { id: data.makeUpId },
+      include: {
+        classSession: {
+          select: {
+            offering: { select: { termId: true } },
+          },
+        },
+      },
     });
 
     if (!existing) {
       throw new NotFoundException("Make-up booking not found");
     }
 
-    if (!data.status) {
-      // CANCEL/DELETE: Remove the make-up booking
-      await this.prisma.makeUpBooking.delete({
-        where: { id: data.makeUpId },
-      });
+    return this.prisma.$transaction(async (tx) => {
+      let tokenTransferred = false;
 
-      // Log the deletion
-      await this.auditLogsService.create({
-        staffId: staffUser.id,
-        action: "Cancel Makeup",
-        entityType: "MakeUpBooking",
-        entityId: existing.id,
-        changes: {
-          status: { from: existing.status, to: null },
-        },
-        metadata: {
-          studentId: existing.studentId,
-          sessionId: existing.classSessionId,
-        },
-      });
-    } else {
-      // UPDATE status
-      const updated = await this.prisma.makeUpBooking.update({
-        where: { id: data.makeUpId },
-        data: {
-          status: data.status,
-          updatedBy: staffUser?.id ?? null,
-        },
-      });
+      // If cancelling/deleting a booking that owns a token, reconcile with any active override in the term
+      if (existing.tokenId && (!data.status || data.status === "cancelled")) {
+        tokenTransferred = await this.tokensService.reconcileTokenOnCancellation(
+          existing,
+          staffUser,
+          tx,
+        );
+      }
 
-      // Log the change
-      await this.auditLogsService.create({
-        staffId: staffUser.id,
-        action: "Update Makeup Status",
-        entityType: "MakeUpBooking",
-        entityId: updated.id,
-        changes: {
-          status: { from: existing.status, to: updated.status },
-        },
-        metadata: {
-          studentId: existing.studentId,
-          sessionId: existing.classSessionId,
-        },
-      });
-    }
+      if (!data.status) {
+        // CANCEL/DELETE: Remove the make-up booking
+        if (existing.tokenId) {
+          // Detach from booking first
+          await tx.makeUpBooking.update({
+            where: { id: data.makeUpId },
+            data: { tokenId: null },
+          });
 
-    return { success: true };
+          // If not transferred to clear an override, restore token to available
+          if (!tokenTransferred) {
+            await tx.makeUpToken.update({
+              where: { id: existing.tokenId },
+              data: {
+                status: "available",
+                consumedAt: null,
+              },
+            });
+          }
+        }
+
+        await tx.makeUpBooking.delete({
+          where: { id: data.makeUpId },
+        });
+
+        // Log the deletion
+        await this.auditLogsService.create(
+          {
+            staffId: staffUser.id,
+            action: "Cancel Makeup",
+            entityType: "MakeUpBooking",
+            entityId: existing.id,
+            changes: {
+              status: { from: existing.status, to: null },
+            },
+            metadata: {
+              studentId: existing.studentId,
+              sessionId: existing.classSessionId,
+              tokenReconciled: tokenTransferred,
+              tokenRefunded: existing.tokenId && !tokenTransferred ? true : false,
+            },
+          },
+          tx,
+        );
+      } else {
+        // UPDATE status
+        if (data.status === "cancelled" && existing.tokenId && !tokenTransferred) {
+          // Restore token to available
+          await tx.makeUpToken.update({
+            where: { id: existing.tokenId },
+            data: {
+              status: "available",
+              consumedAt: null,
+            },
+          });
+        }
+
+        const shouldClearToken =
+          tokenTransferred ||
+          (data.status === "cancelled" && Boolean(existing.tokenId));
+
+        const updated = await tx.makeUpBooking.update({
+          where: { id: data.makeUpId },
+          data: {
+            status: data.status,
+            ...(shouldClearToken ? { tokenId: null } : {}),
+            updatedBy: staffUser?.id ?? null,
+          },
+        });
+
+        // Log the change
+        await this.auditLogsService.create(
+          {
+            staffId: staffUser.id,
+            action: "Update Makeup Status",
+            entityType: "MakeUpBooking",
+            entityId: updated?.id ?? existing.id,
+            changes: {
+              status: { from: existing.status, to: updated?.status ?? data.status },
+            },
+            metadata: {
+              studentId: existing.studentId,
+              sessionId: existing.classSessionId,
+              tokenReconciled: tokenTransferred,
+              tokenRefunded: data.status === "cancelled" && existing.tokenId && !tokenTransferred ? true : false,
+            },
+          },
+          tx,
+        );
+      }
+
+      return { success: true };
+    });
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { Trash2, TicketPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ interface StudentEnrollmentCardProps {
   onManageSkips: (enrollment: Enrollment) => void;
   onDelete: (enrollmentId: string) => void;
   onViewReportCard: (enrollment: Enrollment, instructorNames: string) => void;
+  onGrantTokens?: (enrollment: Enrollment) => void;
 }
 
 export function StudentEnrollmentCard({
@@ -33,6 +34,7 @@ export function StudentEnrollmentCard({
   onManageSkips,
   onDelete,
   onViewReportCard,
+  onGrantTokens,
 }: StudentEnrollmentCardProps) {
   const instructors = enrollment.offering.instructors || [];
   const instructorNames = instructors
@@ -240,6 +242,20 @@ export function StudentEnrollmentCard({
               currentRole={userRole}
             >
               <div className="flex flex-col gap-2">
+                <PermissionGate
+                  allowedRoles={["super_admin", "admin"]}
+                  currentRole={userRole}
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onGrantTokens?.(enrollment)}
+                    className="bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
+                  >
+                    <TicketPlus className="h-4 w-4 mr-1.5 text-emerald-600" />
+                    Add Tokens
+                  </Button>
+                </PermissionGate>
                 <Button
                   variant="outline"
                   size="sm"

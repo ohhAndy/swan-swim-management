@@ -4,6 +4,7 @@ import { TermsModule } from "./terms/terms.module";
 import { SessionsModule } from "./sessions/sessions.module";
 import { EnrollmentsModule } from "./enrollments/enrollment.module";
 import { MakeupsModule } from "./makeups/makeups.module";
+import { TokensModule } from "./tokens/tokens.module";
 import { StudentsModule } from "./students/students.module";
 import { GuardiansModule } from "./guardians/guardians.module";
 import { SkipsModule } from "./enrollments/skips.module";
@@ -54,6 +55,7 @@ import { PublicModule } from './public/public.module';
     SessionsModule,
     EnrollmentsModule,
     MakeupsModule,
+    TokensModule,
     StudentsModule,
     GuardiansModule,
     SkipsModule,

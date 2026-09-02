@@ -328,6 +328,20 @@ export class StudentsService {
                 },
               },
             },
+            makeUpTokens: {
+              select: {
+                id: true,
+                status: true,
+                grantedAt: true,
+                consumedAt: true,
+                notes: true,
+                grantedByUser: {
+                  select: {
+                    fullName: true,
+                  },
+                },
+              },
+            },
           },
           orderBy: { enrollDate: "desc" },
         },
@@ -336,6 +350,8 @@ export class StudentsService {
             id: true,
             status: true,
             notes: true,
+            isOverride: true,
+            tokenId: true,
             createdAt: true,
             classSession: {
               select: {

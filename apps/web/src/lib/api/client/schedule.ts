@@ -38,13 +38,18 @@ export async function getAllTerms(): Promise<Term[]> {
 export async function scheduleMakeUp(payload: {
   studentId: string;
   classSessionId: string;
-  note?: string;
+  notes?: string;
   classRatio?: string;
+  overrideAcknowledged?: boolean;
 }) {
   const res = await clientFetch(`/makeups`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Make-up scheduling failed");
+  }
   return res.json();
 }
 

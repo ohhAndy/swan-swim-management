@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { TransferEnrollmentDialog } from "@/components/schedule/TransferEnrollmentDialog";
 import { ManageSkipsDialog } from "@/components/schedule/ManageSkipsDialog";
 import { ReportCardForm } from "@/components/report-cards/ReportCardForm";
+import { GrantTokensDialog } from "./GrantTokensDialog";
 import { deleteEnrollment } from "@/lib/api/client/schedule";
 import { StaffRole } from "@/lib/auth/permissions";
 import { StudentEnrollmentCard } from "./StudentEnrollmentCard";
@@ -94,6 +95,15 @@ export function StudentEnrollmentsList({
       termName: string;
       instructorName: string;
     } | null>(null);
+
+  // Grant Tokens Dialog State
+  const [grantTokensDialogOpen, setGrantTokensDialogOpen] = useState(false);
+  const [enrollmentForTokens, setEnrollmentForTokens] = useState<Enrollment | null>(null);
+
+  const handleGrantTokensClick = (enrollment: Enrollment) => {
+    setEnrollmentForTokens(enrollment);
+    setGrantTokensDialogOpen(true);
+  };
 
   const currentEnrollments = student.enrollments.filter(
     (e) => e.status === "active",
@@ -218,6 +228,7 @@ export function StudentEnrollmentsList({
                     onManageSkips={handleManageSkipsClick}
                     onDelete={handleDeleteClick}
                     onViewReportCard={handleViewReportCard}
+                    onGrantTokens={handleGrantTokensClick}
                   />
                 ))}
               </div>
@@ -327,6 +338,21 @@ export function StudentEnrollmentsList({
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Grant Tokens Dialog */}
+      {enrollmentForTokens && (
+        <GrantTokensDialog
+          open={grantTokensDialogOpen}
+          onOpenChange={setGrantTokensDialogOpen}
+          enrollment={enrollmentForTokens}
+          studentName={`${student.firstName} ${student.lastName}`}
+          onSuccess={() => {
+            setGrantTokensDialogOpen(false);
+            setEnrollmentForTokens(null);
+            router.refresh();
+          }}
+        />
       )}
     </div>
   );

@@ -59,6 +59,39 @@ export type RosterResponse = {
   trials: TrialLite[];
 };
 
+export type TokenBalance = {
+  total: number;
+  available: number;
+  consumed: number;
+  expired: number;
+  voided: number;
+  overrideCount: number;
+};
+
+export type TokenSummary = {
+  termId: string;
+  termName: string;
+  total: number;
+  available: number;
+  consumed: number;
+  expired: number;
+  voided: number;
+  overrideCount: number;
+  tokens?: TokenInfo[];
+};
+
+export type TokenInfo = {
+  id: string;
+  enrollmentId: string;
+  /** Effective status — 'expired' is computed at read time from term.endDate, not stored in DB */
+  status: "available" | "consumed" | "expired" | "voided";
+  grantedAt: string;
+  consumedAt: string | null;
+  grantedBy: string | null;
+  notes: string | null;
+  isAutoGranted: boolean;
+};
+
 export type MakeupLite = {
   id: string;
   studentId: string;
@@ -68,6 +101,8 @@ export type MakeupLite = {
   status: "requested" | "scheduled" | "attended" | "cancelled" | "missed";
   birthDate: string | null;
   classRatio: string;
+  isOverride?: boolean;
+  tokenId?: string | null;
 };
 
 export type TrialLite = {

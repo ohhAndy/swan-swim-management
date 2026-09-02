@@ -158,6 +158,11 @@ const _enrollmentInclude = {
       level: { select: { name: true } },
     },
   },
+  makeUpTokens: {
+    include: {
+      grantedByUser: { select: { fullName: true } },
+    },
+  },
 } satisfies Prisma.EnrollmentInclude;
 
 export type Enrollment = Serialize<Prisma.EnrollmentGetPayload<{

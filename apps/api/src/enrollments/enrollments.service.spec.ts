@@ -6,6 +6,8 @@ import { createPrismaMock, MockPrismaService } from "../prisma/prisma.mock";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
 import { RequestStaffUser } from "../auth/auth.types";
 
+import { TokensService } from "../tokens/tokens.service";
+
 describe("EnrollmentsService", () => {
   let service: EnrollmentsService;
   let prismaMock: MockPrismaService;
@@ -17,6 +19,12 @@ describe("EnrollmentsService", () => {
       providers: [
         EnrollmentsService,
         AuditLogsService,
+        {
+          provide: TokensService,
+          useValue: {
+            autoGrantTokens: jest.fn().mockResolvedValue([]),
+          },
+        },
         { provide: PrismaService, useValue: prismaMock },
       ],
     }).compile();

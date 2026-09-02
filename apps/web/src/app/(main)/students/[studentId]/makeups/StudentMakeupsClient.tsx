@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -13,12 +14,18 @@ import {
   StickyNote,
   Layers,
   ChevronRight,
+  Ticket,
+  AlertTriangle,
+  Ban,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { VoidTokenDialog } from "@/components/students/VoidTokenDialog";
 import type { Student } from "@/lib/types/models";
 import type { CurrentUser } from "@/lib/auth/user";
+import type { TokenSummary, TokenInfo } from "@school/shared-types";
+import { getStudentTokenSummaries } from "@/lib/api/client/tokens";
 
 /** Serialized Term shape from the API (dates are strings) */
 type SerializedTerm = {
@@ -38,7 +45,10 @@ interface StudentMakeupsClientProps {
   user: CurrentUser;
 }
 
-type MakeUp = Student["makeUps"][number];
+type MakeUp = Student["makeUps"][number] & {
+  isOverride?: boolean;
+  tokenId?: string | null;
+};
 
 function getStatusConfig(status: string) {
   switch (status) {
@@ -76,7 +86,6 @@ function getStatusConfig(status: string) {
       };
   }
 }
-
 
 function MakeupCard({ makeup }: { makeup: MakeUp }) {
   const statusConfig = getStatusConfig(makeup.status);
@@ -121,9 +130,20 @@ function MakeupCard({ makeup }: { makeup: MakeUp }) {
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <p className="font-semibold text-foreground truncate">
-              {offering.title}
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-semibold text-foreground truncate">
+                {offering.title}
+              </p>
+              {makeup.isOverride && (
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-800 border-amber-300 text-[11px] font-medium flex items-center gap-1 py-0 px-1.5"
+                >
+                  <AlertTriangle className="h-3 w-3 text-amber-600" />
+                  Staff Override
+                </Badge>
+              )}
+            </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
               {offering.weekday !== null && (
                 <span className="flex items-center gap-1">
@@ -185,13 +205,31 @@ function MakeupCard({ makeup }: { makeup: MakeUp }) {
   return <div className={sharedClass}>{cardInner}</div>;
 }
 
-
 export default function StudentMakeupsClient({
   student,
   terms,
+  user,
 }: StudentMakeupsClientProps) {
   const router = useRouter();
-  const makeups = student.makeUps;
+  const makeups = (student.makeUps || []) as MakeUp[];
+  const [tokenSummaries, setTokenSummaries] = useState<TokenSummary[]>([]);
+  const [voidDialogOpen, setVoidDialogOpen] = useState(false);
+  const [tokenToVoid, setTokenToVoid] = useState<{
+    token: TokenInfo;
+    termName: string;
+  } | null>(null);
+
+  const isAdminOrAbove = user.role === "admin" || user.role === "super_admin";
+
+  const fetchSummaries = useCallback(() => {
+    getStudentTokenSummaries(student.id)
+      .then((summaries) => setTokenSummaries(summaries))
+      .catch((e) => console.error("Failed to load token summaries", e));
+  }, [student.id]);
+
+  useEffect(() => {
+    fetchSummaries();
+  }, [fetchSummaries]);
 
   // Build termId -> term lookup
   const termMap = new Map<string, SerializedTerm>(terms.map((t) => [t.id, t]));
@@ -209,7 +247,7 @@ export default function StudentMakeupsClient({
     list.sort(
       (a, b) =>
         new Date(b.classSession.date).getTime() -
-        new Date(a.classSession.date).getTime()
+        new Date(a.classSession.date).getTime(),
     );
   });
 
@@ -230,6 +268,9 @@ export default function StudentMakeupsClient({
   const attended = makeups.filter((m) => m.status === "attended").length;
   const scheduled = makeups.filter((m) => m.status === "scheduled").length;
   const missed = makeups.filter((m) => m.status === "missed").length;
+  const totalOverrides = makeups.filter(
+    (m) => m.isOverride === true && m.status !== "cancelled",
+  ).length;
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-4xl">
@@ -256,10 +297,10 @@ export default function StudentMakeupsClient({
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            Make-up History
+            Make-up History & Tokens
           </h1>
           <p className="text-muted-foreground mt-1">
-            All make-up sessions for{" "}
+            Token balances, makeup bookings, and audit records for{" "}
             <span className="font-medium text-foreground">
               {student.firstName} {student.lastName}
             </span>
@@ -274,10 +315,10 @@ export default function StudentMakeupsClient({
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         {[
           {
-            label: "Total",
+            label: "Total Makeups",
             value: totalMakeups,
             icon: <RefreshCw className="h-4 w-4" />,
             className: "bg-slate-50 border-slate-200",
@@ -304,6 +345,13 @@ export default function StudentMakeupsClient({
             className: "bg-red-50 border-red-200",
             valueClass: "text-red-700",
           },
+          {
+            label: "Overrides",
+            value: totalOverrides,
+            icon: <AlertTriangle className="h-4 w-4" />,
+            className: totalOverrides > 0 ? "bg-amber-50 border-amber-300" : "bg-slate-50 border-slate-200",
+            valueClass: totalOverrides > 0 ? "text-amber-800" : "text-slate-600",
+          },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -323,6 +371,107 @@ export default function StudentMakeupsClient({
           </div>
         ))}
       </div>
+
+      {/* Token Balances by Term */}
+      {tokenSummaries.length > 0 && (
+        <div className="mb-8 space-y-3">
+          <h2 className="text-base font-semibold flex items-center gap-2">
+            <Ticket className="h-4 w-4 text-blue-600" />
+            Makeup Token Entitlements
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {tokenSummaries.map((summary) => (
+              <Card key={summary.termId} className="border bg-slate-50/50">
+                <CardHeader className="p-4 pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-semibold">
+                      {summary.termName}
+                    </CardTitle>
+                    <Badge
+                      variant={summary.available > 0 ? "outline" : "secondary"}
+                      className={
+                        summary.available > 0
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : ""
+                      }
+                    >
+                      {summary.available} of {summary.total} Available
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-1 space-y-2 text-xs text-muted-foreground">
+                  <div className="flex justify-between items-center">
+                    <span>Used: {summary.consumed}</span>
+                    {summary.expired > 0 && <span>Expired: {summary.expired}</span>}
+                    {summary.overrideCount > 0 && (
+                      <span className="text-amber-700 font-semibold flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        {summary.overrideCount} Override{summary.overrideCount > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Token breakdown & admin void button */}
+                  {summary.tokens && summary.tokens.length > 0 && (
+                    <div className="pt-2 border-t border-slate-200/80 space-y-1.5">
+                      <p className="font-medium text-[11px] text-slate-600">Tokens:</p>
+                      <div className="space-y-1">
+                        {summary.tokens.map((tok, idx) => (
+                          <div
+                            key={tok.id}
+                            className="flex items-center justify-between text-[11px] py-1 px-2 rounded bg-white border border-slate-100"
+                          >
+                            <div className="flex items-center gap-1.5 truncate mr-2">
+                              <span className="font-mono text-slate-400">#{idx + 1}</span>
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] py-0 h-4 px-1 capitalize ${
+                                  tok.status === "available"
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                    : tok.status === "consumed"
+                                      ? "bg-slate-100 text-slate-600 border-slate-200"
+                                      : tok.status === "voided"
+                                        ? "bg-red-50 text-red-600 border-red-200 line-through"
+                                        : "bg-amber-50 text-amber-700 border-amber-200"
+                                }`}
+                              >
+                                {tok.status}
+                              </Badge>
+                              <span className="text-slate-500 truncate" title={tok.notes || undefined}>
+                                {tok.isAutoGranted
+                                  ? "Enrollment"
+                                  : tok.notes
+                                    ? `Grant: ${tok.notes}`
+                                    : "Manual grant"}
+                              </span>
+                            </div>
+
+                            {tok.status === "available" && isAdminOrAbove && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 px-1.5 text-[10px] text-red-600 hover:bg-red-50 hover:text-red-700 font-medium"
+                                onClick={() => {
+                                  setTokenToVoid({ token: tok, termName: summary.termName });
+                                  setVoidDialogOpen(true);
+                                }}
+                              >
+                                <Ban className="h-3 w-3 mr-0.5" />
+                                Void
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Grouped list */}
       {makeups.length === 0 ? (
@@ -375,6 +524,23 @@ export default function StudentMakeupsClient({
             );
           })}
         </div>
+      )}
+
+      {/* Void Token Dialog */}
+      {tokenToVoid && (
+        <VoidTokenDialog
+          open={voidDialogOpen}
+          onOpenChange={setVoidDialogOpen}
+          token={tokenToVoid.token}
+          studentName={`${student.firstName} ${student.lastName}`}
+          termName={tokenToVoid.termName}
+          onSuccess={() => {
+            setVoidDialogOpen(false);
+            setTokenToVoid(null);
+            fetchSummaries();
+            router.refresh();
+          }}
+        />
       )}
     </div>
   );

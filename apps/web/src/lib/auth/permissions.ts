@@ -69,6 +69,10 @@ export function canManageStaff(role: StaffRole): boolean {
   return hasMinRole(role, "admin");
 }
 
+export function canGrantExtraTokens(role: StaffRole): boolean {
+  return hasMinRole(role, "admin");
+}
+
 // Helper to check if user has permission
 export function hasPermission(
   role: StaffRole,

@@ -90,6 +90,7 @@ model StaffUser {
   reportCardsSent              ReportCard[]          @relation("ReportCardSentBy")
   communicationsSent           CommunicationLog[]    @relation("CommunicationSentBy")
   trialRequestsReviewed        TrialRequest[]        @relation("TrialRequestReviewedBy")
+  tokensGranted                MakeUpToken[]         @relation("TokenGrantedBy")
 }
 
 model AuditLog {
@@ -197,6 +198,7 @@ model Enrollment {
   enrollmentSkips    EnrollmentSkip[]
   invoiceLineItem    InvoiceLineItem? // Reverse relation to check if invoiced
   reportCards        ReportCard[]
+  makeUpTokens       MakeUpToken[]
 
   @@unique([offeringId, studentId], name: "offeringId_studentId")
   @@index([studentId])
@@ -371,16 +373,35 @@ model MakeUpBooking {
   updatedBy      String?
   updatedAt      DateTime     @updatedAt
   classRatio     String       @default("3:1")
+  tokenId        String?      @unique
+  isOverride     Boolean      @default(false)
   classSession   ClassSession @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
   createdByStaff StaffUser?   @relation("MakeUpCreatedBy", fields: [createdBy], references: [id])
   student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
   updatedByStaff StaffUser?   @relation("MakeUpUpdatedBy", fields: [updatedBy], references: [id])
+  token          MakeUpToken? @relation("BookingToToken", fields: [tokenId], references: [id])
 
   @@unique([studentId, classSessionId])
   @@index([classSessionId])
   @@index([createdBy])
   @@index([classSessionId, status])
   @@index([studentId])
+}
+
+model MakeUpToken {
+  id            String         @id @default(cuid())
+  enrollmentId  String
+  status        TokenStatus    @default(available)
+  grantedBy     String?
+  grantedAt     DateTime       @default(now())
+  consumedAt    DateTime?
+  notes         String?
+  enrollment    Enrollment     @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  grantedByUser StaffUser?     @relation("TokenGrantedBy", fields: [grantedBy], references: [id])
+  booking       MakeUpBooking? @relation("BookingToToken")
+
+  @@index([enrollmentId, status])
+  @@map("makeup_tokens")
 }
 
 model InventoryItem {
@@ -508,6 +529,12 @@ enum MakeUpStatus {
   attended
   cancelled
   missed
+}
+
+enum TokenStatus {
+  available
+  consumed
+  voided
 }
 
 enum StaffRole {

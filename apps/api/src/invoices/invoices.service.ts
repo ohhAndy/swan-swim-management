@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
 } from "@nestjs/common";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { PrismaService } from "../prisma/prisma.service";

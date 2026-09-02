@@ -13,12 +13,14 @@ import { RequestStaffUser } from "../auth/auth.types";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { calculateEnrollmentTuition } from "@school/shared-types";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
+import { TokensService } from "../tokens/tokens.service";
 
 @Injectable()
 export class EnrollmentsService {
   constructor(
     private prisma: PrismaService,
     private auditLogsService: AuditLogsService,
+    private tokensService: TokensService,
   ) {}
 
   async updateRemarks(
@@ -184,6 +186,21 @@ export class EnrollmentsService {
           classRatio: currEnrollment.classRatio,
         },
       });
+    }
+
+    // Transfer any available makeup tokens from old enrollment to new enrollment
+    const transferredTokens = await tx.makeUpToken.updateMany({
+      where: { enrollmentId, status: "available" },
+      data: { enrollmentId: newEnrollment.id },
+    });
+    // If no available tokens were transferred and new enrollment has no tokens, auto-grant
+    if (!transferredTokens || transferredTokens.count === 0) {
+      const existingTokensCount = await tx.makeUpToken.count({
+        where: { enrollmentId: newEnrollment.id },
+      });
+      if (!existingTokensCount || existingTokensCount === 0) {
+        await this.tokensService.autoGrantTokens(newEnrollment.id, tx);
+      }
     }
 
     // Map sessions and identify which new sessions should have attendance vs skips
@@ -361,6 +378,9 @@ export class EnrollmentsService {
           classRatio,
         },
       });
+
+      // Auto-grant makeup tokens for the enrollment
+      await this.tokensService.autoGrantTokens(enrollment.id, tx);
 
       // Create skips if any
       let sessionIds: string[] = [];
