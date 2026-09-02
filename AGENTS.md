@@ -55,10 +55,9 @@ swan-swim-management/
   * Class offerings support different instructor-to-student ratios (e.g., 1:1 private, 2:1 semi-private, 3:1 group).
   * Weighted capacity differs from raw headcount. Always use standard calculation helpers when computing capacity percentages on the dashboard or schedule grid.
 
-### C. BigInt Primary & Foreign Keys
-* All database IDs are `BigInt`.
-* **JSON Serialization**: NestJS serializes `BigInt` as string via the global prototype patch in `apps/api/src/main.ts`.
-* **API Payload Handling**: When receiving IDs from JSON payloads, parse with `BigInt(id)` before passing to Prisma query filters.
+### C. Database Primary & Foreign Keys
+* All database IDs must use `cuid()` strings (`@default(cuid())` in Prisma).
+* Do not use `uuid()` or `BigInt` for primary keys to ensure chronologically sortable string IDs across the monorepo.
 
 ### D. Financial & Invoicing Rules
 * Multi-item invoice generation (tuition, registration fees, sibling discounts) must always be wrapped in Prisma transactions (`prisma.$transaction`).

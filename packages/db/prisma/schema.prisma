@@ -166,8 +166,6 @@ model ClassSession {
 
   @@unique([offeringId, date])
   @@index([date])
-  @@index([offeringId, date])
-  @@index([offeringId])
 }
 
 model Enrollment {
@@ -202,7 +200,6 @@ model Enrollment {
 
   @@unique([offeringId, studentId], name: "offeringId_studentId")
   @@index([studentId])
-  @@index([offeringId])
   @@index([offeringId, enrollDate])
   @@index([offeringId, endDate])
   @@index([createdBy])
@@ -225,8 +222,6 @@ model EnrollmentSkip {
   @@unique([enrollmentId, classSessionId])
   @@index([classSessionId])
   @@index([createdBy])
-  @@index([enrollmentId])
-  @@index([enrollmentId, classSessionId])
 }
 
 model Attendance {
@@ -247,8 +242,6 @@ model Attendance {
   @@unique([enrollmentId, classSessionId], name: "enrollmentId_classSessionId")
   @@index([classSessionId])
   @@index([markedBy])
-  @@index([enrollmentId])
-  @@index([enrollmentId, classSessionId])
   @@index([classSessionId, status])
 }
 
@@ -385,7 +378,6 @@ model MakeUpBooking {
   @@index([classSessionId])
   @@index([createdBy])
   @@index([classSessionId, status])
-  @@index([studentId])
 }
 
 model MakeUpToken {
