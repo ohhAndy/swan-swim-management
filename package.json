@@ -16,6 +16,8 @@
     "db:push": "npm --prefix packages/db run push",
     "db:studio": "npm --prefix packages/db run studio",
     "check-types": "tsc --noEmit",
+    "env:dev": "cp packages/db/.env.dev packages/db/.env && cp apps/api/.env.dev apps/api/.env && cp apps/web/.env.local.dev apps/web/.env.local && echo 'Switched to DEV environment'",
+    "env:prod": "cp packages/db/.env.prod packages/db/.env && cp apps/api/.env.prod apps/api/.env && cp apps/web/.env.local.prod apps/web/.env.local && echo 'Switched to PROD environment'",
     "postinstall": "npm run db:generate"
   },
   "devDependencies": {

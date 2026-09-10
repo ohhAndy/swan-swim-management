@@ -18,8 +18,8 @@ build/
 npm-debug.log*
 
 # local env files
-.env*.local
-.env
+.env*
+!.env.example
 
 # vercel
 .vercel
@@ -30,6 +30,7 @@ next-env.d.ts
 
 # backups
 backups/
+scripts/clone-prod-to-dev.sh
 
-# local agent configs
-.agents/**/mcp_config.json
+# local agent configs & skills
+.agents/
