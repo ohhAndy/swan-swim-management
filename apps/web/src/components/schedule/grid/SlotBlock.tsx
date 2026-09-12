@@ -106,7 +106,7 @@ export function SlotBlock({
       );
     } catch (error) {
       console.error("Failed to upsert attendance:", error);
-      toast.error("Failed to update attendance");
+      throw error;
     }
   };
 
@@ -118,7 +118,7 @@ export function SlotBlock({
       );
     } catch (error) {
       console.error("Failed to update makeup status:", error);
-      toast.error("Failed to update makeup status");
+      throw error;
     }
   };
 
@@ -136,7 +136,7 @@ export function SlotBlock({
       );
     } catch (error) {
       console.error("Failed to update trial status:", error);
-      toast.error("Failed to update trial status");
+      throw error;
     }
   };
 

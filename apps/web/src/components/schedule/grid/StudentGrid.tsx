@@ -201,7 +201,9 @@ export function StudentGrid({
       await onAttendanceUpdate(enrollmentId, sessionId, newStatus);
     } catch (error) {
       console.error("Failed to Update Attendance", error);
-      toast.error("Failed to update attendance");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update attendance",
+      );
       setAttnOverrides((m) => {
         const n = { ...m };
         delete n[overrideKey];
@@ -229,7 +231,9 @@ export function StudentGrid({
       await onMakeUpUpdate(makeUpId, newStatus);
     } catch (error) {
       console.error("Failed to update make-up:", error);
-      toast.error("Failed to update make-up");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update make-up",
+      );
       setMakeupOverrides((m) => {
         const n = { ...m };
         delete n[makeUpId];
@@ -257,7 +261,9 @@ export function StudentGrid({
       await onTrialUpdate(trialId, newStatus);
     } catch (error) {
       console.error("Failed to update trial:", error);
-      toast.error("Failed to update trial");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update trial",
+      );
       setTrialOverrides((m) => {
         const n = { ...m };
         delete n[trialId];
@@ -278,7 +284,9 @@ export function StudentGrid({
       await onRemarksUpdate(enrollmentId, remarks);
     } catch (error) {
       console.error("Failed to update remarks:", error);
-      toast.error("Failed to update remarks");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update remarks",
+      );
     } finally {
       setUpdating(null);
     }

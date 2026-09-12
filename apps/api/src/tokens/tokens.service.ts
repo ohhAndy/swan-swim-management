@@ -481,6 +481,12 @@ export class TokensService {
 
     if (!activeOverride) return false;
 
+    // Detach the token from the cancelled booking first so the @unique constraint on tokenId is not violated
+    await tx.makeUpBooking.update({
+      where: { id: cancelledBooking.id },
+      data: { tokenId: null },
+    });
+
     // Transfer the token to the override booking and clear isOverride
     await tx.makeUpBooking.update({
       where: { id: activeOverride.id },

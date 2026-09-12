@@ -67,7 +67,7 @@ export function DailyClassRoster({
       await onLevelUpdate(studentId, levelId, levelName);
     } catch (e) {
       console.error(e);
-      toast.error("Failed to update level");
+      toast.error(e instanceof Error ? e.message : "Failed to update level");
     } finally {
       setUpdating(null);
     }
@@ -80,7 +80,7 @@ export function DailyClassRoster({
       await onAttendanceUpdate(item, status);
     } catch (e) {
       console.error(e);
-      toast.error("Failed to update status");
+      toast.error(e instanceof Error ? e.message : "Failed to update status");
     } finally {
       setUpdating(null);
     }

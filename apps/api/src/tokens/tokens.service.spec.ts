@@ -170,7 +170,11 @@ describe("TokensService", () => {
       );
 
       expect(result).toBe(true);
-      expect(prismaMock.makeUpBooking.update).toHaveBeenCalledWith({
+      expect(prismaMock.makeUpBooking.update).toHaveBeenNthCalledWith(1, {
+        where: { id: "bk_cancelled" },
+        data: { tokenId: null },
+      });
+      expect(prismaMock.makeUpBooking.update).toHaveBeenNthCalledWith(2, {
         where: { id: "bk_override" },
         data: {
           tokenId: "tok_freed",

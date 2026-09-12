@@ -197,5 +197,30 @@ describe("AttendanceService", () => {
         where: { id: "mk1" },
       });
     });
+
+    it("should not restore token when override absorbs it upon deletion", async () => {
+      tokensServiceMock.reconcileTokenOnCancellation = jest.fn().mockResolvedValue(true);
+
+      prismaMock.makeUpBooking.findUnique.mockResolvedValue({
+        id: "mk1",
+        studentId: "std1",
+        tokenId: "tok1",
+        classSessionId: "sess1",
+        status: "scheduled",
+        classSession: { offering: { termId: "term1" } },
+      } as unknown as Awaited<ReturnType<typeof prismaMock.makeUpBooking.findUnique>>);
+
+      const result = await service.updateMakeup(
+        { makeUpId: "mk1", status: null },
+        mockStaffUser,
+      );
+
+      expect(result).toEqual({ success: true });
+      expect(tokensServiceMock.reconcileTokenOnCancellation).toHaveBeenCalled();
+      expect(prismaMock.makeUpToken.update).not.toHaveBeenCalled();
+      expect(prismaMock.makeUpBooking.delete).toHaveBeenCalledWith({
+        where: { id: "mk1" },
+      });
+    });
   });
 });
