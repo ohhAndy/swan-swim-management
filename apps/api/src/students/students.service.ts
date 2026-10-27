@@ -373,6 +373,80 @@ export class StudentsService {
         },
         createdAt: true,
         updatedAt: true,
+        memberships: {
+          select: {
+            id: true,
+            studentId: true,
+            seasonTermId: true,
+            seasonTerm: {
+              select: {
+                id: true,
+                name: true,
+                startDate: true,
+                endDate: true,
+                location: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+            status: true,
+            startDate: true,
+            endDate: true,
+            annualRegFee: true,
+            annualRegPaid: true,
+            monthlyPracticeFee: true,
+            allowedLocationIds: true,
+            notes: true,
+            createdAt: true,
+            updatedAt: true,
+            createdByUser: {
+              select: {
+                fullName: true,
+              },
+            },
+          },
+          orderBy: { startDate: "desc" },
+        },
+        attendances: {
+          where: {
+            enrollmentId: null,
+          },
+          select: {
+            id: true,
+            status: true,
+            markedAt: true,
+            acknowledgedOverdue: true,
+            classSession: {
+              select: {
+                id: true,
+                date: true,
+                startTime: true,
+                endTime: true,
+                offering: {
+                  select: {
+                    id: true,
+                    title: true,
+                    term: {
+                      select: {
+                        name: true,
+                        location: {
+                          select: {
+                            id: true,
+                            name: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { classSession: { date: "desc" } },
+        },
       },
     });
     if (!student) throw new NotFoundException("Student not found");

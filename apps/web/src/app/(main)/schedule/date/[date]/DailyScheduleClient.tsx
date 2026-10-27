@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { updateReportCardStatus } from "@/lib/api/client/enrollments";
 import { useRouter } from "next/navigation";
 import type { RosterItem } from "@/components/schedule/roster";
-import { DailyClassRoster } from "@/components/schedule/roster";
+import { DailyClassRoster, PracticeCheckIn } from "@/components/schedule/roster";
 import { StaffRole } from "@/lib/auth/permissions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
   Clock,
@@ -19,6 +20,7 @@ import {
   Check,
   X,
   Pencil,
+  Waves,
 } from "lucide-react";
 import {
   updateMakeupStatus,
@@ -39,7 +41,7 @@ export interface DailyClass {
   termId: string;
   termName: string;
   title: string;
-  type: "regular" | "flexible";
+  type: "regular" | "flexible" | "practice";
   time: string;
   instructors: InstructorInfo[];
   capacity: number;
@@ -216,6 +218,12 @@ export default function DailyScheduleClient({
                                       <CardTitle className="text-lg">
                                         {cls.title}
                                       </CardTitle>
+                                      {(cls.title.toLowerCase().includes("practice") ||
+                                        cls.title.toLowerCase().includes("team")) && (
+                                        <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">
+                                          Team Practice
+                                        </Badge>
+                                      )}
                                       {canEditTitle && (
                                         <Button
                                           size="icon"
@@ -265,75 +273,171 @@ export default function DailyScheduleClient({
                             </div>
                           </CardHeader>
                           <CardContent className="p-0">
-                            <DailyClassRoster
-                              roster={cls.roster}
-                              termName={cls.termName}
-                              instructorName={
-                                cls.instructors.length > 0
-                                  ? cls.instructors
-                                      .map((i) => i.staffName)
-                                      .join(", ")
-                                  : "No Instructor"
-                              }
-                              onLevelUpdate={
-                                canEditLevel ? handleLevelUpdate : undefined
-                              }
-                              onAttendanceUpdate={async (item, status) => {
-                                if (item.type === "student") {
-                                  // cls.id is the classSessionId
-                                  await upsertAttendance(
-                                    item.id,
-                                    cls.id,
-                                    status as
-                                      | "present"
-                                      | "absent"
-                                      | "excused"
-                                      | "",
-                                  );
-                                } else if (item.type === "makeup") {
-                                  await updateMakeupStatus(
-                                    item.id,
-                                    status as
-                                      | "scheduled"
-                                      | "requested"
-                                      | "cancelled"
-                                      | "attended"
-                                      | "missed"
-                                      | "",
-                                  ); // item.id is makeupId
-                                } else if (item.type === "trial") {
-                                  await updateTrialStatus(
-                                    item.id,
-                                    status as TrialStatus | "",
-                                  ); // item.id is bookingId
+                            {cls.type === "practice" ? (
+                              <Tabs defaultValue="practice" className="w-full">
+                                <div className="px-4 pt-3 border-b bg-slate-50/50">
+                                  <TabsList className="grid w-full max-w-xs grid-cols-2">
+                                    <TabsTrigger
+                                      value="practice"
+                                      className="text-xs flex items-center gap-1.5"
+                                    >
+                                      <Waves className="w-3.5 h-3.5 text-blue-600" />
+                                      Deck Check-In
+                                    </TabsTrigger>
+                                    <TabsTrigger value="roster" className="text-xs">
+                                      Enrolled ({cls.roster.length})
+                                    </TabsTrigger>
+                                  </TabsList>
+                                </div>
+                                <TabsContent value="practice" className="p-4 m-0">
+                                  <PracticeCheckIn
+                                    sessionId={cls.id}
+                                    userRole={userRole}
+                                    onAttendanceChanged={() => router.refresh()}
+                                  />
+                                </TabsContent>
+                                <TabsContent value="roster" className="m-0">
+                                  <DailyClassRoster
+                                    roster={cls.roster}
+                                    termName={cls.termName}
+                                    instructorName={
+                                      cls.instructors.length > 0
+                                        ? cls.instructors
+                                            .map((i) => i.staffName)
+                                            .join(", ")
+                                        : "No Instructor"
+                                    }
+                                    onLevelUpdate={
+                                      canEditLevel ? handleLevelUpdate : undefined
+                                    }
+                                    onAttendanceUpdate={async (item, status) => {
+                                      if (item.type === "student") {
+                                        await upsertAttendance(
+                                          item.id,
+                                          cls.id,
+                                          status as
+                                            | "present"
+                                            | "absent"
+                                            | "excused"
+                                            | "",
+                                        );
+                                      } else if (item.type === "makeup") {
+                                        await updateMakeupStatus(
+                                          item.id,
+                                          status as
+                                            | "scheduled"
+                                            | "requested"
+                                            | "cancelled"
+                                            | "attended"
+                                            | "missed"
+                                            | "",
+                                        );
+                                      } else if (item.type === "trial") {
+                                        await updateTrialStatus(
+                                          item.id,
+                                          status as TrialStatus | "",
+                                        );
+                                      }
+                                      router.refresh();
+                                    }}
+                                    onRemarksUpdate={async (item, remarks) => {
+                                      if (
+                                        (item.type === "student" ||
+                                          item.type === "makeup") &&
+                                        item.studentId
+                                      ) {
+                                        await updateStudentNotes(
+                                          item.studentId,
+                                          remarks,
+                                        );
+                                        router.refresh();
+                                      }
+                                    }}
+                                    onReportCardUpdate={async (
+                                      enrollmentId,
+                                      status,
+                                    ) => {
+                                      await updateReportCardStatus(
+                                        enrollmentId,
+                                        status,
+                                      );
+                                      router.refresh();
+                                    }}
+                                    userRole={userRole as StaffRole}
+                                  />
+                                </TabsContent>
+                              </Tabs>
+                            ) : (
+                              <DailyClassRoster
+                                roster={cls.roster}
+                                termName={cls.termName}
+                                instructorName={
+                                  cls.instructors.length > 0
+                                    ? cls.instructors
+                                        .map((i) => i.staffName)
+                                        .join(", ")
+                                    : "No Instructor"
                                 }
-                                router.refresh();
-                              }}
-                              onRemarksUpdate={async (item, remarks) => {
-                                if (
-                                  (item.type === "student" ||
-                                    item.type === "makeup") &&
-                                  item.studentId
-                                ) {
-                                  await updateStudentNotes(
-                                    item.studentId,
-                                    remarks,
-                                  );
+                                onLevelUpdate={
+                                  canEditLevel ? handleLevelUpdate : undefined
+                                }
+                                onAttendanceUpdate={async (item, status) => {
+                                  if (item.type === "student") {
+                                    // cls.id is the classSessionId
+                                    await upsertAttendance(
+                                      item.id,
+                                      cls.id,
+                                      status as
+                                        | "present"
+                                        | "absent"
+                                        | "excused"
+                                        | "",
+                                    );
+                                  } else if (item.type === "makeup") {
+                                    await updateMakeupStatus(
+                                      item.id,
+                                      status as
+                                        | "scheduled"
+                                        | "requested"
+                                        | "cancelled"
+                                        | "attended"
+                                        | "missed"
+                                        | "",
+                                    ); // item.id is makeupId
+                                  } else if (item.type === "trial") {
+                                    await updateTrialStatus(
+                                      item.id,
+                                      status as TrialStatus | "",
+                                    ); // item.id is bookingId
+                                  }
                                   router.refresh();
-                                }
-                              }}
-                              onReportCardUpdate={async (
-                                enrollmentId,
-                                status,
-                              ) => {
-                                await updateReportCardStatus(
+                                }}
+                                onRemarksUpdate={async (item, remarks) => {
+                                  if (
+                                    (item.type === "student" ||
+                                      item.type === "makeup") &&
+                                    item.studentId
+                                  ) {
+                                    await updateStudentNotes(
+                                      item.studentId,
+                                      remarks,
+                                    );
+                                    router.refresh();
+                                  }
+                                }}
+                                onReportCardUpdate={async (
                                   enrollmentId,
                                   status,
-                                );
-                                router.refresh();
-                              }}
-                              userRole={userRole as StaffRole}
-                            />
+                                ) => {
+                                  await updateReportCardStatus(
+                                    enrollmentId,
+                                    status,
+                                  );
+                                  router.refresh();
+                                }}
+                                userRole={userRole as StaffRole}
+                              />
+                            )}
                           </CardContent>
                         </Card>
                       ))}

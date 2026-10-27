@@ -147,6 +147,11 @@ export class TermsService {
             OR: [{ locationId }, { locationId: null }],
           }
         : undefined,
+      include: {
+        location: {
+          select: { id: true, name: true },
+        },
+      },
       orderBy: { startDate: "desc" },
     });
 
@@ -156,6 +161,7 @@ export class TermsService {
       startDate: t.startDate,
       endDate: t.endDate,
       locationId: t.locationId ? t.locationId.toString() : null,
+      location: t.location ? { id: t.location.id, name: t.location.name } : null,
     }));
   }
 
@@ -172,7 +178,7 @@ export class TermsService {
 
   async getDefaultSlots(termId: string): Promise<(string | null)[]> {
     const offerings = await this.prisma.classOffering.findMany({
-      where: { termId, type: "regular" },
+      where: { termId, type: { in: ["regular", "practice"] } },
       select: { weekday: true, startTime: true, endTime: true },
       orderBy: [{ weekday: "asc" }, { startTime: "asc" }],
     });
@@ -190,7 +196,7 @@ export class TermsService {
 
   async getSlotsForWeekday(termId: string, weekday: number): Promise<string[]> {
     const offerings = await this.prisma.classOffering.findMany({
-      where: { termId, weekday, type: "regular" },
+      where: { termId, weekday, type: { in: ["regular", "practice"] } },
       select: { startTime: true, endTime: true },
       distinct: ["startTime", "endTime"],
       orderBy: { startTime: "asc" },
@@ -201,7 +207,7 @@ export class TermsService {
 
   async getDetailedSlotsForWeekday(termId: string, weekday: number) {
     const offerings = await this.prisma.classOffering.findMany({
-      where: { termId, weekday, type: "regular" },
+      where: { termId, weekday, type: { in: ["regular", "practice"] } },
       select: {
         id: true,
         startTime: true,

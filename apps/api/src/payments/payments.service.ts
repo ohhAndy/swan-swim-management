@@ -158,6 +158,11 @@ export class PaymentsService {
       data: { status: newStatus },
     });
 
+    await this.syncAnnualRegistrationStatus(
+      createPaymentDto.invoiceId,
+      newStatus === "paid",
+    );
+
     return payment;
   }
 
@@ -248,6 +253,11 @@ export class PaymentsService {
       where: { id: payment.invoiceId },
       data: { status: newStatus },
     });
+
+    await this.syncAnnualRegistrationStatus(
+      payment.invoiceId,
+      newStatus === "paid",
+    );
 
     // Log the deletion
     // Payment is deleted, but we can log that it happened.
@@ -349,6 +359,11 @@ export class PaymentsService {
         where: { id: payment.invoiceId },
         data: { status: newStatus },
       });
+
+      await this.syncAnnualRegistrationStatus(
+        payment.invoiceId,
+        newStatus === "paid",
+      );
     }
 
     // Log Audit
@@ -367,5 +382,49 @@ export class PaymentsService {
     }
 
     return updatedPayment;
+  }
+
+  private async syncAnnualRegistrationStatus(
+    invoiceId: string,
+    isPaid: boolean,
+  ) {
+    try {
+      const annualRegItems =
+        (await this.prisma.invoiceLineItem.findMany({
+          where: {
+            invoiceId,
+            feeType: "ANNUAL_REGISTRATION",
+            membershipId: { not: null },
+          },
+        })) || [];
+
+      for (const item of annualRegItems) {
+        if (!item.membershipId) continue;
+
+        if (isPaid) {
+          await this.prisma.studentMembership.update({
+            where: { id: item.membershipId },
+            data: { annualRegPaid: true },
+          });
+        } else {
+          const otherPaid = await this.prisma.invoiceLineItem.findFirst({
+            where: {
+              membershipId: item.membershipId,
+              feeType: "ANNUAL_REGISTRATION",
+              invoiceId: { not: invoiceId },
+              invoice: { status: "paid" },
+            },
+          });
+          if (!otherPaid) {
+            await this.prisma.studentMembership.update({
+              where: { id: item.membershipId },
+              data: { annualRegPaid: false },
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to sync annual registration status:", err);
+    }
   }
 }

@@ -11,6 +11,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -39,6 +46,7 @@ export function AddClassDialog({
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [offeringType, setOfferingType] = useState<"regular" | "practice">("regular");
   const [title, setTitle] = useState("");
   const [capacity, setCapacity] = useState("3");
   const [customTime, setCustomTime] = useState("09:00");
@@ -55,6 +63,7 @@ export function AddClassDialog({
     try {
       await createOffering({
         termId,
+        type: offeringType,
         weekday,
         startTime: timeToUse,
         title,
@@ -63,6 +72,7 @@ export function AddClassDialog({
       });
       setOpen(false);
       setTitle("");
+      setOfferingType("regular");
       setCapacity("3");
       setDurationMinutes("45");
       startTransition(() => {
@@ -126,10 +136,34 @@ export function AddClassDialog({
             </div>
           )}
           <div className="grid gap-2">
+            <Label htmlFor="classType">Offering Type</Label>
+            <Select
+              value={offeringType}
+              onValueChange={(val: "regular" | "practice") => {
+                setOfferingType(val);
+                if (val === "practice") {
+                  if (!title || title === "Preschool A") setTitle("Team Practice");
+                  if (capacity === "3") setCapacity("12");
+                } else {
+                  if (title === "Team Practice") setTitle("");
+                  if (capacity === "12") setCapacity("3");
+                }
+              }}
+            >
+              <SelectTrigger id="classType">
+                <SelectValue placeholder="Select offering type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="regular">Regular Class</SelectItem>
+                <SelectItem value="practice">Practice / Swim Team (Deck Check-In)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
             <Label htmlFor="title">Title (Level)</Label>
             <Input
               id="title"
-              placeholder="e.g. Preschool A"
+              placeholder={offeringType === "practice" ? "e.g. Swim Team Practice" : "e.g. Preschool A"}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />

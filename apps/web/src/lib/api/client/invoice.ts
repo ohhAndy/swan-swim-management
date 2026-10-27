@@ -31,6 +31,16 @@ export interface CreateInvoiceData {
   createdAt?: string;
   lineItems: {
     enrollmentId?: string;
+    membershipId?: string;
+    inventoryItemId?: string;
+    feeType?:
+      | "TUITION"
+      | "ANNUAL_REGISTRATION"
+      | "MONTHLY_PRACTICE"
+      | "CLASS_PASS"
+      | "INVENTORY"
+      | "CUSTOM";
+    billingPeriod?: string;
     description: string;
     amount: number;
   }[];

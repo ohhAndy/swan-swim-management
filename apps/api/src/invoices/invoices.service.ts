@@ -118,7 +118,7 @@ export class InvoicesService {
         }
       }
 
-      return tx.invoice.create({
+      const createdInvoice = await tx.invoice.create({
         data: {
           invoiceNumber: finalInvoiceNumber,
           guardianId: createInvoiceDto.guardianId || null,
@@ -133,7 +133,10 @@ export class InvoicesService {
           lineItems: {
             create: lineItems.map((item) => ({
               enrollmentId: item.enrollmentId,
+              membershipId: item.membershipId,
               inventoryItemId: item.inventoryItemId,
+              feeType: item.feeType ?? "TUITION",
+              billingPeriod: item.billingPeriod,
               description: item.description,
               amount: item.amount,
             })),
@@ -152,6 +155,12 @@ export class InvoicesService {
                   },
                 },
               },
+              membership: {
+                include: {
+                  student: true,
+                  seasonTerm: true,
+                },
+              },
             },
           },
           guardian: true,
@@ -159,6 +168,8 @@ export class InvoicesService {
           location: true,
         },
       });
+
+      return createdInvoice;
     });
 
     await this.auditLogsService.create({
@@ -192,6 +203,12 @@ export class InvoicesService {
                     term: true,
                   },
                 },
+              },
+            },
+            membership: {
+              include: {
+                student: true,
+                seasonTerm: true,
               },
             },
           },

@@ -45,6 +45,7 @@ export type SessionSummary = {
   offeringId: string;
   offeringTitle: string;
   offeringNotes: string | null;
+  offeringType?: "regular" | "flexible" | "practice";
   instructors: InstructorInfo[];
 };
 

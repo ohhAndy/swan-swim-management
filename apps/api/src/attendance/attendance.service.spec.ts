@@ -223,4 +223,320 @@ describe("AttendanceService", () => {
       });
     });
   });
+
+  describe("practiceCheckIn & getPracticeRoster", () => {
+    const mockStaffUser: RequestStaffUser = {
+      id: "staff1",
+      authId: "user1",
+      email: "test@test.com",
+      fullName: "Test Staff",
+      role: "admin",
+      active: true,
+      accessSchedule: {},
+      accessibleLocations: [{ id: "loc1" }],
+    };
+
+    it("should throw NotFoundException if class session not found", async () => {
+      prismaMock.classSession.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.practiceCheckIn(
+          { classSessionId: "sess_999", studentId: "stu_1" },
+          mockStaffUser,
+        ),
+      ).rejects.toThrow();
+    });
+
+    it("should reject check-in if pool capacity is reached", async () => {
+      prismaMock.classSession.findUnique.mockResolvedValue({
+        id: "sess_1",
+        date: new Date("2026-10-14"),
+        offering: {
+          termId: "term_1",
+          capacity: 2,
+          term: { locationId: "loc_1" },
+        },
+        attendance: [{ studentId: "s1" }, { studentId: "s2" }],
+      } as any);
+
+      prismaMock.studentMembership.findFirst.mockResolvedValue({
+        id: "mem_1",
+        studentId: "stu_1",
+        seasonTermId: "term_1",
+        allowedLocationIds: ["loc_1"],
+        startDate: new Date("2026-09-01"),
+        status: "active",
+        lineItems: [],
+      } as any);
+
+      await expect(
+        service.practiceCheckIn(
+          { classSessionId: "sess_1", studentId: "stu_1" },
+          mockStaffUser,
+        ),
+      ).rejects.toThrow("Pool capacity reached");
+    });
+
+    it("should require staff acknowledgment if balance is 1-10 days overdue", async () => {
+      prismaMock.classSession.findUnique.mockResolvedValue({
+        id: "sess_1",
+        date: new Date("2026-10-14"),
+        offering: {
+          termId: "term_1",
+          capacity: 12,
+          term: { locationId: "loc_1" },
+        },
+        attendance: [],
+      } as any);
+
+      // Overdue invoice created 5 days ago with due date 5 days ago
+      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+      prismaMock.studentMembership.findFirst.mockResolvedValue({
+        id: "mem_1",
+        studentId: "stu_1",
+        seasonTermId: "term_1",
+        allowedLocationIds: ["loc_1"],
+        startDate: new Date("2026-09-01"),
+        status: "active",
+        lineItems: [
+          {
+            feeType: "MONTHLY_PRACTICE",
+            billingPeriod: "2026-10",
+            invoice: {
+              id: "inv_1",
+              status: "partial",
+              createdAt: fiveDaysAgo,
+              totalAmount: 220,
+              payments: [],
+            },
+          },
+        ],
+      } as any);
+
+      // Without acknowledgeOverdue: true
+      await expect(
+        service.practiceCheckIn(
+          { classSessionId: "sess_1", studentId: "stu_1", acknowledgeOverdue: false },
+          mockStaffUser,
+        ),
+      ).rejects.toThrow("Staff acknowledgment required");
+    });
+
+    it("should allow check-in when staff acknowledges overdue payment", async () => {
+      prismaMock.classSession.findUnique.mockResolvedValue({
+        id: "sess_1",
+        date: new Date("2026-10-14"),
+        offering: {
+          termId: "term_1",
+          capacity: 12,
+          term: { locationId: "loc_1" },
+        },
+        attendance: [],
+      } as any);
+
+      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+      prismaMock.studentMembership.findFirst.mockResolvedValue({
+        id: "mem_1",
+        studentId: "stu_1",
+        student: { firstName: "Emma", lastName: "Wilson" },
+        seasonTermId: "term_1",
+        allowedLocationIds: ["loc_1"],
+        startDate: new Date("2026-09-01"),
+        status: "active",
+        lineItems: [
+          {
+            feeType: "MONTHLY_PRACTICE",
+            billingPeriod: "2026-10",
+            invoice: {
+              id: "inv_1",
+              status: "partial",
+              createdAt: fiveDaysAgo,
+              totalAmount: 220,
+              payments: [],
+            },
+          },
+        ],
+      } as any);
+
+      prismaMock.attendance.upsert.mockResolvedValue({
+        id: "att_1",
+        studentId: "stu_1",
+        classSessionId: "sess_1",
+        membershipId: "mem_1",
+        status: "present",
+        acknowledgedOverdue: true,
+      } as any);
+
+      const res = await service.practiceCheckIn(
+        { classSessionId: "sess_1", studentId: "stu_1", acknowledgeOverdue: true },
+        mockStaffUser,
+      );
+
+      expect(res.attendance?.status).toBe("present");
+      expect(res.attendance?.acknowledgedOverdue).toBe(true);
+    });
+
+    it("should lock account and throw ForbiddenException for instructor if overdue > 10 days", async () => {
+      const mockCoach: RequestStaffUser = {
+        ...mockStaffUser,
+        role: "instructor",
+      };
+
+      prismaMock.classSession.findUnique.mockResolvedValue({
+        id: "sess_1",
+        date: new Date("2026-10-14"),
+        offering: {
+          termId: "term_1",
+          capacity: 12,
+          term: { locationId: "loc_1" },
+        },
+        attendance: [],
+      } as any);
+
+      // Overdue 15 days ago
+      const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+      prismaMock.studentMembership.findFirst.mockResolvedValue({
+        id: "mem_1",
+        studentId: "stu_1",
+        student: { firstName: "Emma", lastName: "Wilson" },
+        seasonTermId: "term_1",
+        allowedLocationIds: ["loc_1"],
+        startDate: new Date("2026-09-01"),
+        status: "active",
+        lineItems: [
+          {
+            feeType: "MONTHLY_PRACTICE",
+            billingPeriod: "2026-10",
+            invoice: {
+              id: "inv_1",
+              status: "partial",
+              createdAt: fifteenDaysAgo,
+              totalAmount: 220,
+              payments: [],
+            },
+          },
+        ],
+      } as any);
+
+      await expect(
+        service.practiceCheckIn(
+          { classSessionId: "sess_1", studentId: "stu_1", acknowledgeOverdue: true },
+          mockCoach,
+        ),
+      ).rejects.toThrow("Account is locked");
+    });
+
+    it("should allow supervisor to grant override for locked account (> 10 days overdue)", async () => {
+      const mockSupervisor: RequestStaffUser = {
+        ...mockStaffUser,
+        role: "supervisor",
+      };
+
+      prismaMock.classSession.findUnique.mockResolvedValue({
+        id: "sess_1",
+        date: new Date("2026-10-14"),
+        offering: {
+          termId: "term_1",
+          capacity: 12,
+          term: { locationId: "loc_1" },
+        },
+        attendance: [],
+      } as any);
+
+      const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+      prismaMock.studentMembership.findFirst.mockResolvedValue({
+        id: "mem_1",
+        studentId: "stu_1",
+        student: { firstName: "Emma", lastName: "Wilson" },
+        seasonTermId: "term_1",
+        allowedLocationIds: ["loc_1"],
+        startDate: new Date("2026-09-01"),
+        status: "active",
+        lineItems: [
+          {
+            feeType: "MONTHLY_PRACTICE",
+            billingPeriod: "2026-10",
+            invoice: {
+              id: "inv_1",
+              status: "partial",
+              createdAt: fifteenDaysAgo,
+              totalAmount: 220,
+              payments: [],
+            },
+          },
+        ],
+      } as any);
+
+      prismaMock.attendance.upsert.mockResolvedValue({
+        id: "att_1",
+        studentId: "stu_1",
+        classSessionId: "sess_1",
+        membershipId: "mem_1",
+        status: "present",
+        acknowledgedOverdue: true,
+      } as any);
+
+      const res = await service.practiceCheckIn(
+        {
+          classSessionId: "sess_1",
+          studentId: "stu_1",
+          overrideDelinquency: true,
+        },
+        mockSupervisor,
+      );
+
+      expect(res.attendance?.status).toBe("present");
+      expect(res.attendance?.acknowledgedOverdue).toBe(true);
+    });
+
+    it("should deduplicate multi-item invoices when calculating balance", async () => {
+      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+      const sharedInvoice = {
+        id: "inv_shared",
+        status: "partial",
+        createdAt: fiveDaysAgo,
+        totalAmount: 370,
+        payments: [{ amount: 100 }],
+      };
+
+      prismaMock.classSession.findUnique.mockResolvedValue({
+        id: "sess_1",
+        date: new Date("2026-10-14"),
+        offering: {
+          termId: "term_1",
+          capacity: 12,
+          term: { locationId: "loc_1" },
+        },
+        attendance: [],
+      } as any);
+
+      prismaMock.studentMembership.findMany.mockResolvedValue([
+        {
+          id: "mem_1",
+          studentId: "stu_1",
+          student: { firstName: "Emma", lastName: "Wilson", level: "Senior" },
+          seasonTermId: "term_1",
+          allowedLocationIds: ["loc_1"],
+          startDate: new Date("2026-09-01"),
+          status: "active",
+          lineItems: [
+            {
+              feeType: "ANNUAL_REGISTRATION",
+              invoice: sharedInvoice,
+            },
+            {
+              feeType: "MONTHLY_PRACTICE",
+              billingPeriod: "2026-10",
+              invoice: sharedInvoice,
+            },
+          ],
+        },
+      ] as any);
+
+      const roster = await service.getPracticeRoster("sess_1", mockStaffUser);
+      expect(roster.eligibleSwimmers).toHaveLength(1);
+      // Balance is 370 - 100 = 270 (NOT 270 * 2 = 540)
+      expect(roster.eligibleSwimmers[0].amountDue).toBe(270);
+    });
+  });
 });

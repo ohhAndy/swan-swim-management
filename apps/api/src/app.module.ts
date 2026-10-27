@@ -37,6 +37,7 @@ import { SkillsModule } from './skills/skills.module';
 import { ReportCardsModule } from './report-cards/report-cards.module';
 import { PublicModule } from './public/public.module';
 import { TrialRequestsModule } from './trial-requests/trial-requests.module';
+import { MembershipsModule } from './memberships/memberships.module';
 
 @Module({
   imports: [
@@ -83,6 +84,7 @@ import { TrialRequestsModule } from './trial-requests/trial-requests.module';
     ReportCardsModule,
     PublicModule,
     TrialRequestsModule,
+    MembershipsModule,
   ],
   providers: [
     {

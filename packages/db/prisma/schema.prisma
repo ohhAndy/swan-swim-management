@@ -91,6 +91,7 @@ model StaffUser {
   communicationsSent           CommunicationLog[]    @relation("CommunicationSentBy")
   trialRequestsReviewed        TrialRequest[]        @relation("TrialRequestReviewedBy")
   tokensGranted                MakeUpToken[]         @relation("TokenGrantedBy")
+  membershipsCreated           StudentMembership[]   @relation("MembershipCreatedBy")
 }
 
 model AuditLog {
@@ -120,6 +121,7 @@ model Term {
   createdBy      String?
   locationId     String?
   offerings      ClassOffering[]
+  memberships    StudentMembership[]
   createdByStaff StaffUser?      @relation("TermCreatedBy", fields: [createdBy], references: [id])
   location       Location?       @relation(fields: [locationId], references: [id])
 
@@ -225,24 +227,32 @@ model EnrollmentSkip {
 }
 
 model Attendance {
-  id             String           @id @default(cuid())
-  classSessionId String
-  enrollmentId   String
-  status         AttendanceStatus
-  notes          String?
-  markedAt       DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  markedBy       String?
-  updatedBy      String?
-  classSession   ClassSession     @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
-  enrollment     Enrollment       @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  markedByStaff  StaffUser?       @relation("AttendanceMarkedBy", fields: [markedBy], references: [id])
-  updatedByStaff StaffUser?       @relation("AttendanceUpdatedBy", fields: [updatedBy], references: [id])
+  id                  String             @id @default(cuid())
+  classSessionId      String
+  studentId           String?
+  enrollmentId        String?
+  membershipId        String?
+  status              AttendanceStatus
+  notes               String?
+  markedAt            DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  markedBy            String?
+  updatedBy           String?
+  acknowledgedOverdue Boolean            @default(false)
+  classSession        ClassSession       @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  enrollment          Enrollment?        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  student             Student?           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  membership          StudentMembership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  markedByStaff       StaffUser?         @relation("AttendanceMarkedBy", fields: [markedBy], references: [id])
+  updatedByStaff      StaffUser?         @relation("AttendanceUpdatedBy", fields: [updatedBy], references: [id])
 
   @@unique([enrollmentId, classSessionId], name: "enrollmentId_classSessionId")
+  @@unique([studentId, classSessionId], name: "studentId_classSessionId")
   @@index([classSessionId])
   @@index([markedBy])
   @@index([classSessionId, status])
+  @@index([studentId])
+  @@index([membershipId])
 }
 
 model Student {
@@ -262,6 +272,8 @@ model Student {
   notes              String?
   enrollments        Enrollment[]
   makeUps            MakeUpBooking[]
+  memberships        StudentMembership[]
+  attendances        Attendance[]
   createdByStaff     StaffUser?      @relation("StudentCreatedBy", fields: [createdBy], references: [id])
   guardian           Guardian        @relation(fields: [guardianId], references: [id])
   updatedByStaff     StaffUser?      @relation("StudentUpdatedBy", fields: [updatedBy], references: [id])
@@ -323,20 +335,26 @@ model Invoice {
 }
 
 model InvoiceLineItem {
-  id              String         @id @default(uuid())
+  id              String             @id @default(uuid())
   invoiceId       String
-  enrollmentId    String?        @unique
+  enrollmentId    String?            @unique
+  membershipId    String?
   inventoryItemId String?
+  feeType         LineItemFeeType    @default(TUITION)
+  billingPeriod   String?
   description     String
-  amount          Decimal        @db.Decimal(10, 2)
-  createdAt       DateTime       @default(now())
-  enrollment      Enrollment?    @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
-  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
-  invoice         Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount          Decimal            @db.Decimal(10, 2)
+  createdAt       DateTime           @default(now())
+  enrollment      Enrollment?        @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  membership      StudentMembership? @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+  inventoryItem   InventoryItem?     @relation(fields: [inventoryItemId], references: [id])
+  invoice         Invoice            @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
   @@index([enrollmentId])
+  @@index([membershipId])
   @@index([inventoryItemId])
+  @@index([billingPeriod])
 }
 
 model Payment {
@@ -484,6 +502,7 @@ enum EnrollmentStatus {
 enum OfferingType {
   regular
   flexible
+  practice
 }
 
 enum SessionStatus {
@@ -706,4 +725,47 @@ model CommunicationLog {
   @@index([status])
   @@index([createdAt])
   @@map("communication_logs")
+}
+
+model StudentMembership {
+  id                 String           @id @default(cuid())
+  studentId          String
+  seasonTermId       String
+  status             MembershipStatus @default(active)
+  startDate          DateTime         @db.Date
+  endDate            DateTime?        @db.Date
+  annualRegFee       Decimal          @db.Decimal(10, 2)
+  monthlyPracticeFee Decimal          @db.Decimal(10, 2)
+  annualRegPaid      Boolean          @default(false)
+  allowedLocationIds String[]
+  notes              String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  createdBy          String?
+
+  student            Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  seasonTerm         Term             @relation(fields: [seasonTermId], references: [id])
+  createdByUser      StaffUser?       @relation("MembershipCreatedBy", fields: [createdBy], references: [id])
+  lineItems          InvoiceLineItem[]
+  attendances        Attendance[]
+
+  @@index([studentId])
+  @@index([seasonTermId])
+  @@index([status])
+  @@map("student_memberships")
+}
+
+enum MembershipStatus {
+  active
+  paused
+  cancelled
+}
+
+enum LineItemFeeType {
+  TUITION
+  ANNUAL_REGISTRATION
+  MONTHLY_PRACTICE
+  CLASS_PASS
+  INVENTORY
+  CUSTOM
 }
