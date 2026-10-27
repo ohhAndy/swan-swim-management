@@ -169,54 +169,6 @@ export type Enrollment = Serialize<Prisma.EnrollmentGetPayload<{
   include: typeof _enrollmentInclude;
 }>>;
 
-export type StudentMembership = Serialize<Prisma.StudentMembershipGetPayload<{
-  include: {
-    seasonTerm: {
-      select: {
-        id: true;
-        name: true;
-        startDate: true;
-        endDate: true;
-        location: {
-          select: {
-            id: true;
-            name: true;
-          };
-        };
-      };
-    };
-    createdByUser: {
-      select: {
-        fullName: true;
-      };
-    };
-  };
-}>>;
-
-export type PracticeAttendance = {
-  id: string;
-  status: "present" | "absent" | "excused" | "late";
-  markedAt: string;
-  acknowledgedOverdue?: boolean | null;
-  classSession: {
-    id: string;
-    date: string;
-    startTime?: string | null;
-    endTime?: string | null;
-    offering: {
-      id: string;
-      title: string;
-      term?: {
-        name: string;
-        location?: {
-          id: string;
-          name: string;
-        } | null;
-      } | null;
-    };
-  };
-};
-
 export type Student = Serialize<Prisma.StudentGetPayload<{
   include: {
     guardian: true;
@@ -235,10 +187,7 @@ export type Student = Serialize<Prisma.StudentGetPayload<{
       };
     };
   };
-}>> & {
-  memberships?: StudentMembership[];
-  attendances?: PracticeAttendance[];
-};
+}>>;
 
 export type AuditLog = Serialize<Prisma.AuditLogGetPayload<{
   include: {

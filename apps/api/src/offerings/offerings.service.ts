@@ -19,21 +19,20 @@ export class OfferingsService {
 
   async updateOfferingInfo(
     offeringId: string,
-    body: { title?: string; type?: "regular" | "flexible" | "practice" },
+    body: { title: string },
     staffUser: RequestStaffUser,
   ) {
+
     const offering = await this.prisma.classOffering.findUnique({
       where: { id: offeringId },
     });
     if (!offering) throw new NotFoundException("Offering DNE");
 
-    const updateData: { title?: string; type?: "regular" | "flexible" | "practice" } = {};
-    if (body.title !== undefined) updateData.title = body.title;
-    if (body.type !== undefined) updateData.type = body.type;
-
     const updatedOffering = await this.prisma.classOffering.update({
       where: { id: offeringId },
-      data: updateData,
+      data: {
+        title: body.title,
+      },
     });
 
     await this.auditLogsService.create({
@@ -43,8 +42,8 @@ export class OfferingsService {
       entityId: updatedOffering.id,
       changes: {
         status: {
-          from: { title: offering.title, type: offering.type },
-          to: { title: updatedOffering.title, type: updatedOffering.type },
+          from: { title: offering.title },
+          to: { title: updatedOffering.title },
         },
       },
       metadata: {
@@ -104,7 +103,7 @@ export class OfferingsService {
   async createOffering(
     data: {
       termId: string;
-      type?: "regular" | "flexible" | "practice";
+      type?: "regular" | "flexible";
       weekday?: number;
       startTime?: string; // HH:MM
       title: string;

@@ -110,21 +110,17 @@ export async function getAvailableClassesForTransfer(
   return res.json();
 }
 
-export async function updateOfferingInfo(
-  offeringId: string,
-  data: string | { title?: string; type?: "regular" | "flexible" | "practice" },
-) {
-  const body = typeof data === "string" ? { title: data } : data;
+export async function updateOfferingInfo(offeringId: string, title: string) {
   const res = await clientFetch(`/offerings/${offeringId}`, {
     method: "PATCH",
-    body: JSON.stringify(body),
+    body: JSON.stringify({ title }),
   });
   return res.json();
 }
 
 export async function createOffering(payload: {
   termId: string;
-  type?: "regular" | "flexible" | "practice";
+  type?: "regular" | "flexible";
   weekday?: number;
   startTime?: string;
   title: string;

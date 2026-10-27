@@ -4,4 +4,3 @@ export { DailyClassRosterDesktop } from "./DailyClassRosterDesktop";
 export { DailyClassRosterMobile } from "./DailyClassRosterMobile";
 export { AttendanceButton } from "./AttendanceButton";
 export { PrintButton } from "./PrintButton";
-export { PracticeCheckIn } from "./PracticeCheckIn";

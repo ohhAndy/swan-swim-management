@@ -30,15 +30,6 @@ import {
   InvoiceCustomLineItems,
   CustomLineItem,
 } from "@/components/invoices/InvoiceCustomLineItems";
-import {
-  InvoiceMembershipFeesPicker,
-  getFeeItemKey,
-} from "@/components/invoices/InvoiceMembershipFeesPicker";
-import {
-  getUninvoicedMemberships,
-  UninvoicedMembershipItem,
-} from "@/lib/api/client/memberships";
-import type { CreateInvoiceData } from "@/lib/api/client/invoice";
 
 export default function CreateInvoiceForm() {
   const router = useRouter();
@@ -54,16 +45,6 @@ export default function CreateInvoiceForm() {
     new Set(),
   );
   const [skipGuardian, setSkipGuardian] = useState(false);
-
-  const [membershipFees, setMembershipFees] = useState<
-    UninvoicedMembershipItem[]
-  >([]);
-  const [selectedFeeKeys, setSelectedFeeKeys] = useState<Set<string>>(
-    new Set(),
-  );
-  const [feeAmounts, setFeeAmounts] = useState<Record<string, string>>({});
-  const [hasActiveMemberships, setHasActiveMemberships] = useState(false);
-  const [loadingFees, setLoadingFees] = useState(false);
 
   const [customLineItems, setCustomLineItems] = useState<CustomLineItem[]>([]);
   const [invoiceNumber, setInvoiceNumber] = useState("");
@@ -195,48 +176,6 @@ export default function CreateInvoiceForm() {
     }
   }, [selectedGuardian]);
 
-  // Load membership fees when guardian or month selected
-  useEffect(() => {
-    let cancel = false;
-    async function loadMembershipFees() {
-      if (!selectedGuardian) return;
-
-      setLoadingFees(true);
-      try {
-        const result = await getUninvoicedMemberships({
-          guardianId: selectedGuardian.id,
-        });
-        if (!cancel) {
-          setMembershipFees(result.items || []);
-          setHasActiveMemberships(
-            result.hasActiveMemberships ?? (result.items?.length > 0),
-          );
-        }
-      } catch (error) {
-        if (!cancel) {
-          console.error("Failed to load membership fees:", error);
-          toast.error("Failed to load team membership fees");
-        }
-      } finally {
-        if (!cancel) {
-          setLoadingFees(false);
-        }
-      }
-    }
-
-    if (selectedGuardian) {
-      loadMembershipFees();
-    } else {
-      setMembershipFees([]);
-      setSelectedFeeKeys(new Set());
-      setHasActiveMemberships(false);
-    }
-
-    return () => {
-      cancel = true;
-    };
-  }, [selectedGuardian]);
-
   // Reset guardian if skip is selected
   useEffect(() => {
     if (skipGuardian) {
@@ -252,18 +191,6 @@ export default function CreateInvoiceForm() {
       newSelected.add(enrollmentId);
     }
     setSelectedEnrollments(newSelected);
-  }
-
-  function toggleFee(key: string) {
-    setSelectedFeeKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
   }
 
   function addCustomLineItem() {
@@ -294,22 +221,12 @@ export default function CreateInvoiceForm() {
         return sum + (isNaN(val) ? 0 : val);
       }, 0);
 
-    const membershipTotal = membershipFees
-      .filter((m) => selectedFeeKeys.has(getFeeItemKey(m)))
-      .reduce((sum, m) => {
-        const key = getFeeItemKey(m);
-        const val = parseFloat(
-          feeAmounts[key] ?? m.suggestedAmount.toString(),
-        );
-        return sum + (isNaN(val) ? 0 : val);
-      }, 0);
-
     const customTotal = customLineItems.reduce(
       (sum, item) => sum + item.amount,
       0,
     );
 
-    return enrollmentTotal + membershipTotal + customTotal;
+    return enrollmentTotal + customTotal;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -320,11 +237,7 @@ export default function CreateInvoiceForm() {
       return;
     }
 
-    if (
-      selectedEnrollments.size === 0 &&
-      selectedFeeKeys.size === 0 &&
-      customLineItems.length === 0
-    ) {
+    if (selectedEnrollments.size === 0 && customLineItems.length === 0) {
       toast.error("Please add at least one line item");
       return;
     }
@@ -332,7 +245,7 @@ export default function CreateInvoiceForm() {
     setLoading(true);
 
     try {
-      const lineItems: CreateInvoiceData["lineItems"] = [];
+      const lineItems: CustomLineItem[] = [];
 
       // Add enrollment line items
       enrollments
@@ -355,35 +268,13 @@ export default function CreateInvoiceForm() {
                 enrollmentAmounts[enrollment.id] ??
                   enrollment.suggestedAmount.toString(),
               ) || 0,
-            feeType: "TUITION",
-          });
-        });
-
-      // Add membership line items
-      membershipFees
-        .filter((fee) => selectedFeeKeys.has(getFeeItemKey(fee)))
-        .forEach((fee) => {
-          const key = getFeeItemKey(fee);
-          lineItems.push({
-            membershipId: fee.membershipId,
-            description: fee.description,
-            amount:
-              parseFloat(
-                feeAmounts[key] ?? fee.suggestedAmount.toString(),
-              ) || 0,
-            feeType: fee.feeType,
-            billingPeriod: fee.billingPeriod,
           });
         });
 
       // Add custom line items
       customLineItems.forEach((item) => {
         if (item.description && item.amount > 0) {
-          lineItems.push({
-            description: item.description,
-            amount: item.amount,
-            feeType: "CUSTOM",
-          });
+          lineItems.push(item);
         }
       });
 
@@ -468,19 +359,6 @@ export default function CreateInvoiceForm() {
               toggleEnrollment={toggleEnrollment}
               enrollmentAmounts={enrollmentAmounts}
               setEnrollmentAmounts={setEnrollmentAmounts}
-            />
-          )}
-
-          {/* Competitive Team Membership Fees */}
-          {selectedGuardian && (
-            <InvoiceMembershipFeesPicker
-              membershipFees={membershipFees}
-              selectedFeeKeys={selectedFeeKeys}
-              toggleFee={toggleFee}
-              feeAmounts={feeAmounts}
-              setFeeAmounts={setFeeAmounts}
-              hasActiveMemberships={hasActiveMemberships}
-              isLoading={loadingFees}
             />
           )}
 

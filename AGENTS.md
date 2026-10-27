@@ -112,9 +112,7 @@ swan-swim-management/
 ### D. `packages/db` (Data Layer & Prisma)
 * **Schema Location**: `packages/db/prisma/schema.prisma`.
 * **Database Mutations**:
-  * Never alter production tables manually or bypass migration history.
-  * **Always use versioned Prisma migrations**: Generate migrations via `prisma migrate dev` (or `prisma migrate deploy` in production).
-  * **Never run `prisma db push` on production or shared databases**: It bypasses the `_prisma_migrations` history table, leading to schema drift and unsafe data loss warnings.
+  * Never alter production tables manually. Always generate migrations via `npm run db:migrate`.
   * Run `npm run db:generate` immediately after modifying `schema.prisma`.
 * **Query Safety**:
   * Select only required relations (`select` / `include`) to prevent over-fetching large relation graphs.
@@ -163,4 +161,3 @@ npm run lint             # Lint all workspaces via Turborepo
 2. ❌ **Do NOT commit nested `package-lock.json`**: Only maintain the root lockfile for workspace dependency synchronization.
 3. ❌ **Do NOT hardcode timezone offsets**: Avoid `-04:00` or `EST` strings; use standard UTC timestamps and timezone conversion utilities.
 4. ❌ **Do NOT bypass DTO Validation**: Never read unchecked properties directly from `req.body` without a Zod validation pipe.
-5. ❌ **Do NOT use `prisma db push`**: Always maintain auditable, versioned SQL migrations (`prisma/migrations/`) to prevent schema drift and unverified data mutation.

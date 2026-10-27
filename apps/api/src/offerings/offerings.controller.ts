@@ -38,7 +38,7 @@ export class OfferingsController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   async updateOfferingInfo(
     @Param("offeringId") offeringId: string,
-    @Body() body: { title?: string; type?: "regular" | "flexible" | "practice" },
+    @Body() body: { title: string },
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.offeringsService.updateOfferingInfo(offeringId, body, staffUser);
@@ -50,7 +50,7 @@ export class OfferingsController {
     @Body()
     body: {
       termId: string;
-      type?: "regular" | "flexible" | "practice";
+      type?: "regular" | "flexible";
       weekday?: number;
       startTime?: string;
       title: string;

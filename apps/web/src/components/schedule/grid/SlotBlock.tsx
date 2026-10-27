@@ -18,15 +18,14 @@ import {
   AssignInstructorDialog,
   ScheduleTrialDialog,
   ConvertTrialDialog,
-  PracticeRosterDialog,
 } from "../dialogs";
 import { CurrentUser } from "@/lib/auth/user";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { updateStudentNotes } from "@/lib/api/client/students";
-import { Loader2, Users, Trash2, Waves } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Loader2, Users } from "lucide-react";
 import { updateOfferingInfo } from "@/lib/api/client/schedule";
 import { updateTrialStatus } from "@/lib/api/client/trial";
+import { Trash2 } from "lucide-react";
 import { deleteOffering } from "@/lib/api/client/schedule";
 import { useSlotDialogs } from "./useSlotDialogs";
 import { toast } from "sonner";
@@ -51,9 +50,6 @@ export function SlotBlock({
   const [isRefreshing, startTransition] = useTransition();
   const dialogs = useSlotDialogs();
   const [rostersState, setRostersState] = useState(rosters);
-  const [practiceRosterOpen, setPracticeRosterOpen] = useState(false);
-
-  const isPracticeOffering = rosters[0]?.session?.offeringType === "practice";
 
   useEffect(() => {
     setRostersState(rosters);
@@ -156,20 +152,14 @@ export function SlotBlock({
     }
   };
 
-  const handleOfferingUpdate = async (
-    newTitle: string,
-    newType?: "regular" | "flexible" | "practice",
-  ) => {
+  const handleOfferingUpdate = async (title: string) => {
     try {
-      await updateOfferingInfo(fallbackOfferingId, {
-        title: newTitle,
-        type: newType,
-      });
+      await updateOfferingInfo(fallbackOfferingId, title);
       startTransition(() => {
         router.refresh();
       });
     } catch (error) {
-      console.error("Failed to update offering:", error);
+      console.error("Failed to update remarks:", error);
       throw error; // Re-throw so the dialog can show error state
     }
   };
@@ -234,53 +224,28 @@ export function SlotBlock({
         <CardHeader className="gap-1 py-2">
           <div className="flex flex-col items-center justify-between gap-2">
             <div className="flex items-center justify-between w-full p-2">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-5">
                 <CardTitle className="text-base">{title}</CardTitle>
-                {isPracticeOffering && (
-                  <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200 text-xs font-semibold">
-                    Team Practice
-                  </Badge>
-                )}
                 <OfferingDialog
                   initialTitle={title}
-                  initialType={rosters[0]?.session?.offeringType || "regular"}
                   triggerLabel="Edit"
                   onSave={handleOfferingUpdate}
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                {isPracticeOffering && (
-                  <PermissionGate
-                    allowedRoles={["super_admin", "admin", "manager", "supervisor"]}
-                    currentRole={user.role}
-                  >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPracticeRosterOpen(true)}
-                      className="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200 font-medium flex items-center gap-1.5"
-                    >
-                      <Waves className="h-3.5 w-3.5" />
-                      Deck Check-In
-                    </Button>
-                  </PermissionGate>
-                )}
-
-                <PermissionGate
-                  allowedRoles={["super_admin", "admin", "manager"]}
-                  currentRole={user.role}
+              <PermissionGate
+                allowedRoles={["super_admin", "admin", "manager"]}
+                currentRole={user.role}
+              >
+                <Button
+                  variant="outline"
+                  onClick={dialogs.enroll.open}
+                  disabled={!fallbackOfferingId}
+                  className="text-xs hover:underline font-medium opacity-70 hover:opacity-100 transition-all"
                 >
-                  <Button
-                    variant="outline"
-                    onClick={dialogs.enroll.open}
-                    disabled={!fallbackOfferingId}
-                    className="text-xs hover:underline font-medium opacity-70 hover:opacity-100 transition-all"
-                  >
-                    + Enroll
-                  </Button>
-                </PermissionGate>
-              </div>
+                  + Enroll
+                </Button>
+              </PermissionGate>
             </div>
             <Separator className="bg-black" />
             <div className="flex items-center gap-5 w-full">
@@ -400,17 +365,6 @@ export function SlotBlock({
         onSuccess={handleDialogSuccess}
         levelName={title}
       />
-
-      {isPracticeOffering && rosters[0]?.session.id && (
-        <PracticeRosterDialog
-          open={practiceRosterOpen}
-          onOpenChange={setPracticeRosterOpen}
-          sessionId={rosters[0].session.id}
-          title={title}
-          userRole={user.role}
-          onAttendanceChanged={handleDialogSuccess}
-        />
-      )}
 
       {isRefreshing && (
         <div className="fixed inset-0 z-[100px] flex items-center justify-center bg-black/30 backdrop-blur-sm">

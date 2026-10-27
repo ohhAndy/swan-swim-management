@@ -9,4 +9,3 @@ export { default as RemarksDialog } from "./RemarksDialog";
 export { ScheduleMakeupDialog } from "./ScheduleMakeUpDialog";
 export { ScheduleTrialDialog } from "./ScheduleTrialDialog";
 export { TransferEnrollmentDialog } from "./TransferEnrollmentDialog";
-export { PracticeRosterDialog } from "./PracticeRosterDialog";

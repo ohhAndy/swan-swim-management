@@ -92,7 +92,6 @@ export class TermScheduleService {
           select: {
             title: true,
             notes: true,
-            type: true,
             instructors: {
               where: { removedAt: null },
               select: {
@@ -559,7 +558,6 @@ export class TermScheduleService {
               offeringId: s.offeringId,
               offeringTitle: s.offering.title,
               offeringNotes: s.offering.notes,
-              offeringType: s.offering.type,
               instructors: s.offering.instructors.map((i) => ({
                 id: i.id,
                 staffUserId: i.staffUserId,

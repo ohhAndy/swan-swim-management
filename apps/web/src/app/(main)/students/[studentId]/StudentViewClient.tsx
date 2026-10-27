@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { StudentInfoCard } from "@/components/students/StudentInfoCard";
 import { StudentGuardianCard } from "@/components/students/StudentGuardianCard";
 import { StudentQuickLinksCard } from "@/components/students/StudentQuickLinksCard";
-import { StudentMembershipCard } from "@/components/students/StudentMembershipCard";
 import { StudentEnrollmentsList } from "@/components/students/StudentEnrollmentsList";
 import type { Student } from "@/lib/types/models";
 import { CurrentUser } from "@/lib/auth/user";
@@ -54,19 +53,12 @@ export default function StudentViewClient({
         </div>
       </div>
 
-      {/* Competitive Swim Team Membership */}
-      <div className="mt-6">
-        <StudentMembershipCard student={student} userRole={user.role} />
-      </div>
-
       {/* Enrollment History */}
-      <div className="mt-6">
-        <StudentEnrollmentsList
-          student={student}
-          userRole={user.role}
-          staffUserId={user.staffUserId}
-        />
-      </div>
+      <StudentEnrollmentsList
+        student={student}
+        userRole={user.role}
+        staffUserId={user.staffUserId}
+      />
     </div>
   );
 }

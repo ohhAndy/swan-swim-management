@@ -2,19 +2,7 @@ import { z } from "zod";
 
 export const CreateInvoiceLineSchema = z.object({
   enrollmentId: z.string().optional(),
-  membershipId: z.string().optional(),
   inventoryItemId: z.string().optional(),
-  feeType: z
-    .enum([
-      "TUITION",
-      "ANNUAL_REGISTRATION",
-      "MONTHLY_PRACTICE",
-      "CLASS_PASS",
-      "INVENTORY",
-      "CUSTOM",
-    ])
-    .optional(),
-  billingPeriod: z.string().optional(),
   description: z.string(),
   amount: z.number().min(0),
 });
