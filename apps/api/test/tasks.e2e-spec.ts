@@ -2,7 +2,8 @@ import { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { PrismaService } from "../src/prisma/prisma.service";
 import { createTestApp } from "./utils/test-setup";
-import { seedAdmin } from "./utils/seeds";
+import { seedAdmin, seedGuardian, seedTerm, seedClassOffering } from "./utils/seeds";
+import { getBusinessTodayUtcMidnight } from "../src/tasks/cron-tasks.service";
 
 describe("TasksController (e2e)", () => {
   let app: INestApplication;
@@ -81,6 +82,60 @@ describe("TasksController (e2e)", () => {
       
       const dbTask = await prisma.task.findUnique({ where: { id: testTaskId } });
       expect(dbTask?.title).toBe("Updated title");
+    });
+  });
+
+  describe("POST /tasks/cron/deactivate-expired", () => {
+    it("deactivates enrollments only for terms that ended before today", async () => {
+      const guardian = await seedGuardian(prisma);
+      const student = await prisma.student.create({
+        data: { firstName: "Cron", lastName: "Student", guardianId: guardian.id },
+      });
+
+      const today = getBusinessTodayUtcMidnight();
+      const day = 86400000;
+      const pastTerm = await seedTerm(
+        prisma,
+        "Ended Term",
+        new Date(today.getTime() - 60 * day),
+        new Date(today.getTime() - day),
+      );
+      const endsTodayTerm = await seedTerm(
+        prisma,
+        "Ends Today Term",
+        new Date(today.getTime() - 60 * day),
+        today,
+      );
+      const futureTerm = await seedTerm(prisma, "Current Term");
+
+      const makeEnrollment = async (termId: string) => {
+        const offering = await seedClassOffering(prisma, termId);
+        return prisma.enrollment.create({
+          data: {
+            studentId: student.id,
+            offeringId: offering.id,
+            enrollDate: new Date(),
+            status: "active",
+            classRatio: "3:1",
+          },
+        });
+      };
+      const pastEnr = await makeEnrollment(pastTerm.id);
+      const todayEnr = await makeEnrollment(endsTodayTerm.id);
+      const futureEnr = await makeEnrollment(futureTerm.id);
+
+      const res = await request(app.getHttpServer())
+        .post("/tasks/cron/deactivate-expired")
+        .expect(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.count).toBeGreaterThanOrEqual(1);
+
+      const statusOf = async (id: string) =>
+        (await prisma.enrollment.findUnique({ where: { id }, select: { status: true } }))?.status;
+
+      expect(await statusOf(pastEnr.id)).toBe("inactive");
+      expect(await statusOf(todayEnr.id)).toBe("active");
+      expect(await statusOf(futureEnr.id)).toBe("active");
     });
   });
 
