@@ -2,7 +2,9 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { CreateReportCardDto } from "./dto/create-report-card.dto";
 import { UpdateReportCardDto } from "./dto/update-report-card.dto";
 import { PrismaService } from "../prisma/prisma.service";
@@ -18,6 +20,42 @@ export class ReportCardsService {
     private communicationsService: CommunicationsService,
     private auditLogsService: AuditLogsService,
   ) {}
+
+  /**
+   * Advances the student to the level after `reportCardLevelId`, unless they are
+   * already at or beyond it. Idempotent, so safe to call more than once.
+   */
+  private async upgradeStudentLevel(
+    tx: Prisma.TransactionClient,
+    studentId: string,
+    reportCardLevelId: string | null | undefined,
+  ) {
+    if (!reportCardLevelId) return;
+
+    const currentLevel = await tx.level.findUnique({
+      where: { id: reportCardLevelId },
+    });
+    if (!currentLevel) return;
+
+    const nextLevel = await tx.level.findFirst({
+      where: { order: { gt: currentLevel.order } },
+      orderBy: { order: "asc" },
+    });
+    if (!nextLevel) return;
+
+    const student = await tx.student.findUnique({
+      where: { id: studentId },
+      select: { levelModel: { select: { order: true } } },
+    });
+    const studentCurrentLevelOrder = student?.levelModel?.order ?? -1;
+
+    if (nextLevel.order > studentCurrentLevelOrder) {
+      await tx.student.update({
+        where: { id: studentId },
+        data: { level: nextLevel.name, levelId: nextLevel.id },
+      });
+    }
+  }
 
   async create(
     createReportCardDto: CreateReportCardDto,
@@ -53,34 +91,17 @@ export class ReportCardsService {
       });
 
       // Automatically upgrade student level if report card is created as completed
-      if (reportCard.status === "completed" && reportCard.levelId) {
+      if (reportCard.status === "completed") {
         const enrollment = await tx.enrollment.findUnique({
           where: { id: reportCard.enrollmentId },
-          include: { student: { include: { levelModel: true } } },
+          select: { studentId: true },
         });
-
         if (enrollment) {
-          const currentLevel = await tx.level.findUnique({
-            where: { id: reportCard.levelId },
-          });
-
-          if (currentLevel) {
-            const nextLevel = await tx.level.findFirst({
-              where: { order: { gt: currentLevel.order } },
-              orderBy: { order: "asc" },
-            });
-
-            if (nextLevel) {
-              const studentCurrentLevelOrder =
-                enrollment.student.levelModel?.order ?? -1;
-              if (nextLevel.order > studentCurrentLevelOrder) {
-                await tx.student.update({
-                  where: { id: enrollment.studentId },
-                  data: { level: nextLevel.name, levelId: nextLevel.id },
-                });
-              }
-            }
-          }
+          await this.upgradeStudentLevel(
+            tx,
+            enrollment.studentId,
+            reportCard.levelId,
+          );
         }
       }
 
@@ -208,7 +229,7 @@ export class ReportCardsService {
     const existing = await this.prisma.reportCard.findUnique({
       where: { id },
       include: {
-        enrollment: { include: { student: { include: { levelModel: true } } } },
+        enrollment: { select: { studentId: true } },
       },
     });
 
@@ -242,30 +263,11 @@ export class ReportCardsService {
 
       // Automatically upgrade student level if report card is marked as completed
       if (reportCard.status === "completed") {
-        const levelIdToUse = reportCard.levelId || existing.levelId;
-        if (levelIdToUse) {
-          const currentLevel = await tx.level.findUnique({
-            where: { id: levelIdToUse },
-          });
-
-          if (currentLevel) {
-            const nextLevel = await tx.level.findFirst({
-              where: { order: { gt: currentLevel.order } },
-              orderBy: { order: "asc" },
-            });
-
-            if (nextLevel) {
-              const studentCurrentLevelOrder =
-                existing.enrollment.student.levelModel?.order ?? -1;
-              if (nextLevel.order > studentCurrentLevelOrder) {
-                await tx.student.update({
-                  where: { id: existing.enrollment.studentId },
-                  data: { level: nextLevel.name, levelId: nextLevel.id },
-                });
-              }
-            }
-          }
-        }
+        await this.upgradeStudentLevel(
+          tx,
+          existing.enrollment.studentId,
+          reportCard.levelId || existing.levelId,
+        );
       }
 
       // If skills are provided, upsert them
@@ -366,6 +368,13 @@ export class ReportCardsService {
     if (reportCard.status === "sent") {
       throw new ForbiddenException("This report card has already been sent.");
     }
+    // Only finalised report cards may be sent. Sending a draft used to jump
+    // straight to "sent" and skip the level upgrade that happens on "completed".
+    if (reportCard.status !== "completed" && reportCard.status !== "did_not_pass") {
+      throw new BadRequestException(
+        'Save the report card as "Completed" or "Did Not Pass" before emailing it.',
+      );
+    }
 
     const student = reportCard.enrollment.student;
     const guardian = student.guardian;
@@ -406,6 +415,16 @@ export class ReportCardsService {
         where: { id: reportCard.enrollmentId },
         data: { reportCardStatus: "sent" },
       });
+
+      // Safety net: guarantee a passed student is upgraded before the card is
+      // locked as "sent". No-op if the upgrade already happened on completion.
+      if (reportCard.status === "completed") {
+        await this.upgradeStudentLevel(
+          tx,
+          reportCard.enrollment.studentId,
+          reportCard.levelId,
+        );
+      }
 
       // Write Audit Log
       await this.auditLogsService.create(

@@ -150,11 +150,41 @@ describe("ReportCardsController (e2e)", () => {
   });
 
   describe("POST /report-cards/:id/email", () => {
-    it("should email a report card", async () => {
+    it("should reject emailing a draft report card", async () => {
+      await request(app.getHttpServer())
+        .post(`/report-cards/${testReportCardId}/email`)
+        .send({ pdfContent: "base64" })
+        .expect(400);
+
+      const dbReportCard = await prisma.reportCard.findUnique({ where: { id: testReportCardId } });
+      expect(dbReportCard?.status).toBe("draft");
+    });
+
+    it("should email a completed report card and upgrade the student", async () => {
+      const nextLevel = await prisma.level.create({ data: { name: "Level 2", order: 1 } });
+      await prisma.reportCard.update({
+        where: { id: testReportCardId },
+        data: { status: "completed" },
+      });
+
       await request(app.getHttpServer())
         .post(`/report-cards/${testReportCardId}/email`)
         .send({ pdfContent: "base64" })
         .expect(201);
+
+      const dbReportCard = await prisma.reportCard.findUnique({
+        where: { id: testReportCardId },
+        include: { enrollment: { include: { student: true } } },
+      });
+      expect(dbReportCard?.status).toBe("sent");
+      expect(dbReportCard?.enrollment.student.levelId).toBe(nextLevel.id);
+    });
+
+    it("should reject setting status to sent via PATCH", async () => {
+      await request(app.getHttpServer())
+        .patch(`/report-cards/${testReportCardId}`)
+        .send({ status: "sent" })
+        .expect(400);
     });
   });
 

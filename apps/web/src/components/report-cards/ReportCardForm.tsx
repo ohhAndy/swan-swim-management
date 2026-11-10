@@ -217,18 +217,19 @@ export function ReportCardForm({
         />,
       ).toBlob();
 
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = async () => {
-        const base64data = reader.result as string;
-        const pdfBase64 = base64data.split(",")[1];
+      const base64data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+      const pdfBase64 = base64data.split(",")[1];
 
-        await sendEmailReportCard(existingReportCard.id, pdfBase64);
-        toast.success("Email sent successfully!");
-        const updated = await getReportCard(existingReportCard.id);
-        setExistingReportCard(updated);
-        setStatus("sent");
-      };
+      await sendEmailReportCard(existingReportCard.id, pdfBase64);
+      toast.success("Email sent successfully!");
+      const updated = await getReportCard(existingReportCard.id);
+      setExistingReportCard(updated);
+      setStatus("sent");
     } catch (error) {
       console.error("Failed to send email", error);
       toast.error("Failed to send email.");
@@ -412,7 +413,11 @@ export function ReportCardForm({
           </div>
 
           <div className="flex gap-2">
-            {existingReportCard && existingReportCard.status !== "sent" && (
+            {/* Only finalised cards can be emailed; the level upgrade happens on
+                "Completed", so emailing a draft would skip it. */}
+            {existingReportCard &&
+              (existingReportCard.status === "completed" ||
+                existingReportCard.status === "did_not_pass") && (
               <Button
                 variant="secondary"
                 onClick={handleEmail}

@@ -10,7 +10,8 @@ export const ReportCardSkillSchema = z.object({
 export const CreateReportCardSchema = z.object({
   enrollmentId: z.string(),
   levelId: z.string(),
-  status: z.enum(["draft", "completed", "did_not_pass", "sent"]).default("draft"),
+  // "sent" is only set by POST /report-cards/:id/email, never directly.
+  status: z.enum(["draft", "completed", "did_not_pass"]).default("draft"),
   comments: z.string().optional(),
   skills: z.array(ReportCardSkillSchema).optional(),
 });

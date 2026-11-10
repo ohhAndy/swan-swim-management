@@ -5,7 +5,7 @@ import { createPrismaMock, MockPrismaService } from "../prisma/prisma.mock";
 import { CommunicationsService } from "../communications/communications.service";
 import { RequestStaffUser } from "../auth/auth.types";
 import { ReportCardStatus } from "@prisma/client";
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 
@@ -90,6 +90,85 @@ describe("ReportCardsService", () => {
           }),
         })
       );
+    });
+  });
+
+  describe("emailReportCard", () => {
+    const buildCard = (status: ReportCardStatus) => ({
+      id: "rc1",
+      enrollmentId: "enr1",
+      levelId: "lvl1",
+      status,
+      enrollment: {
+        studentId: "stu1",
+        student: {
+          firstName: "Sam",
+          lastName: "Swimmer",
+          guardian: { fullName: "Pat Swimmer", email: "pat@test.com" },
+        },
+        offering: { term: { name: "Fall 2026" } },
+      },
+    });
+
+    beforeEach(() => {
+      prismaMock.$transaction.mockImplementation(async (callback) => callback(prismaMock));
+      prismaMock.level.findUnique.mockResolvedValue({ id: "lvl1", order: 7 } as never);
+      prismaMock.level.findFirst.mockResolvedValue({
+        id: "lvl2",
+        name: "Swimmer 1.2",
+        order: 8,
+      } as never);
+      prismaMock.student.findUnique.mockResolvedValue({ levelModel: { order: 7 } } as never);
+    });
+
+    it("rejects emailing a draft and does not send anything", async () => {
+      prismaMock.reportCard.findUnique.mockResolvedValue(
+        buildCard(ReportCardStatus.draft) as never,
+      );
+
+      await expect(
+        service.emailReportCard("rc1", "pdf", mockStaffUser),
+      ).rejects.toThrow(BadRequestException);
+      expect(communicationsServiceMock.sendEmail).not.toHaveBeenCalled();
+      expect(prismaMock.reportCard.update).not.toHaveBeenCalled();
+    });
+
+    it("upgrades the student when sending a completed card", async () => {
+      prismaMock.reportCard.findUnique.mockResolvedValue(
+        buildCard(ReportCardStatus.completed) as never,
+      );
+
+      await service.emailReportCard("rc1", "pdf", mockStaffUser);
+
+      expect(prismaMock.reportCard.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ status: "sent" }) }),
+      );
+      expect(prismaMock.student.update).toHaveBeenCalledWith({
+        where: { id: "stu1" },
+        data: { level: "Swimmer 1.2", levelId: "lvl2" },
+      });
+    });
+
+    it("does not re-upgrade a student who is already at the next level", async () => {
+      prismaMock.reportCard.findUnique.mockResolvedValue(
+        buildCard(ReportCardStatus.completed) as never,
+      );
+      prismaMock.student.findUnique.mockResolvedValue({ levelModel: { order: 8 } } as never);
+
+      await service.emailReportCard("rc1", "pdf", mockStaffUser);
+
+      expect(prismaMock.student.update).not.toHaveBeenCalled();
+    });
+
+    it("sends a did-not-pass card without upgrading", async () => {
+      prismaMock.reportCard.findUnique.mockResolvedValue(
+        buildCard(ReportCardStatus.did_not_pass) as never,
+      );
+
+      await service.emailReportCard("rc1", "pdf", mockStaffUser);
+
+      expect(communicationsServiceMock.sendEmail).toHaveBeenCalled();
+      expect(prismaMock.student.update).not.toHaveBeenCalled();
     });
   });
 
