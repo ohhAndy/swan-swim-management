@@ -642,13 +642,29 @@ model ReportCard {
   updatedByUser StaffUser?      @relation("ReportCardUpdatedBy", fields: [updatedBy], references: [id])
   sentById     String?
   sentByUser   StaffUser?      @relation("ReportCardSentBy", fields: [sentById], references: [id])
+  lastSendStatus     ReportCardSendStatus?
+  lastSendError      String?               @db.Text
+  lastSendAttemptAt  DateTime?
+  sendAttempts       Int                   @default(0)
+  communicationLogId String?
+  communicationLog   CommunicationLog?     @relation(fields: [communicationLogId], references: [id], onDelete: SetNull)
   enrollment       Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
   level            Level?            @relation(fields: [levelId], references: [id])
   reportCardSkills ReportCardSkill[]
 
   @@index([enrollmentId])
   @@index([levelId])
+  @@index([lastSendStatus])
+  @@index([communicationLogId])
   @@map("report_cards")
+}
+
+enum ReportCardSendStatus {
+  pending
+  sent
+  failed
+  bounced
+  delivered
 }
 
 model ReportCardSkill {
@@ -701,6 +717,7 @@ model CommunicationLog {
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   staff           StaffUser?          @relation("CommunicationSentBy", fields: [staffId], references: [id])
+  reportCards     ReportCard[]
 
   @@index([staffId])
   @@index([status])

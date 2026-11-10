@@ -1,12 +1,24 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import {
   RecipientFilterDto,
   SendEmailDto,
   GetCommunicationHistoryDto,
+  ResendWebhookEvent,
+  ResendWebhookEventSchema,
 } from "./dto/communications.dto";
-import { CommunicationStatus, Prisma } from "@prisma/client";
+import {
+  CommunicationStatus,
+  Prisma,
+  ReportCardSendStatus,
+} from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
 import { Resend } from "resend";
 
@@ -404,16 +416,41 @@ export class CommunicationsService {
     return log;
   }
 
-  async handleWebhook(event: {
-    type: string;
-    data: {
-      email_id?: string;
-      to?: string[];
-      created_at?: string;
-      [key: string]: unknown;
-    };
-  }) {
-    const emailId = event.data?.email_id;
+  verifyResendWebhook(
+    rawBody: Buffer | undefined,
+    headers: { id?: string; timestamp?: string; signature?: string },
+  ): ResendWebhookEvent {
+    const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      this.logger.error("RESEND_WEBHOOK_SECRET is not set; rejecting webhook.");
+      throw new UnauthorizedException("Webhook verification is not configured");
+    }
+
+    const { id, timestamp, signature } = headers;
+    if (!rawBody || !id || !timestamp || !signature) {
+      throw new UnauthorizedException("Missing webhook signature");
+    }
+
+    let payload: unknown;
+    try {
+      payload = this.resend.webhooks.verify({
+        payload: rawBody.toString("utf8"),
+        headers: { id, timestamp, signature },
+        webhookSecret,
+      });
+    } catch {
+      throw new UnauthorizedException("Invalid webhook signature");
+    }
+
+    const parsed = ResendWebhookEventSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new BadRequestException("Malformed webhook payload");
+    }
+    return parsed.data;
+  }
+
+  async handleWebhook(event: ResendWebhookEvent) {
+    const emailId = event.data.email_id;
     const eventType = event.type;
 
     if (!emailId) {
@@ -429,6 +466,8 @@ export class CommunicationsService {
       newStatus = "delivered";
     } else if (eventType === "email.bounced" || eventType === "email.complained") {
       newStatus = "bounced";
+    } else if (eventType === "email.failed") {
+      newStatus = "failed";
     } else if (eventType === "email.delivery_delayed") {
       newStatus = null; // Informational
     }
@@ -491,6 +530,46 @@ export class CommunicationsService {
       }
     }
 
+    await this.syncReportCardDelivery(
+      logs.map((l) => l.id),
+      newStatus,
+      eventType,
+    );
+
     return { ok: true, matched: logs.length };
+  }
+
+  private async syncReportCardDelivery(
+    communicationLogIds: string[],
+    status: "delivered" | "bounced" | "failed",
+    eventType: string,
+  ) {
+    if (status === "delivered") {
+      // Never overwrite a bounce with a late/out-of-order delivered event.
+      await this.prisma.reportCard.updateMany({
+        where: {
+          communicationLogId: { in: communicationLogIds },
+          lastSendStatus: ReportCardSendStatus.sent,
+        },
+        data: { lastSendStatus: ReportCardSendStatus.delivered },
+      });
+      return;
+    }
+
+    await this.prisma.reportCard.updateMany({
+      where: {
+        communicationLogId: { in: communicationLogIds },
+        lastSendStatus: {
+          in: [ReportCardSendStatus.sent, ReportCardSendStatus.delivered],
+        },
+      },
+      data: {
+        lastSendStatus:
+          status === "bounced"
+            ? ReportCardSendStatus.bounced
+            : ReportCardSendStatus.failed,
+        lastSendError: `Email was not delivered (${eventType})`,
+      },
+    });
   }
 }

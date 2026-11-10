@@ -58,10 +58,11 @@ export async function updateReportCard(
 export async function sendEmailReportCard(
   id: string,
   pdfContent: string,
-): Promise<{ success: boolean }> {
+  options: { force?: boolean } = {},
+): Promise<{ success: boolean; attempt: number; communicationLogId: string }> {
   const res = await clientFetch(`/report-cards/${id}/email`, {
     method: "POST",
-    body: JSON.stringify({ pdfContent }),
+    body: JSON.stringify({ pdfContent, force: options.force ?? false }),
   });
   return res.json();
 }

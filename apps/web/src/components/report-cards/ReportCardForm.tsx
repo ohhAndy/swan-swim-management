@@ -25,7 +25,12 @@ import {
   Save,
   Eye,
   Mail,
+  RotateCcw,
+  AlertTriangle,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { ApiError } from "@/lib/api/error";
 import { getLevels, Level } from "@/lib/api/client/curriculum";
 import {
   createReportCard,
@@ -35,6 +40,8 @@ import {
   getReportCard,
   sendEmailReportCard,
 } from "@/lib/api/client/report-card";
+
+type ReportCardSendStatus = NonNullable<ReportCard["lastSendStatus"]>;
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -71,6 +78,7 @@ export function ReportCardForm({
   const [sendingEmail, setSendingEmail] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
+  const [resendConfirmOpen, setResendConfirmOpen] = useState(false);
   const [skillgrades, setSkillGrades] = useState<
     Record<string, "not_started" | "developing" | "mastered">
   >({});
@@ -196,7 +204,7 @@ export function ReportCardForm({
     }
   };
 
-  const handleEmail = async () => {
+  const handleEmail = async ({ force = false }: { force?: boolean } = {}) => {
     if (!existingReportCard) {
       toast.error("Please save the report card first.");
       return;
@@ -225,18 +233,39 @@ export function ReportCardForm({
       });
       const pdfBase64 = base64data.split(",")[1];
 
-      await sendEmailReportCard(existingReportCard.id, pdfBase64);
+      await sendEmailReportCard(existingReportCard.id, pdfBase64, { force });
       toast.success("Email sent successfully!");
-      const updated = await getReportCard(existingReportCard.id);
-      setExistingReportCard(updated);
-      setStatus("sent");
     } catch (error) {
       console.error("Failed to send email", error);
-      toast.error("Failed to send email.");
+      toast.error(
+        error instanceof ApiError && error.message
+          ? error.message
+          : "Failed to send email.",
+      );
     } finally {
+      // Refresh either way so the send status / error is shown.
+      try {
+        const updated = await getReportCard(existingReportCard.id);
+        setExistingReportCard(updated);
+        setStatus(updated.status);
+      } catch (refreshError) {
+        console.error("Failed to refresh report card", refreshError);
+      }
       setSendingEmail(false);
     }
   };
+
+  const sendStatus = existingReportCard?.lastSendStatus ?? null;
+  const sendFailed = sendStatus === "failed" || sendStatus === "bounced";
+  const sendPending = sendStatus === "pending";
+  const isFinalised =
+    existingReportCard?.status === "completed" ||
+    existingReportCard?.status === "did_not_pass";
+  const isSent = existingReportCard?.status === "sent";
+  // Only finalised cards can be emailed; the level upgrade happens on
+  // "Completed", so emailing a draft would skip it.
+  const canSend = isFinalised || (isSent && sendFailed);
+  const canSendAgain = isSent && !sendFailed && !sendPending;
 
   if (loading) {
     return (
@@ -286,11 +315,39 @@ export function ReportCardForm({
                     )}
                   </span>
                 )}
+              {sendStatus && (
+                <span className="flex items-center gap-2">
+                  Email:
+                  <SendStatusBadge status={sendStatus} />
+                  {existingReportCard.sendAttempts > 1 && (
+                    <span>({existingReportCard.sendAttempts} attempts)</span>
+                  )}
+                </span>
+              )}
             </span>
           )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {sendFailed && (
+          <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-md text-sm flex items-start gap-3">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div>
+              {sendStatus === "bounced"
+                ? "The last email to the guardian bounced."
+                : "The last email to the guardian failed to send."}
+              {existingReportCard?.lastSendError && (
+                <span className="block text-xs mt-1 opacity-80">
+                  {existingReportCard.lastSendError}
+                </span>
+              )}
+              <span className="block mt-1">
+                Check the guardian&apos;s email address, then retry.
+              </span>
+            </div>
+          </div>
+        )}
+
         {isReadOnly && (
           <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-md text-sm flex items-start gap-3">
             <span className="text-base shrink-0 mt-0.5">ℹ️</span>
@@ -413,14 +470,31 @@ export function ReportCardForm({
           </div>
 
           <div className="flex gap-2">
-            {/* Only finalised cards can be emailed; the level upgrade happens on
-                "Completed", so emailing a draft would skip it. */}
-            {existingReportCard &&
-              (existingReportCard.status === "completed" ||
-                existingReportCard.status === "did_not_pass") && (
+            {canSend && (
               <Button
-                variant="secondary"
-                onClick={handleEmail}
+                variant={sendFailed ? "destructive" : "secondary"}
+                onClick={() => handleEmail()}
+                disabled={sendingEmail || saving || sendPending}
+              >
+                {sendingEmail || sendPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : sendFailed ? (
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                ) : (
+                  <Mail className="h-4 w-4 mr-2" />
+                )}
+                {sendPending
+                  ? "Sending…"
+                  : sendFailed
+                    ? "Retry Email"
+                    : "Email to Guardian"}
+              </Button>
+            )}
+
+            {canSendAgain && (
+              <Button
+                variant="outline"
+                onClick={() => setResendConfirmOpen(true)}
                 disabled={sendingEmail || saving}
               >
                 {sendingEmail ? (
@@ -428,7 +502,7 @@ export function ReportCardForm({
                 ) : (
                   <Mail className="h-4 w-4 mr-2" />
                 )}
-                Email to Guardian
+                Send Again
               </Button>
             )}
 
@@ -482,6 +556,52 @@ export function ReportCardForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={resendConfirmOpen}
+        onOpenChange={setResendConfirmOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send Report Card Again?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This report card was already emailed to the guardian. Sending again
+              will email them another copy.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setResendConfirmOpen(false);
+                handleEmail({ force: true });
+              }}
+            >
+              Send Again
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
+  );
+}
+
+const SEND_STATUS_BADGE: Record<
+  ReportCardSendStatus,
+  { label: string; className: string }
+> = {
+  pending: { label: "Sending", className: "bg-slate-100 text-slate-700" },
+  sent: { label: "Sent", className: "bg-blue-100 text-blue-800" },
+  delivered: { label: "Delivered", className: "bg-green-100 text-green-800" },
+  failed: { label: "Failed", className: "bg-red-100 text-red-800" },
+  bounced: { label: "Bounced", className: "bg-red-100 text-red-800" },
+};
+
+function SendStatusBadge({ status }: { status: ReportCardSendStatus }) {
+  const { label, className } = SEND_STATUS_BADGE[status];
+  return (
+    <Badge variant="outline" className={cn("border-transparent", className)}>
+      {label}
+    </Badge>
   );
 }

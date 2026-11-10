@@ -11,6 +11,7 @@ import {
 import { ReportCardsService } from "./report-cards.service";
 import { CreateReportCardDto } from "./dto/create-report-card.dto";
 import { UpdateReportCardDto } from "./dto/update-report-card.dto";
+import { EmailReportCardDto } from "./dto/email-report-card.dto";
 import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
@@ -61,9 +62,14 @@ export class ReportCardsController {
   @Post(":id/email")
   email(
     @Param("id") id: string,
-    @Body() body: { pdfContent: string },
+    @Body() body: EmailReportCardDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    return this.reportCardsService.emailReportCard(id, body.pdfContent, staffUser);
+    return this.reportCardsService.emailReportCard(
+      id,
+      body.pdfContent,
+      staffUser,
+      { force: body.force },
+    );
   }
 }

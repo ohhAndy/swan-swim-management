@@ -3,8 +3,10 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  BadGatewayException,
+  ConflictException,
 } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
+import { Prisma, ReportCardSendStatus } from "@prisma/client";
 import { CreateReportCardDto } from "./dto/create-report-card.dto";
 import { UpdateReportCardDto } from "./dto/update-report-card.dto";
 import { PrismaService } from "../prisma/prisma.service";
@@ -12,6 +14,8 @@ import { CommunicationsService } from "../communications/communications.service"
 import { RequestStaffUser } from "../auth/auth.types";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
+const STALE_PENDING_MS = 5 * 60 * 1000;
 
 @Injectable()
 export class ReportCardsService {
@@ -363,14 +367,27 @@ export class ReportCardsService {
     id: string,
     pdfContent: string,
     staffUser: RequestStaffUser,
+    options: { force?: boolean } = {},
   ) {
+    const force = options.force ?? false;
     const reportCard = await this.findOne(id);
+    const previousSendStatus = reportCard.lastSendStatus;
+
     if (reportCard.status === "sent") {
-      throw new ForbiddenException("This report card has already been sent.");
-    }
-    // Only finalised report cards may be sent. Sending a draft used to jump
-    // straight to "sent" and skip the level upgrade that happens on "completed".
-    if (reportCard.status !== "completed" && reportCard.status !== "did_not_pass") {
+      const retryable =
+        previousSendStatus === ReportCardSendStatus.failed ||
+        previousSendStatus === ReportCardSendStatus.bounced;
+      if (!retryable && !force) {
+        throw new ForbiddenException(
+          'This report card has already been sent. Use "Send again" to email another copy.',
+        );
+      }
+    } else if (
+      // Only finalised report cards may be sent. Sending a draft used to jump
+      // straight to "sent" and skip the level upgrade that happens on "completed".
+      reportCard.status !== "completed" &&
+      reportCard.status !== "did_not_pass"
+    ) {
       throw new BadRequestException(
         'Save the report card as "Completed" or "Did Not Pass" before emailing it.',
       );
@@ -380,24 +397,85 @@ export class ReportCardsService {
     const guardian = student.guardian;
 
     if (!guardian?.email) {
-      throw new Error("Guardian does not have an email address");
+      throw new BadRequestException(
+        "The guardian does not have an email address on file.",
+      );
     }
+
+    // Claim the send so concurrent requests can't email twice; stale claims expire.
+    const now = new Date();
+    const staleBefore = new Date(now.getTime() - STALE_PENDING_MS);
+    const claim = await this.prisma.reportCard.updateMany({
+      where: {
+        id,
+        status: reportCard.status,
+        OR: [
+          { lastSendStatus: null },
+          { lastSendStatus: { not: ReportCardSendStatus.pending } },
+          { lastSendAttemptAt: { lt: staleBefore } },
+        ],
+      },
+      data: {
+        lastSendStatus: ReportCardSendStatus.pending,
+        lastSendAttemptAt: now,
+        lastSendError: null,
+        sendAttempts: { increment: 1 },
+      },
+    });
+    if (claim.count === 0) {
+      throw new ConflictException(
+        "This report card is already being sent. Please wait a moment and refresh.",
+      );
+    }
+    const attempt = reportCard.sendAttempts + 1;
 
     const termName = reportCard.enrollment.offering.term
       ? reportCard.enrollment.offering.term["name"]
       : "Current Term";
 
-    await this.communicationsService.sendEmail({
-      recipients: [guardian.email],
-      subject: `Progress Report for ${student.firstName} - ${termName}`,
-      body: `Dear ${guardian.fullName},\n\nPlease find attached the progress report for ${student.firstName}.\n\nBest regards,\nSwan Swim School`,
-      attachments: [
+    // sendEmail reports provider failures in its result rather than throwing.
+    let sendResult: Awaited<ReturnType<CommunicationsService["sendEmail"]>>;
+    try {
+      sendResult = await this.communicationsService.sendEmail(
         {
-          filename: `Progress_Report_${student.firstName}_${student.lastName}.pdf`,
-          content: pdfContent,
+          recipients: [guardian.email],
+          subject: `Progress Report for ${student.firstName} - ${termName}`,
+          body: `Dear ${guardian.fullName},\n\nPlease find attached the progress report for ${student.firstName}.\n\nBest regards,\nSwan Swim School`,
+          attachments: [
+            {
+              filename: `Progress_Report_${student.firstName}_${student.lastName}.pdf`,
+              content: pdfContent,
+            },
+          ],
         },
-      ],
-    }, staffUser);
+        staffUser,
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      await this.recordSendFailure(id, message, staffUser, {
+        recipient: guardian.email,
+        attempt,
+        previousSendStatus,
+      });
+      throw new BadGatewayException(
+        `Failed to email the report card to ${guardian.email}: ${message}`,
+      );
+    }
+
+    if (!sendResult.success) {
+      const message =
+        sendResult.results.find((r) => r.status === "failed")?.error ??
+        "The email provider rejected the message.";
+      await this.recordSendFailure(id, message, staffUser, {
+        recipient: guardian.email,
+        attempt,
+        previousSendStatus,
+        communicationLogId: sendResult.logId,
+      });
+      throw new BadGatewayException(
+        `Failed to email the report card to ${guardian.email}: ${message}`,
+      );
+    }
 
     await this.prisma.$transaction(async (tx) => {
       // Update status, sentAt, and sentById
@@ -407,6 +485,9 @@ export class ReportCardsService {
           status: "sent",
           sentAt: new Date(),
           sentById: staffUser.id,
+          lastSendStatus: ReportCardSendStatus.sent,
+          lastSendError: null,
+          communicationLogId: sendResult.logId,
         },
       });
 
@@ -436,12 +517,52 @@ export class ReportCardsService {
           metadata: {
             recipient: guardian.email,
             studentName: `${student.firstName} ${student.lastName}`,
+            attempt,
+            force,
+            previousSendStatus,
+            communicationLogId: sendResult.logId,
           },
         },
         tx,
       );
     });
 
-    return { success: true };
+    return { success: true, attempt, communicationLogId: sendResult.logId };
+  }
+
+  private async recordSendFailure(
+    id: string,
+    error: string,
+    staffUser: RequestStaffUser,
+    details: {
+      recipient: string;
+      attempt: number;
+      previousSendStatus: ReportCardSendStatus | null;
+      communicationLogId?: string;
+    },
+  ) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.reportCard.update({
+        where: { id },
+        data: {
+          lastSendStatus: ReportCardSendStatus.failed,
+          lastSendError: error,
+          ...(details.communicationLogId && {
+            communicationLogId: details.communicationLogId,
+          }),
+        },
+      });
+
+      await this.auditLogsService.create(
+        {
+          staffId: staffUser.id,
+          action: "Report Card Send Failed",
+          entityType: "ReportCard",
+          entityId: id,
+          metadata: { ...details, error },
+        },
+        tx,
+      );
+    });
   }
 }

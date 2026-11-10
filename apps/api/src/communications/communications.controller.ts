@@ -2,11 +2,16 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
   Query,
+  RawBodyRequest,
+  Req,
   UseGuards,
 } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
+import { Request } from "express";
 import { CommunicationsService } from "./communications.service";
 import {
   RecipientFilterDto,
@@ -51,9 +56,21 @@ export class CommunicationsController {
     return this.service.getHistoryById(id);
   }
 
+  // Public because Resend can't send a Supabase token; authenticated by signature instead.
   @Post("webhooks/resend")
   @Public()
-  async handleResendWebhook(@Body() event: any) {
+  @SkipThrottle()
+  async handleResendWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers("svix-id") id: string | undefined,
+    @Headers("svix-timestamp") timestamp: string | undefined,
+    @Headers("svix-signature") signature: string | undefined,
+  ) {
+    const event = this.service.verifyResendWebhook(req.rawBody, {
+      id,
+      timestamp,
+      signature,
+    });
     return this.service.handleWebhook(event);
   }
 }

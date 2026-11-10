@@ -29,6 +29,16 @@ export const SendEmailSchema = z.object({
 
 export class SendEmailDto extends createZodDto(SendEmailSchema) {}
 
+export const ResendWebhookEventSchema = z.object({
+  type: z.string(),
+  created_at: z.string().optional(),
+  data: z.looseObject({
+    email_id: z.string().optional(),
+  }),
+});
+
+export type ResendWebhookEvent = z.infer<typeof ResendWebhookEventSchema>;
+
 export const GetCommunicationHistorySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),

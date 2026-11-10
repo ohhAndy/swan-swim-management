@@ -4,14 +4,16 @@ import helmet from "helmet";
 import compression from "compression";
 import { PrismaClientExceptionFilter } from "./common/filters/prisma-client-exception.filter";
 import { ZodValidationPipe } from "nestjs-zod";
-import { json, urlencoded } from "express";
+import { NestExpressApplication } from "@nestjs/platform-express";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
 
   // 50mb body size limit for base64 report card PDFs and email attachments
-  app.use(json({ limit: "50mb" }));
-  app.use(urlencoded({ extended: true, limit: "50mb" }));
+  app.useBodyParser("json", { limit: "50mb" });
+  app.useBodyParser("urlencoded", { extended: true, limit: "50mb" });
 
   // Trust reverse proxy (Cloudflare, Vercel, Nginx, ALB) for accurate client IP resolution & rate limiting
   const expressApp = app.getHttpAdapter().getInstance();

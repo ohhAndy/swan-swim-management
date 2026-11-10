@@ -1,6 +1,7 @@
 import { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { PrismaService } from "../src/prisma/prisma.service";
+import { CommunicationsService } from "../src/communications/communications.service";
 import { createTestApp } from "./utils/test-setup";
 import { seedAdmin, seedGuardian, seedTerm, seedClassOffering } from "./utils/seeds";
 
@@ -185,6 +186,103 @@ describe("ReportCardsController (e2e)", () => {
         .patch(`/report-cards/${testReportCardId}`)
         .send({ status: "sent" })
         .expect(400);
+    });
+
+    it("should reject a request without pdfContent", async () => {
+      await prisma.reportCard.update({
+        where: { id: testReportCardId },
+        data: { status: "completed" },
+      });
+
+      await request(app.getHttpServer())
+        .post(`/report-cards/${testReportCardId}/email`)
+        .send({})
+        .expect(400);
+    });
+
+    it("should keep a card resendable when the provider fails, then succeed on retry", async () => {
+      await prisma.reportCard.update({
+        where: { id: testReportCardId },
+        data: { status: "completed" },
+      });
+
+      const sendSpy = jest
+        .spyOn(CommunicationsService.prototype, "sendEmail")
+        .mockResolvedValueOnce({
+          success: false,
+          total: 1,
+          successCount: 0,
+          failureCount: 1,
+          status: "failed",
+          logId: "log-failed",
+          mock: false,
+          results: [
+            {
+              email: "guardian@test.com",
+              status: "failed",
+              error: "Rate limit exceeded",
+              updatedAt: new Date().toISOString(),
+            },
+          ],
+        });
+
+      const failed = await request(app.getHttpServer())
+        .post(`/report-cards/${testReportCardId}/email`)
+        .send({ pdfContent: "base64" })
+        .expect(502);
+      expect(failed.body.message).toContain("Rate limit exceeded");
+
+      let card = await prisma.reportCard.findUnique({ where: { id: testReportCardId } });
+      expect(card?.status).toBe("completed");
+      expect(card?.lastSendStatus).toBe("failed");
+      expect(card?.lastSendError).toBe("Rate limit exceeded");
+      expect(card?.sendAttempts).toBe(1);
+
+      sendSpy.mockRestore();
+
+      await request(app.getHttpServer())
+        .post(`/report-cards/${testReportCardId}/email`)
+        .send({ pdfContent: "base64" })
+        .expect(201);
+
+      card = await prisma.reportCard.findUnique({ where: { id: testReportCardId } });
+      expect(card?.status).toBe("sent");
+      expect(card?.lastSendStatus).toBe("sent");
+      expect(card?.lastSendError).toBeNull();
+      expect(card?.sendAttempts).toBe(2);
+      expect(card?.communicationLogId).toBeTruthy();
+    });
+
+    it("should require force to re-send a delivered card", async () => {
+      await prisma.reportCard.update({
+        where: { id: testReportCardId },
+        data: { status: "sent", lastSendStatus: "delivered" },
+      });
+
+      await request(app.getHttpServer())
+        .post(`/report-cards/${testReportCardId}/email`)
+        .send({ pdfContent: "base64" })
+        .expect(403);
+
+      await request(app.getHttpServer())
+        .post(`/report-cards/${testReportCardId}/email`)
+        .send({ pdfContent: "base64", force: true })
+        .expect(201);
+
+      const card = await prisma.reportCard.findUnique({ where: { id: testReportCardId } });
+      expect(card?.lastSendStatus).toBe("sent");
+    });
+
+    it("should allow retrying a sent card whose email bounced", async () => {
+      await prisma.reportCard.update({
+        where: { id: testReportCardId },
+        data: { status: "sent", lastSendStatus: "bounced" },
+      });
+
+      await request(app.getHttpServer())
+        .post(`/report-cards/${testReportCardId}/email`)
+        .send({ pdfContent: "base64" })
+        .expect(201);
     });
   });
 

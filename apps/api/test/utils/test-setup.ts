@@ -9,6 +9,10 @@ import { PrismaService } from "../../src/prisma/prisma.service";
 import { IS_PUBLIC_KEY } from "../../src/auth/public.decorator";
 
 export async function createTestApp(): Promise<{ app: INestApplication; prisma: PrismaService }> {
+  // Never send real email from tests. An empty value also stops ConfigModule
+  // from loading the real key out of apps/api/.env.
+  process.env.RESEND_API_KEY = "";
+
   const reflector = new Reflector();
 
   // Mock SupabaseAuthGuard globally
@@ -35,7 +39,7 @@ export async function createTestApp(): Promise<{ app: INestApplication; prisma: 
     imports: [AppModule],
   }).compile();
 
-  const app = moduleFixture.createNestApplication();
+  const app = moduleFixture.createNestApplication({ rawBody: true });
   
   const httpAdapter = app.get(HttpAdapterHost);
   app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
