@@ -1,4 +1,6 @@
 export { SlotBlock } from "./SlotBlock";
+export { PracticeSlotBlock } from "./PracticeSlotBlock";
+export { MonthPager } from "./MonthPager";
 export { SlotBlockGrid } from "./SlotBlockGrid";
 export { SlotHeader } from "./SlotHeader";
 export { SlotNavigator } from "./SlotNavigator";

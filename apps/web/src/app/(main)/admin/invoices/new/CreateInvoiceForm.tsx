@@ -30,6 +30,21 @@ import {
   InvoiceCustomLineItems,
   CustomLineItem,
 } from "@/components/invoices/InvoiceCustomLineItems";
+import {
+  InvoiceSwimTeamPicker,
+  defaultSwimTeamAmounts,
+  type SwimTeamFeeAmounts,
+} from "@/components/invoices/InvoiceSwimTeamPicker";
+import {
+  InvoiceInstallmentPlan,
+  installmentsMatchTotal,
+} from "@/components/invoices/InvoiceInstallmentPlan";
+import {
+  getUninvoicedSwimTeamRegistrations,
+  type UninvoicedSwimTeamRegistration,
+} from "@/lib/api/client/swim-team";
+import type { PlannedInstallment } from "@school/shared-types";
+import { getTorontoDateString } from "@/lib/date";
 
 export default function CreateInvoiceForm() {
   const router = useRouter();
@@ -45,6 +60,18 @@ export default function CreateInvoiceForm() {
     new Set(),
   );
   const [skipGuardian, setSkipGuardian] = useState(false);
+
+  // Swim team season fees
+  const [registrations, setRegistrations] = useState<
+    UninvoicedSwimTeamRegistration[]
+  >([]);
+  const [selectedRegistrations, setSelectedRegistrations] = useState<
+    Set<string>
+  >(new Set());
+  const [swimTeamAmounts, setSwimTeamAmounts] = useState<
+    Record<string, SwimTeamFeeAmounts>
+  >({});
+  const [installments, setInstallments] = useState<PlannedInstallment[]>([]);
 
   const [customLineItems, setCustomLineItems] = useState<CustomLineItem[]>([]);
   const [invoiceNumber, setInvoiceNumber] = useState("");
@@ -165,6 +192,15 @@ export default function CreateInvoiceForm() {
         console.error("Failed to load enrollments:", error);
         toast.error("Failed to load enrollments");
       }
+
+      try {
+        setRegistrations(
+          await getUninvoicedSwimTeamRegistrations(selectedGuardian.id),
+        );
+      } catch (error) {
+        console.error("Failed to load swim team registrations:", error);
+        toast.error("Failed to load swim team registrations");
+      }
     }
 
     if (selectedGuardian) {
@@ -173,6 +209,9 @@ export default function CreateInvoiceForm() {
     } else {
       setEnrollments([]);
       setSelectedEnrollments(new Set());
+      setRegistrations([]);
+      setSelectedRegistrations(new Set());
+      setSwimTeamAmounts({});
     }
   }, [selectedGuardian]);
 
@@ -192,6 +231,31 @@ export default function CreateInvoiceForm() {
     }
     setSelectedEnrollments(newSelected);
   }
+
+  function toggleRegistration(registrationId: string) {
+    const next = new Set(selectedRegistrations);
+    if (next.has(registrationId)) {
+      next.delete(registrationId);
+    } else {
+      next.add(registrationId);
+    }
+    setSelectedRegistrations(next);
+  }
+
+  const chosenRegistrations = registrations.filter((r) =>
+    selectedRegistrations.has(r.id),
+  );
+
+  function swimTeamAmountsFor(registration: UninvoicedSwimTeamRegistration) {
+    const raw =
+      swimTeamAmounts[registration.id] ?? defaultSwimTeamAmounts(registration);
+    return {
+      practice: parseFloat(raw.practice) || 0,
+      meet: parseFloat(raw.meet) || 0,
+    };
+  }
+
+  const today = getTorontoDateString();
 
   function addCustomLineItem() {
     setCustomLineItems([...customLineItems, { description: "", amount: 0 }]);
@@ -226,7 +290,15 @@ export default function CreateInvoiceForm() {
       0,
     );
 
-    return enrollmentTotal + customTotal;
+    const swimTeamTotal = chosenRegistrations.reduce((sum, r) => {
+      const fees = swimTeamAmountsFor(r);
+      return sum + fees.practice + fees.meet;
+    }, 0);
+
+    // Work in cents so installments can match the total exactly
+    return (
+      Math.round((enrollmentTotal + customTotal + swimTeamTotal) * 100) / 100
+    );
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -237,8 +309,18 @@ export default function CreateInvoiceForm() {
       return;
     }
 
-    if (selectedEnrollments.size === 0 && customLineItems.length === 0) {
+    if (
+      selectedEnrollments.size === 0 &&
+      customLineItems.length === 0 &&
+      selectedRegistrations.size === 0
+    ) {
       toast.error("Please add at least one line item");
+      return;
+    }
+
+    const usesPlan = chosenRegistrations.length > 0 && installments.length > 0;
+    if (usesPlan && !installmentsMatchTotal(installments, calculateTotal())) {
+      toast.error("Installments must add up to the invoice total");
       return;
     }
 
@@ -271,6 +353,25 @@ export default function CreateInvoiceForm() {
           });
         });
 
+      // Add swim team season fee lines
+      chosenRegistrations.forEach((r) => {
+        const fees = swimTeamAmountsFor(r);
+        lineItems.push({
+          swimTeamRegistrationId: r.id,
+          feeType: "swim_team_practice",
+          description: `${r.studentName} - Swim Team ${r.frequency}x/week practice fee - ${r.termName}`,
+          amount: fees.practice,
+        });
+        if (r.competing || fees.meet > 0) {
+          lineItems.push({
+            swimTeamRegistrationId: r.id,
+            feeType: "swim_team_meet",
+            description: `${r.studentName} - Annual meet registration - ${r.termName}`,
+            amount: fees.meet,
+          });
+        }
+      });
+
       // Add custom line items
       customLineItems.forEach((item) => {
         if (item.description && item.amount > 0) {
@@ -296,6 +397,7 @@ export default function CreateInvoiceForm() {
         notes: notes || undefined,
         createdAt: finalCreatedAt,
         lineItems,
+        installments: usesPlan ? installments : undefined,
       });
 
       toast.success("Invoice created successfully");
@@ -362,6 +464,17 @@ export default function CreateInvoiceForm() {
             />
           )}
 
+          {/* Swim team season fees */}
+          {selectedGuardian && (
+            <InvoiceSwimTeamPicker
+              registrations={registrations}
+              selected={selectedRegistrations}
+              toggle={toggleRegistration}
+              amounts={swimTeamAmounts}
+              setAmounts={setSwimTeamAmounts}
+            />
+          )}
+
           {/* Custom Line Items */}
           <InvoiceCustomLineItems
             customLineItems={customLineItems}
@@ -369,6 +482,16 @@ export default function CreateInvoiceForm() {
             updateCustomLineItem={updateCustomLineItem}
             removeCustomLineItem={removeCustomLineItem}
           />
+
+          {/* Installment plan: offered when the invoice has swim team fees */}
+          {chosenRegistrations.length > 0 && (
+            <InvoiceInstallmentPlan
+              total={calculateTotal()}
+              defaultFirstDueDate={today}
+              installments={installments}
+              onChange={setInstallments}
+            />
+          )}
 
           {/* Invoice Details & Notes */}
           <Card>

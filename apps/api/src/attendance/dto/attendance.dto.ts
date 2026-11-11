@@ -5,6 +5,8 @@ export const UpsertAttendanceSchema = z.object({
   enrollmentId: z.string().min(1),
   status: z.enum(["present", "absent", "excused"]).nullable(), 
   notes: z.string().optional(),
+  // Staff confirmed checking in a swim team member who is behind on payments
+  acknowledgedOverdue: z.boolean().optional(),
 });
 
 export const UpdateMakeupAttendanceSchema = z.object({

@@ -15,6 +15,8 @@ export interface CustomLineItem {
   enrollmentId?: string;
   description: string;
   amount: number;
+  swimTeamRegistrationId?: string;
+  feeType?: "swim_team_practice" | "swim_team_meet";
 }
 
 interface InvoiceCustomLineItemsProps {

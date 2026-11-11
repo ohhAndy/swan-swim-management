@@ -13,9 +13,12 @@ export async function getSlotPage(
   weekday: number,
   start: string,
   end: string,
+  /** Swim team seasons only: which month ("YYYY-MM") to load */
+  month?: string,
 ): Promise<SlotPage> {
+  const query = month ? `?month=${encodeURIComponent(month)}` : "";
   const res = await serverFetch(
-    `/terms/${termId}/schedule/weekday/${weekday}/slot/${start}/${end}`,
+    `/terms/${termId}/schedule/weekday/${weekday}/slot/${start}/${end}${query}`,
   );
   return res.json();
 }

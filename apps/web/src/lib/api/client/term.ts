@@ -10,6 +10,9 @@ export async function createTerm(values: FormOutput) {
     body: JSON.stringify({
       name: values.name.trim(),
       slug: values.slug?.trim() || undefined,
+      type: values.type,
+      feeTiers:
+        values.type === "swim_team_season" ? values.feeTiers : undefined,
       startDate: values.startDate,
       endDate: values.endDate,
       weeks: values.weeks,

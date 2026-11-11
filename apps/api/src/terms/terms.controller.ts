@@ -91,24 +91,29 @@ export class TermsController {
     @Param("weekday", ParseIntPipe) weekday: number,
     @Param("start") start: string,
     @Param("end") end: string,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
+    @Query("month") month?: string,
   ): Promise<SlotPage> {
     return this.termScheduleService.slotByWeekdayAndTime(
       weekday,
       termId,
       start,
       end,
+      { month, role: staffUser?.role },
     );
   }
 
   @Get("schedule/date/:date")
   async getDailySchedule(
     @Param("date") date: string,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
     @Query("locationId") queryLocationId?: string,
     @CurrentLocationId() locationId?: string,
   ) {
     return this.termScheduleService.getDailySchedule(
       queryLocationId || locationId || null,
       date,
+      staffUser?.role,
     );
   }
 

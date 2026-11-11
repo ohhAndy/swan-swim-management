@@ -10,10 +10,12 @@ export default function ScheduleGrid({
   timeSlotsByDay,
   termId,
   userRole,
+  swimTeam = false,
 }: {
   timeSlotsByDay: Record<number, DetailedTimeSlot[]>;
   termId: string;
   userRole: string;
+  swimTeam?: boolean;
 }) {
   const [showDetails, setShowDetails] = useState(false);
   const canSeeDetails = ["admin", "super_admin"].includes(userRole);
@@ -50,6 +52,7 @@ export default function ScheduleGrid({
             weekday={i}
             termId={termId}
             showDetails={showDetails}
+            swimTeam={swimTeam}
           />
         ))}
       </div>

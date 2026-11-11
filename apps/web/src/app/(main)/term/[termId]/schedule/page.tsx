@@ -9,6 +9,7 @@ import ScheduleGrid from "./ScheduleGrid";
 import { groupByOffering } from "@/lib/schedule/transform";
 import { SlotBlock } from "@/components/schedule/grid";
 import { AddFlexibleClassDialog } from "@/components/schedule/dialogs";
+import { SeasonFeesDialog } from "@/components/swim-team/SeasonFeesDialog";
 import { getCurrentUser } from "@/lib/auth/user";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { redirect } from "next/navigation";
@@ -31,10 +32,11 @@ export default async function TimeSlotsPage({
   const cookieStore = await cookies();
   const locationId = cookieStore.get("swan_location_id")?.value;
 
-  if (locationId) {
-    const allTerms = await getAllTerms();
-    const currentTerm = allTerms.find((t) => t.id === termId);
+  const allTerms = await getAllTerms();
+  const currentTerm = allTerms.find((t) => t.id === termId);
+  const isSeason = currentTerm?.type === "swim_team_season";
 
+  if (locationId) {
     if (!currentTerm) {
       redirect("/term");
     }
@@ -79,14 +81,35 @@ export default async function TimeSlotsPage({
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-row items-center justify-between">
-        <h1 className="text-xl font-bold text-[#1c82c5]">{termTitle}</h1>
-        <div className="flex gap-4 text-sm items-center">
-          <PermissionGate
-            allowedRoles={["super_admin", "admin"]}
-            currentRole={user.role}
+        <div className="flex items-center gap-3">
+          <h1
+            className={`text-xl font-bold ${isSeason ? "text-green-700" : "text-[#1c82c5]"}`}
           >
-            <AddFlexibleClassDialog termId={termId} />
-          </PermissionGate>
+            {termTitle}
+          </h1>
+          {isSeason && (
+            <span className="rounded-md bg-green-600 px-2 py-0.5 text-xs font-semibold text-white">
+              Swim Team Season
+            </span>
+          )}
+        </div>
+        <div className="flex gap-4 text-sm items-center">
+          {isSeason && (
+            <PermissionGate
+              allowedRoles={["super_admin", "admin"]}
+              currentRole={user.role}
+            >
+              <SeasonFeesDialog termId={termId} />
+            </PermissionGate>
+          )}
+          {!isSeason && (
+            <PermissionGate
+              allowedRoles={["super_admin", "admin"]}
+              currentRole={user.role}
+            >
+              <AddFlexibleClassDialog termId={termId} />
+            </PermissionGate>
+          )}
           <div className="flex items-center gap-2 ml-4">
             <div className="w-3 h-3 rounded-full bg-yellow-600" />
             <span>P&T</span>
@@ -102,7 +125,12 @@ export default async function TimeSlotsPage({
         </div>
       </div>
       {showRegularGrid && (
-        <ScheduleGrid timeSlotsByDay={timeSlotsByDay} termId={termId} userRole={user.role} />
+        <ScheduleGrid
+          timeSlotsByDay={timeSlotsByDay}
+          termId={termId}
+          userRole={user.role}
+          swimTeam={isSeason}
+        />
       )}
 
       {flexibleBlocks.length > 0 && (

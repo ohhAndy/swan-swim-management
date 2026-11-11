@@ -76,6 +76,7 @@ export type Payment = Serialize<Prisma.PaymentGetPayload<{
 export type Invoice = Serialize<Prisma.InvoiceGetPayload<{
   include: {
     payments: true;
+    installments: true;
     guardian: true;
     location: { select: { id: true; name: true } };
     lineItems: {
@@ -94,6 +95,10 @@ export type Invoice = Serialize<Prisma.InvoiceGetPayload<{
   amountPaid: number;
   balance: number;
   calculatedStatus: "paid" | "partial" | "void" | "refunded";
+  /** Where the family stands on the installment plan (detail view only) */
+  standing?: import("@school/shared-types").PaymentStanding;
+  /** Line items changed after the plan was set up */
+  installmentsOutOfSync?: boolean;
 };
 
 export type InvoiceLineItem = Serialize<Prisma.InvoiceLineItemGetPayload<{

@@ -6,11 +6,18 @@ import {
   Patch,
   Param,
   Delete,
+  Put,
   Query,
   UseGuards,
 } from "@nestjs/common";
+import { ZodValidationPipe } from "nestjs-zod";
 import { InvoicesService } from "./invoices.service";
-import { CreateInvoiceDto } from "./dto/create-invoice.dto";
+import {
+  CreateInvoiceDto,
+  CreateInvoiceSchema,
+  UpdateInstallmentsDto,
+  UpdateInstallmentsSchema,
+} from "./dto/create-invoice.dto";
 import { UpdateInvoiceDto } from "./dto/update-invoice.dto";
 import { InvoiceQueryDto } from "./dto/invoice-query.dto";
 import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-query.dto";
@@ -30,7 +37,8 @@ export class InvoicesController {
   @Post()
   @Roles("super_admin", "admin", "manager")
   async create(
-    @Body() createInvoiceDto: CreateInvoiceDto,
+    @Body(new ZodValidationPipe(CreateInvoiceSchema))
+    createInvoiceDto: CreateInvoiceDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
     @CurrentLocationId() locationId?: string,
   ) {
@@ -79,6 +87,18 @@ export class InvoicesController {
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.invoicesService.update(id, updateInvoiceDto, staffUser);
+  }
+
+  // Replace the installment plan - Admin & Manager only
+  @Put(":id/installments")
+  @Roles("super_admin", "admin", "manager")
+  async updateInstallments(
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(UpdateInstallmentsSchema))
+    body: UpdateInstallmentsDto,
+    @CurrentStaffUser() staffUser: RequestStaffUser,
+  ) {
+    return this.invoicesService.updateInstallments(id, body, staffUser);
   }
 
   // Delete invoice - Admin only

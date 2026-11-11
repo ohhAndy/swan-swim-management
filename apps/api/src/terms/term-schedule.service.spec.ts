@@ -3,6 +3,7 @@ import { TermScheduleService } from "./term-schedule.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { createPrismaMock, MockPrismaService } from "../prisma/prisma.mock";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
+import { SwimTeamStandingService } from "../swim-team/swim-team-standing.service";
 
 describe("TermScheduleService", () => {
   let service: TermScheduleService;
@@ -15,6 +16,10 @@ describe("TermScheduleService", () => {
       providers: [
         TermScheduleService,
         { provide: PrismaService, useValue: prismaMock },
+        {
+          provide: SwimTeamStandingService,
+          useValue: { getStandings: jest.fn().mockResolvedValue(new Map()) },
+        },
       ],
     }).compile();
 

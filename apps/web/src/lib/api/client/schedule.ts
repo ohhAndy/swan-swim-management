@@ -120,7 +120,7 @@ export async function updateOfferingInfo(offeringId: string, title: string) {
 
 export async function createOffering(payload: {
   termId: string;
-  type?: "regular" | "flexible";
+  type?: "regular" | "flexible" | "swim_team";
   weekday?: number;
   startTime?: string;
   title: string;

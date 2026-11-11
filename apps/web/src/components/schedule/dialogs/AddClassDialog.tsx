@@ -25,6 +25,8 @@ interface AddClassDialogProps {
   weekday: number;
   startTime?: string; // HH:MM
   duration?: number;
+  /** "swim_team" creates a practice in a swim team season */
+  offeringType?: "regular" | "swim_team";
   onSuccess?: () => void;
 }
 
@@ -33,17 +35,21 @@ export function AddClassDialog({
   weekday,
   startTime,
   duration,
+  offeringType = "regular",
   onSuccess,
 }: AddClassDialogProps) {
+  const isPractice = offeringType === "swim_team";
+  const defaultCapacity = isPractice ? "12" : "3";
+  const defaultDuration = isPractice ? "60" : "45";
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
-  const [capacity, setCapacity] = useState("3");
+  const [capacity, setCapacity] = useState(defaultCapacity);
   const [customTime, setCustomTime] = useState("09:00");
   const [durationMinutes, setDurationMinutes] = useState(
-    duration?.toString() || "45",
+    duration?.toString() || defaultDuration,
   );
 
   async function handleCreate() {
@@ -55,24 +61,33 @@ export function AddClassDialog({
     try {
       await createOffering({
         termId,
+        type: offeringType,
         weekday,
         startTime: timeToUse,
         title,
-        capacity: parseInt(capacity) || 3,
-        duration: parseInt(durationMinutes) || 45,
+        capacity: parseInt(capacity) || Number(defaultCapacity),
+        duration: parseInt(durationMinutes) || Number(defaultDuration),
       });
       setOpen(false);
       setTitle("");
-      setCapacity("3");
-      setDurationMinutes("45");
+      setCapacity(defaultCapacity);
+      setDurationMinutes(duration?.toString() || defaultDuration);
       startTransition(() => {
         router.refresh();
       });
       onSuccess?.();
-      toast.success("Class created successfully");
+      toast.success(
+        isPractice ? "Practice created successfully" : "Class created successfully",
+      );
     } catch (error) {
       console.error(error);
-      toast.error("Failed to create class");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : isPractice
+            ? "Failed to create practice"
+            : "Failed to create class",
+      );
     } finally {
       setLoading(false);
     }
@@ -87,18 +102,22 @@ export function AddClassDialog({
           className={startTime ? "gap-2" : "gap-2 w-full mt-2 border-dashed"}
         >
           <Plus className="h-4 w-4" />
-          {startTime ? "Add Class" : "Add Slot"}
+          {startTime ? (isPractice ? "Add Practice" : "Add Class") : "Add Slot"}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {startTime
-              ? `Add Class - ${formatTime(startTime)}`
-              : "Add New Time Slot"}
+              ? `${isPractice ? "Add Practice" : "Add Class"} - ${formatTime(startTime)}`
+              : isPractice
+                ? "Add Practice Time"
+                : "Add New Time Slot"}
           </DialogTitle>
           <DialogDescription>
-            Create a new class offering for this time slot.
+            {isPractice
+              ? "Create a weekly swim team practice. It repeats every week until the season ends."
+              : "Create a new class offering for this time slot."}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -126,16 +145,20 @@ export function AddClassDialog({
             </div>
           )}
           <div className="grid gap-2">
-            <Label htmlFor="title">Title (Level)</Label>
+            <Label htmlFor="title">
+              {isPractice ? "Practice group" : "Title (Level)"}
+            </Label>
             <Input
               id="title"
-              placeholder="e.g. Preschool A"
+              placeholder={isPractice ? "e.g. Junior Squad" : "e.g. Preschool A"}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="capacity">Capacity</Label>
+            <Label htmlFor="capacity">
+              {isPractice ? "Capacity (swimmers)" : "Capacity"}
+            </Label>
             <Input
               id="capacity"
               type="number"
@@ -152,7 +175,11 @@ export function AddClassDialog({
             onClick={handleCreate}
             disabled={loading || isPending || !title}
           >
-            {loading || isPending ? "Creating..." : "Create Class"}
+            {loading || isPending
+              ? "Creating..."
+              : isPractice
+                ? "Create Practice"
+                : "Create Class"}
           </Button>
         </DialogFooter>
       </DialogContent>

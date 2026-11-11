@@ -13,11 +13,14 @@ export default function TimeSlots({
   weekday,
   termId,
   showDetails = false,
+  swimTeam = false,
 }: {
   timeSlots: DetailedTimeSlot[];
   weekday: number;
   termId: string;
   showDetails?: boolean;
+  /** Swim team season: every slot is a practice */
+  swimTeam?: boolean;
 }) {
   const getDuration = (timeSlot: string) => {
     const [start, end] = timeSlot.split("-");
@@ -46,7 +49,9 @@ export default function TimeSlots({
               >
                 <span
                   className={`text-center text-sm font-medium ${
-                    getDuration(slot.time) === 30
+                    swimTeam
+                      ? "text-green-600"
+                      : getDuration(slot.time) === 30
                       ? "text-yellow-600"
                       : getDuration(slot.time) === 45
                         ? "text-[#1c82c5]"
@@ -57,7 +62,7 @@ export default function TimeSlots({
                 </span>
                 {showDetails && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{slot.offeringCount} {slot.offeringCount === 1 ? "class" : "classes"}</span>
+                    <span>{slot.offeringCount} {swimTeam ? (slot.offeringCount === 1 ? "group" : "groups") : slot.offeringCount === 1 ? "class" : "classes"}</span>
                     <span>·</span>
                     <span className={slot.filledSeats >= slot.realCapacity ? "text-red-500 font-medium" : ""}>{slot.filledSeats}/{slot.realCapacity}</span>
                   </div>
@@ -65,7 +70,11 @@ export default function TimeSlots({
               </Link>
             </Button>
           ))}
-          <AddClassDialog termId={termId} weekday={weekday} />
+          <AddClassDialog
+            termId={termId}
+            weekday={weekday}
+            offeringType={swimTeam ? "swim_team" : "regular"}
+          />
         </div>
       </CardContent>
     </Card>

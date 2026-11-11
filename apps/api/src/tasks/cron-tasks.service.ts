@@ -84,9 +84,20 @@ export class CronTasksService implements OnApplicationBootstrap {
         },
       });
 
+      // Swim team registrations end with their season too
+      const registrations =
+        await this.prisma.swimTeamRegistration.updateMany({
+          where: {
+            status: "active",
+            term: { endDate: { lt: todayStart } },
+          },
+          data: { status: "inactive" },
+        });
+
       return {
         success: true,
         count: result.count,
+        swimTeamRegistrations: registrations.count,
         timestamp: new Date().toISOString(),
       };
     } catch (error) {

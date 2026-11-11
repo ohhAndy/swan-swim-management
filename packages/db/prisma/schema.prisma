@@ -9,16 +9,16 @@ datasource db {
 }
 
 model Location {
-  id                  String                @id @default(cuid())
-  name                String
-  slug                String                @unique
-  address             String?
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  invoices            Invoice[]
-  terms               Term[]
-  staffUsers          StaffUser[]           @relation("LocationToStaffUser")
-  trialRequests       TrialRequest[]
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique
+  address       String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  invoices      Invoice[]
+  terms         Term[]
+  staffUsers    StaffUser[]    @relation("LocationToStaffUser")
+  trialRequests TrialRequest[]
 
   @@map("locations")
 }
@@ -51,46 +51,47 @@ model TrialBooking {
 }
 
 model StaffUser {
-  id                           String                @id @default(cuid())
-  authId                       String                @unique
-  email                        String                @unique
+  id                           String                 @id @default(cuid())
+  authId                       String                 @unique
+  email                        String                 @unique
   fullName                     String
   role                         StaffRole
-  active                       Boolean               @default(true)
-  createdAt                    DateTime              @default(now())
-  updatedAt                    DateTime              @updatedAt
+  active                       Boolean                @default(true)
+  createdAt                    DateTime               @default(now())
+  updatedAt                    DateTime               @updatedAt
   accessSchedule               Json?
-  attendanceMarked             Attendance[]          @relation("AttendanceMarkedBy")
-  attendanceUpdated            Attendance[]          @relation("AttendanceUpdatedBy")
+  attendanceMarked             Attendance[]           @relation("AttendanceMarkedBy")
+  attendanceUpdated            Attendance[]           @relation("AttendanceUpdatedBy")
   auditLogs                    AuditLog[]
-  enrollmentsCreated           Enrollment[]          @relation("EnrollmentCreatedBy")
-  transfersInitiated           Enrollment[]          @relation("EnrollmentTransferredBy")
-  skipsCreated                 EnrollmentSkip[]      @relation("SkipCreatedBy")
-  guardiansCreated             Guardian[]            @relation("GuardianCreatedBy")
-  guardiansUpdated             Guardian[]            @relation("GuardianUpdatedBy")
-  invoicesCreated              Invoice[]             @relation("InvoiceCreatedBy")
-  invoicesUpdated              Invoice[]             @relation("InvoiceUpdatedBy")
-  makeUpsCreated               MakeUpBooking[]       @relation("MakeUpCreatedBy")
-  makeUpsUpdated               MakeUpBooking[]       @relation("MakeUpUpdatedBy")
-  paymentsCreated              Payment[]             @relation("PaymentCreatedBy")
-  studentsCreated              Student[]             @relation("StudentCreatedBy")
-  studentsUpdated              Student[]             @relation("StudentUpdatedBy")
-  termsCreated                 Term[]                @relation("TermCreatedBy")
-  accessibleLocations          Location[]            @relation("LocationToStaffUser")
-  instructorAssignmentsCreated ClassInstructor[]     @relation("ClassInstructorAssignedBy")
-  instructorAssignmentsRemoved ClassInstructor[]     @relation("ClassInstructorRemovedBy")
+  enrollmentsCreated           Enrollment[]           @relation("EnrollmentCreatedBy")
+  transfersInitiated           Enrollment[]           @relation("EnrollmentTransferredBy")
+  skipsCreated                 EnrollmentSkip[]       @relation("SkipCreatedBy")
+  guardiansCreated             Guardian[]             @relation("GuardianCreatedBy")
+  guardiansUpdated             Guardian[]             @relation("GuardianUpdatedBy")
+  invoicesCreated              Invoice[]              @relation("InvoiceCreatedBy")
+  invoicesUpdated              Invoice[]              @relation("InvoiceUpdatedBy")
+  makeUpsCreated               MakeUpBooking[]        @relation("MakeUpCreatedBy")
+  makeUpsUpdated               MakeUpBooking[]        @relation("MakeUpUpdatedBy")
+  paymentsCreated              Payment[]              @relation("PaymentCreatedBy")
+  studentsCreated              Student[]              @relation("StudentCreatedBy")
+  studentsUpdated              Student[]              @relation("StudentUpdatedBy")
+  termsCreated                 Term[]                 @relation("TermCreatedBy")
+  accessibleLocations          Location[]             @relation("LocationToStaffUser")
+  instructorAssignmentsCreated ClassInstructor[]      @relation("ClassInstructorAssignedBy")
+  instructorAssignmentsRemoved ClassInstructor[]      @relation("ClassInstructorRemovedBy")
   classInstructors             ClassInstructor[]
-  tasksAssigned                Task[]                @relation("TaskAssignedTo")
-  tasksCreated                 Task[]                @relation("TaskCreatedBy")
-  trialBookingsConverted       TrialBooking[]        @relation("TrialBookingConvertedBy")
-  trialBookingsCreated         TrialBooking[]        @relation("TrialBookingCreatedBy")
-  trialBookingsUpdated         TrialBooking[]        @relation("TrialBookingUpdatedBy")
-  reportCardsCreated           ReportCard[]          @relation("ReportCardCreatedBy")
-  reportCardsUpdated           ReportCard[]          @relation("ReportCardUpdatedBy")
-  reportCardsSent              ReportCard[]          @relation("ReportCardSentBy")
-  communicationsSent           CommunicationLog[]    @relation("CommunicationSentBy")
-  trialRequestsReviewed        TrialRequest[]        @relation("TrialRequestReviewedBy")
-  tokensGranted                MakeUpToken[]         @relation("TokenGrantedBy")
+  tasksAssigned                Task[]                 @relation("TaskAssignedTo")
+  tasksCreated                 Task[]                 @relation("TaskCreatedBy")
+  trialBookingsConverted       TrialBooking[]         @relation("TrialBookingConvertedBy")
+  trialBookingsCreated         TrialBooking[]         @relation("TrialBookingCreatedBy")
+  trialBookingsUpdated         TrialBooking[]         @relation("TrialBookingUpdatedBy")
+  reportCardsCreated           ReportCard[]           @relation("ReportCardCreatedBy")
+  reportCardsUpdated           ReportCard[]           @relation("ReportCardUpdatedBy")
+  reportCardsSent              ReportCard[]           @relation("ReportCardSentBy")
+  communicationsSent           CommunicationLog[]     @relation("CommunicationSentBy")
+  trialRequestsReviewed        TrialRequest[]         @relation("TrialRequestReviewedBy")
+  tokensGranted                MakeUpToken[]          @relation("TokenGrantedBy")
+  swimTeamRegistrationsCreated SwimTeamRegistration[] @relation("SwimTeamRegistrationCreatedBy")
 }
 
 model AuditLog {
@@ -110,18 +111,21 @@ model AuditLog {
 }
 
 model Term {
-  id             String          @id @default(cuid())
-  startDate      DateTime        @db.Date
-  endDate        DateTime        @db.Date
-  name           String
-  slug           String?         @unique
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  createdBy      String?
-  locationId     String?
-  offerings      ClassOffering[]
-  createdByStaff StaffUser?      @relation("TermCreatedBy", fields: [createdBy], references: [id])
-  location       Location?       @relation(fields: [locationId], references: [id])
+  id                    String                 @id @default(cuid())
+  startDate             DateTime               @db.Date
+  endDate               DateTime               @db.Date
+  name                  String
+  slug                  String?                @unique
+  type                  TermType               @default(regular)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  createdBy             String?
+  locationId            String?
+  offerings             ClassOffering[]
+  swimTeamFeeTiers      SwimTeamFeeTier[]
+  swimTeamRegistrations SwimTeamRegistration[]
+  createdByStaff        StaffUser?             @relation("TermCreatedBy", fields: [createdBy], references: [id])
+  location              Location?              @relation(fields: [locationId], references: [id])
 
   @@index([locationId])
 }
@@ -169,34 +173,36 @@ model ClassSession {
 }
 
 model Enrollment {
-  id                 String           @id @default(cuid())
-  studentId          String
-  offeringId         String
-  status             EnrollmentStatus @default(active)
-  enrollDate         DateTime         @default(now())
-  notes              String?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  createdBy          String?
-  endDate            DateTime?        @db.Date
-  transferNotes      String?
-  transferredAt      DateTime?
-  transferredBy      String?
-  transferredFromId  String?          @unique
-  transferredToId    String?          @unique
-  classRatio         String           @default("3:1")
-  reportCardStatus   String?          @default("not_created")
-  attendance         Attendance[]
-  createdByStaff     StaffUser?       @relation("EnrollmentCreatedBy", fields: [createdBy], references: [id])
-  offering           ClassOffering    @relation(fields: [offeringId], references: [id], onDelete: Cascade)
-  student            Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  transferredByStaff StaffUser?       @relation("EnrollmentTransferredBy", fields: [transferredBy], references: [id])
-  transferredTo      Enrollment?      @relation("EnrollmentTransfer", fields: [transferredToId], references: [id])
-  transferredFrom    Enrollment?      @relation("EnrollmentTransfer")
-  enrollmentSkips    EnrollmentSkip[]
-  invoiceLineItem    InvoiceLineItem? // Reverse relation to check if invoiced
-  reportCards        ReportCard[]
-  makeUpTokens       MakeUpToken[]
+  id                     String                @id @default(cuid())
+  studentId              String
+  offeringId             String
+  status                 EnrollmentStatus      @default(active)
+  enrollDate             DateTime              @default(now())
+  notes                  String?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  createdBy              String?
+  endDate                DateTime?             @db.Date
+  transferNotes          String?
+  transferredAt          DateTime?
+  transferredBy          String?
+  transferredFromId      String?               @unique
+  transferredToId        String?               @unique
+  classRatio             String                @default("3:1")
+  reportCardStatus       String?               @default("not_created")
+  swimTeamRegistrationId String?
+  swimTeamRegistration   SwimTeamRegistration? @relation(fields: [swimTeamRegistrationId], references: [id], onDelete: SetNull)
+  attendance             Attendance[]
+  createdByStaff         StaffUser?            @relation("EnrollmentCreatedBy", fields: [createdBy], references: [id])
+  offering               ClassOffering         @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  student                Student               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  transferredByStaff     StaffUser?            @relation("EnrollmentTransferredBy", fields: [transferredBy], references: [id])
+  transferredTo          Enrollment?           @relation("EnrollmentTransfer", fields: [transferredToId], references: [id])
+  transferredFrom        Enrollment?           @relation("EnrollmentTransfer")
+  enrollmentSkips        EnrollmentSkip[]
+  invoiceLineItem        InvoiceLineItem? // Reverse relation to check if invoiced
+  reportCards            ReportCard[]
+  makeUpTokens           MakeUpToken[]
 
   @@unique([offeringId, studentId], name: "offeringId_studentId")
   @@index([studentId])
@@ -205,6 +211,7 @@ model Enrollment {
   @@index([createdBy])
   @@index([transferredBy])
   @@index([offeringId, status])
+  @@index([swimTeamRegistrationId])
 }
 
 model EnrollmentSkip {
@@ -225,19 +232,20 @@ model EnrollmentSkip {
 }
 
 model Attendance {
-  id             String           @id @default(cuid())
-  classSessionId String
-  enrollmentId   String
-  status         AttendanceStatus
-  notes          String?
-  markedAt       DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  markedBy       String?
-  updatedBy      String?
-  classSession   ClassSession     @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
-  enrollment     Enrollment       @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  markedByStaff  StaffUser?       @relation("AttendanceMarkedBy", fields: [markedBy], references: [id])
-  updatedByStaff StaffUser?       @relation("AttendanceUpdatedBy", fields: [updatedBy], references: [id])
+  id                  String           @id @default(cuid())
+  classSessionId      String
+  enrollmentId        String
+  status              AttendanceStatus
+  notes               String?
+  markedAt            DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  markedBy            String?
+  updatedBy           String?
+  acknowledgedOverdue Boolean          @default(false)
+  classSession        ClassSession     @relation(fields: [classSessionId], references: [id], onDelete: Cascade)
+  enrollment          Enrollment       @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  markedByStaff       StaffUser?       @relation("AttendanceMarkedBy", fields: [markedBy], references: [id])
+  updatedByStaff      StaffUser?       @relation("AttendanceUpdatedBy", fields: [updatedBy], references: [id])
 
   @@unique([enrollmentId, classSessionId], name: "enrollmentId_classSessionId")
   @@index([classSessionId])
@@ -246,26 +254,27 @@ model Attendance {
 }
 
 model Student {
-  id                 String          @id @default(cuid())
-  shortCode          String?         @unique
-  firstName          String
-  lastName           String
-  birthdate          DateTime?
-  guardianId         String
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  createdBy          String?
-  level              String?
-  levelId            String?
-  levelModel         Level?          @relation(fields: [levelId], references: [id])
-  updatedBy          String?
-  notes              String?
-  enrollments        Enrollment[]
-  makeUps            MakeUpBooking[]
-  createdByStaff     StaffUser?      @relation("StudentCreatedBy", fields: [createdBy], references: [id])
-  guardian           Guardian        @relation(fields: [guardianId], references: [id])
-  updatedByStaff     StaffUser?      @relation("StudentUpdatedBy", fields: [updatedBy], references: [id])
-  convertedFromTrial TrialBooking[]
+  id                    String                 @id @default(cuid())
+  shortCode             String?                @unique
+  firstName             String
+  lastName              String
+  birthdate             DateTime?
+  guardianId            String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  createdBy             String?
+  level                 String?
+  levelId               String?
+  levelModel            Level?                 @relation(fields: [levelId], references: [id])
+  updatedBy             String?
+  notes                 String?
+  enrollments           Enrollment[]
+  makeUps               MakeUpBooking[]
+  swimTeamRegistrations SwimTeamRegistration[]
+  createdByStaff        StaffUser?             @relation("StudentCreatedBy", fields: [createdBy], references: [id])
+  guardian              Guardian               @relation(fields: [guardianId], references: [id])
+  updatedByStaff        StaffUser?             @relation("StudentUpdatedBy", fields: [updatedBy], references: [id])
+  convertedFromTrial    TrialBooking[]
 
   @@index([guardianId])
   @@index([lastName, firstName])
@@ -297,23 +306,24 @@ model Guardian {
 }
 
 model Invoice {
-  id            String            @id @default(uuid())
-  invoiceNumber String?           @unique
+  id            String               @id @default(uuid())
+  invoiceNumber String?              @unique
   guardianId    String?
-  totalAmount   Decimal           @db.Decimal(10, 2)
+  totalAmount   Decimal              @db.Decimal(10, 2)
   status        InvoiceStatus
   notes         String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
   createdBy     String?
   updatedBy     String?
   locationId    String?
-  createdByUser StaffUser?        @relation("InvoiceCreatedBy", fields: [createdBy], references: [id])
-  guardian      Guardian?         @relation(fields: [guardianId], references: [id], onDelete: Restrict)
-  location      Location?         @relation(fields: [locationId], references: [id])
-  updatedByUser StaffUser?        @relation("InvoiceUpdatedBy", fields: [updatedBy], references: [id])
+  createdByUser StaffUser?           @relation("InvoiceCreatedBy", fields: [createdBy], references: [id])
+  guardian      Guardian?            @relation(fields: [guardianId], references: [id], onDelete: Restrict)
+  location      Location?            @relation(fields: [locationId], references: [id])
+  updatedByUser StaffUser?           @relation("InvoiceUpdatedBy", fields: [updatedBy], references: [id])
   lineItems     InvoiceLineItem[]
   payments      Payment[]
+  installments  InvoiceInstallment[]
 
   @@index([guardianId])
   @@index([invoiceNumber])
@@ -323,20 +333,35 @@ model Invoice {
 }
 
 model InvoiceLineItem {
-  id              String         @id @default(uuid())
-  invoiceId       String
-  enrollmentId    String?        @unique
-  inventoryItemId String?
-  description     String
-  amount          Decimal        @db.Decimal(10, 2)
-  createdAt       DateTime       @default(now())
-  enrollment      Enrollment?    @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
-  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
-  invoice         Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  id                     String                @id @default(uuid())
+  invoiceId              String
+  enrollmentId           String?               @unique
+  inventoryItemId        String?
+  description            String
+  amount                 Decimal               @db.Decimal(10, 2)
+  createdAt              DateTime              @default(now())
+  swimTeamRegistrationId String?
+  feeType                LineItemFeeType?
+  swimTeamRegistration   SwimTeamRegistration? @relation(fields: [swimTeamRegistrationId], references: [id], onDelete: Restrict)
+  enrollment             Enrollment?           @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  inventoryItem          InventoryItem?        @relation(fields: [inventoryItemId], references: [id])
+  invoice                Invoice               @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
   @@index([enrollmentId])
   @@index([inventoryItemId])
+  @@index([swimTeamRegistrationId])
+}
+
+model InvoiceInstallment {
+  id        String   @id @default(cuid())
+  invoiceId String
+  dueDate   DateTime @db.Date
+  amount    Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, dueDate])
 }
 
 model Payment {
@@ -471,10 +496,6 @@ model Task {
   @@map("tasks")
 }
 
-
-
-
-
 enum EnrollmentStatus {
   active
   inactive
@@ -484,6 +505,17 @@ enum EnrollmentStatus {
 enum OfferingType {
   regular
   flexible
+  swim_team
+}
+
+enum TermType {
+  regular
+  swim_team_season
+}
+
+enum LineItemFeeType {
+  swim_team_practice
+  swim_team_meet
 }
 
 enum SessionStatus {
@@ -568,23 +600,23 @@ enum TrialRequestStatus {
 }
 
 model TrialRequest {
-  id              String             @id @default(uuid())
-  parentName      String
-  parentPhone     String
-  parentEmail     String?
-  childName       String
-  childAge        Int
-  preferredDates  Json               // Array of ISO date strings selected by parent
-  notes           String?
-  status          TrialRequestStatus @default(pending)
-  submittedAt     DateTime           @default(now())
-  reviewedAt      DateTime?
-  reviewedBy      String?
-  reviewedByUser  StaffUser?         @relation("TrialRequestReviewedBy", fields: [reviewedBy], references: [id])
-  ipAddress       String?
-  cookieId        String?
-  locationId      String?
-  location        Location?          @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  id             String             @id @default(uuid())
+  parentName     String
+  parentPhone    String
+  parentEmail    String?
+  childName      String
+  childAge       Int
+  preferredDates Json // Array of ISO date strings selected by parent
+  notes          String?
+  status         TrialRequestStatus @default(pending)
+  submittedAt    DateTime           @default(now())
+  reviewedAt     DateTime?
+  reviewedBy     String?
+  reviewedByUser StaffUser?         @relation("TrialRequestReviewedBy", fields: [reviewedBy], references: [id])
+  ipAddress      String?
+  cookieId       String?
+  locationId     String?
+  location       Location?          @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
   @@index([parentPhone])
   @@index([status])
@@ -628,29 +660,29 @@ model Skill {
 }
 
 model ReportCard {
-  id           String           @id @default(cuid())
-  enrollmentId String
-  levelId      String?
-  status       ReportCardStatus @default(draft) // draft, completed, sent
-  comments     String?          @db.Text
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  sentAt       DateTime?
-  createdBy    String?
-  createdByUser StaffUser?      @relation("ReportCardCreatedBy", fields: [createdBy], references: [id])
-  updatedBy    String?
-  updatedByUser StaffUser?      @relation("ReportCardUpdatedBy", fields: [updatedBy], references: [id])
-  sentById     String?
-  sentByUser   StaffUser?      @relation("ReportCardSentBy", fields: [sentById], references: [id])
+  id                 String                @id @default(cuid())
+  enrollmentId       String
+  levelId            String?
+  status             ReportCardStatus      @default(draft) // draft, completed, sent
+  comments           String?               @db.Text
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  sentAt             DateTime?
+  createdBy          String?
+  createdByUser      StaffUser?            @relation("ReportCardCreatedBy", fields: [createdBy], references: [id])
+  updatedBy          String?
+  updatedByUser      StaffUser?            @relation("ReportCardUpdatedBy", fields: [updatedBy], references: [id])
+  sentById           String?
+  sentByUser         StaffUser?            @relation("ReportCardSentBy", fields: [sentById], references: [id])
   lastSendStatus     ReportCardSendStatus?
   lastSendError      String?               @db.Text
   lastSendAttemptAt  DateTime?
   sendAttempts       Int                   @default(0)
   communicationLogId String?
   communicationLog   CommunicationLog?     @relation(fields: [communicationLogId], references: [id], onDelete: SetNull)
-  enrollment       Enrollment        @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  level            Level?            @relation(fields: [levelId], references: [id])
-  reportCardSkills ReportCardSkill[]
+  enrollment         Enrollment            @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  level              Level?                @relation(fields: [levelId], references: [id])
+  reportCardSkills   ReportCardSkill[]
 
   @@index([enrollmentId])
   @@index([levelId])
@@ -683,6 +715,7 @@ model ReportCardSkill {
   @@index([skillId])
   @@map("report_card_skills")
 }
+
 enum ReportCardStatus {
   draft
   completed
@@ -692,8 +725,8 @@ enum ReportCardStatus {
 
 enum SkillStatus {
   not_started // "Not Started" / Bad
-  developing  // "Developing" / Ok
-  mastered    // "Mastered" / Good
+  developing // "Developing" / Ok
+  mastered // "Mastered" / Good
 }
 
 enum CommunicationStatus {
@@ -723,4 +756,40 @@ model CommunicationLog {
   @@index([status])
   @@index([createdAt])
   @@map("communication_logs")
+}
+
+model SwimTeamFeeTier {
+  id          String   @id @default(cuid())
+  termId      String
+  frequency   Int
+  practiceFee Decimal  @db.Decimal(10, 2)
+  meetFee     Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  term        Term     @relation(fields: [termId], references: [id], onDelete: Cascade)
+
+  @@unique([termId, frequency])
+}
+
+model SwimTeamRegistration {
+  id             String            @id @default(cuid())
+  studentId      String
+  termId         String
+  frequency      Int
+  competing      Boolean           @default(false)
+  status         EnrollmentStatus  @default(active)
+  startDate      DateTime          @db.Date
+  endDate        DateTime?         @db.Date
+  notes          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  createdBy      String?
+  student        Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  term           Term              @relation(fields: [termId], references: [id], onDelete: Restrict)
+  createdByStaff StaffUser?        @relation("SwimTeamRegistrationCreatedBy", fields: [createdBy], references: [id])
+  enrollments    Enrollment[]
+  lineItems      InvoiceLineItem[]
+
+  @@unique([studentId, termId])
+  @@index([termId, status])
 }

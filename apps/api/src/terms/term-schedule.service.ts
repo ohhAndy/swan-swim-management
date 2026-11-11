@@ -8,21 +8,91 @@ import type {
   MakeupLite,
   RosterResponse,
   SlotPage,
+  SwimTeamRosterInfo,
   Term,
   TrialLite,
 } from "@school/shared-types";
+import { SwimTeamStandingService } from "../swim-team/swim-team-standing.service";
+import { getTorontoDateString } from "../common/date.utils";
 import { getRatioWeight } from "@school/shared-types";
 import { formatTime } from "./terms.helpers";
 
 @Injectable()
 export class TermScheduleService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly swimTeamStandingService: SwimTeamStandingService,
+  ) {}
+
+  /**
+   * Tier, meet status, payment standing and held slots for a set of swim team
+   * registrations, keyed by registration id.
+   */
+  private async loadSwimTeamInfo(
+    registrations: {
+      id: string;
+      frequency: number;
+      competing: boolean;
+    }[],
+    role?: string,
+  ): Promise<Map<string, SwimTeamRosterInfo>> {
+    const result = new Map<string, SwimTeamRosterInfo>();
+    const unique = new Map(registrations.map((r) => [r.id, r]));
+    if (unique.size === 0) return result;
+    const ids = [...unique.keys()];
+
+    const [standings, slotEnrollments] = await Promise.all([
+      this.swimTeamStandingService.getStandings(ids),
+      this.prisma.enrollment.findMany({
+        where: { swimTeamRegistrationId: { in: ids }, status: "active" },
+        select: {
+          id: true,
+          swimTeamRegistrationId: true,
+          offering: {
+            select: {
+              id: true,
+              title: true,
+              weekday: true,
+              startTime: true,
+              endTime: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    for (const [id, registration] of unique) {
+      result.set(id, {
+        registrationId: id,
+        frequency: registration.frequency,
+        competing: registration.competing,
+        standing: SwimTeamStandingService.forRole(standings.get(id), role),
+        slots: slotEnrollments
+          .filter((e) => e.swimTeamRegistrationId === id)
+          .map((e) => ({
+            enrollmentId: e.id,
+            offeringId: e.offering.id,
+            title: e.offering.title,
+            weekday: e.offering.weekday,
+            startTime: e.offering.startTime,
+            endTime: e.offering.endTime,
+          }))
+          .sort(
+            (a, b) =>
+              (a.weekday ?? 0) - (b.weekday ?? 0) ||
+              (a.startTime ?? "").localeCompare(b.startTime ?? ""),
+          ),
+      });
+    }
+    return result;
+  }
 
   async slotByWeekdayAndTime(
     weekday: number,
     termId: string,
     startTime: string,
     endTime: string,
+    options: { month?: string; role?: string } = {},
   ): Promise<SlotPage> {
     if (weekday < 0 || weekday > 6) {
       throw new BadRequestException("Not a real weekday");
@@ -36,7 +106,14 @@ export class TermScheduleService {
     const [term, offerings] = await Promise.all([
       this.prisma.term.findUnique({
         where: { id: termId },
-        select: { id: true, name: true, startDate: true, locationId: true },
+        select: {
+          id: true,
+          name: true,
+          startDate: true,
+          endDate: true,
+          locationId: true,
+          type: true,
+        },
       }),
       this.prisma.classOffering.findMany({
         where: { weekday, startTime, endTime, termId },
@@ -44,6 +121,7 @@ export class TermScheduleService {
           id: true,
           capacity: true,
           title: true,
+          type: true,
         },
       }),
     ]);
@@ -55,13 +133,51 @@ export class TermScheduleService {
     const termMeta: Term = {
       id: term.id.toString(),
       name: term.name,
+      type: term.type,
     };
+
+    // A season is too long to show at once, so it is paged by month.
+    if (term.type === "swim_team_season") {
+      if (options.month && !/^\d{4}-\d{2}$/.test(options.month)) {
+        throw new BadRequestException("Month is not YYYY-MM");
+      }
+      const first = term.startDate.toISOString().slice(0, 7);
+      const last = term.endDate.toISOString().slice(0, 7);
+      const months: string[] = [];
+      for (let m = first; m <= last; ) {
+        months.push(m);
+        const [y, mo] = m.split("-").map(Number);
+        m = mo === 12 ? `${y + 1}-01` : `${y}-${String(mo + 1).padStart(2, "0")}`;
+      }
+      const current = getTorontoDateString().slice(0, 7);
+      const fallback = current < first ? first : current > last ? last : current;
+      const month =
+        options.month && months.includes(options.month)
+          ? options.month
+          : fallback;
+
+      return this.buildSlotPageFromOfferings(
+        offerings,
+        termMeta,
+        {
+          weekday,
+          startTime,
+          endTime,
+          term: termMeta,
+          offeringType: "swim_team",
+          month,
+          months,
+        },
+        { month, role: options.role, swimTeam: true },
+      );
+    }
 
     return this.buildSlotPageFromOfferings(offerings, termMeta, {
       weekday,
       startTime,
       endTime,
       term: termMeta,
+      offeringType: "regular",
     });
   }
 
@@ -69,7 +185,18 @@ export class TermScheduleService {
     offerings: { id: string; capacity: number; title: string }[],
     termMeta: Term,
     meta: SlotPage["meta"],
+    options: { month?: string; role?: string; swimTeam?: boolean } = {},
   ): Promise<SlotPage> {
+    const isSwimTeam = options.swimTeam === true;
+    let monthRange: { gte: Date; lt: Date } | undefined;
+    if (options.month) {
+      const [y, m] = options.month.split("-").map(Number);
+      monthRange = {
+        gte: new Date(Date.UTC(y, m - 1, 1)),
+        lt: new Date(Date.UTC(y, m, 1)),
+      };
+    }
+
     if (offerings.length === 0) {
       return {
         meta,
@@ -82,7 +209,10 @@ export class TermScheduleService {
 
     // Step 2: Get sessions
     const sessions = await this.prisma.classSession.findMany({
-      where: { offeringId: { in: offeringIds } },
+      where: {
+        offeringId: { in: offeringIds },
+        ...(monthRange ? { date: monthRange } : {}),
+      },
       select: {
         id: true,
         date: true,
@@ -148,6 +278,10 @@ export class TermScheduleService {
         classRatio: true,
         reportCardStatus: true,
         status: true,
+        endDate: true,
+        swimTeamRegistration: {
+          select: { id: true, frequency: true, competing: true },
+        },
         invoiceLineItem: {
           select: {
             invoice: {
@@ -185,6 +319,15 @@ export class TermScheduleService {
     }
 
     const enrollmentIds = enrollments.map((e) => e.id);
+
+    const swimTeamInfo = isSwimTeam
+      ? await this.loadSwimTeamInfo(
+          enrollments.flatMap((e) =>
+            e.swimTeamRegistration ? [e.swimTeamRegistration] : [],
+          ),
+          options.role,
+        )
+      : new Map<string, SwimTeamRosterInfo>();
 
     // Step 4: Fetch all remaining data IN PARALLEL
     const [
@@ -410,8 +553,16 @@ export class TermScheduleService {
       .sort()
       .map(([date, sessionList]) => {
         const rosters: RosterResponse[] = sessionList.map((s) => {
-          const offeringEnrollments =
-            enrollmentsByOffering.get(s.offeringId) ?? [];
+          // A swimmer who dropped this slot only shows on practices up to
+          // the day they left it.
+          const offeringEnrollments = (
+            enrollmentsByOffering.get(s.offeringId) ?? []
+          ).filter(
+            (e) =>
+              !isSwimTeam ||
+              e.status === "active" ||
+              (e.endDate !== null && s.date <= e.endDate),
+          );
 
           const instructorCount = s.offering.instructors.length;
           const capacity = capacityMap.get(s.offeringId) ?? 0;
@@ -466,7 +617,8 @@ export class TermScheduleService {
 
           const totalFilled = regularWeighted + makeupWeighted + trialsWeighted;
 
-          const dynamicMin = instructorCount >= 2 ? 5 : 0;
+          // Practices are plain headcount; no instructor-based minimum
+          const dynamicMin = !isSwimTeam && instructorCount >= 2 ? 5 : 0;
           const effectiveCapacity = Math.max(capacity, dynamicMin);
           const openSeats = Math.max(
             0,
@@ -548,6 +700,9 @@ export class TermScheduleService {
                   }
                 : null,
               enrollmentStatus: e.status,
+              swimTeam: e.swimTeamRegistration
+                ? (swimTeamInfo.get(e.swimTeamRegistration.id) ?? null)
+                : null,
             };
           });
 
@@ -617,7 +772,11 @@ export class TermScheduleService {
     });
   }
 
-  async getDailySchedule(locationId: string | null, dateString: string) {
+  async getDailySchedule(
+    locationId: string | null,
+    dateString: string,
+    role?: string,
+  ) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
       throw new BadRequestException("Invalid date format YYYY-MM-DD");
     }
@@ -696,6 +855,10 @@ export class TermScheduleService {
         classRatio: true,
         reportCardStatus: true,
         status: true,
+        endDate: true,
+        swimTeamRegistration: {
+          select: { id: true, frequency: true, competing: true },
+        },
         student: {
           select: {
             id: true,
@@ -712,9 +875,25 @@ export class TermScheduleService {
       },
     });
 
+    const calendarDate = new Date(`${dateString}T00:00:00.000Z`);
+    const swimTeamInfo = await this.loadSwimTeamInfo(
+      enrollments.flatMap((e) =>
+        e.swimTeamRegistration ? [e.swimTeamRegistration] : [],
+      ),
+      role,
+    );
+
     const enrollmentIds = enrollments.map((e) => e.id);
     const enrollmentsByOffering = new Map<string, typeof enrollments>();
     for (const e of enrollments) {
+      // A swimmer who dropped this practice slot before today is not listed
+      if (
+        e.swimTeamRegistration &&
+        e.status !== "active" &&
+        (e.endDate === null || e.endDate < calendarDate)
+      ) {
+        continue;
+      }
       const arr = enrollmentsByOffering.get(e.offeringId) ?? [];
       arr.push(e);
       enrollmentsByOffering.set(e.offeringId, arr);
@@ -1028,6 +1207,9 @@ export class TermScheduleService {
               totalSessionsCount: timeline.length,
               attendanceTimeline: timeline,
               enrollmentStatus: e.status,
+              swimTeam: e.swimTeamRegistration
+                ? (swimTeamInfo.get(e.swimTeamRegistration.id) ?? null)
+                : null,
             };
           }),
           ...sessionMakeups.map((m) => {

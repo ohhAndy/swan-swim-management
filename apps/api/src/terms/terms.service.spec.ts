@@ -54,7 +54,13 @@ describe("TermsService", () => {
       };
 
       prismaMock.term.create.mockResolvedValue(mockCreatedTerm as any);
-      prismaMock.classOffering.create.mockResolvedValue({ id: "off1" } as any);
+      // Echo the created offering back, as Prisma does, so it keeps its weekday
+      prismaMock.classOffering.create.mockImplementation(
+        async ({ data }: { data: Record<string, unknown> }) => ({
+          id: "off1",
+          ...data,
+        }),
+      );
       prismaMock.classSession.createMany.mockResolvedValue({ count: 8 });
 
       const result = await service.createTermWithSchedule(
@@ -78,6 +84,15 @@ describe("TermsService", () => {
       );
 
       expect(result).toEqual(mockCreatedTerm);
+      // 8 weeks of Monday classes inside a 13-week term
+      expect(prismaMock.classSession.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({ offeringId: "off1" }),
+        ]),
+      });
+      expect(
+        prismaMock.classSession.createMany.mock.calls[0][0].data,
+      ).toHaveLength(8);
       expect(prismaMock.term.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({

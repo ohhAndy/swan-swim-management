@@ -12,6 +12,7 @@ describe("CronTasksService", () => {
 
   beforeEach(async () => {
     prismaMock = createPrismaMock();
+    prismaMock.swimTeamRegistration.updateMany.mockResolvedValue({ count: 0 });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -35,6 +36,10 @@ describe("CronTasksService", () => {
 
       expect(result.success).toBe(true);
       expect(result.count).toBe(5);
+      expect(prismaMock.swimTeamRegistration.updateMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({ status: "active" }),
+        data: { status: "inactive" },
+      });
       expect(prismaMock.enrollment.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({

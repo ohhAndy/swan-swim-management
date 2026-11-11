@@ -11,7 +11,15 @@ import { InvoiceQueryDto } from "./dto/invoice-query.dto";
 import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-query.dto";
 import { Prisma } from "@prisma/client";
 import { CreateInvoiceLineItemDto } from "./dto/create-invoice.dto";
-import { calculateEnrollmentTuition } from "@school/shared-types";
+import {
+  calculateEnrollmentTuition,
+  calculateInstallmentStanding,
+} from "@school/shared-types";
+import { getTorontoDateString } from "../common/date.utils";
+import {
+  InvoiceInstallmentDto,
+  UpdateInstallmentsDto,
+} from "./dto/create-invoice.dto";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { RequestStaffUser } from "../auth/auth.types";
 import { EnrollmentsService } from "../enrollments/enrollments.service";
@@ -81,6 +89,14 @@ export class InvoicesService {
       }
     }
 
+    await this.assertSwimTeamLinesValid(lineItems);
+
+    const installments = createInvoiceDto.installments ?? [];
+    this.assertInstallmentsMatchTotal(
+      installments,
+      createInvoiceDto.totalAmount,
+    );
+
     // Invoice Number Logic
     let finalInvoiceNumber = createInvoiceDto.invoiceNumber;
     if (!finalInvoiceNumber) {
@@ -136,8 +152,18 @@ export class InvoicesService {
               inventoryItemId: item.inventoryItemId,
               description: item.description,
               amount: item.amount,
+              swimTeamRegistrationId: item.swimTeamRegistrationId,
+              feeType: item.swimTeamRegistrationId ? item.feeType : undefined,
             })),
           },
+          installments: installments.length
+            ? {
+                create: installments.map((i) => ({
+                  dueDate: new Date(`${i.dueDate}T00:00:00.000Z`),
+                  amount: i.amount,
+                })),
+              }
+            : undefined,
         },
         include: {
           lineItems: {
@@ -152,10 +178,20 @@ export class InvoicesService {
                   },
                 },
               },
+              swimTeamRegistration: {
+                select: {
+                  id: true,
+                  frequency: true,
+                  competing: true,
+                  student: { select: { id: true, firstName: true, lastName: true } },
+                  term: { select: { id: true, name: true } },
+                },
+              },
             },
           },
           guardian: true,
           payments: true,
+          installments: { orderBy: { dueDate: "asc" } },
           location: true,
         },
       });
@@ -194,6 +230,15 @@ export class InvoicesService {
                 },
               },
             },
+            swimTeamRegistration: {
+              select: {
+                id: true,
+                frequency: true,
+                competing: true,
+                student: { select: { id: true, firstName: true, lastName: true } },
+                term: { select: { id: true, name: true } },
+              },
+            },
           },
         },
         guardian: true,
@@ -211,6 +256,7 @@ export class InvoicesService {
         updatedByUser: {
           select: { id: true, fullName: true },
         },
+        installments: { orderBy: { dueDate: "asc" } },
         location: true,
       },
     });
@@ -394,6 +440,10 @@ export class InvoicesService {
                 description: item.description!, // Required for create
                 amount: item.amount!, // Required for create
                 enrollmentId: item.enrollmentId,
+                swimTeamRegistrationId: item.swimTeamRegistrationId,
+                feeType: item.swimTeamRegistrationId
+                  ? item.feeType
+                  : undefined,
               },
             });
           }
@@ -428,10 +478,20 @@ export class InvoicesService {
                   },
                 },
               },
+              swimTeamRegistration: {
+                select: {
+                  id: true,
+                  frequency: true,
+                  competing: true,
+                  student: { select: { id: true, firstName: true, lastName: true } },
+                  term: { select: { id: true, name: true } },
+                },
+              },
             },
           },
           guardian: true,
           payments: true,
+          installments: { orderBy: { dueDate: "asc" } },
           location: true,
         },
       });
@@ -502,6 +562,7 @@ export class InvoicesService {
       status: string;
       totalAmount: number | Prisma.Decimal;
       payments?: { amount: number | Prisma.Decimal }[];
+      installments?: { dueDate: Date; amount: number | Prisma.Decimal }[];
     },
   >(invoice: T) {
     const amountPaid =
@@ -525,11 +586,147 @@ export class InvoicesService {
       }
     }
 
+    // Installment plan standing (only when the plan was loaded)
+    const plan = invoice.installments;
+    const planTotalCents = (plan ?? []).reduce(
+      (sum, i) => sum + Math.round(Number(i.amount) * 100),
+      0,
+    );
+    const standing = plan
+      ? calculateInstallmentStanding(
+          plan.map((i) => ({ dueDate: i.dueDate, amount: Number(i.amount) })),
+          amountPaid,
+          getTorontoDateString(),
+          Number(invoice.totalAmount),
+        )
+      : undefined;
+
     return {
       ...invoice,
       amountPaid,
       balance,
       calculatedStatus,
+      standing,
+      // True when line items were edited after the plan was set up
+      installmentsOutOfSync:
+        !!plan &&
+        plan.length > 0 &&
+        planTotalCents !== Math.round(Number(invoice.totalAmount) * 100),
     };
+  }
+
+  // Replace an invoice's installment plan
+  async updateInstallments(
+    id: string,
+    dto: UpdateInstallmentsDto,
+    staffUser: RequestStaffUser,
+  ) {
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { id },
+      select: { id: true, totalAmount: true },
+    });
+    if (!invoice) {
+      throw new NotFoundException(`Invoice with ID ${id} not found`);
+    }
+
+    this.assertInstallmentsMatchTotal(
+      dto.installments,
+      Number(invoice.totalAmount),
+    );
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.invoiceInstallment.deleteMany({ where: { invoiceId: id } });
+      if (dto.installments.length > 0) {
+        await tx.invoiceInstallment.createMany({
+          data: dto.installments.map((i) => ({
+            invoiceId: id,
+            dueDate: new Date(`${i.dueDate}T00:00:00.000Z`),
+            amount: i.amount,
+          })),
+        });
+      }
+      await this.auditLogsService.create(
+        {
+          staffId: staffUser.id,
+          action: "update installments",
+          entityType: "invoice",
+          entityId: id,
+          changes: { installments: dto.installments },
+        },
+        tx,
+      );
+    });
+
+    return this.findOne(id);
+  }
+
+  // An installment plan must add up to exactly the invoice total
+  private assertInstallmentsMatchTotal(
+    installments: InvoiceInstallmentDto[],
+    totalAmount: number,
+  ) {
+    if (installments.length === 0) return;
+    const planCents = installments.reduce(
+      (sum, i) => sum + Math.round(i.amount * 100),
+      0,
+    );
+    if (planCents !== Math.round(totalAmount * 100)) {
+      throw new BadRequestException(
+        "Installments must add up to the invoice total",
+      );
+    }
+  }
+
+  // Swim team fee lines: the registration must exist and each fee type can
+  // only be invoiced once per registration (ignoring voided invoices)
+  private async assertSwimTeamLinesValid(lineItems: CreateInvoiceLineItemDto[]) {
+    const swimLines = lineItems.filter((l) => l.swimTeamRegistrationId);
+    if (swimLines.length === 0) return;
+
+    const seen = new Set<string>();
+    for (const line of swimLines) {
+      if (!line.feeType) {
+        throw new BadRequestException(
+          "Swim team line items need a fee type",
+        );
+      }
+      const key = `${line.swimTeamRegistrationId}:${line.feeType}`;
+      if (seen.has(key)) {
+        throw new BadRequestException(
+          "The same swim team fee appears twice on this invoice",
+        );
+      }
+      seen.add(key);
+    }
+
+    const registrationIds = [
+      ...new Set(swimLines.map((l) => l.swimTeamRegistrationId!)),
+    ];
+    const found = await this.prisma.swimTeamRegistration.count({
+      where: { id: { in: registrationIds } },
+    });
+    if (found !== registrationIds.length) {
+      throw new NotFoundException("Swim team registration not found");
+    }
+
+    const existing = await this.prisma.invoiceLineItem.findMany({
+      where: {
+        swimTeamRegistrationId: { in: registrationIds },
+        invoice: { status: { not: "void" } },
+      },
+      select: {
+        swimTeamRegistrationId: true,
+        feeType: true,
+        invoice: { select: { id: true, invoiceNumber: true } },
+      },
+    });
+    const clash = existing.find((e) =>
+      seen.has(`${e.swimTeamRegistrationId}:${e.feeType}`),
+    );
+    if (clash) {
+      throw new BadRequestException(
+        `This swim team fee is already on invoice ${clash.invoice.invoiceNumber || clash.invoice.id}`,
+      );
+    }
   }
 }

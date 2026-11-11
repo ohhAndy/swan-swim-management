@@ -5,6 +5,8 @@ export const UpdateInvoiceLineItemSchema = z.object({
   enrollmentId: z.string().optional(), // Can bind/unbind enrollment
   description: z.string().optional(),
   amount: z.number().min(0).optional(),
+  swimTeamRegistrationId: z.string().optional(),
+  feeType: z.enum(["swim_team_practice", "swim_team_meet"]).optional(),
 });
 
 export const UpdateInvoiceSchema = z.object({

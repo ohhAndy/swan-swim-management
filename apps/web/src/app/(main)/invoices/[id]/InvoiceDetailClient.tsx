@@ -31,6 +31,7 @@ import {
 } from "@/components/invoices/InvoiceSummaryCard";
 import { InvoiceLineItemsTable } from "@/components/invoices/InvoiceLineItemsTable";
 import { InvoicePaymentsTable } from "@/components/invoices/InvoicePaymentsTable";
+import { InvoiceInstallmentsCard } from "@/components/invoices/InvoiceInstallmentsCard";
 import { toast } from "sonner";
 
 interface Props {
@@ -222,6 +223,15 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
         editLineItems={editLineItems}
         setEditLineItems={setEditLineItems}
       />
+
+      {/* Installment plan */}
+      {!editMode && (
+        <InvoiceInstallmentsCard
+          invoice={invoice}
+          canEdit={["super_admin", "admin", "manager"].includes(userRole)}
+          onSaved={loadInvoice}
+        />
+      )}
 
       {/* Payments History Table */}
       <InvoicePaymentsTable

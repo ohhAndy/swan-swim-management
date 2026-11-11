@@ -6,11 +6,14 @@ import { TokensService } from "../tokens/tokens.service";
 import { createPrismaMock, MockPrismaService } from "../prisma/prisma.mock";
 import { Attendance, AttendanceStatus } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
+import { SwimTeamStandingService } from "../swim-team/swim-team-standing.service";
+import { ConflictException } from "@nestjs/common";
 
 describe("AttendanceService", () => {
   let service: AttendanceService;
   let prismaMock: MockPrismaService;
   let tokensServiceMock: Partial<TokensService>;
+  let standingMock: { getStanding: jest.Mock };
 
   beforeEach(async () => {
     prismaMock = createPrismaMock();
@@ -18,12 +21,15 @@ describe("AttendanceService", () => {
       reconcileTokenOnCancellation: jest.fn().mockResolvedValue(true),
     };
 
+    standingMock = { getStanding: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AttendanceService,
         AuditLogsService,
         { provide: TokensService, useValue: tokensServiceMock },
         { provide: PrismaService, useValue: prismaMock },
+        { provide: SwimTeamStandingService, useValue: standingMock },
       ],
     }).compile();
 
@@ -49,6 +55,94 @@ describe("AttendanceService", () => {
       accessSchedule: {},
       accessibleLocations: [{ id: "loc1" }],
     };
+
+    describe("swim team members behind on payments", () => {
+      const behind = {
+        state: "behind",
+        behindAmount: 250,
+        nextDueDate: "2026-12-01",
+        invoiceIds: ["inv1"],
+      };
+      const checkIn = {
+        enrollmentId: "enr1",
+        classSessionId: "sess1",
+        status: "present" as const,
+      };
+
+      beforeEach(() => {
+        prismaMock.attendance.findUnique.mockResolvedValue(null);
+        prismaMock.enrollment.findUnique.mockResolvedValue({
+          swimTeamRegistrationId: "reg1",
+        });
+        prismaMock.attendance.upsert.mockResolvedValue({
+          id: "att1",
+          status: AttendanceStatus.present,
+        });
+        prismaMock.auditLog.create.mockResolvedValue({});
+      });
+
+      it("refuses the check-in until staff acknowledge", async () => {
+        standingMock.getStanding.mockResolvedValue(behind);
+
+        await expect(service.upsert(checkIn, mockStaffUser)).rejects.toThrow(
+          ConflictException,
+        );
+        expect(prismaMock.attendance.upsert).not.toHaveBeenCalled();
+      });
+
+      it("hides the amount from roles that cannot see money", async () => {
+        standingMock.getStanding.mockResolvedValue(behind);
+
+        const error = await service
+          .upsert(checkIn, { ...mockStaffUser, role: "supervisor" })
+          .catch((e: ConflictException) => e);
+        expect((error as ConflictException).getResponse()).toMatchObject({
+          code: "SWIM_TEAM_PAYMENT_BEHIND",
+          behindAmount: null,
+        });
+      });
+
+      it("records the acknowledgement when staff confirm", async () => {
+        standingMock.getStanding.mockResolvedValue(behind);
+
+        await service.upsert(
+          { ...checkIn, acknowledgedOverdue: true },
+          mockStaffUser,
+        );
+        expect(prismaMock.attendance.upsert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            create: expect.objectContaining({ acknowledgedOverdue: true }),
+          }),
+        );
+      });
+
+      it("checks in normally when payments are on plan", async () => {
+        standingMock.getStanding.mockResolvedValue({
+          ...behind,
+          state: "on_track",
+          behindAmount: 0,
+        });
+
+        await service.upsert(checkIn, mockStaffUser);
+        expect(prismaMock.attendance.upsert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            create: expect.objectContaining({ acknowledgedOverdue: false }),
+          }),
+        );
+      });
+
+      it("never blocks marking a swimmer absent", async () => {
+        standingMock.getStanding.mockResolvedValue(behind);
+        prismaMock.attendance.upsert.mockResolvedValue({
+          id: "att1",
+          status: AttendanceStatus.absent,
+        });
+
+        await service.upsert({ ...checkIn, status: "absent" }, mockStaffUser);
+        expect(standingMock.getStanding).not.toHaveBeenCalled();
+        expect(prismaMock.attendance.upsert).toHaveBeenCalled();
+      });
+    });
 
     it("should create/update attendance and log it", async () => {
       prismaMock.attendance.findUnique.mockResolvedValue(null);

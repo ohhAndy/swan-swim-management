@@ -50,6 +50,11 @@ export class MakeupsService {
       },
     });
     if (!session) throw new BadRequestException("Session not found");
+    if (session.offering.type === "swim_team") {
+      throw new BadRequestException(
+        "Makeups are not available for swim team practices",
+      );
+    }
 
     // Validate Location Access
     validateLocationAccess(

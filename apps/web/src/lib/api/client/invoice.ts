@@ -33,7 +33,22 @@ export interface CreateInvoiceData {
     enrollmentId?: string;
     description: string;
     amount: number;
+    swimTeamRegistrationId?: string;
+    feeType?: "swim_team_practice" | "swim_team_meet";
   }[];
+  /** Omit or leave empty when the invoice is due in full */
+  installments?: { dueDate: string; amount: number }[];
+}
+
+export async function updateInvoiceInstallments(
+  id: string,
+  installments: { dueDate: string; amount: number }[],
+): Promise<Invoice> {
+  const res = await clientFetch(`/invoices/${id}/installments`, {
+    method: "PUT",
+    body: JSON.stringify({ installments }),
+  });
+  return res.json();
 }
 
 export interface CreatePaymentData {

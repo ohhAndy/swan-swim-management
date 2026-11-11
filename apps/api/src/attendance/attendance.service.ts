@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { RequestStaffUser } from "../auth/auth.types";
 import {
@@ -8,6 +12,9 @@ import {
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { TokensService } from "../tokens/tokens.service";
+import { SwimTeamStandingService } from "../swim-team/swim-team-standing.service";
+
+export const SWIM_TEAM_PAYMENT_BEHIND = "SWIM_TEAM_PAYMENT_BEHIND";
 
 @Injectable()
 export class AttendanceService {
@@ -15,7 +22,45 @@ export class AttendanceService {
     private prisma: PrismaService,
     private auditLogsService: AuditLogsService,
     private tokensService: TokensService,
+    private swimTeamStandingService: SwimTeamStandingService,
   ) {}
+
+  /**
+   * Swim team members who are behind on their installment plan can only be
+   * checked in after staff explicitly confirm. Returns whether this check-in
+   * was such a confirmed override.
+   */
+  private async checkSwimTeamStanding(
+    data: UpsertAttendanceInput,
+    staffUser: RequestStaffUser,
+    alreadyPresent: boolean,
+  ): Promise<boolean> {
+    if (data.status !== "present" || alreadyPresent) return false;
+
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: { id: data.enrollmentId },
+      select: { swimTeamRegistrationId: true },
+    });
+    if (!enrollment?.swimTeamRegistrationId) return false;
+
+    const standing = await this.swimTeamStandingService.getStanding(
+      enrollment.swimTeamRegistrationId,
+    );
+    if (standing.state !== "behind") return false;
+
+    if (!data.acknowledgedOverdue) {
+      const visible = SwimTeamStandingService.forRole(standing, staffUser.role);
+      throw new ConflictException({
+        statusCode: 409,
+        code: SWIM_TEAM_PAYMENT_BEHIND,
+        message:
+          "This swimmer is behind on their payment plan. Confirm to check them in.",
+        behindAmount: visible.behindAmount,
+        nextDueDate: visible.nextDueDate,
+      });
+    }
+    return true;
+  }
 
   async upsert(data: UpsertAttendanceInput, staffUser: RequestStaffUser) {
 
@@ -28,6 +73,12 @@ export class AttendanceService {
         },
       },
     });
+
+    const overdueOverride = await this.checkSwimTeamStanding(
+      data,
+      staffUser,
+      existing?.status === "present",
+    );
 
     if (!data.status) {
       // UNMARK: Delete the attendance record
@@ -72,11 +123,13 @@ export class AttendanceService {
           status: data.status,
           updatedAt: new Date(),
           updatedBy: staffUser?.id ?? null,
+          ...(overdueOverride ? { acknowledgedOverdue: true } : {}),
         },
         create: {
           classSessionId: data.classSessionId,
           enrollmentId: data.enrollmentId,
           status: data.status,
+          acknowledgedOverdue: overdueOverride,
           notes: data.notes,
           markedAt: new Date(),
           markedBy: staffUser?.id ?? null,
@@ -102,6 +155,7 @@ export class AttendanceService {
         metadata: {
           enrollmentId: data.enrollmentId,
           classSessionId: data.classSessionId,
+          ...(overdueOverride ? { acknowledgedOverdue: true } : {}),
         },
       });
     }

@@ -24,9 +24,19 @@ export class SkipsService {
   ) {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
-      select: { id: true, offeringId: true, status: true },
+      select: {
+        id: true,
+        offeringId: true,
+        status: true,
+        swimTeamRegistrationId: true,
+      },
     });
     if (!enrollment) throw new NotFoundException("Enrollment not found");
+    if (enrollment.swimTeamRegistrationId) {
+      throw new BadRequestException(
+        "Skips are not available for swim team practices",
+      );
+    }
 
     const session = await this.prisma.classSession.findUnique({
       where: { id: dto.classSessionId },

@@ -3,7 +3,22 @@ export function getUTCDayKey(d: Date): string {
   return d.toISOString().split("T")[0];
 }
 
-export function* weeklyDates(start: Date, end: Date, weekday: number) {
+export function* weeklyDates(
+  start: Date,
+  end: Date,
+  weekday: number | null | undefined,
+) {
+  // Without a valid 0-6 weekday the search below would never find a match
+  // and loop forever.
+  if (
+    typeof weekday !== "number" ||
+    !Number.isInteger(weekday) ||
+    weekday < 0 ||
+    weekday > 6
+  ) {
+    throw new RangeError(`Invalid weekday: ${String(weekday)}`);
+  }
+
   const cur = new Date(start);
   // Set to noon UTC to avoid timezone shifts (e.g. 00:00 UTC -> 19:00 EST prev day)
   cur.setUTCHours(12, 0, 0, 0);

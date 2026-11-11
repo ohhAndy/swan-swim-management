@@ -1,7 +1,14 @@
 import { getSlotPage } from "@/lib/api/server/schedule";
 import { weekdayName, groupByOffering } from "@/lib/schedule/transform";
 import type { SlotPage } from "@school/shared-types";
-import { SlotHeader, SlotBlockGrid, SlotNavigator } from "@/components/schedule/grid";
+import {
+  SlotHeader,
+  SlotBlockGrid,
+  SlotNavigator,
+  PracticeSlotBlock,
+  MonthPager,
+} from "@/components/schedule/grid";
+import { getTorontoDateString } from "@/lib/date";
 import PreviousButton from "@/components/nav/PreviousButton";
 import NextButton from "@/components/nav/NextButton";
 import { getCurrentUser } from "@/lib/auth/user";
@@ -34,8 +41,10 @@ function parseRange(range: string) {
 
 export default async function SlotPageView({
   params,
+  searchParams,
 }: {
   params: Promise<{ weekday: string; termId: string; range: string }>;
+  searchParams: Promise<{ month?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) {
@@ -55,7 +64,15 @@ export default async function SlotPageView({
   const [eh, em] = end.split(":").map(Number);
   const duration = eh * 60 + em - (sh * 60 + sm);
 
-  const data: SlotPage = await getSlotPage(termId, Number(weekday), start, end);
+  const { month } = await searchParams;
+  const data: SlotPage = await getSlotPage(
+    termId,
+    Number(weekday),
+    start,
+    end,
+    month,
+  );
+  const isSwimTeam = data.meta.offeringType === "swim_team";
 
   const title = `${weekdayName(data.meta.weekday)} - ${formatTimeRange(
     `${data.meta.startTime}-${data.meta.endTime}`,
@@ -96,15 +113,49 @@ export default async function SlotPageView({
             weekday={Number(weekday)}
             startTime={start}
             duration={duration}
+            offeringType={isSwimTeam ? "swim_team" : "regular"}
           />
         </PermissionGate>
       </SlotHeader>
-      <SlotBlockGrid
-        blocks={blocks}
-        isoDates={isoDates}
-        user={user}
-        termName={subtitle || "Term"}
-      />
+      {isSwimTeam ? (
+        <div className="flex flex-col gap-5">
+          {data.meta.month && data.meta.months && (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <MonthPager
+                basePath={`/term/${termId}/schedule/weekday/${weekday}/slot/${range}`}
+                month={data.meta.month}
+                months={data.meta.months}
+              />
+              <p className="text-xs text-muted-foreground print:hidden">
+                Tap a box to check a swimmer in. Tap again for absent, and
+                once more to clear.
+              </p>
+            </div>
+          )}
+          {blocks.length === 0 ? (
+            <p className="rounded-lg bg-muted/30 py-12 text-center text-muted-foreground">
+              No practices in this time slot this month.
+            </p>
+          ) : (
+            blocks.map((b) => (
+              <PracticeSlotBlock
+                key={b.offeringKey}
+                title={b.title}
+                rosters={b.rosters}
+                user={user}
+                today={getTorontoDateString()}
+              />
+            ))
+          )}
+        </div>
+      ) : (
+        <SlotBlockGrid
+          blocks={blocks}
+          isoDates={isoDates}
+          user={user}
+          termName={subtitle || "Term"}
+        />
+      )}
     </main>
   );
 }

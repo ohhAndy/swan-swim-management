@@ -7,6 +7,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { calculateClassUsage } from "../common/capacity.utils";
 import { RequestStaffUser } from "../auth/auth.types";
+import { CreateOfferingInput } from "./dto/create-offering.dto";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 
@@ -101,17 +102,7 @@ export class OfferingsService {
   }
 
   async createOffering(
-    data: {
-      termId: string;
-      type?: "regular" | "flexible";
-      weekday?: number;
-      startTime?: string; // HH:MM
-      title: string;
-      capacity: number;
-      duration?: number;
-      notes?: string;
-      sessions?: { date: string; startTime: string; endTime: string }[];
-    },
+    data: CreateOfferingInput,
     staffUser: RequestStaffUser,
   ) {
 
@@ -129,6 +120,21 @@ export class OfferingsService {
       where: { id: data.termId },
     });
     if (!term) throw new NotFoundException("Term not found");
+
+    // Swim team practices only live in a swim team season, and a season
+    // only holds practices.
+    const isSeason = term.type === "swim_team_season";
+    const requestedType = data.type || "regular";
+    if (requestedType === "swim_team" && !isSeason) {
+      throw new BadRequestException(
+        "Swim team practices can only be added to a swim team season",
+      );
+    }
+    if (requestedType !== "swim_team" && isSeason) {
+      throw new BadRequestException(
+        "A swim team season can only contain swim team practices",
+      );
+    }
 
     const DURATION = data.duration || 45;
 

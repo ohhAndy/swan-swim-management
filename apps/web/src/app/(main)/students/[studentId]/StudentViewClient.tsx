@@ -5,6 +5,7 @@ import { StudentInfoCard } from "@/components/students/StudentInfoCard";
 import { StudentGuardianCard } from "@/components/students/StudentGuardianCard";
 import { StudentQuickLinksCard } from "@/components/students/StudentQuickLinksCard";
 import { StudentEnrollmentsList } from "@/components/students/StudentEnrollmentsList";
+import { SwimTeamCard } from "@/components/students/SwimTeamCard";
 import type { Student } from "@/lib/types/models";
 import { CurrentUser } from "@/lib/auth/user";
 
@@ -52,6 +53,14 @@ export default function StudentViewClient({
           <StudentQuickLinksCard student={student} />
         </div>
       </div>
+
+      {/* Swim team season registration */}
+      <SwimTeamCard
+        studentId={student.id}
+        studentName={`${student.firstName} ${student.lastName}`}
+        userRole={user.role}
+        onChanged={() => router.refresh()}
+      />
 
       {/* Enrollment History */}
       <StudentEnrollmentsList

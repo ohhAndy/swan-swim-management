@@ -39,7 +39,13 @@ export class CommunicationsService {
     private readonly prisma: PrismaService,
     private readonly auditLogsService: AuditLogsService,
   ) {
-    this.resend = new Resend(process.env.RESEND_API_KEY);
+    // The Resend SDK throws on a missing key, which would stop the whole app
+    // from booting (e.g. in tests, where the key is blanked on purpose).
+    // Sending already falls back to mock mode without a real key, and webhook
+    // verification never calls the API, so a placeholder is safe here.
+    this.resend = new Resend(
+      process.env.RESEND_API_KEY || "re_not_configured",
+    );
   }
 
   async getRecipients(filters: RecipientFilterDto) {

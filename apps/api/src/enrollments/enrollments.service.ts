@@ -101,6 +101,14 @@ export class EnrollmentsService {
 
     if (!targetOffering)
       throw new NotFoundException("Target offering not found");
+    if (
+      currEnrollment.offering.type === "swim_team" ||
+      targetOffering.type === "swim_team"
+    ) {
+      throw new BadRequestException(
+        "Swim team slots are changed from the swimmer's registration, not by transfer",
+      );
+    }
     if (targetOffering.termId !== currEnrollment.offering.termId) {
       throw new BadRequestException("Can only transfer within the same term");
     }
@@ -354,6 +362,11 @@ export class EnrollmentsService {
       include: { term: true },
     });
     if (!offering) throw new NotFoundException("Offering not found");
+    if (offering.type === "swim_team") {
+      throw new BadRequestException(
+        "Swim team practices are joined through a swim team registration",
+      );
+    }
 
     const existingEnrollment = await this.prisma.enrollment.findUnique({
       where: {
@@ -610,6 +623,8 @@ export class EnrollmentsService {
 
     const where: Prisma.EnrollmentWhereInput = {
       invoiceLineItem: null, // Not linked to any invoice
+      // Swim team slots are billed through their season registration
+      swimTeamRegistrationId: null,
       status: { in: ["active", "inactive"] },
     };
 

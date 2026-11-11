@@ -1,3 +1,5 @@
+import type { SwimTeamRosterInfo } from "@school/shared-types";
+
 export type RosterItem = {
   id: string; // EnrollmentID, MakeupID, or TrialID
   type: "student" | "makeup" | "trial";
@@ -28,4 +30,6 @@ export type RosterItem = {
       }[]
     | null;
   enrollmentStatus?: string;
+  /** Present only on swim team practice rosters */
+  swimTeam?: SwimTeamRosterInfo | null;
 };

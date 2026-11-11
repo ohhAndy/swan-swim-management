@@ -15,6 +15,11 @@ import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
+import { ZodValidationPipe } from "nestjs-zod";
+import {
+  CreateOfferingInput,
+  CreateOfferingSchema,
+} from "./dto/create-offering.dto";
 
 @Controller("offerings")
 @UseGuards(SupabaseAuthGuard, RolesGuard)
@@ -47,18 +52,8 @@ export class OfferingsController {
   @Post()
   @Roles("super_admin", "admin", "manager")
   async createOffering(
-    @Body()
-    body: {
-      termId: string;
-      type?: "regular" | "flexible";
-      weekday?: number;
-      startTime?: string;
-      title: string;
-      capacity: number;
-      duration?: number;
-      notes?: string;
-      sessions?: { date: string; startTime: string; endTime: string }[];
-    },
+    @Body(new ZodValidationPipe(CreateOfferingSchema))
+    body: CreateOfferingInput,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.offeringsService.createOffering(body, staffUser);

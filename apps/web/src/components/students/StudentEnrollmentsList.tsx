@@ -107,10 +107,14 @@ export function StudentEnrollmentsList({
     setGrantTokensDialogOpen(true);
   };
 
-  const currentEnrollments = student.enrollments.filter(
+  // Swim team slots are managed from the Swim Team card, not as lesson enrollments
+  const lessonEnrollments = student.enrollments.filter(
+    (e) => !e.swimTeamRegistrationId,
+  );
+  const currentEnrollments = lessonEnrollments.filter(
     (e) => e.status === "active",
   );
-  const pastEnrollments = student.enrollments.filter(
+  const pastEnrollments = lessonEnrollments.filter(
     (e) => e.status !== "active",
   );
 
@@ -262,7 +266,7 @@ export function StudentEnrollmentsList({
             </div>
           )}
 
-          {student.enrollments.length === 0 && (
+          {lessonEnrollments.length === 0 && (
             <p className="text-gray-500 text-center py-8">
               No enrollment history found.
             </p>

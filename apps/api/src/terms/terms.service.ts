@@ -5,6 +5,13 @@ import type { Term } from "@school/shared-types";
 import { CreateTermInput } from "./dto/create-term.dto";
 import { RequestStaffUser } from "../auth/auth.types";
 import { computeEnd, weeklyDates } from "./terms.helpers";
+import {
+  DEFAULT_SWIM_TEAM_MEET_FEES,
+  SWIM_TEAM_FREQUENCIES,
+} from "@school/shared-types";
+
+/** Offering types that repeat weekly and appear on the weekday schedule grid */
+const WEEKLY_OFFERING_TYPES = ["regular", "swim_team"] as const;
 
 @Injectable()
 export class TermsService {
@@ -36,6 +43,7 @@ export class TermsService {
     locationId?: string,
   ) {
     const { name, slug, startDate, endDate, weeks = 8, templates } = input;
+    const isSeason = input.type === "swim_team_season";
     const start = new Date(startDate);
     const end = new Date(endDate);
 
@@ -81,10 +89,27 @@ export class TermsService {
             slug: finalSlug,
             startDate: start,
             endDate: end,
+            type: input.type ?? "regular",
             createdBy: staffUser?.id ?? null,
             locationId: assignedLocationId,
           },
         });
+
+        if (isSeason) {
+          const provided = new Map(
+            (input.feeTiers ?? []).map((t) => [t.frequency, t]),
+          );
+          await tx.swimTeamFeeTier.createMany({
+            data: SWIM_TEAM_FREQUENCIES.map((frequency) => ({
+              termId: newTerm.id,
+              frequency,
+              practiceFee: provided.get(frequency)?.practiceFee ?? 0,
+              meetFee:
+                provided.get(frequency)?.meetFee ??
+                DEFAULT_SWIM_TEAM_MEET_FEES[frequency],
+            })),
+          });
+        }
 
         await this.auditLogsService.create(
           {
@@ -111,7 +136,8 @@ export class TermsService {
                 endTime: computedEndTime,
                 capacity: tpl.capacity ?? 4,
                 title: tpl.title ?? "",
-                type: "regular",
+                type: isSeason ? "swim_team" : "regular",
+                duration: isSeason ? tpl.duration : undefined,
               },
             });
           }),
@@ -120,7 +146,9 @@ export class TermsService {
         // Generate class sessions
         for (const off of offerings) {
           const dates = Array.from(weeklyDates(start, end, off.weekday));
-          const sessionDates = weeks ? dates.slice(0, weeks) : dates;
+          // A season runs every week until its end date
+          const sessionDates =
+            !isSeason && weeks ? dates.slice(0, weeks) : dates;
 
           if (sessionDates.length > 0) {
             await tx.classSession.createMany({
@@ -156,6 +184,7 @@ export class TermsService {
       startDate: t.startDate,
       endDate: t.endDate,
       locationId: t.locationId ? t.locationId.toString() : null,
+      type: t.type,
     }));
   }
 
@@ -172,7 +201,7 @@ export class TermsService {
 
   async getDefaultSlots(termId: string): Promise<(string | null)[]> {
     const offerings = await this.prisma.classOffering.findMany({
-      where: { termId, type: "regular" },
+      where: { termId, type: { in: [...WEEKLY_OFFERING_TYPES] } },
       select: { weekday: true, startTime: true, endTime: true },
       orderBy: [{ weekday: "asc" }, { startTime: "asc" }],
     });
@@ -190,7 +219,7 @@ export class TermsService {
 
   async getSlotsForWeekday(termId: string, weekday: number): Promise<string[]> {
     const offerings = await this.prisma.classOffering.findMany({
-      where: { termId, weekday, type: "regular" },
+      where: { termId, weekday, type: { in: [...WEEKLY_OFFERING_TYPES] } },
       select: { startTime: true, endTime: true },
       distinct: ["startTime", "endTime"],
       orderBy: { startTime: "asc" },
@@ -201,9 +230,10 @@ export class TermsService {
 
   async getDetailedSlotsForWeekday(termId: string, weekday: number) {
     const offerings = await this.prisma.classOffering.findMany({
-      where: { termId, weekday, type: "regular" },
+      where: { termId, weekday, type: { in: [...WEEKLY_OFFERING_TYPES] } },
       select: {
         id: true,
+        type: true,
         startTime: true,
         endTime: true,
         capacity: true,
@@ -242,7 +272,10 @@ export class TermsService {
 
       let realCap: number;
       const count = off.instructors.length;
-      if (count === 1) {
+      if (off.type === "swim_team") {
+        // Practices are plain headcount; no ratio-based capacity rules
+        realCap = off.capacity;
+      } else if (count === 1) {
         realCap = Math.min(off.capacity, 4);
       } else if (count >= 2) {
         realCap = Math.max(off.capacity, 5);
