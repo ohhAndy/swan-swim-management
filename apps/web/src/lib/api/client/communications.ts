@@ -8,6 +8,7 @@ export interface RecipientFilter {
   startTime?: string;
   endTime?: string;
   instructorId?: string;
+  enrollmentStatus?: "active" | "inactive" | "all";
 }
 
 export interface Recipient {

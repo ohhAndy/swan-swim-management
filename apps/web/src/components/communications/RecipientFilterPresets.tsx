@@ -222,6 +222,28 @@ export function RecipientFilterPresets({
         </div>
 
         <div className="space-y-2">
+          <Label>Enrollment Status</Label>
+          <Select
+            value={filter.enrollmentStatus ?? "active"}
+            onValueChange={(v) =>
+              setFilter((prev) => ({
+                ...prev,
+                enrollmentStatus: v as RecipientFilter["enrollmentStatus"],
+              }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Active" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="all">All (active + inactive)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
           <Label>Start Time (after)</Label>
           <Input
             type="time"

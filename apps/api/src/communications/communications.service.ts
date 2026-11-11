@@ -51,6 +51,7 @@ export class CommunicationsService {
       startTime,
       endTime,
       instructorId,
+      enrollmentStatus = "active",
     } = filters;
 
     const studentWhere: Prisma.StudentWhereInput = {
@@ -63,8 +64,12 @@ export class CommunicationsService {
       studentWhere.level = level;
     }
 
+    if (enrollmentStatus === "inactive") {
+      studentWhere.enrollments = { none: { status: "active" } };
+    }
+
     const where: Prisma.EnrollmentWhereInput = {
-      status: "active",
+      ...(enrollmentStatus === "active" ? { status: "active" } : {}),
       student: studentWhere,
     };
 

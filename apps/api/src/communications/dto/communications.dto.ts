@@ -9,6 +9,7 @@ export const RecipientFilterSchema = z.object({
   startTime: z.string().optional(), // HH:mm
   endTime: z.string().optional(), // HH:mm
   instructorId: z.string().optional(),
+  enrollmentStatus: z.enum(["active", "inactive", "all"]).optional(),
 });
 
 export class RecipientFilterDto extends createZodDto(RecipientFilterSchema) {}

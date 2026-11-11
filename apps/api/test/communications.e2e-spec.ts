@@ -33,6 +33,25 @@ describe("CommunicationsController (e2e)", () => {
       
       expect(Array.isArray(response.body)).toBe(true);
     });
+
+    it.each(["active", "inactive", "all"])(
+      "should accept enrollmentStatus=%s",
+      async (enrollmentStatus) => {
+        const response = await request(app.getHttpServer())
+          .post("/communications/recipients")
+          .send({ enrollmentStatus })
+          .expect(201);
+
+        expect(Array.isArray(response.body)).toBe(true);
+      },
+    );
+
+    it("should reject an invalid enrollmentStatus", async () => {
+      await request(app.getHttpServer())
+        .post("/communications/recipients")
+        .send({ enrollmentStatus: "bogus" })
+        .expect(400);
+    });
   });
 
   describe("POST /communications/send", () => {
