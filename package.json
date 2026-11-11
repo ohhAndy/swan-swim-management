@@ -15,7 +15,7 @@
     "db:migrate": "npm --prefix packages/db run migrate:dev",
     "db:push": "npm --prefix packages/db run push",
     "db:studio": "npm --prefix packages/db run studio",
-    "check-types": "tsc --noEmit",
+    "check-types": "turbo run check-types",
     "env:dev": "cp packages/db/.env.dev packages/db/.env && cp apps/api/.env.dev apps/api/.env && cp apps/web/.env.local.dev apps/web/.env.local && echo 'Switched to DEV environment'",
     "env:prod": "cp packages/db/.env.prod packages/db/.env && cp apps/api/.env.prod apps/api/.env && cp apps/web/.env.local.prod apps/web/.env.local && echo 'Switched to PROD environment'",
     "postinstall": "npm run db:generate"
@@ -26,6 +26,6 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "zod": "^4.5.4"
+    "zod": "^4.6.7"
   }
 }

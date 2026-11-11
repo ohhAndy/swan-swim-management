@@ -1,7 +1,9 @@
 node_modules
 .pnp
 .pnp.js
-package-lock.json
+# Only the root lockfile is committed (npm workspaces)
+**/package-lock.json
+!/package-lock.json
 
 .next/
 out/
