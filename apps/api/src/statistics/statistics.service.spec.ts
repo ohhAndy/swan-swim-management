@@ -44,21 +44,43 @@ describe("StatisticsService", () => {
       prismaMock.classOffering.findMany.mockResolvedValue([
         {
           id: "off-1",
+          type: "regular",
           capacity: 6,
           weekday: 1,
+          instructors: [{ id: "i1" }],
           enrollments: [
-            { classRatio: "1:1" },
-            { classRatio: "2:1" },
+            { id: "e1", status: "active", classRatio: "1:1" },
+            { id: "e2", status: "active", classRatio: "2:1" },
           ],
         },
         {
           id: "off-2",
+          type: "regular",
           capacity: 3,
           weekday: 2,
+          instructors: [{ id: "i2" }],
           enrollments: [
-            { classRatio: "3:1" },
-            { classRatio: "3:1" },
+            { id: "e3", status: "active", classRatio: "3:1" },
+            { id: "e4", status: "active", classRatio: "3:1" },
           ],
+        },
+        {
+          id: "off-3",
+          type: "swim_team",
+          capacity: 20,
+          weekday: 3,
+          instructors: [],
+          enrollments: [{ id: "e5", status: "active", classRatio: null }],
+        },
+      ]);
+
+      prismaMock.classSession.findMany.mockResolvedValue([
+        {
+          offeringId: "off-2",
+          enrollmentSkips: [],
+          attendance: [{ enrollmentId: "e3", status: "absent" }],
+          makeUps: [{ status: "attended", classRatio: "3:1" }],
+          trialBookings: [{ status: "cancelled", classRatio: "3:1" }],
         },
       ]);
 
@@ -77,6 +99,13 @@ describe("StatisticsService", () => {
       expect(stats.capacity.total).toBe(9);
       expect(stats.capacity.filled).toBe(6.5);
       expect(stats.capacity.percentage).toBe(72); // Math.round((6.5 / 9) * 100)
+      expect(stats.utilization).toEqual({
+        sessions: 1,
+        seatsOffered: 3,
+        seatsUsed: 2,
+        emptySeats: 1,
+        percentage: 67,
+      });
       expect(stats.studentCount).toBe(4);
       expect(stats.levels["Beginner"]).toBe(3);
       expect(stats.levels["Intermediate"]).toBe(1);

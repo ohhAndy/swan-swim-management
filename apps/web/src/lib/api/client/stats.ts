@@ -7,6 +7,13 @@ export interface DashboardStats {
     filled: number;
     percentage: number;
   };
+  utilization: {
+    sessions: number;
+    seatsOffered: number;
+    seatsUsed: number;
+    emptySeats: number;
+    percentage: number;
+  };
   studentsPerDay: number[];
   levels: Record<string, number>;
   actionItems: {

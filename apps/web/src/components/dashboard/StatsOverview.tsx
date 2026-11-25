@@ -10,6 +10,10 @@ import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 
+function formatSeats(seats: number): string {
+  return Number.isInteger(seats) ? String(seats) : seats.toFixed(1);
+}
+
 export function StatsOverview({
   termId,
   termName,
@@ -70,7 +74,7 @@ export function StatsOverview({
           <CardContent>
             <div className="text-2xl font-bold">{stats.studentCount}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.capacity.percentage}% of capacity filled
+              {stats.capacity.percentage}% of lesson seats enrolled
             </p>
           </CardContent>
         </Card>
@@ -136,12 +140,27 @@ export function StatsOverview({
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm gap-1">
-                <span className="font-medium">Term Capacity</span>
+                <span className="font-medium">Enrollment Fill</span>
                 <span className="text-muted-foreground">
-                  {stats.capacity.filled} / {stats.capacity.total}
+                  {formatSeats(stats.capacity.filled)} /{" "}
+                  {formatSeats(stats.capacity.total)} seats
                 </span>
               </div>
               <Progress value={stats.capacity.percentage} className="h-2" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm gap-1">
+                <span className="font-medium">Seats Used So Far</span>
+                <span className="text-muted-foreground">
+                  {stats.utilization.percentage}%
+                </span>
+              </div>
+              <Progress value={stats.utilization.percentage} className="h-2" />
+              <p className="text-xs text-muted-foreground">
+                {formatSeats(stats.utilization.emptySeats)} empty seats across{" "}
+                {stats.utilization.sessions} lessons held
+              </p>
             </div>
 
             <div className="pt-4 grid grid-cols-2 gap-4">

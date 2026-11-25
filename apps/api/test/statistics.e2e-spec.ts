@@ -40,6 +40,14 @@ describe("StatisticsController (e2e)", () => {
         { studentId: transferred.id, offeringId: offering.id, status: "transferred", classRatio: "3:1" },
       ],
     });
+
+    const day = 24 * 60 * 60 * 1000;
+    await prisma.classSession.createMany({
+      data: [
+        { offeringId: offering.id, date: new Date(Date.now() - 7 * day), status: "scheduled" },
+        { offeringId: offering.id, date: new Date(Date.now() + 7 * day), status: "scheduled" },
+      ],
+    });
   });
 
   afterAll(async () => {
@@ -48,14 +56,21 @@ describe("StatisticsController (e2e)", () => {
   });
 
   describe("GET /statistics/dashboard", () => {
-    it("returns weighted capacity and counts that exclude transferred enrollments", async () => {
+    it("returns enrollment fill from active students and seat use from past lessons", async () => {
       const response = await request(app.getHttpServer())
         .get(`/statistics/dashboard?termId=${testTermId}`)
         .expect(200);
 
       expect(response.body).toEqual({
         studentCount: 2,
-        capacity: { total: 10, filled: 4, percentage: 40 },
+        capacity: { total: 10, filled: 1, percentage: 10 },
+        utilization: {
+          sessions: 1,
+          seatsOffered: 10,
+          seatsUsed: 1,
+          emptySeats: 9,
+          percentage: 10,
+        },
         studentsPerDay: [0, 2, 0, 0, 0, 0, 0],
         levels: { "Level 3": 1, Unknown: 1 },
         actionItems: { pendingMakeups: 0, upcomingTrials: 0 },
