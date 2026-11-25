@@ -1,4 +1,5 @@
-import type { SlotPage, Term } from "@school/shared-types";
+import type { SlotPage } from "@school/shared-types";
+import type { Term } from "@/lib/types/models";
 import { serverFetch } from "../_fetch/server";
 
 export interface DetailedTimeSlot {

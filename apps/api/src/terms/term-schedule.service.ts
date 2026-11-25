@@ -9,7 +9,7 @@ import type {
   RosterResponse,
   SlotPage,
   SwimTeamRosterInfo,
-  Term,
+  TermSummary,
   TrialLite,
 } from "@school/shared-types";
 import { SwimTeamStandingService } from "../swim-team/swim-team-standing.service";
@@ -130,7 +130,7 @@ export class TermScheduleService {
       throw new NotFoundException("Term Does Not Exist");
     }
 
-    const termMeta: Term = {
+    const termMeta: TermSummary = {
       id: term.id.toString(),
       name: term.name,
       type: term.type,
@@ -183,7 +183,7 @@ export class TermScheduleService {
 
   private async buildSlotPageFromOfferings(
     offerings: { id: string; capacity: number; title: string }[],
-    termMeta: Term,
+    termMeta: TermSummary,
     meta: SlotPage["meta"],
     options: { month?: string; role?: string; swimTeam?: boolean } = {},
   ): Promise<SlotPage> {
@@ -749,7 +749,7 @@ export class TermScheduleService {
       throw new NotFoundException("Term Does Not Exist");
     }
 
-    const termMeta: Term = {
+    const termMeta: TermSummary = {
       id: term.id.toString(),
       name: term.name,
     };

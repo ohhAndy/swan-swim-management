@@ -18,7 +18,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { LoadError } from "@/components/ui/load-error";
 import { getAllTerms } from "@/lib/api/client/schedule";
-import { Term } from "@school/shared-types";
+import type { Term } from "@/lib/types/models";
 import {
   Select,
   SelectContent,
@@ -27,16 +27,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface TermWithLocation extends Term {
-  location?: { name: string };
-}
-
 export default function UninvoicedList() {
   const [data, setData] = useState<UninvoicedEnrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [terms, setTerms] = useState<TermWithLocation[]>([]);
+  const [terms, setTerms] = useState<Term[]>([]);
   const [selectedTermId, setSelectedTermId] = useState<string>("all");
 
   useEffect(() => {

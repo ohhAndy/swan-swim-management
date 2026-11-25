@@ -174,6 +174,7 @@ export class TermsService {
             OR: [{ locationId }, { locationId: null }],
           }
         : undefined,
+      include: { location: { select: { name: true } } },
       orderBy: { startDate: "desc" },
     });
 
@@ -183,6 +184,7 @@ export class TermsService {
       startDate: t.startDate,
       endDate: t.endDate,
       locationId: t.locationId ? t.locationId.toString() : null,
+      location: t.location,
       type: t.type,
     }));
   }

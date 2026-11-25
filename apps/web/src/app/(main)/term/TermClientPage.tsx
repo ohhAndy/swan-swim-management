@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Term } from "@school/shared-types";
+import type { Term } from "@/lib/types/models";
 import Link from "next/link";
 
 export default function TermSlot({

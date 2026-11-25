@@ -40,11 +40,7 @@ export default async function StudentMakeupsPage({
       getAllTermsUnfiltered(),
     ]);
 
-    return (
-      // getAllTerms() is typed as Prisma Term[] (with Date fields), but JSON.parse gives strings
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <StudentMakeupsClient student={student} terms={terms as unknown as any} user={user} />
-    );
+    return <StudentMakeupsClient student={student} terms={terms} user={user} />;
   } catch (error) {
     if (isNotFound(error)) notFound();
     throw error;

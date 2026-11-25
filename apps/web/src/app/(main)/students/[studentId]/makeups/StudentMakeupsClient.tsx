@@ -28,22 +28,13 @@ import type { Student } from "@/lib/types/models";
 import type { CurrentUser } from "@/lib/auth/user";
 import type { TokenSummary, TokenInfo } from "@school/shared-types";
 import { getStudentTokenSummaries } from "@/lib/api/client/tokens";
+import type { Term } from "@/lib/types/models";
 
-/** Serialized Term shape from the API (dates are strings) */
-type SerializedTerm = {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  locationId: string | null;
-  slug: string | null;
-  location: { name: string } | null;
-};
 import { FULL_DAY_LABELS, formatTime } from "@/lib/schedule/slots";
 
 interface StudentMakeupsClientProps {
   student: Student;
-  terms: SerializedTerm[];
+  terms: Term[];
   user: CurrentUser;
 }
 
@@ -234,7 +225,7 @@ export default function StudentMakeupsClient({
   }, [fetchSummaries]);
 
   // Build termId -> term lookup
-  const termMap = new Map<string, SerializedTerm>(terms.map((t) => [t.id, t]));
+  const termMap = new Map<string, Term>(terms.map((t) => [t.id, t]));
 
   // Group makeups by termId, then sort groups by term start date (newest first)
   const grouped = makeups.reduce<Map<string, MakeUp[]>>((acc, m) => {

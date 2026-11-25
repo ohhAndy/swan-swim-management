@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getLocations, Location } from "@/lib/api/client/location";
-import { getTerms, Term } from "@/lib/api/client/term";
+import { getAllTerms } from "@/lib/api/client/schedule";
+import type { Term } from "@/lib/types/models";
 import { getInstructors } from "@/lib/api/client/instructors";
 import { getLevels, Level } from "@/lib/api/client/curriculum";
 import {
@@ -50,7 +51,7 @@ export function RecipientFilterPresets({
     getLocations()
       .then(setLocations)
       .catch(() => toast.error("Failed to load locations"));
-    getTerms()
+    getAllTerms()
       .then(setTerms)
       .catch(() => toast.error("Failed to load terms"));
     getInstructors()

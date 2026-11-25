@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import type { Term as SharedTerm } from "@school/shared-types";
 
 export type Serialize<T> = T extends Date
   ? string
@@ -27,11 +28,7 @@ export type Task = Serialize<Prisma.TaskGetPayload<{
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type InventoryItem = Serialize<Prisma.InventoryItemGetPayload<{}>>;
 
-export type Term = Serialize<Prisma.TermGetPayload<{
-  include: {
-    location: { select: { name: true } };
-  };
-}>>;
+export type Term = Serialize<SharedTerm>;
 
 export type Instructor = Serialize<Prisma.ClassInstructorGetPayload<{
   include: {

@@ -1,8 +1,6 @@
 import type { FormOutput } from "../../zod/term";
 import { clientFetch } from "../_fetch/client";
 
-import type { Term } from "@prisma/client";
-export type { Term };
 
 export async function createTerm(values: FormOutput) {
   const res = await clientFetch(`/terms`, {
@@ -28,9 +26,4 @@ export async function createTerm(values: FormOutput) {
   });
 
   await res.json();
-}
-
-export async function getTerms(): Promise<Term[]> {
-  const res = await clientFetch(`/terms/all`);
-  return res.json();
 }

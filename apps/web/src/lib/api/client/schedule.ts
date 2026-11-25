@@ -1,4 +1,5 @@
-import type { SlotPage, Term } from "@school/shared-types";
+import type { SlotPage } from "@school/shared-types";
+import type { Term } from "@/lib/types/models";
 import { clientFetch } from "../_fetch/client";
 
 export async function getSlotPage(

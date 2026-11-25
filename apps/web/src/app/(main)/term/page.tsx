@@ -1,6 +1,6 @@
 import { hasMinRole } from "@/lib/auth/permissions";
 import { getAllTerms } from "@/lib/api/server/schedule";
-import type { Term } from "@school/shared-types";
+import type { Term } from "@/lib/types/models";
 import { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";

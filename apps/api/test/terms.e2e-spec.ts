@@ -44,6 +44,23 @@ describe("TermsController (e2e)", () => {
       expect(response.body.length).toBeGreaterThanOrEqual(1);
       expect(response.body.some((t: { id: string }) => t.id === testTermId)).toBe(true);
     });
+
+    it("includes each term's location name", async () => {
+      const location = await prisma.location.create({
+        data: { name: "Newmarket", slug: "newmarket" },
+      });
+      await prisma.term.update({
+        where: { id: testTermId },
+        data: { locationId: location.id },
+      });
+
+      const response = await request(app.getHttpServer())
+        .get("/terms/all")
+        .expect(200);
+
+      const term = response.body.find((t: { id: string }) => t.id === testTermId);
+      expect(term.location).toEqual({ name: "Newmarket" });
+    });
   });
 
   describe("GET /terms/:termId", () => {

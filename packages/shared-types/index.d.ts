@@ -36,11 +36,14 @@ export type RosterRow = {
 export type Term = {
   id: string;
   name: string;
-  startDate?: string | Date;
-  endDate?: string | Date;
-  locationId?: string | null;
-  type?: "regular" | "swim_team_season";
+  startDate: string | Date;
+  endDate: string | Date;
+  locationId: string | null;
+  type: "regular" | "swim_team_season";
+  location?: { name: string } | null;
 };
+
+export type TermSummary = Pick<Term, "id" | "name"> & { type?: Term["type"] };
 
 export type SessionSummary = {
   id: string;
@@ -123,7 +126,7 @@ export type SlotPage = {
     weekday: number;
     startTime: string;
     endTime: string;
-    term: Term | null;
+    term: TermSummary | null;
     offeringType?: OfferingType;
     /** Swim team seasons are paged by month ("YYYY-MM") */
     month?: string | null;
