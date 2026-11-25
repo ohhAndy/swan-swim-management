@@ -25,6 +25,7 @@ import type { RosterResponse, TokenBalance } from "@school/shared-types";
 import { calcAge } from "@/lib/utils/student-helpers";
 import { AlertCircle, AlertTriangle, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 interface ScheduleMakeupDialogProps {
   open: boolean;
@@ -138,6 +139,7 @@ export function ScheduleMakeupDialog({
           return;
         }
 
+        if (res.capacityWarning) toast.warning(res.capacityWarning);
         onSuccess();
         onOpenChange(false);
       } catch (e) {

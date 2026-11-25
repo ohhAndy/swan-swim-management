@@ -8,7 +8,7 @@ export async function createTrialBooking(payload: {
   parentPhone: string;
   notes?: string;
   classRatio?: string;
-}) {
+}): Promise<{ id: string; capacityWarning: string | null }> {
   const res = await clientFetch(`/trial-bookings`, {
     method: "POST",
     body: JSON.stringify(payload),

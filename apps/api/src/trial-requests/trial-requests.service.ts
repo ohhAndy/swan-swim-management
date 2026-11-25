@@ -10,6 +10,7 @@ import { TrialRequestQueryDto } from "./dto/trial-request-query.dto";
 import { BookTrialRequestDto } from "./dto/book-trial-request.dto";
 import { TrialRequestStatus, Prisma } from "@prisma/client";
 import { getTorontoStartOfDay } from "../common/date.utils";
+import { loadSessionUsage, overCapacityWarning } from "../common/session-usage";
 
 @Injectable()
 export class TrialRequestsService {
@@ -374,6 +375,9 @@ export class TrialRequestsService {
       return {
         trialBooking,
         trialRequest: updatedTrialRequest,
+        capacityWarning: overCapacityWarning(
+          await loadSessionUsage(tx, dto.classSessionId),
+        ),
       };
     });
   }

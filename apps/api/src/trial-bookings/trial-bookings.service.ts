@@ -8,6 +8,7 @@ import { TrialStatus } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
+import { loadSessionUsage, overCapacityWarning } from "../common/session-usage";
 
 @Injectable()
 export class TrialBookingsService {
@@ -93,7 +94,12 @@ export class TrialBookingsService {
         tx,
       );
 
-      return trial;
+      return {
+        ...trial,
+        capacityWarning: overCapacityWarning(
+          await loadSessionUsage(tx, classSessionId),
+        ),
+      };
     });
   }
 

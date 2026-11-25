@@ -53,7 +53,10 @@ swan-swim-management/
 ### B. Capacity & Enrollment Calculations
 * **Ratio-Weighted Capacity**:
   * Class offerings support different instructor-to-student ratios (e.g., 1:1 private, 2:1 semi-private, 3:1 group).
-  * Weighted capacity differs from raw headcount. Always use the helpers in `apps/api/src/common/capacity.ts` when computing capacity on the dashboard or schedule grid.
+  * Weighted capacity differs from raw headcount (1:1 = 3 seats, 2:1 = 1.5, 3:1 = 1). Always use the helpers in `apps/api/src/common/capacity.ts` (`calculateSessionUsage` for one session, `calculateClassUsage` for a whole term); never re-implement the counting.
+* **Who holds a seat in a session**: active enrollments that are not skipped, excused or absent; makeups that are scheduled or attended; trials in any status except cancelled.
+* **Capacity**: the offering's capacity, raised to at least 5 for lessons with 2+ instructors (a rough rule; practices are plain headcount).
+* **Capacity never blocks**: seat limits are staff discretion. Booking past capacity succeeds and the API returns a `capacityWarning` for the UI to show.
 
 ### C. Database Primary & Foreign Keys
 * All database IDs must use `cuid()` strings (`@default(cuid())` in Prisma).

@@ -245,7 +245,7 @@ export function AssignSessionDialog({
 
     try {
       setSubmitting(true);
-      await bookTrialRequestSession(request.id, {
+      const { capacityWarning } = await bookTrialRequestSession(request.id, {
         classSessionId: selectedSessionId,
         classRatio,
         notes: bookingNote.trim() || undefined,
@@ -254,6 +254,7 @@ export function AssignSessionDialog({
       toast.success(
         `Trial confirmed for ${request.childName}! Request marked as approved.`,
       );
+      if (capacityWarning) toast.warning(capacityWarning);
       onSuccess();
       onOpenChange(false);
     } catch (err) {

@@ -9,9 +9,9 @@ import { RequestStaffUser } from "../auth/auth.types";
 import { ScheduleMakeUpInput } from "./dto/schedule-makeup.dto";
 import { Student, MakeUpToken, MakeUpBooking } from "@prisma/client";
 
-// Mock countUsedSeatsForSession
-jest.mock("../sessions/sessions.helpers", () => ({
-  countUsedSeatsForSession: jest.fn().mockResolvedValue({ filled: 1, effectiveCapacity: 4 }),
+jest.mock("../common/session-usage", () => ({
+  ...jest.requireActual("../common/session-usage"),
+  loadSessionUsage: jest.fn().mockResolvedValue({ filled: 1, effectiveCapacity: 4, openSeats: 3 }),
 }));
 
 // Mock validateLocationAccess
@@ -105,7 +105,7 @@ describe("MakeupsService", () => {
 
       const result = await service.scheduleMakeUp(mockDto, mockStaffUser);
 
-      expect(result).toEqual({ makeUpId: "bk1", status: "scheduled", isOverride: false, tokenId: "tok1" });
+      expect(result).toEqual({ makeUpId: "bk1", status: "scheduled", isOverride: false, tokenId: "tok1", capacityWarning: null });
       expect(prismaMock.makeUpBooking.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({

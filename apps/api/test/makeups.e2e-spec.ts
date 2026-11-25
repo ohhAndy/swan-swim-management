@@ -133,6 +133,55 @@ describe("MakeupsController (e2e)", () => {
     });
   });
 
+  describe("POST /makeups capacity", () => {
+    it("books into a full class and warns, counting trials and ratios", async () => {
+      await prisma.classOffering.update({
+        where: { id: testOfferingId },
+        data: { capacity: 2 },
+      });
+      const sessionId = await createSession();
+      await prisma.trialBooking.create({
+        data: {
+          classSessionId: sessionId,
+          childName: "Trial Kid",
+          childAge: 6,
+          parentPhone: "5550000000",
+          status: "scheduled",
+          classRatio: "3:1",
+        },
+      });
+
+      const res = await request(app.getHttpServer())
+        .post(`/makeups`)
+        .send({
+          studentId: testStudentId,
+          classSessionId: sessionId,
+          classRatio: "1:1",
+          overrideAcknowledged: true,
+        })
+        .expect(201);
+
+      expect(res.body.capacityWarning).toBe(
+        "This class is now over capacity (4/2 seats).",
+      );
+    });
+
+    it("does not warn when the class has room", async () => {
+      const sessionId = await createSession();
+
+      const res = await request(app.getHttpServer())
+        .post(`/makeups`)
+        .send({
+          studentId: testStudentId,
+          classSessionId: sessionId,
+          overrideAcknowledged: true,
+        })
+        .expect(201);
+
+      expect(res.body.capacityWarning).toBeNull();
+    });
+  });
+
   describe("GET /tokens/student/:studentId/balance", () => {
     it("should return correct token balance", async () => {
       const enrollment = await prisma.enrollment.create({

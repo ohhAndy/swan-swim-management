@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
-import { countUsedSeatsForSession } from "../sessions/sessions.helpers";
+import { loadSessionUsage, overCapacityWarning } from "../common/session-usage";
 import { RequestStaffUser } from "../auth/auth.types";
 import { TokensService } from "../tokens/tokens.service";
 import { ScheduleMakeUpInput } from "./dto/schedule-makeup.dto";
@@ -88,16 +88,6 @@ export class MakeupsService {
 
     try {
       return await this.prisma.$transaction(async (tx) => {
-        const { filled, effectiveCapacity } = await countUsedSeatsForSession(
-          tx,
-          session.offeringId,
-          session.date,
-        );
-
-        if (filled + 1 > effectiveCapacity) {
-          throw new BadRequestException("No seats left in this class session");
-        }
-
         // Try consuming an available token for this student in this term
         const consumedToken = await this.tokensService.consumeAvailableToken(
           studentId,
@@ -150,6 +140,9 @@ export class MakeupsService {
           status: booking.status,
           isOverride,
           tokenId: consumedToken?.id ?? null,
+          capacityWarning: overCapacityWarning(
+            await loadSessionUsage(tx, classSessionId),
+          ),
         };
       });
     } catch (error) {

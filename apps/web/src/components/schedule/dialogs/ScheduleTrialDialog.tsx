@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { createTrialBooking } from "@/lib/api/client/trial";
+import { toast } from "sonner";
 
 interface ScheduleTrialDialogProps {
   open: boolean;
@@ -64,7 +65,7 @@ export function ScheduleTrialDialog({
     try {
       setLoading(true);
       setError(null);
-      await createTrialBooking({
+      const { capacityWarning } = await createTrialBooking({
         classSessionId: sessionId,
         childName: childName.trim(),
         childAge: age,
@@ -80,6 +81,7 @@ export function ScheduleTrialDialog({
       setNotes("");
       setClassRatio("3:1");
 
+      if (capacityWarning) toast.warning(capacityWarning);
       onSuccess();
       onOpenChange(false);
     } catch (err) {

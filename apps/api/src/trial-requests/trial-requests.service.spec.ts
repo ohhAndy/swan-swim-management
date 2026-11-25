@@ -6,6 +6,11 @@ import { createPrismaMock, MockPrismaService } from "../prisma/prisma.mock";
 import { RequestStaffUser } from "../auth/auth.types";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
 
+jest.mock("../common/session-usage", () => ({
+  ...jest.requireActual("../common/session-usage"),
+  loadSessionUsage: jest.fn().mockResolvedValue(null),
+}));
+
 describe("TrialRequestsService", () => {
   let service: TrialRequestsService;
   let prismaMock: MockPrismaService;

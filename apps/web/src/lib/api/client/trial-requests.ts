@@ -111,6 +111,7 @@ export async function bookTrialRequestSession(
     classSessionId: string;
   };
   trialRequest: TrialRequestItem;
+  capacityWarning: string | null;
 }> {
   const res = await clientFetch(`/trial-requests/${id}/book`, {
     method: "POST",
