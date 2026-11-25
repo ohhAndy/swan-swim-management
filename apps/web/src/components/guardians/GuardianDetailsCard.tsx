@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
@@ -86,8 +87,7 @@ export function GuardianDetailsCard({
       setIsEditing(false);
       router.refresh();
     } catch (error) {
-      console.error("Failed to update guardian:", error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : "Failed to update guardian",
       );
     } finally {

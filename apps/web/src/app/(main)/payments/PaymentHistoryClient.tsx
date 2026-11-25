@@ -1,5 +1,7 @@
 "use client";
 
+import { toast } from "sonner";
+import { LoadError } from "@/components/ui/load-error";
 import { useEffect, useState } from "react";
 import {
   getAllPayments,
@@ -41,6 +43,8 @@ import { Invoice } from "@/lib/api/client/invoice";
 export default function PaymentHistoryClient() {
   const [data, setData] = useState<PaginatedResponse<Payment> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [page, setPage] = useState(1);
   const limit = 20;
 
@@ -50,7 +54,9 @@ export default function PaymentHistoryClient() {
     useState<Invoice | null>(null);
 
   useEffect(() => {
-    getLocations().then(setLocations).catch(console.error);
+    getLocations()
+      .then(setLocations)
+      .catch(() => toast.error("Failed to load locations"));
   }, []);
 
   // Filters
@@ -70,6 +76,7 @@ export default function PaymentHistoryClient() {
   useEffect(() => {
     async function fetchPayments() {
       setLoading(true);
+      setLoadError(null);
       try {
         const res = await getAllPayments({
           page,
@@ -81,13 +88,15 @@ export default function PaymentHistoryClient() {
         });
         setData(res);
       } catch (error) {
-        console.error("Failed to fetch payments:", error);
+        setLoadError(
+          error instanceof Error ? error.message : "Failed to load payments",
+        );
       } finally {
         setLoading(false);
       }
     }
     fetchPayments();
-  }, [page, startDate, endDate, method, debouncedSearch]);
+  }, [page, startDate, endDate, method, debouncedSearch, reloadKey]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -199,7 +208,9 @@ export default function PaymentHistoryClient() {
                 a.download = "payments.xlsx";
                 a.click();
               } catch (error) {
-                console.error("Failed to export payments", error);
+                toast.error(
+                  error instanceof Error ? error.message : "Failed to export payments",
+                );
               }
             }}
           >
@@ -213,6 +224,11 @@ export default function PaymentHistoryClient() {
           <div className="flex justify-center p-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
+        ) : loadError ? (
+          <LoadError
+            message={loadError}
+            onRetry={() => setReloadKey((k) => k + 1)}
+          />
         ) : !data || data.data.length === 0 ? (
           <div className="text-center p-8 text-muted-foreground">
             No payments found matching your filters.
@@ -347,12 +363,7 @@ export default function PaymentHistoryClient() {
           onOpenChange={(open) => !open && setEditingPaymentInvoice(null)}
           invoice={editingPaymentInvoice}
           locations={locations}
-          onSuccess={() => {
-            // Refresh payments to show updated location
-            setPage((p) => (p === 1 ? 1.0001 : 1)); // Hack to trigger effect
-            // Actually better to just refetch directly or extract fetch function
-            window.location.reload(); // Simplest way to ensure everything updates
-          }}
+          onSuccess={() => setReloadKey((k) => k + 1)}
         />
       )}
     </Card>

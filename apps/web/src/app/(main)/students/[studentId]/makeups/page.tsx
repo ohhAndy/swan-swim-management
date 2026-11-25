@@ -1,5 +1,6 @@
 import { hasMinRole } from "@/lib/auth/permissions";
 import { notFound, redirect } from "next/navigation";
+import { isNotFound } from "@/lib/api/error";
 import { getStudentById } from "@/lib/api/server/students";
 import { getAllTermsUnfiltered } from "@/lib/api/server/schedule";
 import { getCurrentUser } from "@/lib/auth/user";
@@ -45,7 +46,7 @@ export default async function StudentMakeupsPage({
       <StudentMakeupsClient student={student} terms={terms as unknown as any} user={user} />
     );
   } catch (error) {
-    console.error("Failed to fetch student makeups:", error);
-    notFound();
+    if (isNotFound(error)) notFound();
+    throw error;
   }
 }

@@ -18,6 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadError } from "@/components/ui/load-error";
+import { toast } from "sonner";
 import { CheckCircle2, XCircle, Clock, Percent, Pencil } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +51,7 @@ export default function TrialsPage() {
   const [upcoming, setUpcoming] = useState<UpcomingTrial[]>([]);
   const [past, setPast] = useState<UpcomingTrial[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedTrialForNotes, setSelectedTrialForNotes] = useState<{
     id: string;
     childName: string;
@@ -57,6 +60,7 @@ export default function TrialsPage() {
   const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
 
   const loadData = async () => {
+    setLoadError(null);
     try {
       const [fetchedStats, fetchedUpcoming, fetchedPast] = await Promise.all([
         getTrialStats(),
@@ -67,7 +71,10 @@ export default function TrialsPage() {
       setUpcoming(fetchedUpcoming);
       setPast(fetchedPast);
     } catch (error) {
-      console.error("Failed to load trials data:", error);
+      const message =
+        error instanceof Error ? error.message : "Failed to load trials";
+      if (stats) toast.error(message);
+      else setLoadError(message);
     }
   };
 
@@ -90,6 +97,14 @@ export default function TrialsPage() {
           ))}
         </div>
         <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="container mx-auto py-8">
+        <LoadError message={loadError} onRetry={loadData} />
       </div>
     );
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import {
   Select,
@@ -46,8 +47,12 @@ export function RecipientFilterPresets({
   const [filterLoading, setFilterLoading] = useState(false);
 
   useEffect(() => {
-    getLocations().then(setLocations).catch(console.error);
-    getTerms().then(setTerms).catch(console.error);
+    getLocations()
+      .then(setLocations)
+      .catch(() => toast.error("Failed to load locations"));
+    getTerms()
+      .then(setTerms)
+      .catch(() => toast.error("Failed to load terms"));
     getInstructors()
       .then((res) =>
         setInstructors(
@@ -58,8 +63,10 @@ export function RecipientFilterPresets({
           })),
         ),
       )
-      .catch(console.error);
-    getLevels().then(setLevels).catch(console.error);
+      .catch(() => toast.error("Failed to load instructors"));
+    getLevels()
+      .then(setLevels)
+      .catch(() => toast.error("Failed to load levels"));
   }, []);
 
   const handleFilterChange = (

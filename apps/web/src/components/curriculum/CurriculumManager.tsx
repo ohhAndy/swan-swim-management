@@ -34,10 +34,17 @@ import {
   Skill,
 } from "@/lib/api/client/curriculum";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { LoadError } from "@/components/ui/load-error";
 
 export function CurriculumManager() {
   const queryClient = useQueryClient();
-  const { data: levelsData, isLoading } = useQuery({
+  const {
+    data: levelsData,
+    isLoading,
+    error: levelsError,
+    refetch: refetchLevels,
+  } = useQuery({
     queryKey: ["levels"],
     queryFn: getLevels,
   });
@@ -108,8 +115,7 @@ export function CurriculumManager() {
       queryClient.invalidateQueries({ queryKey: ["levels"] });
       setIsLevelDialogOpen(false);
     } catch (error) {
-      console.error("Failed to save level", error);
-      alert("Failed to save level");
+      toast.error(error instanceof Error ? error.message : "Failed to save level");
     } finally {
       setIsSubmittingLevel(false);
     }
@@ -127,7 +133,7 @@ export function CurriculumManager() {
       await deleteLevel(id);
       queryClient.invalidateQueries({ queryKey: ["levels"] });
     } catch (error) {
-      console.error("Failed to delete level", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete level");
     }
   };
 
@@ -162,8 +168,7 @@ export function CurriculumManager() {
       queryClient.invalidateQueries({ queryKey: ["levels"] }); // Refresh to show new skill
       setIsSkillDialogOpen(false);
     } catch (error) {
-      console.error("Failed to save skill", error);
-      alert("Failed to save skill");
+      toast.error(error instanceof Error ? error.message : "Failed to save skill");
     } finally {
       setIsSubmittingSkill(false);
     }
@@ -175,7 +180,7 @@ export function CurriculumManager() {
       await deleteSkill(id);
       queryClient.invalidateQueries({ queryKey: ["levels"] });
     } catch (error) {
-      console.error("Failed to delete skill", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete skill");
     }
   };
 
@@ -198,6 +203,11 @@ export function CurriculumManager() {
           <div className="flex justify-center p-8">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
+        ) : levelsError ? (
+          <LoadError
+            message={levelsError.message}
+            onRetry={() => refetchLevels()}
+          />
         ) : levels.length === 0 ? (
           <div className="text-center p-8 border rounded-lg text-muted-foreground border-dashed">
             No levels defined yet. Create your first level to get started.

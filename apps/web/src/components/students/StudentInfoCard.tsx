@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -81,7 +82,9 @@ export function StudentInfoCard({ student, userRole }: StudentInfoCardProps) {
   });
 
   useEffect(() => {
-    getLevels().then(setLevels).catch(console.error);
+    getLevels()
+      .then(setLevels)
+      .catch(() => toast.error("Failed to load levels"));
   }, []);
 
   const levelId = watch("levelId");
@@ -119,8 +122,7 @@ export function StudentInfoCard({ student, userRole }: StudentInfoCardProps) {
       setIsEditing(false);
       router.refresh();
     } catch (error) {
-      console.error("Failed to update student:", error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : "Failed to update student",
       );
     } finally {
@@ -156,8 +158,7 @@ export function StudentInfoCard({ student, userRole }: StudentInfoCardProps) {
       router.push(`/guardians/${student.guardian.id}`);
       router.refresh();
     } catch (error) {
-      console.error("Failed to delete student:", error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : "Failed to delete student",
       );
       setLoading(false);

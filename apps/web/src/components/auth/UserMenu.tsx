@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -29,8 +30,8 @@ export function UserMenu({ user }: UserMenuProps) {
       await fetch("/api/auth/logout", { method: "POST" });
       router.push("/login");
       router.refresh();
-    } catch (error) {
-      console.error("Logout failed:", error);
+    } catch {
+      toast.error("Logout failed. Please try again.");
     } finally {
       setLoading(false);
     }

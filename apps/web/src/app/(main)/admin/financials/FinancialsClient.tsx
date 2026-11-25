@@ -21,10 +21,13 @@ import {
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadError } from "@/components/ui/load-error";
 
 export default function FinancialsClient() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [revenueByLocation, setRevenueByLocation] = useState<
     RevenueByLocation[]
   >([]);
@@ -32,6 +35,8 @@ export default function FinancialsClient() {
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
+      setLoadError(null);
       try {
         const [locData, termData] = await Promise.all([
           getRevenueByLocation(),
@@ -40,19 +45,30 @@ export default function FinancialsClient() {
         setRevenueByLocation(locData);
         setRevenueByTerm(termData);
       } catch (error) {
-        console.error("Failed to fetch analytics:", error);
+        setLoadError(
+          error instanceof Error ? error.message : "Failed to load financials",
+        );
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, []);
+  }, [reloadKey]);
 
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <LoadError
+        message={loadError}
+        onRetry={() => setReloadKey((k) => k + 1)}
+      />
     );
   }
 

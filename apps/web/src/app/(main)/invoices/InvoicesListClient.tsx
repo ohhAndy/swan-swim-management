@@ -22,6 +22,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { LoadError } from "@/components/ui/load-error";
+import { toast } from "sonner";
 import {
   Plus,
   Search,
@@ -40,6 +42,7 @@ export default function InvoicesListClient() {
 
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "all");
   const [startDate, setStartDate] = useState<string>(searchParams.get("startDate") || "");
@@ -104,12 +107,15 @@ export default function InvoicesListClient() {
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
 
   useEffect(() => {
-    getLocations().then(setLocations).catch(console.error);
+    getLocations()
+      .then(setLocations)
+      .catch(() => toast.error("Failed to load locations"));
   }, []);
 
   const loadInvoices = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const result = await getInvoices({
         search: search || undefined,
         status: statusFilter as "paid" | "partial" | "void" | "refunded" | "all",
@@ -124,7 +130,9 @@ export default function InvoicesListClient() {
       setInvoices(result.data);
       setTotalPages(result.pagination.totalPages);
     } catch (error) {
-      console.error("Failed to load invoices:", error);
+      setLoadError(
+        error instanceof Error ? error.message : "Failed to load invoices",
+      );
     } finally {
       setLoading(false);
     }
@@ -294,7 +302,9 @@ export default function InvoicesListClient() {
               a.download = "invoices.xlsx";
               a.click();
             } catch (error) {
-              console.error("Failed to export invoices", error);
+              toast.error(
+                error instanceof Error ? error.message : "Failed to export invoices",
+              );
             }
           }}
         >
@@ -309,6 +319,8 @@ export default function InvoicesListClient() {
         <div className="text-center py-8 text-muted-foreground">
           Loading invoices...
         </div>
+      ) : loadError ? (
+        <LoadError message={loadError} onRetry={loadInvoices} />
       ) : invoices.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           No invoices found

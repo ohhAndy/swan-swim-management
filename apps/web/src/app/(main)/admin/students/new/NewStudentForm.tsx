@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { createStudent } from "@/lib/api/client/students";
 import { CreateStudentInput, CreateStudentSchema } from "@/lib/zod/student";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -71,7 +72,7 @@ export default function NewStudentForm() {
       reset();
       router.push("/students");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Create student failed");
+      toast.error(e instanceof Error ? e.message : "Create student failed");
     } finally {
       setSubmitting(false);
     }

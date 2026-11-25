@@ -1,5 +1,6 @@
 import { hasMinRole } from "@/lib/auth/permissions";
 import { notFound, redirect } from "next/navigation";
+import { isNotFound } from "@/lib/api/error";
 import { getStudentById } from "@/lib/api/server/students";
 import StudentViewClient from "./StudentViewClient";
 import { getCurrentUser } from "@/lib/auth/user";
@@ -36,7 +37,7 @@ export default async function StudentPage({
     const student = await getStudentById(resolvedParams.studentId);
     return <StudentViewClient student={student} user={user} />;
   } catch (error) {
-    console.error("Failed to fetch student:", error);
-    notFound();
+    if (isNotFound(error)) notFound();
+    throw error;
   }
 }

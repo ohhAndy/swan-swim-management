@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { getLocations } from "@/lib/api/client/location";
 
 interface Location {
   id: string;
@@ -45,36 +47,27 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/locations`,
-          {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-            },
-          },
-        );
+        const data = await getLocations();
+        setLocations(data);
 
-        if (res.ok) {
-          const data = await res.json();
-          setLocations(data);
+        if (data.length > 0) {
+          // Retrieve stored location
+          const match = document.cookie.match(/(^|;)\s*swan_location_id\s*=\s*([^;]+)/);
+          const stored = match ? match[2] : null;
+          const found = data.find((l) => l.id === stored);
 
-          if (data.length > 0) {
-            // Retrieve stored location
-            const match = document.cookie.match(/(^|;)\s*swan_location_id\s*=\s*([^;]+)/);
-            const stored = match ? match[2] : null;
-            const found = data.find((l: Location) => l.id === stored);
-
-            if (found) {
-              setCurrentLocationId(found.id);
-            } else {
-              // Default to first accessible location
-              setCurrentLocationId(data[0].id);
-              document.cookie = `swan_location_id=${data[0].id}; path=/; max-age=31536000`;
-            }
+          if (found) {
+            setCurrentLocationId(found.id);
+          } else {
+            // Default to first accessible location
+            setCurrentLocationId(data[0].id);
+            document.cookie = `swan_location_id=${data[0].id}; path=/; max-age=31536000`;
           }
         }
       } catch (error) {
-        console.error("Failed to fetch locations", error);
+        toast.error(
+          error instanceof Error ? error.message : "Failed to load locations",
+        );
       } finally {
         setIsLoading(false);
       }

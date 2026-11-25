@@ -25,12 +25,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { LoadError } from "@/components/ui/load-error";
+import { toast } from "sonner";
 import { getAllStaffUsers, StaffUser } from "@/lib/api/client/staff";
 
 export default function AuditLogsPage() {
   const router = useRouter();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
@@ -45,7 +48,9 @@ export default function AuditLogsPage() {
         const users = await getAllStaffUsers();
         setStaffList(users);
       } catch (error) {
-        console.error("Failed to load staff users", error);
+        toast.error(
+          error instanceof Error ? error.message : "Failed to load staff list",
+        );
       }
     }
     loadStaff();
@@ -53,6 +58,7 @@ export default function AuditLogsPage() {
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const filters: Record<string, string> = {};
       if (selectedStaffId !== "all") filters.staffId = selectedStaffId;
@@ -71,7 +77,9 @@ export default function AuditLogsPage() {
       setLogs(data);
       setTotal(total);
     } catch (error) {
-      console.error(error);
+      setLoadError(
+        error instanceof Error ? error.message : "Failed to load audit logs",
+      );
     } finally {
       setLoading(false);
     }
@@ -147,6 +155,12 @@ export default function AuditLogsPage() {
                     <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
                     Loading logs...
                   </div>
+                </TableCell>
+              </TableRow>
+            ) : loadError ? (
+              <TableRow>
+                <TableCell colSpan={6}>
+                  <LoadError message={loadError} onRetry={fetchLogs} />
                 </TableCell>
               </TableRow>
             ) : logs.length === 0 ? (

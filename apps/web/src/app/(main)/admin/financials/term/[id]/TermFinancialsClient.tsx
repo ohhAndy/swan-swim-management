@@ -27,6 +27,8 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadError } from "@/components/ui/load-error";
+import { toast } from "sonner";
 
 interface TermFinancialsClientProps {
   termId: string;
@@ -37,6 +39,8 @@ export default function TermFinancialsClient({
 }: TermFinancialsClientProps) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<TermFinancialDetails | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [date, setDate] = useState<DateRange | undefined>({
     from: undefined,
@@ -50,8 +54,8 @@ export default function TermFinancialsClient({
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setLoadError(null);
       try {
-        console.log("Fetching term details for", termId, "date:", date);
         const startDate = date?.from
           ? format(date.from, "yyyy-MM-dd")
           : undefined;
@@ -61,17 +65,19 @@ export default function TermFinancialsClient({
           startDate,
           endDate,
         );
-        console.log("Term details result:", result);
         setData(result);
       } catch (error) {
-        console.error("Failed to fetch term details:", error);
+        const message =
+          error instanceof Error ? error.message : "Failed to load term financials";
+        setLoadError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [termId, date]);
+  }, [termId, date, reloadKey]);
 
   if (loading && !data) {
     return (
@@ -82,7 +88,12 @@ export default function TermFinancialsClient({
   }
 
   if (!data) {
-    return <div>Failed to load data.</div>;
+    return (
+      <LoadError
+        message={loadError ?? "Failed to load term financials"}
+        onRetry={() => setReloadKey((k) => k + 1)}
+      />
+    );
   }
 
   return (

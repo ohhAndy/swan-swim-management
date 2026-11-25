@@ -1,5 +1,6 @@
 import { hasMinRole } from "@/lib/auth/permissions";
 import { notFound, redirect } from "next/navigation";
+import { isNotFound } from "@/lib/api/error";
 import { getGuardianById } from "@/lib/api/server/guardians";
 import GuardianViewClient from "./GuardianViewClient";
 import { getCurrentUser } from "@/lib/auth/user";
@@ -29,7 +30,7 @@ export default async function GuardianPage({
     const guardian = await getGuardianById(resolvedParams.guardianId);
     return <GuardianViewClient guardian={guardian} user={user} />;
   } catch (error) {
-    console.error("Failed to fetch guardian:", error);
-    notFound();
+    if (isNotFound(error)) notFound();
+    throw error;
   }
 }

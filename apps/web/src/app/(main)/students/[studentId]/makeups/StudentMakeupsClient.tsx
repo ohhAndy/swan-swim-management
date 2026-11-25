@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { hasMinRole } from "@/lib/auth/permissions";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -225,7 +226,7 @@ export default function StudentMakeupsClient({
   const fetchSummaries = useCallback(() => {
     getStudentTokenSummaries(student.id)
       .then((summaries) => setTokenSummaries(summaries))
-      .catch((e) => console.error("Failed to load token summaries", e));
+      .catch(() => toast.error("Failed to load make-up tokens"));
   }, [student.id]);
 
   useEffect(() => {

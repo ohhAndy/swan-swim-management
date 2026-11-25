@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -36,7 +37,11 @@ export function SlotNavigator({
           setAvailableSlots(slots);
         }
       } catch (error) {
-        console.error("Failed to fetch slots", error);
+        if (mounted) {
+          toast.error(
+            error instanceof Error ? error.message : "Failed to load time slots",
+          );
+        }
       } finally {
         if (mounted) setLoadingSlots(false);
       }

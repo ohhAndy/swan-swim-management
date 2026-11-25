@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { LoadError } from "@/components/ui/load-error";
 import { getAllTerms } from "@/lib/api/client/schedule";
 import { Term } from "@school/shared-types";
 import {
@@ -32,6 +34,8 @@ interface TermWithLocation extends Term {
 export default function UninvoicedList() {
   const [data, setData] = useState<UninvoicedEnrollment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [terms, setTerms] = useState<TermWithLocation[]>([]);
   const [selectedTermId, setSelectedTermId] = useState<string>("all");
 
@@ -41,7 +45,9 @@ export default function UninvoicedList() {
         const allTerms = await getAllTerms();
         setTerms(allTerms);
       } catch (error) {
-        console.error("Failed to load terms:", error);
+        toast.error(
+          error instanceof Error ? error.message : "Failed to load terms",
+        );
       }
     }
     loadTerms();
@@ -50,6 +56,7 @@ export default function UninvoicedList() {
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
+      setLoadError(null);
       try {
         const res = await getUninvoicedEnrollments({
           termId: selectedTermId === "all" ? undefined : selectedTermId,
@@ -62,13 +69,17 @@ export default function UninvoicedList() {
           setData([]);
         }
       } catch (error) {
-        console.error("Failed to fetch uninvoiced enrollments:", error);
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load uninvoiced enrollments",
+        );
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [selectedTermId]);
+  }, [selectedTermId, reloadKey]);
 
   return (
     <Card>
@@ -98,6 +109,11 @@ export default function UninvoicedList() {
           <div className="flex justify-center p-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
+        ) : loadError ? (
+          <LoadError
+            message={loadError}
+            onRetry={() => setReloadKey((k) => k + 1)}
+          />
         ) : data.length === 0 ? (
           <div className="text-center p-8 text-muted-foreground">
             No uninvoiced enrollments found. Good job!

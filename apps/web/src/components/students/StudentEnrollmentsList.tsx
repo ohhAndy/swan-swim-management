@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar } from "lucide-react";
@@ -183,8 +184,7 @@ export function StudentEnrollmentsList({
       setEnrollmentToDelete(null);
       router.refresh();
     } catch (error) {
-      console.error("Failed to delete enrollment:", error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : "Failed to delete enrollment",
       );
     } finally {

@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LoadError } from "@/components/ui/load-error";
 import { searchGuardiansPage, GuardianLite } from "@/lib/api/client/guardian";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { CurrentUser } from "@/lib/auth/user";
@@ -52,6 +53,8 @@ export default function GuardianListClient({
   const [data, setData] = useState(initialData);
   const [query, setQuery] = useState(initialQuery);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const isFirstRender = useRef(true);
@@ -64,6 +67,7 @@ export default function GuardianListClient({
 
     async function fetch() {
       setLoading(true);
+      setLoadError(null);
       try {
         const q = searchParams.get("query") || "";
         const p = parseInt(searchParams.get("page") || "1");
@@ -78,13 +82,15 @@ export default function GuardianListClient({
         setData(newData);
         setQuery(q);
       } catch (error) {
-        console.error("Failed to fetch guardians:", error);
+        setLoadError(
+          error instanceof Error ? error.message : "Failed to load guardians",
+        );
       } finally {
         setLoading(false);
       }
     }
     fetch();
-  }, [searchParams]);
+  }, [searchParams, reloadKey]);
 
   // Update URL and let useEffect handle fetching data
   const updateFilters = (
@@ -225,7 +231,14 @@ export default function GuardianListClient({
             </div>
           )}
 
-          {!loading && data.items.length === 0 && (
+          {!loading && loadError && (
+            <LoadError
+              message={loadError}
+              onRetry={() => setReloadKey((k) => k + 1)}
+            />
+          )}
+
+          {!loading && !loadError && data.items.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12">
               <Users className="h-12 w-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -239,7 +252,7 @@ export default function GuardianListClient({
             </div>
           )}
 
-          {!loading && data.items.length > 0 && (
+          {!loading && !loadError && data.items.length > 0 && (
             <>
               {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
@@ -356,7 +369,7 @@ export default function GuardianListClient({
       </Card>
 
       {/* Pagination */}
-      {!loading && totalPages > 1 && (
+      {!loading && !loadError && totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
           <div className="text-sm text-gray-600">
             Page {data.page} of {totalPages}

@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadError } from "@/components/ui/load-error";
 import { useEffect, useState, useCallback } from "react";
 import {
   CommunicationLogItem,
@@ -54,6 +55,7 @@ function useDebounced<T>(value: T, delay = 300) {
 export function CommunicationHistory() {
   const [items, setItems] = useState<CommunicationLogItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(15);
@@ -67,6 +69,7 @@ export function CommunicationHistory() {
   const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const res = await getCommunicationHistory({
         page,
         pageSize,
@@ -76,7 +79,9 @@ export function CommunicationHistory() {
       setItems(res.items);
       setTotal(res.total);
     } catch (err) {
-      console.error("Failed to load communication history", err);
+      setLoadError(
+        err instanceof Error ? err.message : "Failed to load communication history",
+      );
     } finally {
       setLoading(false);
     }
@@ -243,6 +248,12 @@ export function CommunicationHistory() {
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-12 text-sm text-muted-foreground">
                       Loading communication history...
+                    </TableCell>
+                  </TableRow>
+                ) : loadError ? (
+                  <TableRow>
+                    <TableCell colSpan={6}>
+                      <LoadError message={loadError} onRetry={fetchHistory} />
                     </TableCell>
                   </TableRow>
                 ) : items.length === 0 ? (

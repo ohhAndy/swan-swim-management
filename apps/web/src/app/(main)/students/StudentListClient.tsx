@@ -18,13 +18,15 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LoadError } from "@/components/ui/load-error";
+import { toast } from "sonner";
 import { searchStudents } from "@/lib/api/client/students";
 
 import { getLevels, Level } from "@/lib/api/client/curriculum";
 import { PermissionGate } from "@/components/auth/PermissionGate";
+import { hasMinRole } from "@/lib/auth/permissions";
 import { CurrentUser } from "@/lib/auth/user";
 
-import { hasMinRole } from "@/lib/auth/permissions";
 // Types based on your API response
 interface Student {
   id: string;
@@ -69,12 +71,16 @@ export default function StudentsListClient({
   const [data, setData] = useState(initialData);
   const [query, setQuery] = useState(initialQuery);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [levels, setLevels] = useState<Level[]>([]);
 
   const isFirstRender = useRef(true);
 
   useEffect(() => {
-    getLevels().then(setLevels);
+    getLevels()
+      .then(setLevels)
+      .catch(() => toast.error("Failed to load levels"));
   }, []);
 
   const groupedLevels = levels.reduce((acc, lvl) => {
@@ -92,6 +98,7 @@ export default function StudentsListClient({
 
     async function fetch() {
       setLoading(true);
+      setLoadError(null);
       try {
         const q = searchParams.get("query") || "";
         const p = parseInt(searchParams.get("page") || "1");
@@ -108,13 +115,15 @@ export default function StudentsListClient({
         setData(newData);
         setQuery(q);
       } catch (error) {
-        console.error("Failed to fetch students:", error);
+        setLoadError(
+          error instanceof Error ? error.message : "Failed to load students",
+        );
       } finally {
         setLoading(false);
       }
     }
     fetch();
-  }, [searchParams]);
+  }, [searchParams, reloadKey]);
 
   // Calculate age helper
   const calculateAge = (birthdate: string | null) => {
@@ -286,7 +295,14 @@ export default function StudentsListClient({
             </div>
           )}
 
-          {!loading && data.items.length === 0 && (
+          {!loading && loadError && (
+            <LoadError
+              message={loadError}
+              onRetry={() => setReloadKey((k) => k + 1)}
+            />
+          )}
+
+          {!loading && !loadError && data.items.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12">
               <Users className="h-12 w-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -300,7 +316,7 @@ export default function StudentsListClient({
             </div>
           )}
 
-          {!loading && data.items.length > 0 && (
+          {!loading && !loadError && data.items.length > 0 && (
             <>
               {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
@@ -462,7 +478,7 @@ export default function StudentsListClient({
       </Card>
 
       {/* Pagination */}
-      {!loading && totalPages > 1 && (
+      {!loading && !loadError && totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
           <div className="text-sm text-gray-600">
             Page {data.page} of {totalPages}

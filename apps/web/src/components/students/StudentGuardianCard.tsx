@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -64,8 +65,7 @@ export function StudentGuardianCard({
       setIsEditingGuardian(false);
       router.refresh();
     } catch (error) {
-      console.error("Failed to update guardian:", error);
-      alert(
+      toast.error(
         error instanceof Error ? error.message : "Failed to update guardian",
       );
     } finally {
