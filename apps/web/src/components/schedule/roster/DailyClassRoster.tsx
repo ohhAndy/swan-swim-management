@@ -22,7 +22,6 @@ type Props = {
   ) => Promise<void>;
   onAttendanceUpdate?: (item: RosterItem, status: string) => Promise<void>;
   onRemarksUpdate?: (item: RosterItem, remarks: string) => Promise<void>;
-  onReportCardUpdate?: (enrollmentId: string, status: string) => Promise<void>;
   userRole: StaffRole;
   termName?: string;
   instructorName?: string;

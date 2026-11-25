@@ -447,35 +447,6 @@ export class EnrollmentsService {
     });
   }
 
-  async updateReportCardStatus(
-    enrollmentId: string,
-    status: string,
-    staffUser: RequestStaffUser,
-  ) {
-
-    const curr = await this.prisma.enrollment.findUnique({
-      where: { id: enrollmentId },
-    });
-    if (!curr) throw new NotFoundException("Enrollment not found");
-
-    await this.prisma.enrollment.update({
-      where: { id: enrollmentId },
-      data: { reportCardStatus: status },
-    });
-
-    await this.auditLogsService.create({
-      staffId: staffUser.id,
-      action: "Update Report Card Status",
-      entityType: "Enrollment",
-      entityId: enrollmentId,
-      changes: {
-        status: { from: curr.reportCardStatus, to: status },
-      },
-    });
-
-    return { success: true, status };
-  }
-
   async updateSkips(
     enrollmentId: string,
     skippedSessionIds: string[],

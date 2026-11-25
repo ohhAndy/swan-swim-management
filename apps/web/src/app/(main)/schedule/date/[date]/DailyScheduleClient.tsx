@@ -5,7 +5,6 @@ import { format, addDays, subDays } from "date-fns";
 import { updateStudentNotes, updateStudent } from "@/lib/api/client/students";
 import { updateOfferingInfo } from "@/lib/api/client/schedule";
 import { Input } from "@/components/ui/input";
-import { updateReportCardStatus } from "@/lib/api/client/enrollments";
 import { useRouter } from "next/navigation";
 import type { RosterItem } from "@/components/schedule/roster";
 import { DailyClassRoster } from "@/components/schedule/roster";
@@ -405,16 +404,6 @@ export default function DailyScheduleClient({
                                   );
                                   router.refresh();
                                 }
-                              }}
-                              onReportCardUpdate={async (
-                                enrollmentId,
-                                status,
-                              ) => {
-                                await updateReportCardStatus(
-                                  enrollmentId,
-                                  status,
-                                );
-                                router.refresh();
                               }}
                               userRole={userRole}
                             />

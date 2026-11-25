@@ -81,18 +81,6 @@ describe("EnrollmentsController (e2e)", () => {
     });
   });
 
-  describe("PUT /enrollments/:id/report-card-status", () => {
-    it("should update report card status", async () => {
-      await request(app.getHttpServer())
-        .put(`/enrollments/${testEnrollmentId}/report-card-status`)
-        .send({ status: "sent" })
-        .expect(200);
-      
-      const dbEnrollment = await prisma.enrollment.findUnique({ where: { id: testEnrollmentId } });
-      expect(dbEnrollment?.reportCardStatus).toBe("sent");
-    });
-  });
-
   describe("DELETE /enrollments/:id", () => {
     it("should delete an enrollment", async () => {
       await request(app.getHttpServer())
@@ -101,15 +89,6 @@ describe("EnrollmentsController (e2e)", () => {
       
       const dbEnrollment = await prisma.enrollment.findUnique({ where: { id: testEnrollmentId } });
       expect(dbEnrollment).toBeNull();
-    });
-  });
-
-  describe("PUT /enrollments/:id/report-card-status", () => {
-    it("rejects a status that is not a report card status", () => {
-      return request(app.getHttpServer())
-        .put("/enrollments/any-id/report-card-status")
-        .send({ status: "whatever" })
-        .expect(400);
     });
   });
 });

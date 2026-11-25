@@ -26,8 +26,6 @@ import { BulkTransferDto, bulkTransferSchema } from "./dto/bulk-transfer.dto";
 import {
   UpdateRemarksDto,
   UpdateRemarksSchema,
-  UpdateReportCardStatusDto,
-  UpdateReportCardStatusSchema,
   UpdateSkipsDto,
   UpdateSkipsSchema,
 } from "./dto/enrollment-updates.dto";
@@ -89,21 +87,6 @@ export class EnrollmentsController {
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.enrollmentsService.updateRemarks(id, body, staffUser);
-  }
-
-  @Put(":id/report-card-status")
-  @Roles("super_admin", "admin", "manager", "supervisor")
-  async updateReportCardStatus(
-    @Param("id") id: string,
-    @Body(new ZodValidationPipe(UpdateReportCardStatusSchema))
-    body: UpdateReportCardStatusDto,
-    @CurrentStaffUser() staffUser: RequestStaffUser,
-  ) {
-    return this.enrollmentsService.updateReportCardStatus(
-      id,
-      body.status,
-      staffUser,
-    );
   }
 
   @Put(":id/skips")
