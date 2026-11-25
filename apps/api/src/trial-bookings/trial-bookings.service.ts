@@ -103,10 +103,9 @@ export class TrialBookingsService {
 
   async updateTrialStatus(
     trialId: string,
-    status: TrialStatus | "",
+    status: TrialStatus,
     staffUser: RequestStaffUser,
   ) {
-
     const trial = await this.prisma.trialBooking.findUnique({
       where: { id: trialId },
       include: {
@@ -130,31 +129,6 @@ export class TrialBookingsService {
     // Don't allow status changes on converted trials
     if (trial.status === "converted" && status !== "converted") {
       throw new BadRequestException("Cannot change status of converted trial");
-    }
-
-    // An empty status is the UI's "clear" action and deletes the booking.
-    if (status === "") {
-      return this.prisma.$transaction(async (tx) => {
-        await this.auditLogsService.create(
-          {
-            staffId: staffUser.id,
-            action: "Delete Trial Booking",
-            entityType: "TrialBooking",
-            entityId: trialId,
-            metadata: {
-              childName: trial.childName,
-              childAge: trial.childAge,
-              parentPhone: trial.parentPhone,
-              status: trial.status,
-            },
-          },
-          tx,
-        );
-
-        return tx.trialBooking.delete({
-          where: { id: trialId },
-        });
-      });
     }
 
     return this.prisma.$transaction(async (tx) => {

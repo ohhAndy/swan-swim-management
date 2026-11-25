@@ -95,6 +95,7 @@ export function StudentGrid({
   onMakeUpUpdate,
   onMakeUpClick,
   onTrialUpdate,
+  onTrialRemove,
   onTrialClick,
   onTrialConvert,
   onRemarksUpdate,
@@ -112,6 +113,7 @@ export function StudentGrid({
   onMakeUpUpdate?: (makeUpId: string, status: string) => Promise<void>;
   onMakeUpClick?: (date: string) => void;
   onTrialUpdate?: (trialId: string, status: string) => Promise<void>;
+  onTrialRemove?: (trialId: string) => Promise<void>;
   onTrialClick?: (date: string) => void;
   onTrialConvert?: (trial: {
     id: string;
@@ -248,11 +250,7 @@ export function StudentGrid({
 
     const updateKey = `trial-${trialId}`;
 
-    if (newStatus === "") {
-      setTrialOverrides((prev) => ({ ...prev, [trialId]: "__removed__" }));
-    } else {
-      setTrialOverrides((prev) => ({ ...prev, [trialId]: newStatus }));
-    }
+    setTrialOverrides((prev) => ({ ...prev, [trialId]: newStatus }));
 
     setUpdating(updateKey);
 
@@ -262,6 +260,29 @@ export function StudentGrid({
       console.error("Failed to update trial:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to update trial",
+      );
+      setTrialOverrides((m) => {
+        const n = { ...m };
+        delete n[trialId];
+        return n;
+      });
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleTrialRemove = async (trialId: string, childName: string) => {
+    if (!onTrialRemove) return;
+    if (!confirm(`Remove the trial for ${childName}?`)) return;
+
+    setTrialOverrides((prev) => ({ ...prev, [trialId]: "__removed__" }));
+    setUpdating(`trial-${trialId}`);
+
+    try {
+      await onTrialRemove(trialId);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to remove trial",
       );
       setTrialOverrides((m) => {
         const n = { ...m };
@@ -375,6 +396,11 @@ export function StudentGrid({
               trialOverrides={trialOverrides}
               updating={updating}
               onTrialUpdate={handleTrialUpdate}
+              onTrialRemove={
+                onTrialRemove && hasMinRole(user.role, "manager")
+                  ? handleTrialRemove
+                  : undefined
+              }
               onTrialConvert={onTrialConvert}
             />
           ))}

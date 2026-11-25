@@ -11,7 +11,7 @@ export const CreateTrialBookingSchema = z.object({
 });
 
 export const UpdateTrialStatusSchema = z.object({
-  status: z.union([z.enum(TrialStatus), z.literal("")]),
+  status: z.enum(TrialStatus),
 });
 
 export const UpdateTrialNotesSchema = z.object({

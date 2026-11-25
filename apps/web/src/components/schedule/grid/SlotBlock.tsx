@@ -4,7 +4,7 @@ import { hasMinRole } from "@/lib/auth/permissions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { StudentGrid } from "./StudentGrid";
-import type { RosterResponse } from "@school/shared-types";
+import type { RosterResponse, TrialStatus } from "@school/shared-types";
 import {
   upsertAttendance,
   updateMakeupStatus,
@@ -25,7 +25,10 @@ import { PermissionGate } from "@/components/auth/PermissionGate";
 import { updateStudentNotes } from "@/lib/api/client/students";
 import { Loader2, Users } from "lucide-react";
 import { updateOfferingInfo } from "@/lib/api/client/schedule";
-import { updateTrialStatus } from "@/lib/api/client/trial";
+import {
+  deleteTrialBooking,
+  updateTrialStatus,
+} from "@/lib/api/client/trial";
 import { Trash2 } from "lucide-react";
 import { deleteOffering } from "@/lib/api/client/schedule";
 import { useSlotDialogs } from "./useSlotDialogs";
@@ -114,16 +117,7 @@ export function SlotBlock({
   };
 
   const handleTrialUpdate = async (trialId: string, status: string) => {
-    await updateTrialStatus(
-      trialId,
-      status as
-        | "scheduled"
-        | "attended"
-        | "noshow"
-        | "converted"
-        | "cancelled"
-        | "",
-    );
+    await updateTrialStatus(trialId, status as TrialStatus);
   };
 
   const handleRemarksUpdate = async (studentId: string, notes: string) => {
@@ -288,6 +282,7 @@ export function SlotBlock({
             onMakeUpClick={handleMakeupClick}
             onRemarksUpdate={handleRemarksUpdate}
             onTrialUpdate={handleTrialUpdate}
+            onTrialRemove={deleteTrialBooking}
             onTrialClick={handleTrialClick}
             onTrialConvert={handleTrialConvert}
             user={user}

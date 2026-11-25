@@ -11,7 +11,6 @@ import {
 import { getTrialStatusColour } from "@/lib/utils/student-helpers";
 
 const TRIAL_OPTIONS = [
-  { value: "", label: "Remove Trial", shortLabel: "" },
   { value: "scheduled", label: "Scheduled", shortLabel: "S" },
   { value: "attended", label: "Attended", shortLabel: "P" },
   { value: "noshow", label: "No Show", shortLabel: "A" },
@@ -25,6 +24,8 @@ interface TrialRowProps {
   trialOverrides: Record<string, string | undefined>;
   updating: string | null;
   onTrialUpdate: (trialId: string, status: string) => Promise<void>;
+  /** Only passed for roles allowed to delete trial bookings */
+  onTrialRemove?: (trialId: string, childName: string) => Promise<void>;
   onTrialConvert?: (trial: {
     id: string;
     childName: string;
@@ -40,6 +41,7 @@ export function TrialRow({
   trialOverrides,
   updating,
   onTrialUpdate,
+  onTrialRemove,
   onTrialConvert,
 }: TrialRowProps) {
   return (
@@ -133,6 +135,17 @@ export function TrialRow({
                       {option.label}
                     </DropdownMenuItem>
                   ))}
+                  {onTrialRemove && (
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        onTrialRemove(trialStudent.id, trialStudent.childName)
+                      }
+                      className="text-red-600"
+                    >
+                      <span className="font-medium mr-2">-</span>
+                      Remove Trial
+                    </DropdownMenuItem>
+                  )}
                   {/* Convert Button */}
                   <DropdownMenuItem
                     onSelect={() => {

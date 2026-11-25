@@ -13,7 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { updateTrialStatus } from "@/lib/api/client/trial";
+import {
+  deleteTrialBooking,
+  updateTrialStatus,
+} from "@/lib/api/client/trial";
 import {
   CompetingBadge,
   StandingBadge,
@@ -25,12 +28,11 @@ import type { RosterItem } from "./DailyClassRosterTypes";
 
 type Mark = "present" | "absent" | "excused" | "";
 
-const TRIAL_OPTIONS: { value: TrialStatus | ""; label: string }[] = [
+const TRIAL_OPTIONS: { value: TrialStatus; label: string }[] = [
   { value: "scheduled", label: "Scheduled" },
   { value: "attended", label: "Attended" },
   { value: "noshow", label: "No show" },
   { value: "cancelled", label: "Cancelled" },
-  { value: "", label: "Remove trial" },
 ];
 
 const toMark = (status: string | null): Mark =>
@@ -47,12 +49,14 @@ export function PracticeCheckInList({
   offeringId,
   roster,
   canMark,
+  canRemoveTrials,
   onChanged,
 }: {
   sessionId: string;
   offeringId: string;
   roster: RosterItem[];
   canMark: boolean;
+  canRemoveTrials: boolean;
   onChanged: () => void;
 }) {
   const { markAttendance, dialog } = useOverdueCheckIn();
@@ -106,13 +110,25 @@ export function PracticeCheckInList({
     }
   };
 
-  const handleTrial = async (trialId: string, status: TrialStatus | "") => {
+  const handleTrial = async (trialId: string, status: TrialStatus) => {
     try {
       await updateTrialStatus(trialId, status);
       onChanged();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Could not update the trial",
+      );
+    }
+  };
+
+  const handleTrialRemove = async (trialId: string, name: string) => {
+    if (!confirm(`Remove the trial for ${name}?`)) return;
+    try {
+      await deleteTrialBooking(trialId);
+      onChanged();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not remove the trial",
       );
     }
   };
@@ -260,6 +276,14 @@ export function PracticeCheckInList({
                         {option.label}
                       </DropdownMenuItem>
                     ))}
+                    {canRemoveTrials && (
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => handleTrialRemove(trial.id, trial.name)}
+                      >
+                        Remove trial
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </li>

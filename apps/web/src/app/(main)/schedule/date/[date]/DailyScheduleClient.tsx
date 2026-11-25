@@ -345,6 +345,7 @@ export default function DailyScheduleClient({
                                 offeringId={cls.offeringId}
                                 roster={cls.roster}
                                 canMark={canMarkAttendance}
+                                canRemoveTrials={hasMinRole(userRole, "manager")}
                                 onChanged={() => router.refresh()}
                               />
                             ) : (
@@ -387,7 +388,7 @@ export default function DailyScheduleClient({
                                 } else if (item.type === "trial") {
                                   await updateTrialStatus(
                                     item.id,
-                                    status as TrialStatus | "",
+                                    status as TrialStatus,
                                   ); // item.id is bookingId
                                 }
                                 router.refresh();

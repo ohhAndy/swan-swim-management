@@ -18,7 +18,11 @@ import {
 import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/lib/auth/user";
 import { PermissionGate } from "@/components/auth/PermissionGate";
-import { updateTrialStatus } from "@/lib/api/client/trial";
+import {
+  deleteTrialBooking,
+  updateTrialStatus,
+} from "@/lib/api/client/trial";
+import { hasMinRole } from "@/lib/auth/permissions";
 import { AssignInstructorDialog, ScheduleTrialDialog } from "../dialogs";
 import {
   CompetingBadge,
@@ -31,12 +35,11 @@ import { useOverdueCheckIn } from "@/components/swim-team/useOverdueCheckIn";
 
 type Mark = "present" | "absent" | "excused" | "";
 
-const TRIAL_OPTIONS: { value: TrialLite["status"] | ""; label: string }[] = [
+const TRIAL_OPTIONS: { value: TrialLite["status"]; label: string }[] = [
   { value: "scheduled", label: "Scheduled" },
   { value: "attended", label: "Attended" },
   { value: "noshow", label: "No show" },
   { value: "cancelled", label: "Cancelled" },
-  { value: "", label: "Remove trial" },
 ];
 
 /** Tap order for a check-in cell */
@@ -169,16 +172,29 @@ export function PracticeSlotBlock({
     }
   };
 
-  const handleTrialStatus = async (trialId: string, status: string) => {
+  const handleTrialStatus = async (
+    trialId: string,
+    status: TrialLite["status"],
+  ) => {
     try {
-      await updateTrialStatus(
-        trialId,
-        status as TrialLite["status"] | "",
-      );
+      await updateTrialStatus(trialId, status);
       refresh();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Could not update the trial",
+      );
+    }
+  };
+
+  const canRemoveTrials = hasMinRole(user.role, "manager");
+  const handleTrialRemove = async (trialId: string, childName: string) => {
+    if (!confirm(`Remove the trial for ${childName}?`)) return;
+    try {
+      await deleteTrialBooking(trialId);
+      refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not remove the trial",
       );
     }
   };
@@ -398,6 +414,16 @@ export function PracticeSlotBlock({
                                   {option.label}
                                 </DropdownMenuItem>
                               ))}
+                              {canRemoveTrials && (
+                                <DropdownMenuItem
+                                  className="text-red-600"
+                                  onClick={() =>
+                                    handleTrialRemove(trial.id, trial.childName)
+                                  }
+                                >
+                                  Remove trial
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         ))}

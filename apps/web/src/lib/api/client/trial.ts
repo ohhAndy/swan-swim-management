@@ -19,7 +19,7 @@ export async function createTrialBooking(payload: {
 
 export async function updateTrialStatus(
   trialId: string,
-  status: TrialStatus | "",
+  status: TrialStatus,
 ) {
   const res = await clientFetch(`/trial-bookings/${trialId}/status`, {
     method: "PATCH",
@@ -27,6 +27,10 @@ export async function updateTrialStatus(
   });
 
   return res.json();
+}
+
+export async function deleteTrialBooking(trialId: string) {
+  await clientFetch(`/trial-bookings/${trialId}`, { method: "DELETE" });
 }
 
 export async function updateTrialNotes(

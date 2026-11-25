@@ -123,4 +123,62 @@ describe("TrialBookingsController (e2e)", () => {
         .expect(400);
     });
   });
+
+  describe("who can remove a trial", () => {
+    const seedStaff = (role: "supervisor" | "manager") =>
+      prisma.staffUser.create({
+        data: {
+          authId: `test-${role}`,
+          email: `${role}@test.com`,
+          role,
+          fullName: `Test ${role}`,
+          active: true,
+        },
+      });
+
+    it("does not treat an empty status as a delete", async () => {
+      await seedStaff("supervisor");
+      await request(app.getHttpServer())
+        .patch(`/trial-bookings/${testTrialId}/status`)
+        .set("x-mock-auth-id", "test-supervisor")
+        .send({ status: "" })
+        .expect(400);
+
+      const dbTrial = await prisma.trialBooking.findUnique({ where: { id: testTrialId } });
+      expect(dbTrial).not.toBeNull();
+    });
+
+    it("lets supervisors change a trial's status", async () => {
+      await seedStaff("supervisor");
+      await request(app.getHttpServer())
+        .patch(`/trial-bookings/${testTrialId}/status`)
+        .set("x-mock-auth-id", "test-supervisor")
+        .send({ status: "cancelled" })
+        .expect(200);
+    });
+
+    it("blocks supervisors from deleting a trial", async () => {
+      await seedStaff("supervisor");
+      await request(app.getHttpServer())
+        .delete(`/trial-bookings/${testTrialId}`)
+        .set("x-mock-auth-id", "test-supervisor")
+        .expect(403);
+
+      const dbTrial = await prisma.trialBooking.findUnique({ where: { id: testTrialId } });
+      expect(dbTrial).not.toBeNull();
+    });
+
+    it("lets managers delete a trial and records it in the audit log", async () => {
+      const manager = await seedStaff("manager");
+      await request(app.getHttpServer())
+        .delete(`/trial-bookings/${testTrialId}`)
+        .set("x-mock-auth-id", "test-manager")
+        .expect(200);
+
+      const audit = await prisma.auditLog.findFirst({
+        where: { entityId: testTrialId, action: "Delete Trial Booking" },
+      });
+      expect(audit?.staffId).toBe(manager.id);
+    });
+  });
 });
