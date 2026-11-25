@@ -55,7 +55,7 @@ describe("TermAvailabilityService", () => {
             },
           ],
           enrollments: [
-            { id: "enr1", classRatio: "3:1" },
+            { id: "enr1", status: "active", classRatio: "3:1" },
           ],
         },
       ]);
@@ -95,7 +95,7 @@ describe("TermAvailabilityService", () => {
             },
           ],
           enrollments: [
-            { id: "enr2", classRatio: "1:1" }, // Weight 3.0
+            { id: "enr2", status: "active", classRatio: "1:1" }, // Weight 3.0
           ],
         },
       ]);

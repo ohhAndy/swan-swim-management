@@ -1,7 +1,10 @@
 import {
   calculateClassUsage,
+  calculateSessionUsage,
+  getEffectiveCapacity,
   getRatioWeight,
   CLASS_RATIO_WEIGHTS,
+  type SessionUsageInput,
 } from "./capacity";
 
 describe("Capacity and Ratio Logic", () => {
@@ -88,6 +91,108 @@ describe("Capacity and Ratio Logic", () => {
       expect(result.filled).toBe(6);
       expect(result.effectiveCapacity).toBe(4);
       expect(result.openSeats).toBe(0); // Math.max(0, floor(4 - 6)) = 0
+    });
+  });
+
+  describe("getEffectiveCapacity", () => {
+    it("keeps the base capacity with one instructor", () => {
+      expect(getEffectiveCapacity(3, 1, "regular")).toBe(3);
+      expect(getEffectiveCapacity(6, 1, "regular")).toBe(6);
+    });
+
+    it("raises lessons with 2+ instructors to at least 5", () => {
+      expect(getEffectiveCapacity(3, 2, "regular")).toBe(5);
+      expect(getEffectiveCapacity(3, 2, "flexible")).toBe(5);
+      expect(getEffectiveCapacity(7, 2, "regular")).toBe(7);
+    });
+
+    it("never raises practices", () => {
+      expect(getEffectiveCapacity(3, 2, "swim_team")).toBe(3);
+    });
+  });
+
+  describe("calculateSessionUsage", () => {
+    const base: SessionUsageInput = {
+      baseCapacity: 3,
+      instructorCount: 1,
+      offeringType: "regular",
+      enrollments: [],
+      makeups: [],
+      trials: [],
+    };
+    const regular = { status: "active" as const, classRatio: "3:1" };
+
+    it("counts regulars, makeups and trials together", () => {
+      const result = calculateSessionUsage({
+        ...base,
+        enrollments: [regular, regular],
+        trials: [{ status: "scheduled", classRatio: "3:1" }],
+      });
+      expect(result).toEqual({ filled: 3, effectiveCapacity: 3, openSeats: 0 });
+    });
+
+    it("weights makeups and trials by their own ratio", () => {
+      const result = calculateSessionUsage({
+        ...base,
+        enrollments: [regular],
+        makeups: [{ status: "scheduled", classRatio: "1:1" }],
+      });
+      expect(result.filled).toBe(4);
+      expect(result.openSeats).toBe(0);
+    });
+
+    it("frees seats for skipped, excused and absent regulars", () => {
+      const result = calculateSessionUsage({
+        ...base,
+        enrollments: [
+          { ...regular, skipped: true },
+          { ...regular, attendanceStatus: "excused" },
+          { ...regular, attendanceStatus: "absent" },
+          { ...regular, attendanceStatus: "present" },
+        ],
+      });
+      expect(result.filled).toBe(1);
+    });
+
+    it("ignores enrollments that are not active", () => {
+      const result = calculateSessionUsage({
+        ...base,
+        enrollments: [
+          { status: "inactive", classRatio: "3:1" },
+          { status: "transferred", classRatio: "3:1" },
+        ],
+      });
+      expect(result.filled).toBe(0);
+    });
+
+    it("counts only scheduled and attended makeups", () => {
+      const result = calculateSessionUsage({
+        ...base,
+        makeups: (
+          ["requested", "scheduled", "attended", "cancelled", "missed"] as const
+        ).map((status) => ({ status, classRatio: "3:1" })),
+      });
+      expect(result.filled).toBe(2);
+    });
+
+    it("counts every trial except cancelled ones", () => {
+      const result = calculateSessionUsage({
+        ...base,
+        trials: (
+          ["scheduled", "attended", "noshow", "converted", "cancelled"] as const
+        ).map((status) => ({ status, classRatio: "3:1" })),
+      });
+      expect(result.filled).toBe(4);
+    });
+
+    it("reports over-capacity sessions with no open seats", () => {
+      const result = calculateSessionUsage({
+        ...base,
+        enrollments: [regular, regular, regular],
+        trials: [{ status: "scheduled", classRatio: "2:1" }],
+      });
+      expect(result.filled).toBe(4.5);
+      expect(result.openSeats).toBe(0);
     });
   });
 });

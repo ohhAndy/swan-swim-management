@@ -14,7 +14,7 @@ import type {
 } from "@school/shared-types";
 import { SwimTeamStandingService } from "../swim-team/swim-team-standing.service";
 import { getTorontoDateString } from "../common/date.utils";
-import { getRatioWeight } from "../common/capacity";
+import { calculateSessionUsage } from "../common/capacity";
 import { formatTime } from "./terms.helpers";
 
 @Injectable()
@@ -565,9 +565,6 @@ export class TermScheduleService {
 
           const instructorCount = s.offering.instructors.length;
           const capacity = capacityMap.get(s.offeringId) ?? 0;
-          // Correct approach: Sum weights of PRESENT students.
-          // PRESENT = All Active Enrollments MINUS Skipped/Excused Enrollments.
-
           // Map for next term enrollments for quick lookup
           const nextTermEnrollmentMap = new Map<
             string,
@@ -577,52 +574,25 @@ export class TermScheduleService {
             nextTermEnrollmentMap.set(nte.studentId, nte);
           }
 
-          let regularWeighted = 0;
-          for (const enr of offeringEnrollments) {
-            const isSkipped = skipMap.get(enr.id)?.has(s.id);
-            const attendanceStatus = attendanceMap
-              .get(enr.id)
-              ?.get(s.id)?.status;
-            const isExcused = attendanceStatus === "excused";
-            const isAbsent = attendanceStatus === "absent";
-
-            if (
-              enr.status === "active" &&
-              !isSkipped &&
-              !isExcused &&
-              !isAbsent
-            ) {
-              regularWeighted += getRatioWeight(enr.classRatio);
-            }
-          }
-
-          // Makeups (Weighted & Status filtered)
           const sessionMakeUps = makeUpsBySession.get(s.id) ?? [];
-          let makeupWeighted = 0;
-          for (const m of sessionMakeUps) {
-            if (["scheduled", "attended"].includes(m.status)) {
-              makeupWeighted += getRatioWeight(m.classRatio);
-            }
-          }
-
-          // Trials (Weighted & Status filtered)
           const sessionTrials = trialsBySession.get(s.id) ?? [];
-          let trialsWeighted = 0;
-          for (const t of sessionTrials) {
-            if (["scheduled", "attended"].includes(t.status)) {
-              trialsWeighted += getRatioWeight(t.classRatio);
-            }
-          }
-
-          const totalFilled = regularWeighted + makeupWeighted + trialsWeighted;
-
-          // Practices are plain headcount; no instructor-based minimum
-          const dynamicMin = !isSwimTeam && instructorCount >= 2 ? 5 : 0;
-          const effectiveCapacity = Math.max(capacity, dynamicMin);
-          const openSeats = Math.max(
-            0,
-            Math.floor(effectiveCapacity - totalFilled),
-          );
+          const {
+            filled: totalFilled,
+            effectiveCapacity,
+            openSeats,
+          } = calculateSessionUsage({
+            baseCapacity: capacity,
+            instructorCount,
+            offeringType: isSwimTeam ? "swim_team" : "regular",
+            enrollments: offeringEnrollments.map((enr) => ({
+              status: enr.status,
+              classRatio: enr.classRatio,
+              skipped: skipMap.get(enr.id)?.has(s.id),
+              attendanceStatus: attendanceMap.get(enr.id)?.get(s.id)?.status,
+            })),
+            makeups: sessionMakeUps,
+            trials: sessionTrials,
+          });
 
           const makeUpsLite: MakeupLite[] = sessionMakeUps.map((m) => ({
             id: m.id,
@@ -1097,42 +1067,19 @@ export class TermScheduleService {
         const sessionTrials = trialsBySession.get(session.id) ?? [];
         const sessionEnrollments = enrollmentsByOffering.get(offering.id) ?? [];
 
-        // COUNT LOGIC matching SlotBlock (Weighted)
-        let regularWeighted = 0;
-        for (const enr of sessionEnrollments) {
-          const isSkipped = skipSet.has(enr.id);
-          const att = attendanceMap.get(enr.id);
-          const isExcused = att && att.status === "excused";
-          const isAbsent = att && att.status === "absent";
-
-          if (
-            enr.status === "active" &&
-            !isSkipped &&
-            !isExcused &&
-            !isAbsent
-          ) {
-            regularWeighted += getRatioWeight(enr.classRatio);
-          }
-        }
-
-        // Active Makeups (Weighted)
-        let makeupWeighted = 0;
-        for (const m of sessionMakeups) {
-          if (["scheduled", "attended"].includes(m.status)) {
-            makeupWeighted += getRatioWeight(m.classRatio);
-          }
-        }
-
-        // Active Trials (Weighted)
-        let trialsWeighted = 0;
-        for (const t of sessionTrials) {
-          if (["scheduled", "attended"].includes(t.status)) {
-            trialsWeighted += getRatioWeight(t.classRatio);
-          }
-        }
-
-        // Total filled (float)
-        const filled = regularWeighted + makeupWeighted + trialsWeighted;
+        const { filled, effectiveCapacity } = calculateSessionUsage({
+          baseCapacity: offering.capacity,
+          instructorCount: offering.instructors.length,
+          offeringType: offering.type,
+          enrollments: sessionEnrollments.map((enr) => ({
+            status: enr.status,
+            classRatio: enr.classRatio,
+            skipped: skipSet.has(enr.id),
+            attendanceStatus: attendanceMap.get(enr.id)?.status,
+          })),
+          makeups: sessionMakeups,
+          trials: sessionTrials,
+        });
 
         const roster = [
           ...sessionEnrollments.map((e) => {
@@ -1278,7 +1225,7 @@ export class TermScheduleService {
               ? `${i.instructor.firstName} ${i.instructor.lastName}`
               : (i.staffUser?.fullName ?? "Unknown"),
           })),
-          capacity: offering.capacity,
+          capacity: effectiveCapacity,
           filled,
           roster,
         };

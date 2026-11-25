@@ -5,6 +5,7 @@ import type { Term } from "@school/shared-types";
 import { CreateTermInput } from "./dto/create-term.dto";
 import { RequestStaffUser } from "../auth/auth.types";
 import { computeEnd, weeklyDates } from "./terms.helpers";
+import { calculateClassUsage } from "../common/capacity";
 import {
   DEFAULT_SWIM_TEAM_MEET_FEES,
   SWIM_TEAM_FREQUENCIES,
@@ -244,7 +245,7 @@ export class TermsService {
         },
         enrollments: {
           where: { status: "active" },
-          select: { id: true },
+          select: { classRatio: true },
         },
       },
       orderBy: { startTime: "asc" },
@@ -271,22 +272,16 @@ export class TermsService {
         };
       }
 
-      let realCap: number;
-      const count = off.instructors.length;
-      if (off.type === "swim_team") {
-        // Practices are plain headcount; no ratio-based capacity rules
-        realCap = off.capacity;
-      } else if (count === 1) {
-        realCap = Math.min(off.capacity, 4);
-      } else if (count >= 2) {
-        realCap = Math.max(off.capacity, 5);
-      } else {
-        realCap = off.capacity;
-      }
+      const { filled, effectiveCapacity } = calculateClassUsage(
+        off.enrollments,
+        off.instructors.length,
+        off.capacity,
+        off.type,
+      );
 
       groups[time].offeringCount += 1;
-      groups[time].realCapacity += realCap;
-      groups[time].filledSeats += off.enrollments.length;
+      groups[time].realCapacity += effectiveCapacity;
+      groups[time].filledSeats += filled;
     }
 
     return Object.values(groups).sort((a, b) => a.time.localeCompare(b.time));

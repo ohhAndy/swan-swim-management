@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { getRatioWeight } from "../common/capacity";
+import { calculateSessionUsage, getEffectiveCapacity } from "../common/capacity";
+import { getTorontoDateString } from "../common/date.utils";
 
 @Injectable()
 export class TermAvailabilityService {
@@ -30,18 +31,16 @@ export class TermAvailabilityService {
             date: true,
             status: true,
             makeUps: {
-              select: { id: true, classRatio: true },
-              where: { status: { not: "cancelled" } },
+              select: { status: true, classRatio: true },
             },
             trialBookings: {
-              select: { id: true, status: true, classRatio: true },
+              select: { status: true, classRatio: true },
             },
             enrollmentSkips: {
               select: { enrollmentId: true },
             },
             attendance: {
-              where: { status: "excused" },
-              select: { enrollmentId: true },
+              select: { enrollmentId: true, status: true },
             },
           },
         },
@@ -49,6 +48,7 @@ export class TermAvailabilityService {
           where: { status: "active" },
           select: {
             id: true,
+            status: true,
             classRatio: true,
           },
         },
@@ -57,10 +57,7 @@ export class TermAvailabilityService {
     });
 
     // 2. Process in-memory to find open slots
-    // Calculate cutoff date (Yesterday in UTC to be safe for all timezones)
-    const now = new Date();
-    now.setUTCDate(now.getUTCDate() - 1);
-    const cutoffDate = now.toISOString().split("T")[0];
+    const today = getTorontoDateString();
 
     // Group by Weekday
     const byWeekday: Record<
@@ -80,47 +77,41 @@ export class TermAvailabilityService {
 
     for (const off of offerings) {
       const availableSessions: Array<{ date: string; openSeats: number }> = [];
-      const baseCap = off.capacity;
       const instructorCount = off.instructors.length;
-
-      // Dynamic rule: 2+ instructors -> min 5 slots
-      const dynamicMin = instructorCount >= 2 ? 5 : 0;
-      const effectiveCapacity = Math.max(baseCap, dynamicMin);
+      const capacity = getEffectiveCapacity(
+        off.capacity,
+        instructorCount,
+        off.type,
+      );
 
       for (const sess of off.sessions) {
         if (sess.status === "canceled") continue;
-        if (sess.date.toISOString().split("T")[0] < cutoffDate) continue;
+        const date = sess.date.toISOString().slice(0, 10);
+        if (date < today) continue;
 
-        let filled = 0;
-
-        // Enrollments (exclude skips/excused)
-        const skipSet = new Set(
+        const skipped = new Set(
           sess.enrollmentSkips.map((s) => s.enrollmentId),
         );
-        const excusedSet = new Set(sess.attendance.map((a) => a.enrollmentId));
-
-        for (const enr of off.enrollments) {
-          if (skipSet.has(enr.id) || excusedSet.has(enr.id)) continue;
-          filled += getRatioWeight(enr.classRatio);
-        }
-
-        // Add Makeups (Weighted)
-        for (const m of sess.makeUps) {
-          filled += getRatioWeight(m.classRatio);
-        }
-
-        // Add Trials (Weighted)
-        for (const t of sess.trialBookings) {
-          if (["scheduled", "attended"].includes(t.status)) {
-            filled += getRatioWeight(t.classRatio);
-          }
-        }
-
-        const openSeats = Math.max(0, Math.floor(effectiveCapacity - filled));
+        const attendance = new Map(
+          sess.attendance.map((a) => [a.enrollmentId, a.status]),
+        );
+        const { openSeats } = calculateSessionUsage({
+          baseCapacity: off.capacity,
+          instructorCount,
+          offeringType: off.type,
+          enrollments: off.enrollments.map((e) => ({
+            status: e.status,
+            classRatio: e.classRatio,
+            skipped: skipped.has(e.id),
+            attendanceStatus: attendance.get(e.id),
+          })),
+          makeups: sess.makeUps,
+          trials: sess.trialBookings,
+        });
 
         if (openSeats > 0) {
           availableSessions.push({
-            date: sess.date.toISOString().split("T")[0], // YYYY-MM-DD (UTC)
+            date,
             openSeats,
           });
         }
@@ -133,7 +124,7 @@ export class TermAvailabilityService {
           offeringId: off.id,
           title: off.title,
           time: `${off.startTime}-${off.endTime}`,
-          capacity: effectiveCapacity,
+          capacity,
           sessions: availableSessions,
           instructors: off.instructors
             .map((i) =>

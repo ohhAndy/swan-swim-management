@@ -92,11 +92,12 @@ export class OfferingsService {
         o.enrollments,
         o.instructors.length,
         o.capacity,
+        o.type,
       );
       return {
         ...o,
         capacity: effectiveCapacity,
-        _count: { enrollments: filled }, // Helper for frontend compatibility (note: float now)
+        _count: { enrollments: filled },
       };
     });
   }
