@@ -1,7 +1,6 @@
 import { Module } from "@nestjs/common";
 import { PrismaModule } from "./prisma/prisma.module";
 import { TermsModule } from "./terms/terms.module";
-import { SessionsModule } from "./sessions/sessions.module";
 import { EnrollmentsModule } from "./enrollments/enrollment.module";
 import { MakeupsModule } from "./makeups/makeups.module";
 import { TokensModule } from "./tokens/tokens.module";
@@ -54,7 +53,6 @@ import { SwimTeamModule } from './swim-team/swim-team.module';
     ]),
     PrismaModule,
     TermsModule,
-    SessionsModule,
     EnrollmentsModule,
     MakeupsModule,
     TokensModule,
