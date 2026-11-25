@@ -19,18 +19,4 @@ export class StaffUsersService {
       },
     });
   }
-
-  async findByAuthId(authId: string) {
-    return this.prisma.staffUser.findUnique({
-      where: { authId },
-      select: {
-        id: true,
-        authId: true,
-        email: true,
-        fullName: true,
-        role: true,
-        active: true,
-      },
-    });
-  }
 }

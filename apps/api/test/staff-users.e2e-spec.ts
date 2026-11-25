@@ -61,19 +61,54 @@ describe("StaffUsersController (e2e)", () => {
     });
   });
 
-  describe("GET /staff-users/by-auth/:authId", () => {
-    it("should return staff user by authId without requiring authentication", async () => {
+  describe("GET /staff-users/me", () => {
+    it("returns the authenticated staff user", async () => {
       const response = await request(app.getHttpServer())
-        .get("/staff-users/by-auth/test-admin")
-        .set("x-mock-unauthorized", "true") // Still works because it's @Public()
+        .get("/staff-users/me")
         .expect(200);
-      
-      expect(response.body.authId).toBe("test-admin");
+
+      expect(response.body).toEqual({
+        id: expect.any(String),
+        authId: "test-admin",
+        email: "admin@test.com",
+        fullName: "Test Admin",
+        role: "admin",
+        active: true,
+      });
+    });
+
+    it("rejects unauthenticated requests", () => {
+      return request(app.getHttpServer())
+        .get("/staff-users/me")
+        .set("x-mock-unauthorized", "true")
+        .expect(401);
+    });
+
+    it("rejects inactive staff users", async () => {
+      await prisma.staffUser.create({
+        data: {
+          authId: "test-inactive",
+          email: "inactive@test.com",
+          role: "manager",
+          fullName: "Inactive Manager",
+          active: false,
+        },
+      });
+
+      return request(app.getHttpServer())
+        .get("/staff-users/me")
+        .set("x-mock-auth-id", "test-inactive")
+        .expect(403);
     });
   });
 
-  // Staff accounts are managed in the database directly; the API must not
-  // offer a way to create staff users or change their roles.
+  it("no longer exposes the public by-auth lookup", () => {
+    return request(app.getHttpServer())
+      .get("/staff-users/by-auth/test-admin")
+      .set("x-mock-unauthorized", "true")
+      .expect(404);
+  });
+
   describe("write endpoints", () => {
     it("does not expose POST /staff-users", async () => {
       await request(app.getHttpServer())

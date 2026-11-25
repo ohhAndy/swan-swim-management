@@ -1,51 +1,61 @@
+import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { ApiError } from "@/lib/api/error";
 import { CurrentUser } from "./user-client";
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
 
 export type { CurrentUser };
 
-export async function getCurrentUser(): Promise<CurrentUser | null> {
-  try {
-    const supabase = await createServerSupabaseClient();
+type CurrentUserLookup =
+  | { status: "ok"; user: CurrentUser }
+  | { status: "unauthenticated" }
+  | { status: "forbidden" };
 
-    // Get Supabase user
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
+interface StaffUserResponse {
+  id: string;
+  authId: string;
+  email: string;
+  fullName: string;
+  role: CurrentUser["role"];
+  active: boolean;
+}
 
-    if (error || !user) {
-      return null;
-    }
+export async function lookupCurrentUser(): Promise<CurrentUserLookup> {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-    // Fetch staff user from your backend
-    const res = await fetch(`${API}/staff-users/by-auth/${user.id}`, {
-      cache: "no-store",
-    });
+  if (!session) return { status: "unauthenticated" };
 
-    if (!res.ok) {
-      console.log(await res.text());
-      console.error("Failed to fetch staff user");
-      return null;
-    }
+  const res = await fetch(`${API}/staff-users/me`, {
+    cache: "no-store",
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
 
-    const staffUser = await res.json();
+  if (res.status === 401) return { status: "unauthenticated" };
+  if (res.status === 403) return { status: "forbidden" };
+  if (!res.ok) {
+    throw new ApiError(res.status, res.statusText, await res.text());
+  }
 
-    if (!staffUser.active) {
-      return null;
-    }
-
-    return {
-      authId: user.id,
+  const staffUser: StaffUserResponse = await res.json();
+  return {
+    status: "ok",
+    user: {
+      authId: staffUser.authId,
       email: staffUser.email,
       fullName: staffUser.fullName,
       role: staffUser.role,
       active: staffUser.active,
       staffUserId: staffUser.id,
-    };
-  } catch (error) {
-    console.error("Error getting current user:", error);
-    return null;
-  }
+    },
+  };
+}
+
+export async function getCurrentUser(): Promise<CurrentUser | null> {
+  const result = await lookupCurrentUser();
+  if (result.status === "forbidden") redirect("/access-denied");
+  return result.status === "ok" ? result.user : null;
 }

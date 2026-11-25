@@ -1,10 +1,9 @@
-import { Controller, Get, Param } from "@nestjs/common";
+import { Controller, Get } from "@nestjs/common";
 import { StaffUsersService } from "./staff-users.service";
-import { Public } from "../auth/public.decorator";
 import { Roles } from "../auth/roles.decorator";
+import { CurrentStaffUser } from "../auth/current-user.decorator";
+import { RequestStaffUser } from "../auth/auth.types";
 
-// Staff accounts and roles are managed directly in the database; this
-// controller only exposes the read lookups the web app needs.
 @Controller("staff-users")
 export class StaffUsersController {
   constructor(private readonly staffUsersService: StaffUsersService) {}
@@ -15,9 +14,9 @@ export class StaffUsersController {
     return this.staffUsersService.findAll();
   }
 
-  @Public()
-  @Get("by-auth/:authId")
-  async getByAuthId(@Param("authId") authId: string) {
-    return this.staffUsersService.findByAuthId(authId);
+  @Get("me")
+  me(@CurrentStaffUser() staffUser: RequestStaffUser) {
+    const { id, authId, email, fullName, role, active } = staffUser;
+    return { id, authId, email, fullName, role, active };
   }
 }
