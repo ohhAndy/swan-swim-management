@@ -2,6 +2,7 @@
 
 import { useGetCurrentUser } from "@/lib/auth/hooks/use-get-current-user";
 import {
+  createTask,
   CreateTaskInput,
   deleteTask,
   getTasks,
@@ -64,10 +65,6 @@ export default function TasksPage() {
     if (editingTask) {
       await updateTask(editingTask.id, data);
     } else {
-      // Create
-      // Verify we have a create function exposed or call fetch directly.
-      // I created createTask in client/tasks.ts. I need to import it.
-      const { createTask } = await import("@/lib/api/client/tasks");
       await createTask(data);
     }
     queryClient.invalidateQueries({ queryKey: ["tasks"] });

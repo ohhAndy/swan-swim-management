@@ -172,13 +172,6 @@ export async function createPayment(data: CreatePaymentData): Promise<Payment> {
   return res.json();
 }
 
-export async function getPaymentsByInvoice(
-  invoiceId: string,
-): Promise<Payment[]> {
-  const res = await clientFetch(`/payments/invoice/${invoiceId}`);
-  return res.json();
-}
-
 export async function deletePayment(id: string): Promise<void> {
   await clientFetch(`/payments/${id}`, { method: "DELETE" });
 }

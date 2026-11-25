@@ -19,7 +19,8 @@ import {
   getUnInvoicedEnrollments,
   getInvoices,
 } from "@/lib/api/client/invoice";
-import { searchGuardians, GuardianLite } from "@/lib/api/client/guardian";
+import type { GuardianLite } from "@/lib/api/client/guardian";
+import { useGuardianSearch } from "@/hooks/useGuardianSearch";
 import { DAY_LABELS } from "@/lib/schedule/slots";
 import { InvoiceGuardianSelector } from "@/components/invoices/InvoiceGuardianSelector";
 import {
@@ -50,7 +51,10 @@ export default function CreateInvoiceForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [guardianSearch, setGuardianSearch] = useState("");
-  const [guardians, setGuardians] = useState<GuardianLite[]>([]);
+  const { results: guardians, error: guardianSearchError } = useGuardianSearch(
+    guardianSearch,
+    2,
+  );
   const [selectedGuardian, setSelectedGuardian] = useState<GuardianLite | null>(
     null,
   );
@@ -92,29 +96,8 @@ export default function CreateInvoiceForm() {
   }, []);
 
   useEffect(() => {
-    let cancel = false;
-    const query = guardianSearch.trim();
-    if (query.length >= 2) {
-      const timer = setTimeout(async () => {
-        try {
-          const results = await searchGuardians(query);
-          if (!cancel) {
-            setGuardians(results || []);
-          }
-        } catch (error) {
-          if (!cancel) {
-            console.error("Failed to search guardians:", error);
-          }
-        }
-      }, 250);
-      return () => {
-        cancel = true;
-        clearTimeout(timer);
-      };
-    } else {
-      setGuardians([]);
-    }
-  }, [guardianSearch]);
+    if (guardianSearchError) toast.error(guardianSearchError);
+  }, [guardianSearchError]);
 
   // Auto-populate invoice number
   useEffect(() => {

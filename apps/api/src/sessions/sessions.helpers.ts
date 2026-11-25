@@ -1,5 +1,5 @@
 import type { Prisma } from "@prisma/client";
-import { calculateClassUsage } from "../common/capacity.utils";
+import { calculateClassUsage } from "@school/shared-types";
 
 export async function countUsedSeatsForSession(
   tx: Prisma.TransactionClient,

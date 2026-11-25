@@ -10,19 +10,10 @@ import {
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 
-import { searchGuardians } from "@/lib/api/client/guardian";
 import type { GuardianLite } from "@/lib/api/client/guardian";
 import { GuardianCreateModal } from "./GuardianCreateModal";
 import { useEffect, useState } from "react";
-
-function useDebounced<T>(value: T, delay = 300) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
-  return debounced;
-}
+import { useGuardianSearch } from "@/hooks/useGuardianSearch";
 
 export function GuardianPicker(props: {
   value: string | null;
@@ -31,54 +22,23 @@ export function GuardianPicker(props: {
 }) {
   const { value, onChange, disabled } = props;
   const [q, setQ] = useState("");
-  const dq = useDebounced(q, 300);
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<GuardianLite[]>([]);
+  const { results, loading, error: err } = useGuardianSearch(q);
   const [picked, setPicked] = useState<GuardianLite | null>(null);
-  const [err, setErr] = useState<string | null>(null);
   const [openCreate, setOpenCreate] = useState(false);
 
   useEffect(() => {
     if (!value) setPicked(null);
   }, [value]);
 
-  useEffect(() => {
-    let cancel = false;
-    async function run() {
-      if (!dq) {
-        setResults([]);
-        return;
-      }
-      try {
-        setErr(null);
-        setLoading(true);
-        const items = await searchGuardians(dq);
-        if (!cancel) setResults(items);
-      } catch (e) {
-        if (!cancel) {
-          setErr(e instanceof Error ? e.message : "Search failed");
-        }
-      } finally {
-        if (!cancel) setLoading(false);
-      }
-    }
-    run();
-    return () => {
-      cancel = true;
-    };
-  }, [dq]);
-
   function pick(guardian: GuardianLite) {
     setPicked(guardian);
     setQ("");
-    setResults([]);
     onChange(guardian);
   }
 
   function clear() {
     setPicked(null);
     setQ("");
-    setResults([]);
     onChange(null);
   }
 

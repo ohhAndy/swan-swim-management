@@ -624,10 +624,6 @@ export class TermScheduleService {
             Math.floor(effectiveCapacity - totalFilled),
           );
 
-          // Compatibility variables for return
-          const finalCapacity = effectiveCapacity;
-          const filled = totalFilled; // This is a number, possibly float.
-
           const makeUpsLite: MakeupLite[] = sessionMakeUps.map((m) => ({
             id: m.id,
             studentId: m.studentId,
@@ -721,8 +717,8 @@ export class TermScheduleService {
               })),
             },
             roster: rosterRows,
-            capacity: finalCapacity,
-            filled,
+            capacity: effectiveCapacity,
+            filled: totalFilled,
             openSeats,
             status: s.status,
             makeups: makeUpsLite,

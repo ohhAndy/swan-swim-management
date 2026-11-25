@@ -205,7 +205,7 @@ export class EnrollmentsService {
       const existingTokensCount = await tx.makeUpToken.count({
         where: { enrollmentId: newEnrollment.id },
       });
-      if (!existingTokensCount || existingTokensCount === 0) {
+      if (existingTokensCount === 0) {
         await this.tokensService.autoGrantTokens(newEnrollment.id, tx);
       }
     }
@@ -549,8 +549,6 @@ export class EnrollmentsService {
   }
 
   async deleteEnrollment(id: string, staffUser: RequestStaffUser) {
-    if (!staffUser) return;
-
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id },
       include: {

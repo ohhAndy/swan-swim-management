@@ -2,8 +2,6 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const start = Date.now(); // start timing
-
   const { response, user } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
@@ -16,9 +14,6 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ["/login", "/auth/callback"];
 
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
-    console.log(
-      `[Request] GET ${pathname} → 200 (public) - ${Date.now() - start}ms`,
-    );
     return response;
   }
 
@@ -27,8 +22,6 @@ export async function middleware(request: NextRequest) {
     const redirectUrl = new URL("/login", request.url);
     return NextResponse.redirect(redirectUrl);
   }
-
-  console.log(`[Request] GET ${pathname} → 200 - ${Date.now() - start}ms`);
 
   return response;
 }

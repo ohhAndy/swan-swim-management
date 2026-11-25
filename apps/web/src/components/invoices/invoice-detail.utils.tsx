@@ -14,15 +14,6 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  });
-}
-
 export function getInvoiceStatusBadge(status: string): React.ReactNode {
   if (status === "refunded") {
     return (

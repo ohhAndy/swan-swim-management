@@ -12,14 +12,7 @@ export class TermAvailabilityService {
     const offerings = await this.prisma.classOffering.findMany({
       where: {
         termId,
-        ...(level
-          ? {
-              OR: [
-                { title: { contains: level, mode: "insensitive" } },
-                // If filtering by level, we might want to check the offering title usually
-              ],
-            }
-          : {}),
+        ...(level ? { title: { contains: level, mode: "insensitive" } } : {}),
         ...(weekday !== undefined ? { weekday } : {}),
       },
       include: {

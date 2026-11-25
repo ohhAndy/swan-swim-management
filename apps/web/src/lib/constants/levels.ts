@@ -1,30 +1,3 @@
-export const PRESCHOOL_LEVELS = [
-  "Preschool 1",
-  "Preschool 2",
-  "Preschool 3",
-  "Preschool 4",
-  "Preschool 5",
-];
-
-export const SWIMMER_LEVELS = [
-  "Swimmer 1.1",
-  "Swimmer 1.2",
-  "Swimmer 2.1",
-  "Swimmer 2.2",
-  "Swimmer 3.1",
-  "Swimmer 3.2",
-  "Swimmer 4.1",
-  "Swimmer 4.2",
-  "Swimmer 5.1",
-  "Swimmer 5.2",
-  "Swimmer 6.1",
-  "Swimmer 6.2",
-];
-
-export const SWIMTEAM_LEVELS = ["Junior Swim Team", "Senior Swim Team"];
-
-export const PARENT_TOT_LEVELS = ["Parent and Tot"];
-
 export const LEVEL_MAP = new Map<string, string>([
   ["Parent and Tot", "P&T"],
   ["Preschool 1", "PS1"],

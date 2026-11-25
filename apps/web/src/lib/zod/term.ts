@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const TemplateSchema = z.object({
+const TemplateSchema = z.object({
   title: z.string().min(1, "Title is required"),
   weekday: z.coerce.number().int().min(0).max(6),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, "HH:MM"),
@@ -9,7 +9,7 @@ export const TemplateSchema = z.object({
   notes: z.string().trim().optional(),
 });
 
-export const FeeTierSchema = z.object({
+const FeeTierSchema = z.object({
   frequency: z.coerce.number().int().min(1).max(4),
   practiceFee: z.coerce.number().min(0, "Must be 0 or more"),
   meetFee: z.coerce.number().min(0, "Must be 0 or more"),

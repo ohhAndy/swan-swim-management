@@ -17,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatCurrency, formatDate, EditableLineItem } from "./invoice-detail.utils";
+import { formatCurrency, EditableLineItem } from "./invoice-detail.utils";
+import { formatCalendarDate } from "@/lib/date";
 import type { Invoice } from "@/lib/api/client/invoice";
 
 interface InvoiceSummaryCardProps {
@@ -181,11 +182,11 @@ export function InvoiceMetadataCard({ invoice }: { invoice: Invoice }) {
       <CardContent className="space-y-2 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Created:</span>
-          <span>{formatDate(invoice.createdAt)}</span>
+          <span>{formatCalendarDate(invoice.createdAt)}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Last Updated:</span>
-          <span>{formatDate(invoice.updatedAt)}</span>
+          <span>{formatCalendarDate(invoice.updatedAt)}</span>
         </div>
         {invoice.notes && (
           <div>

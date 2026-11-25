@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { RequestStaffUser } from "../auth/auth.types";
-import { getRatioWeight } from "../common/capacity.utils";
+import { getRatioWeight } from "@school/shared-types";
 
 @Injectable()
 export class StatisticsService {

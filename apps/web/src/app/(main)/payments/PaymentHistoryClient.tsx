@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCalendarDate } from "@/lib/date";
 import { toast } from "sonner";
 import { LoadError } from "@/components/ui/load-error";
 import { useEffect, useState } from "react";
@@ -120,15 +121,6 @@ export default function PaymentHistoryClient() {
 
   const hasFilters =
     startDate !== "" || endDate !== "" || method !== "all" || search !== "";
-
-  function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      timeZone: "UTC",
-    });
-  }
 
   return (
     <Card>
@@ -254,7 +246,7 @@ export default function PaymentHistoryClient() {
                   {data.data.map((payment) => (
                     <TableRow key={payment.id}>
                       <TableCell className="whitespace-nowrap">
-                        {formatDate(payment.paymentDate)}
+                        {formatCalendarDate(payment.paymentDate)}
                       </TableCell>
                       <TableCell className="font-medium text-green-600">
                         ${Number(payment.amount).toFixed(2)}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useDebounced } from "@/hooks/useDebounced";
 import { LoadError } from "@/components/ui/load-error";
 import { useEffect, useState, useCallback } from "react";
 import {
@@ -42,15 +43,6 @@ import {
   ChevronRight,
   Inbox,
 } from "lucide-react";
-
-function useDebounced<T>(value: T, delay = 300) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
-  return debounced;
-}
 
 export function CommunicationHistory() {
   const [items, setItems] = useState<CommunicationLogItem[]>([]);

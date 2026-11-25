@@ -27,7 +27,6 @@ export const WEEKEND_SLOTS = [
   "14:15",
 ];
 export const laneLetter = (i: number) => String.fromCharCode(65 + i);
-export const YEARS = ["2026", "2027", "2028", "2029", "2030", "2031"];
 
 // Add holidays here in YYYY-MM-DD format
 export const HOLIDAYS = [

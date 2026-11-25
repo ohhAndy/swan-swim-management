@@ -47,7 +47,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { formatCurrency, formatDate } from "./invoice-detail.utils";
+import { formatCurrency } from "./invoice-detail.utils";
+import { formatCalendarDate } from "@/lib/date";
 import EditPaymentDialog from "@/components/payments/EditPaymentDialog";
 import { createPayment, deletePayment, type Invoice } from "@/lib/api/client/invoice";
 import { Payment } from "@/lib/api/client/payments";
@@ -264,7 +265,7 @@ export function InvoicePaymentsTable({
               <TableBody>
                 {invoice.payments.map((payment) => (
                   <TableRow key={payment.id}>
-                    <TableCell>{formatDate(payment.paymentDate)}</TableCell>
+                    <TableCell>{formatCalendarDate(payment.paymentDate)}</TableCell>
                     <TableCell className="font-medium">
                       {formatCurrency(payment.amount)}
                     </TableCell>

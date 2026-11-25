@@ -7,8 +7,8 @@ import { seedAdmin, seedTerm, seedClassOffering } from "./utils/seeds";
 describe("TrialRequestsController (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
-  let testAdminAuthId = "test-admin";
-  let testManagerAuthId = "test-manager";
+  const testAdminAuthId = "test-admin";
+  const testManagerAuthId = "test-manager";
   let testSessionId: string;
   let testRequestId: string;
 

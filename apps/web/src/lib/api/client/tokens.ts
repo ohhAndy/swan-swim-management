@@ -9,10 +9,6 @@ export async function getStudentTokenBalance(
     ? `/tokens/student/${studentId}/balance?termId=${encodeURIComponent(termId)}`
     : `/tokens/student/${studentId}/balance`;
   const res = await clientFetch(url, { cache: "no-store" });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to fetch token balance");
-  }
   return res.json();
 }
 
@@ -22,10 +18,6 @@ export async function getStudentTokenSummaries(
   const res = await clientFetch(`/tokens/student/${studentId}/summaries`, {
     cache: "no-store",
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to fetch token summaries");
-  }
   return res.json();
 }
 
@@ -38,10 +30,6 @@ export async function grantExtraTokens(payload: {
     method: "POST",
     body: JSON.stringify(payload),
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to grant extra tokens");
-  }
   return res.json();
 }
 
@@ -50,9 +38,5 @@ export async function voidToken(tokenId: string, notes: string) {
     method: "DELETE",
     body: JSON.stringify({ notes }),
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to void token");
-  }
   return res.json();
 }

@@ -6,7 +6,7 @@
  * regardless of whether code executes on Vercel (UTC) or client browsers.
  */
 
-export const BUSINESS_TIMEZONE = "America/Toronto";
+const BUSINESS_TIMEZONE = "America/Toronto";
 
 /**
  * Returns the current calendar date in America/Toronto as a "YYYY-MM-DD" string.

@@ -47,10 +47,6 @@ export async function scheduleMakeUp(payload: {
     method: "POST",
     body: JSON.stringify(payload),
   });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || "Make-up scheduling failed");
-  }
   return res.json();
 }
 

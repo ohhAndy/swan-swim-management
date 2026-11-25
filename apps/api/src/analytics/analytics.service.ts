@@ -18,10 +18,6 @@ export class AnalyticsService {
           },
         },
       },
-      where: {
-        // Optional: filter out voided checks or unrelated payments if needed?
-        // Currently assuming all payments in DB are valid revenue
-      },
     });
 
     // Aggregate in memory

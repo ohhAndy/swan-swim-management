@@ -75,22 +75,6 @@ export const updateInstructor = async (
   return res.json() as Promise<Instructor>;
 };
 
-export const deleteInstructor = async (id: string) => {
-  const res = await clientFetch(`/instructors/${id}`, { method: "DELETE" });
-  return res.json() as Promise<Instructor>;
-};
-
-export const searchInstructors = async (query: string) => {
-  // Client-side filtering for now
-  const all = await getInstructors(true);
-  const lowerQuery = query.toLowerCase();
-  return all.filter(
-    (i) =>
-      i.firstName.toLowerCase().includes(lowerQuery) ||
-      i.lastName.toLowerCase().includes(lowerQuery),
-  );
-};
-
 export async function assignInstructor(
   classOfferingId: string,
   instructorId: string,
@@ -108,14 +92,5 @@ export async function removeInstructor(
   const response = await clientFetch(`/class-instructors/${assignmentId}`, {
     method: "DELETE",
   });
-  return response.json();
-}
-
-export async function getActiveInstructors(
-  classOfferingId: string,
-): Promise<InstructorAssignment[]> {
-  const response = await clientFetch(
-    `/class-instructors/class/${classOfferingId}`,
-  );
   return response.json();
 }

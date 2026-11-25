@@ -53,14 +53,6 @@ export async function convertTrialToStudent(
   return res.json();
 }
 
-export async function deleteTrialBooking(trialId: string) {
-  const res = await clientFetch(`/trial-bookings/${trialId}`, {
-    method: "DELETE",
-  });
-
-  return res.json();
-}
-
 export interface TrialStats {
   total: number;
   converted: number;

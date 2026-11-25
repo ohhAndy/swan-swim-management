@@ -326,7 +326,6 @@ model Invoice {
   installments  InvoiceInstallment[]
 
   @@index([guardianId])
-  @@index([invoiceNumber])
   @@index([status])
   @@index([createdAt])
   @@index([locationId])

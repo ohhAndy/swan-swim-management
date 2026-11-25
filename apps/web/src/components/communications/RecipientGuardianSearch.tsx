@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Search, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { searchGuardians, GuardianLite } from "@/lib/api/client/guardian";
+import type { GuardianLite } from "@/lib/api/client/guardian";
+import { useGuardianSearch } from "@/hooks/useGuardianSearch";
 import { Recipient } from "@/lib/api/client/communications";
 
 interface RecipientGuardianSearchProps {
@@ -16,53 +17,18 @@ interface RecipientGuardianSearchProps {
   ) => void;
 }
 
-function useDebounced<T>(value: T, delay = 300) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
-  return debounced;
-}
-
 export function RecipientGuardianSearch({
   recipientEmailSet,
   onAddRecipient,
   setNotice,
 }: RecipientGuardianSearchProps) {
   const [guardianQuery, setGuardianQuery] = useState("");
-  const debouncedGuardianQuery = useDebounced(guardianQuery, 300);
-  const [guardianSearching, setGuardianSearching] = useState(false);
-  const [guardianResults, setGuardianResults] = useState<GuardianLite[]>([]);
-  const [guardianError, setGuardianError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancel = false;
-    async function run() {
-      if (!debouncedGuardianQuery.trim()) {
-        setGuardianResults([]);
-        return;
-      }
-      try {
-        setGuardianError(null);
-        setGuardianSearching(true);
-        const items = await searchGuardians(debouncedGuardianQuery.trim());
-        if (!cancel) setGuardianResults(items);
-      } catch (e) {
-        if (!cancel) {
-          setGuardianError(
-            e instanceof Error ? e.message : "Failed to search guardians",
-          );
-        }
-      } finally {
-        if (!cancel) setGuardianSearching(false);
-      }
-    }
-    run();
-    return () => {
-      cancel = true;
-    };
-  }, [debouncedGuardianQuery]);
+  const {
+    results: guardianResults,
+    loading: guardianSearching,
+    error: guardianError,
+    debouncedQuery: debouncedGuardianQuery,
+  } = useGuardianSearch(guardianQuery);
 
   const handleAddGuardian = (guardian: GuardianLite) => {
     if (!guardian.email) {
@@ -85,7 +51,6 @@ export function RecipientGuardianSearch({
 
     onAddRecipient(newRecipient);
     setGuardianQuery("");
-    setGuardianResults([]);
     setNotice({
       type: "success",
       message: `Added ${guardian.fullName} (${guardian.email}) to recipient list.`,

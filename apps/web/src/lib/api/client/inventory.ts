@@ -46,11 +46,6 @@ export async function getInventoryItems(query?: InventoryQuery) {
   }>;
 }
 
-export async function getInventoryItem(id: string) {
-  const res = await clientFetch(`/inventory/${id}`);
-  return res.json();
-}
-
 export async function createInventoryItem(data: CreateInventoryItemData) {
   const res = await clientFetch(`/inventory`, {
     method: "POST",

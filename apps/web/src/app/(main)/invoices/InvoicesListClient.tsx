@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCalendarDate } from "@/lib/date";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -178,15 +179,6 @@ export default function InvoicesListClient() {
       style: "currency",
       currency: "CAD",
     }).format(amount);
-  }
-
-  function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      timeZone: "UTC",
-    });
   }
 
   return (
@@ -386,7 +378,7 @@ export default function InvoicesListClient() {
                       </TableCell>
                       <TableCell className="p-0">
                         <Link href={`/invoices/${invoice.id}`} className="flex items-center w-full h-full p-4" onClick={(e) => e.stopPropagation()}>
-                          {formatDate(invoice.createdAt)}
+                          {formatCalendarDate(invoice.createdAt)}
                         </Link>
                       </TableCell>
                       <TableCell className="p-0">

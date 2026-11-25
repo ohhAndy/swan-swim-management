@@ -2,7 +2,7 @@ import {
   calculateClassUsage,
   getRatioWeight,
   CLASS_RATIO_WEIGHTS,
-} from "./capacity.utils";
+} from "@school/shared-types";
 
 describe("Capacity and Ratio Logic", () => {
   describe("CLASS_RATIO_WEIGHTS", () => {
