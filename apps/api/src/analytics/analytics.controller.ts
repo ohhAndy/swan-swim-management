@@ -1,6 +1,8 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
 import { AnalyticsService } from "./analytics.service";
+import { ZodValidationPipe } from "nestjs-zod";
 import { Roles } from "../auth/roles.decorator";
+import { DateRangeQueryDto, DateRangeQuerySchema } from "./dto/financial-query.dto";
 
 @Controller("analytics")
 export class AnalyticsController {
@@ -21,13 +23,12 @@ export class AnalyticsController {
   @Roles("super_admin", "admin")
   async getTermFinancialDetails(
     @Param("id") id: string,
-    @Query("startDate") startDate?: string,
-    @Query("endDate") endDate?: string,
+    @Query(new ZodValidationPipe(DateRangeQuerySchema)) q: DateRangeQueryDto,
   ) {
     return this.analyticsService.getTermFinancialDetails(
       id,
-      startDate,
-      endDate,
+      q.startDate,
+      q.endDate,
     );
   }
 }

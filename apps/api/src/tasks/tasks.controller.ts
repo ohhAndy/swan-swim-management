@@ -7,15 +7,14 @@ import {
   Patch,
   Post,
 } from "@nestjs/common";
+import { ZodValidationPipe } from "nestjs-zod";
 import { TasksService } from "./tasks.service";
-import { CreateTaskDto } from "./dto/create-task.dto";
-import { UpdateTaskDto } from "./dto/update-task.dto";
+import { CronTasksService } from "./cron-tasks.service";
+import { CreateTaskDto, CreateTaskSchema } from "./dto/create-task.dto";
+import { UpdateTaskDto, UpdateTaskSchema } from "./dto/update-task.dto";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { Roles } from "../auth/roles.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
-
-
-import { CronTasksService } from "./cron-tasks.service";
 
 @Controller("tasks")
 export class TasksController {
@@ -33,7 +32,7 @@ export class TasksController {
   @Post()
   @Roles("super_admin", "admin", "manager", "supervisor")
   create(
-    @Body() createTaskDto: CreateTaskDto,
+    @Body(new ZodValidationPipe(CreateTaskSchema)) createTaskDto: CreateTaskDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.tasksService.create(createTaskDto, staffUser);
@@ -55,7 +54,7 @@ export class TasksController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   update(
     @Param("id") id: string,
-    @Body() updateTaskDto: UpdateTaskDto,
+    @Body(new ZodValidationPipe(UpdateTaskSchema)) updateTaskDto: UpdateTaskDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.tasksService.update(id, updateTaskDto, staffUser);

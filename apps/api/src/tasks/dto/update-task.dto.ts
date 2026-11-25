@@ -1,8 +1,9 @@
-export class UpdateTaskDto {
-  title?: string;
-  description?: string;
-  assignedToId?: string;
-  status?: "pending" | "in_progress" | "completed" | "cancelled";
-  priority?: "low" | "medium" | "high" | "urgent";
-  dueDate?: string;
-}
+import { z } from "zod";
+import { TaskStatus } from "@prisma/client";
+import { CreateTaskSchema } from "./create-task.dto";
+
+export const UpdateTaskSchema = CreateTaskSchema.partial().extend({
+  status: z.enum(TaskStatus).optional(),
+});
+
+export type UpdateTaskDto = z.infer<typeof UpdateTaskSchema>;

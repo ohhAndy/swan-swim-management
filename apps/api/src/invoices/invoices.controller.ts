@@ -17,9 +17,12 @@ import {
   UpdateInstallmentsDto,
   UpdateInstallmentsSchema,
 } from "./dto/create-invoice.dto";
-import { UpdateInvoiceDto } from "./dto/update-invoice.dto";
-import { InvoiceQueryDto } from "./dto/invoice-query.dto";
-import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-query.dto";
+import { UpdateInvoiceDto, UpdateInvoiceSchema } from "./dto/update-invoice.dto";
+import { InvoiceQueryDto, InvoiceQuerySchema } from "./dto/invoice-query.dto";
+import {
+  UnInvoicedEnrollmentsQueryDto,
+  UnInvoicedEnrollmentsQuerySchema,
+} from "./dto/uninvoiced-enrollments-query.dto";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
@@ -44,7 +47,7 @@ export class InvoicesController {
   @Get()
   @Roles("super_admin", "admin", "manager")
   async findAll(
-    @Query() query: InvoiceQueryDto,
+    @Query(new ZodValidationPipe(InvoiceQuerySchema)) query: InvoiceQueryDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
     @CurrentLocationId() locationId?: string,
   ) {
@@ -55,7 +58,8 @@ export class InvoicesController {
   @Get("un-invoiced-enrollments")
   @Roles("super_admin", "admin", "manager")
   async getUnInvoicedEnrollments(
-    @Query() query: UnInvoicedEnrollmentsQueryDto,
+    @Query(new ZodValidationPipe(UnInvoicedEnrollmentsQuerySchema))
+    query: UnInvoicedEnrollmentsQueryDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
     @CurrentLocationId() locationId?: string,
   ) {
@@ -76,7 +80,8 @@ export class InvoicesController {
   @Roles("super_admin", "admin", "manager")
   async update(
     @Param("id") id: string,
-    @Body() updateInvoiceDto: UpdateInvoiceDto,
+    @Body(new ZodValidationPipe(UpdateInvoiceSchema))
+    updateInvoiceDto: UpdateInvoiceDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.invoicesService.update(id, updateInvoiceDto, staffUser);

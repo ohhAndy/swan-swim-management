@@ -7,12 +7,12 @@ import {
   Param,
   Delete,
   Query,
-  DefaultValuePipe,
-  ParseIntPipe,
 } from "@nestjs/common";
+import { ZodValidationPipe } from "nestjs-zod";
 import { PaymentsService } from "./payments.service";
-import { CreatePaymentDto } from "./dto/create-payment.dto";
-import { UpdatePaymentDto } from "./dto/update-payment.dto";
+import { CreatePaymentDto, CreatePaymentSchema } from "./dto/create-payment.dto";
+import { UpdatePaymentDto, UpdatePaymentSchema } from "./dto/update-payment.dto";
+import { PaymentQueryDto, PaymentQuerySchema } from "./dto/payment-query.dto";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
@@ -24,20 +24,15 @@ export class PaymentsController {
   @Get()
   @Roles("super_admin", "admin", "manager")
   findAll(
-    @Query("page", new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query("limit", new DefaultValuePipe(50), ParseIntPipe) limit: number,
-    @Query("startDate") startDate?: string,
-    @Query("endDate") endDate?: string,
-    @Query("method") method?: string,
-    @Query("query") query?: string,
+    @Query(new ZodValidationPipe(PaymentQuerySchema)) q: PaymentQueryDto,
   ) {
     return this.paymentsService.findAll(
-      page,
-      limit,
-      startDate,
-      endDate,
-      method,
-      query,
+      q.page,
+      q.limit,
+      q.startDate,
+      q.endDate,
+      q.method,
+      q.query,
     );
   }
 
@@ -45,7 +40,8 @@ export class PaymentsController {
   @Post()
   @Roles("super_admin", "admin", "manager")
   create(
-    @Body() createPaymentDto: CreatePaymentDto,
+    @Body(new ZodValidationPipe(CreatePaymentSchema))
+    createPaymentDto: CreatePaymentDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.paymentsService.create(createPaymentDto, staffUser);
@@ -74,7 +70,8 @@ export class PaymentsController {
   @Roles("super_admin", "admin", "manager")
   update(
     @Param("id") id: string,
-    @Body() updatePaymentDto: UpdatePaymentDto,
+    @Body(new ZodValidationPipe(UpdatePaymentSchema))
+    updatePaymentDto: UpdatePaymentDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.paymentsService.update(id, updatePaymentDto, staffUser);

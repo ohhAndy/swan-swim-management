@@ -78,4 +78,13 @@ describe("TermsController (e2e)", () => {
         .expect(404);
     });
   });
+
+  describe("POST /terms", () => {
+    it("returns 400 for an invalid body", () => {
+      return request(app.getHttpServer())
+        .post("/terms")
+        .send({ name: "" })
+        .expect(400);
+    });
+  });
 });

@@ -244,5 +244,13 @@ describe("MakeupsController (e2e)", () => {
         .expect(400);
     });
   });
-});
 
+  describe("input validation", () => {
+    it("returns 400 for an invalid makeup body", () => {
+      return request(app.getHttpServer())
+        .post("/makeups")
+        .send({})
+        .expect(400);
+    });
+  });
+});

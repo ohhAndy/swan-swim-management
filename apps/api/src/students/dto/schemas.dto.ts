@@ -25,3 +25,8 @@ export const searchStudentsSchema = z.object({
   level: z.string().optional(),
 });
 export type SearchStudentsDto = z.infer<typeof searchStudentsSchema>;
+
+export const updateStudentNotesSchema = z.object({
+  notes: z.string(),
+});
+export type UpdateStudentNotesDto = z.infer<typeof updateStudentNotesSchema>;

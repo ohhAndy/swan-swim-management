@@ -17,6 +17,12 @@ import {
   CreateOfferingInput,
   CreateOfferingSchema,
 } from "./dto/create-offering.dto";
+import {
+  TransferOptionsQueryDto,
+  TransferOptionsQuerySchema,
+  UpdateOfferingInfoDto,
+  UpdateOfferingInfoSchema,
+} from "./dto/offering-updates.dto";
 
 @Controller("offerings")
 export class OfferingsController {
@@ -24,14 +30,13 @@ export class OfferingsController {
 
   @Get("available-for-transfer")
   async getAvailableForTransfer(
-    @Query("termId") termId: string,
-    @Query("excludeOfferingId") excludeOfferingId: string,
-    @Query("level") level?: string,
+    @Query(new ZodValidationPipe(TransferOptionsQuerySchema))
+    q: TransferOptionsQueryDto,
   ) {
     return this.offeringsService.getOfferingsForTransfer(
-      termId,
-      excludeOfferingId,
-      level,
+      q.termId,
+      q.excludeOfferingId,
+      q.level,
     );
   }
 
@@ -39,7 +44,8 @@ export class OfferingsController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   async updateOfferingInfo(
     @Param("offeringId") offeringId: string,
-    @Body() body: { title: string },
+    @Body(new ZodValidationPipe(UpdateOfferingInfoSchema))
+    body: UpdateOfferingInfoDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.offeringsService.updateOfferingInfo(offeringId, body, staffUser);

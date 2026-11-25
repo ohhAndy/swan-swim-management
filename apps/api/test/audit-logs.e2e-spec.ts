@@ -44,4 +44,14 @@ describe("AuditLogsController (e2e)", () => {
       expect(response.body.total).toBeDefined();
     });
   });
+
+  describe("input validation", () => {
+    it("rejects a non-numeric skip", () => {
+      return request(app.getHttpServer())
+        .get("/audit-logs")
+        .set("x-mock-auth-id", "test-superadmin")
+        .query({ skip: "abc" })
+        .expect(400);
+    });
+  });
 });

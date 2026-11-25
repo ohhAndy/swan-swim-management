@@ -103,4 +103,13 @@ describe("EnrollmentsController (e2e)", () => {
       expect(dbEnrollment).toBeNull();
     });
   });
+
+  describe("PUT /enrollments/:id/report-card-status", () => {
+    it("rejects a status that is not a report card status", () => {
+      return request(app.getHttpServer())
+        .put("/enrollments/any-id/report-card-status")
+        .send({ status: "whatever" })
+        .expect(400);
+    });
+  });
 });

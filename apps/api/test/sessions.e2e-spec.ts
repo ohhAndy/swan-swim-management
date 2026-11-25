@@ -46,4 +46,13 @@ describe("SessionsController (e2e)", () => {
       }
     });
   });
+
+  describe("input validation", () => {
+    it("rejects a weekday outside 0-6", () => {
+      return request(app.getHttpServer())
+        .get("/sessions/slot")
+        .query({ termId: "t", weekday: "9", startTime: "09:00", date: "2026-11-24" })
+        .expect(400);
+    });
+  });
 });

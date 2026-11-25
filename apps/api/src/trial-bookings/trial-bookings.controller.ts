@@ -7,11 +7,21 @@ import {
   Param,
   Get,
 } from "@nestjs/common";
+import { ZodValidationPipe } from "nestjs-zod";
 import { TrialBookingsService } from "./trial-bookings.service";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
-import { TrialStatus } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
+import {
+  ConvertTrialDto,
+  ConvertTrialSchema,
+  CreateTrialBookingDto,
+  CreateTrialBookingSchema,
+  UpdateTrialNotesDto,
+  UpdateTrialNotesSchema,
+  UpdateTrialStatusDto,
+  UpdateTrialStatusSchema,
+} from "./dto/trial-booking.dto";
 
 @Controller("trial-bookings")
 export class TrialBookingsController {
@@ -38,15 +48,8 @@ export class TrialBookingsController {
   @Post()
   @Roles("super_admin", "admin", "manager")
   async createTrialBooking(
-    @Body()
-    body: {
-      classSessionId: string;
-      childName: string;
-      childAge: number;
-      parentPhone: string;
-      notes?: string;
-      classRatio?: string;
-    },
+    @Body(new ZodValidationPipe(CreateTrialBookingSchema))
+    body: CreateTrialBookingDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.service.createTrialBooking(
@@ -55,7 +58,7 @@ export class TrialBookingsController {
       body.childAge,
       body.parentPhone,
       body.notes || null,
-      body.classRatio || "3:1",
+      body.classRatio,
       staffUser,
     );
   }
@@ -64,7 +67,8 @@ export class TrialBookingsController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   async updateStatus(
     @Param("id") id: string,
-    @Body() body: { status: TrialStatus },
+    @Body(new ZodValidationPipe(UpdateTrialStatusSchema))
+    body: UpdateTrialStatusDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.service.updateTrialStatus(id, body.status, staffUser);
@@ -74,7 +78,8 @@ export class TrialBookingsController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   async updateNotes(
     @Param("id") id: string,
-    @Body() body: { notes: string | null },
+    @Body(new ZodValidationPipe(UpdateTrialNotesSchema))
+    body: UpdateTrialNotesDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.service.updateTrialNotes(id, body.notes, staffUser);
@@ -84,7 +89,7 @@ export class TrialBookingsController {
   @Roles("super_admin", "admin", "manager")
   async convertToStudent(
     @Param("id") id: string,
-    @Body() body: { studentId: string },
+    @Body(new ZodValidationPipe(ConvertTrialSchema)) body: ConvertTrialDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.service.convertToStudent(id, body.studentId, staffUser);

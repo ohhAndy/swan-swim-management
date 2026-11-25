@@ -8,7 +8,16 @@ import {
   Delete,
   Query,
 } from "@nestjs/common";
+import { ZodValidationPipe } from "nestjs-zod";
 import { InventoryService } from "./inventory.service";
+import {
+  CreateInventoryItemDto,
+  CreateInventoryItemSchema,
+  InventoryQueryDto,
+  InventoryQuerySchema,
+  UpdateInventoryItemDto,
+  UpdateInventoryItemSchema,
+} from "./dto/inventory.dto";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { Prisma } from "@prisma/client";
@@ -21,7 +30,8 @@ export class InventoryController {
   @Post()
   @Roles("super_admin", "admin", "manager")
   create(
-    @Body() data: Prisma.InventoryItemCreateInput,
+    @Body(new ZodValidationPipe(CreateInventoryItemSchema))
+    data: CreateInventoryItemDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.inventoryService.create(data, staffUser);
@@ -30,25 +40,22 @@ export class InventoryController {
   @Get()
   @Roles("super_admin", "admin", "manager", "viewer")
   findAll(
-    @Query("skip") skip?: string,
-    @Query("take") take?: string,
-    @Query("search") search?: string,
-    @Query("active") active?: string,
+    @Query(new ZodValidationPipe(InventoryQuerySchema)) q: InventoryQueryDto,
   ) {
     const where: Prisma.InventoryItemWhereInput = {};
-    if (search) {
+    if (q.search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { sku: { contains: search, mode: "insensitive" } },
+        { name: { contains: q.search, mode: "insensitive" } },
+        { sku: { contains: q.search, mode: "insensitive" } },
       ];
     }
-    if (active !== undefined) {
-      where.active = active === "true";
+    if (q.active !== undefined) {
+      where.active = q.active;
     }
 
     return this.inventoryService.findAll({
-      skip: skip ? parseInt(skip) : undefined,
-      take: take ? parseInt(take) : undefined,
+      skip: q.skip,
+      take: q.take,
       where,
       orderBy: { name: "asc" },
     });
@@ -64,7 +71,8 @@ export class InventoryController {
   @Roles("super_admin", "admin", "manager")
   update(
     @Param("id") id: string,
-    @Body() data: Prisma.InventoryItemUpdateInput,
+    @Body(new ZodValidationPipe(UpdateInventoryItemSchema))
+    data: UpdateInventoryItemDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.inventoryService.update(id, data, staffUser);

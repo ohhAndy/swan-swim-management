@@ -12,7 +12,12 @@ import { TermsService } from "./terms.service";
 import { TermScheduleService } from "./term-schedule.service";
 import { TermAvailabilityService } from "./term-availability.service";
 import type { SlotPage, Term } from "@school/shared-types";
-import { CreateTermSchema } from "./dto/create-term.dto";
+import { ZodValidationPipe } from "nestjs-zod";
+import { CreateTermInput, CreateTermSchema } from "./dto/create-term.dto";
+import {
+  AvailabilityQueryDto,
+  AvailabilityQuerySchema,
+} from "./dto/availability-query.dto";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
@@ -29,11 +34,10 @@ export class TermsController {
   @Post()
   @Roles("super_admin", "admin")
   async create(
-    @Body() body: unknown,
+    @Body(new ZodValidationPipe(CreateTermSchema)) input: CreateTermInput,
     @CurrentStaffUser() staffUser: RequestStaffUser,
     @CurrentLocationId() locationId?: string,
   ) {
-    const input = CreateTermSchema.parse(body);
     return await this.termsService.createTermWithSchedule(
       input,
       staffUser,
@@ -116,11 +120,14 @@ export class TermsController {
   @Get(":termId/availability")
   async getTermAvailability(
     @Param("termId") termId: string,
-    @Query("level") level?: string,
-    @Query("weekday") weekday?: string,
+    @Query(new ZodValidationPipe(AvailabilityQuerySchema))
+    q: AvailabilityQueryDto,
   ) {
-    const wd = weekday ? Number(weekday) : undefined;
-    return this.termAvailabilityService.getTermAvailability(termId, level, wd);
+    return this.termAvailabilityService.getTermAvailability(
+      termId,
+      q.level,
+      q.weekday,
+    );
   }
 
   @Get(":termId/flexible-schedule")

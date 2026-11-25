@@ -1,5 +1,7 @@
 import { Controller, Get, Query } from "@nestjs/common";
+import { ZodValidationPipe } from "nestjs-zod";
 import { SessionsService } from "./sessions.service";
+import { SlotQueryDto, SlotQuerySchema } from "./dto/slot-query.dto";
 
 @Controller("sessions")
 export class SessionsController {
@@ -7,16 +9,13 @@ export class SessionsController {
 
   @Get("slot")
   async seatsForSlot(
-    @Query("termId") termId: string,
-    @Query("weekday") weekday: string,
-    @Query("startTime") startTime: string,
-    @Query("date") dateOnly: string,
+    @Query(new ZodValidationPipe(SlotQuerySchema)) q: SlotQueryDto,
   ) {
     return this.sessionsService.seatsForSlot({
-      termId,
-      weekday: Number(weekday),
-      startTime,
-      dateOnly,
+      termId: q.termId,
+      weekday: q.weekday,
+      startTime: q.startTime,
+      dateOnly: q.date,
     });
   }
 }

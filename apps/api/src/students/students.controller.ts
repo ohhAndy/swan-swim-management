@@ -18,6 +18,8 @@ import {
   SearchStudentsDto,
   CreateStudentDto,
   UpdateStudentDto,
+  updateStudentNotesSchema,
+  UpdateStudentNotesDto,
 } from "./dto/schemas.dto";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
@@ -66,7 +68,8 @@ export class StudentsController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   async updateNotes(
     @Param("id") id: string,
-    @Body() body: { notes: string },
+    @Body(new ZodValidationPipe(updateStudentNotesSchema))
+    body: UpdateStudentNotesDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.studentsService.updateNotes(id, body.notes, staffUser);

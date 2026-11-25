@@ -1,7 +1,12 @@
-export class CreateTaskDto {
-  title: string;
-  description?: string;
-  assignedToId?: string; // If null, unassigned? Or maybe required.
-  priority?: "low" | "medium" | "high" | "urgent";
-  dueDate?: string; // ISO Date
-}
+import { z } from "zod";
+import { TaskPriority } from "@prisma/client";
+
+export const CreateTaskSchema = z.object({
+  title: z.string().trim().min(1),
+  description: z.string().optional(),
+  assignedToId: z.string().min(1).optional(),
+  priority: z.enum(TaskPriority).optional(),
+  dueDate: z.iso.date().optional(),
+});
+
+export type CreateTaskDto = z.infer<typeof CreateTaskSchema>;

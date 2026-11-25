@@ -9,7 +9,10 @@ import {
   Query,
 } from "@nestjs/common";
 import { EnrollmentsService } from "./enrollments.service";
-import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-query.dto";
+import {
+  UnInvoicedEnrollmentsQueryDto,
+  UnInvoicedEnrollmentsQuerySchema,
+} from "./dto/uninvoiced-enrollments-query.dto";
 import {
   EnrollWithSkipInput,
   EnrollWithSkipSchema,
@@ -20,6 +23,14 @@ import {
   transferEnrollmentSchema,
 } from "./dto/transfer.dto";
 import { BulkTransferDto, bulkTransferSchema } from "./dto/bulk-transfer.dto";
+import {
+  UpdateRemarksDto,
+  UpdateRemarksSchema,
+  UpdateReportCardStatusDto,
+  UpdateReportCardStatusSchema,
+  UpdateSkipsDto,
+  UpdateSkipsSchema,
+} from "./dto/enrollment-updates.dto";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
@@ -32,7 +43,8 @@ export class EnrollmentsController {
   @Get("uninvoiced")
   @Roles("super_admin", "admin", "manager")
   async findUninvoiced(
-    @Query() query: UnInvoicedEnrollmentsQueryDto,
+    @Query(new ZodValidationPipe(UnInvoicedEnrollmentsQuerySchema))
+    query: UnInvoicedEnrollmentsQueryDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
     @CurrentLocationId() locationId?: string,
   ) {
@@ -73,7 +85,7 @@ export class EnrollmentsController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   async updateRemarks(
     @Param("id") id: string,
-    @Body() body: { remarks: string },
+    @Body(new ZodValidationPipe(UpdateRemarksSchema)) body: UpdateRemarksDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.enrollmentsService.updateRemarks(id, body, staffUser);
@@ -83,7 +95,8 @@ export class EnrollmentsController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   async updateReportCardStatus(
     @Param("id") id: string,
-    @Body() body: { status: string },
+    @Body(new ZodValidationPipe(UpdateReportCardStatusSchema))
+    body: UpdateReportCardStatusDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.enrollmentsService.updateReportCardStatus(
@@ -97,7 +110,7 @@ export class EnrollmentsController {
   @Roles("super_admin", "admin", "manager")
   async updateSkips(
     @Param("id") id: string,
-    @Body() body: { skippedSessionIds: string[] },
+    @Body(new ZodValidationPipe(UpdateSkipsSchema)) body: UpdateSkipsDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.enrollmentsService.updateSkips(

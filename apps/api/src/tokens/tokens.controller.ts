@@ -7,6 +7,7 @@ import {
   Post,
   Query,
 } from "@nestjs/common";
+import { ZodValidationPipe } from "nestjs-zod";
 import { TokensService } from "./tokens.service";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
@@ -23,10 +24,10 @@ export class TokensController {
   @Roles("super_admin", "admin", "manager", "supervisor", "instructor", "viewer")
   async getBalance(
     @Param("studentId") studentId: string,
-    @Query() query: TokenBalanceQueryInput,
+    @Query(new ZodValidationPipe(TokenBalanceQuerySchema))
+    query: TokenBalanceQueryInput,
   ) {
-    const validated = TokenBalanceQuerySchema.parse(query);
-    return this.tokensService.getTokenBalance(studentId, validated.termId);
+    return this.tokensService.getTokenBalance(studentId, query.termId);
   }
 
   @Get("student/:studentId/summaries")
@@ -38,21 +39,20 @@ export class TokensController {
   @Post("grant")
   @Roles("super_admin", "admin")
   async grantExtraTokens(
-    @Body() body: GrantExtraTokensInput,
+    @Body(new ZodValidationPipe(GrantExtraTokensSchema))
+    body: GrantExtraTokensInput,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    const validated = GrantExtraTokensSchema.parse(body);
-    return this.tokensService.grantExtraTokens(validated, staffUser);
+    return this.tokensService.grantExtraTokens(body, staffUser);
   }
 
   @Delete(":tokenId")
   @Roles("super_admin", "admin")
   async voidToken(
     @Param("tokenId") tokenId: string,
-    @Body() body: VoidTokenInput,
+    @Body(new ZodValidationPipe(VoidTokenSchema)) body: VoidTokenInput,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    const validated = VoidTokenSchema.parse(body);
-    return this.tokensService.voidToken(tokenId, validated, staffUser);
+    return this.tokensService.voidToken(tokenId, body, staffUser);
   }
 }

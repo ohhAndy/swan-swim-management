@@ -6,7 +6,12 @@ import {
   Param,
   Body,
 } from "@nestjs/common";
+import { ZodValidationPipe } from "nestjs-zod";
 import { ClassInstructorsService } from "./class-instructors.service";
+import {
+  AssignInstructorDto,
+  AssignInstructorSchema,
+} from "./dto/assign-instructor.dto";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
@@ -18,7 +23,8 @@ export class ClassInstructorsController {
   @Post()
   @Roles("super_admin", "admin", "manager", "supervisor")
   async assignInstructor(
-    @Body() body: { classOfferingId: string; instructorId: string },
+    @Body(new ZodValidationPipe(AssignInstructorSchema))
+    body: AssignInstructorDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
     return this.service.assignInstructor(

@@ -1,7 +1,16 @@
 import { Controller, Get, Query, Res } from "@nestjs/common";
 import { ExportsService } from "./exports.service";
 import { Response } from "express";
+import { ZodValidationPipe } from "nestjs-zod";
 import { Roles } from "../auth/roles.decorator";
+import {
+  InvoiceExportQueryDto,
+  InvoiceExportQuerySchema,
+} from "./dto/export-query.dto";
+import {
+  PaymentFilterDto,
+  PaymentFilterSchema,
+} from "../payments/dto/payment-query.dto";
 
 @Controller("exports")
 export class ExportsController {
@@ -10,17 +19,15 @@ export class ExportsController {
   @Get("payments")
   @Roles("super_admin", "admin", "manager")
   async exportPayments(
-    @Query("startDate") startDate: string,
-    @Query("endDate") endDate: string,
-    @Query("method") method: string,
-    @Query("query") query: string,
+    @Query(new ZodValidationPipe(PaymentFilterSchema))
+    q: PaymentFilterDto,
     @Res() res: Response,
   ) {
     const workbook = await this.exportsService.generatePaymentsSheet(
-      startDate,
-      endDate,
-      method,
-      query,
+      q.startDate,
+      q.endDate,
+      q.method,
+      q.query,
     );
 
     res.setHeader(
@@ -39,17 +46,15 @@ export class ExportsController {
   @Get("invoices")
   @Roles("super_admin", "admin", "manager")
   async exportInvoices(
-    @Query("startDate") startDate: string,
-    @Query("endDate") endDate: string,
-    @Query("status") status: string,
-    @Query("query") query: string,
+    @Query(new ZodValidationPipe(InvoiceExportQuerySchema))
+    q: InvoiceExportQueryDto,
     @Res() res: Response,
   ) {
     const workbook = await this.exportsService.generateInvoicesSheet(
-      startDate,
-      endDate,
-      status,
-      query,
+      q.startDate,
+      q.endDate,
+      q.status,
+      q.query,
     );
 
     res.setHeader(

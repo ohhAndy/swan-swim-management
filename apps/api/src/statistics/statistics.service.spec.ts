@@ -37,12 +37,6 @@ describe("StatisticsService", () => {
       accessibleLocations: [{ id: "loc1" }],
     };
 
-    it("should throw error if termId is missing", async () => {
-      await expect(
-        service.getDashboardStats("", mockStaffUser)
-      ).rejects.toThrow(/Term ID is required/);
-    });
-
     it("should calculate weighted capacity and filled seats using class ratios", async () => {
       // Offering 1: Capacity 6, with one 1:1 (3 slots) and one 2:1 (1.5 slots) -> 4.5 filled
       // Offering 2: Capacity 3, with two 3:1 (1.0 each) -> 2.0 filled

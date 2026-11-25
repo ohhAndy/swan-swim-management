@@ -62,4 +62,12 @@ describe("StatisticsController (e2e)", () => {
       });
     });
   });
+
+  describe("input validation", () => {
+    it("returns 400 when termId is missing", () => {
+      return request(app.getHttpServer())
+        .get("/statistics/dashboard")
+        .expect(400);
+    });
+  });
 });

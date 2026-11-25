@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { PaymentMethod } from "@prisma/client";
+import { dateParam } from "../../common/dto/query-params";
 
 export const CreatePaymentSchema = z.object({
-  invoiceId: z.string(),
+  invoiceId: z.string().min(1),
   amount: z.number(),
-  paymentDate: z.iso.date(),
-  paymentMethod: z.enum(["cash", "debit", "visa", "mastercard", "etransfer", "website", "other"]),
+  paymentDate: dateParam,
+  paymentMethod: z.enum(PaymentMethod),
   notes: z.string().optional(),
 });
 

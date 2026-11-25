@@ -226,4 +226,24 @@ describe("TasksController (e2e)", () => {
       expect(response.body.createdBy).toEqual({ id: adminUserId, fullName: "Test Admin" });
     });
   });
+
+  describe("PATCH /tasks/:id", () => {
+    it("ignores fields that are not part of a task update", async () => {
+      await request(app.getHttpServer())
+        .patch(`/tasks/${testTaskId}`)
+        .send({ title: "Renamed", createdById: "someone-else" })
+        .expect(200);
+
+      const task = await prisma.task.findUnique({ where: { id: testTaskId } });
+      expect(task?.title).toBe("Renamed");
+      expect(task?.createdById).toBe(adminUserId);
+    });
+
+    it("rejects an unknown priority", () => {
+      return request(app.getHttpServer())
+        .patch(`/tasks/${testTaskId}`)
+        .send({ priority: "whenever" })
+        .expect(400);
+    });
+  });
 });

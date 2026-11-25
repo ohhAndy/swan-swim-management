@@ -2,6 +2,8 @@ import { Controller, Get, Query } from "@nestjs/common";
 import { AuditLogsService } from "./audit-logs.service";
 import { Roles } from "../auth/roles.decorator";
 import { Prisma } from "@prisma/client";
+import { ZodValidationPipe } from "nestjs-zod";
+import { AuditLogQueryDto, AuditLogQuerySchema } from "./dto/audit-log-query.dto";
 
 @Controller("audit-logs")
 export class AuditLogsController {
@@ -10,13 +12,8 @@ export class AuditLogsController {
   @Get()
   @Roles("super_admin")
   async findAll(
-    @Query("skip") skip?: string,
-    @Query("take") take?: string,
-    @Query("action") action?: string,
-    @Query("entityType") entityType?: string,
-    @Query("staffId") staffId?: string,
-    @Query("startDate") startDate?: string,
-    @Query("endDate") endDate?: string,
+    @Query(new ZodValidationPipe(AuditLogQuerySchema))
+    { skip, take, action, entityType, staffId, startDate, endDate }: AuditLogQueryDto,
   ) {
     const where: Prisma.AuditLogWhereInput = {};
     if (action) where.action = { contains: action, mode: "insensitive" };
@@ -31,8 +28,8 @@ export class AuditLogsController {
 
     const [data, total] = await Promise.all([
       this.auditLogsService.findAll({
-        skip: skip ? Number(skip) : 0,
-        take: take ? Number(take) : 50,
+        skip,
+        take,
         where,
         orderBy: { createdAt: "desc" },
       }),

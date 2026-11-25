@@ -118,4 +118,30 @@ describe("PaymentsController (e2e)", () => {
       expect(dbPayment).toBeNull();
     });
   });
+
+  describe("input validation", () => {
+    it("accepts a date-only payment date", () => {
+      return request(app.getHttpServer())
+        .post("/payments")
+        .send({
+          invoiceId: testInvoiceId,
+          amount: 10,
+          paymentDate: "2026-11-24",
+          paymentMethod: "cash",
+        })
+        .expect(201);
+    });
+
+    it("rejects an unknown payment method", () => {
+      return request(app.getHttpServer())
+        .post("/payments")
+        .send({
+          invoiceId: testInvoiceId,
+          amount: 10,
+          paymentDate: "2026-11-24",
+          paymentMethod: "bitcoin",
+        })
+        .expect(400);
+    });
+  });
 });

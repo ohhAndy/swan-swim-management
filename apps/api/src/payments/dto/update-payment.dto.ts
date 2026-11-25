@@ -1,20 +1,8 @@
 import { z } from "zod";
+import { CreatePaymentSchema } from "./create-payment.dto";
 
-export const UpdatePaymentSchema = z.object({
-  amount: z.number().optional(),
-  paymentDate: z.string().optional(), // ISO date string
-  paymentMethod: z
-    .enum([
-      "cash",
-      "debit",
-      "visa",
-      "mastercard",
-      "etransfer",
-      "website",
-      "other",
-    ])
-    .optional(),
-  notes: z.string().optional(),
-});
+export const UpdatePaymentSchema = CreatePaymentSchema.omit({
+  invoiceId: true,
+}).partial();
 
 export type UpdatePaymentDto = z.infer<typeof UpdatePaymentSchema>;

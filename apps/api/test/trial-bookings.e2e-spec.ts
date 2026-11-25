@@ -107,4 +107,20 @@ describe("TrialBookingsController (e2e)", () => {
       expect(dbTrial).toBeNull();
     });
   });
+
+  describe("input validation", () => {
+    it("rejects an unknown trial status", () => {
+      return request(app.getHttpServer())
+        .patch("/trial-bookings/any-id/status")
+        .send({ status: "maybe" })
+        .expect(400);
+    });
+
+    it("rejects a booking without a child name", () => {
+      return request(app.getHttpServer())
+        .post("/trial-bookings")
+        .send({ classSessionId: "s", childName: "", childAge: 5, parentPhone: "555" })
+        .expect(400);
+    });
+  });
 });

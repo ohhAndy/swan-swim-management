@@ -16,10 +16,6 @@ export class StatisticsService {
     locationId?: string,
   ) {
     try {
-      if (!termId) {
-        throw new Error("Term ID is required");
-      }
-
       const validatedLocationId = validateLocationAccess(staffUser, locationId);
 
       // 1. Enrollment Capacity

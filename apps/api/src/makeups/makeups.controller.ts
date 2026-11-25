@@ -1,5 +1,6 @@
 import { Body, Controller, Post, Res } from "@nestjs/common";
 import { Response } from "express";
+import { ZodValidationPipe } from "nestjs-zod";
 import { MakeupsService } from "./makeups.service";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
@@ -13,12 +14,11 @@ export class MakeupsController {
   @Post()
   @Roles("super_admin", "admin", "manager")
   async create(
-    @Body() body: ScheduleMakeUpInput,
+    @Body(new ZodValidationPipe(ScheduleMakeUpSchema)) body: ScheduleMakeUpInput,
     @Res({ passthrough: true }) res: Response,
     @CurrentStaffUser() staffUser: RequestStaffUser,
   ) {
-    const validated = ScheduleMakeUpSchema.parse(body);
-    const result = await this.makeupsService.scheduleMakeUp(validated, staffUser);
+    const result = await this.makeupsService.scheduleMakeUp(body, staffUser);
 
     // No resource was created — return 200 instead of 201
     if ("requiresOverride" in result && result.requiresOverride) {

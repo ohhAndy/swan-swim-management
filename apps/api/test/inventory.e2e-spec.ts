@@ -92,4 +92,22 @@ describe("InventoryController (e2e)", () => {
       expect(dbItem?.active).toBe(false);
     });
   });
+
+  describe("input validation", () => {
+    it("allows several items without a SKU", async () => {
+      for (const name of ["Cap", "Towel"]) {
+        await request(app.getHttpServer())
+          .post("/inventory")
+          .send({ name, description: "", sku: "", price: 10, stock: 1 })
+          .expect(201);
+      }
+    });
+
+    it("rejects a non-numeric page size", () => {
+      return request(app.getHttpServer())
+        .get("/inventory")
+        .query({ take: "abc" })
+        .expect(400);
+    });
+  });
 });

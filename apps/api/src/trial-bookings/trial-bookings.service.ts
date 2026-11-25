@@ -103,7 +103,7 @@ export class TrialBookingsService {
 
   async updateTrialStatus(
     trialId: string,
-    status: TrialStatus,
+    status: TrialStatus | "",
     staffUser: RequestStaffUser,
   ) {
 
@@ -132,9 +132,8 @@ export class TrialBookingsService {
       throw new BadRequestException("Cannot change status of converted trial");
     }
 
-    // Check if the incoming status is empty strings (deletion request)
-    // We cast to string because the enum won't technically allow empty string, but runtime value from UI might be empty
-    if (!status || (status as unknown as string) === "") {
+    // An empty status is the UI's "clear" action and deletes the booking.
+    if (status === "") {
       return this.prisma.$transaction(async (tx) => {
         await this.auditLogsService.create(
           {
