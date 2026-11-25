@@ -78,7 +78,7 @@ describe("AttendanceController (e2e)", () => {
         })
         .expect(200);
       
-      const attendance = await prisma.attendance.findUnique({
+      const attendance = await prisma.attendance.findUniqueOrThrow({
         where: {
           enrollmentId_classSessionId: {
             enrollmentId: testEnrollmentId,
@@ -86,8 +86,7 @@ describe("AttendanceController (e2e)", () => {
           }
         }
       });
-      expect(attendance).toBeDefined();
-      expect(attendance?.status).toBe("present");
+      expect(attendance.status).toBe("present");
     });
   });
 

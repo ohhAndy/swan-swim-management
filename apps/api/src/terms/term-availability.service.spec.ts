@@ -58,7 +58,7 @@ describe("TermAvailabilityService", () => {
             { id: "enr1", classRatio: "3:1" },
           ],
         },
-      ] as any);
+      ]);
 
       const result = await service.getTermAvailability("term1");
 
@@ -98,7 +98,7 @@ describe("TermAvailabilityService", () => {
             { id: "enr2", classRatio: "1:1" }, // Weight 3.0
           ],
         },
-      ] as any);
+      ]);
 
       const result = await service.getTermAvailability("term1");
 

@@ -111,9 +111,8 @@ describe("ClassInstructorsController (e2e)", () => {
         .delete(`/class-instructors/${testAssignmentId}`)
         .expect(200);
       
-      const dbAssignment = await prisma.classInstructor.findUnique({ where: { id: testAssignmentId } });
-      expect(dbAssignment).toBeDefined();
-      expect(dbAssignment!.removedAt).not.toBeNull();
+      const dbAssignment = await prisma.classInstructor.findUniqueOrThrow({ where: { id: testAssignmentId } });
+      expect(dbAssignment.removedAt).not.toBeNull();
     });
   });
 });

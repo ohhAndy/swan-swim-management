@@ -59,10 +59,10 @@ describe("EnrollmentsService", () => {
     });
 
     it("should correctly update remarks and create an audit log", async () => {
-      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr1", remarks: "old" } as any);
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr1", remarks: "old" });
       
       const mockUpdated = { id: "enr1", remarks: "test" };
-      prismaMock.enrollment.update.mockResolvedValue(mockUpdated as any);
+      prismaMock.enrollment.update.mockResolvedValue(mockUpdated);
 
       const result = await service.updateRemarks("enr1", { remarks: "test" }, mockStaffUser);
       expect(result).toEqual({ success: true, notes: "test" });
@@ -87,13 +87,13 @@ describe("EnrollmentsService", () => {
     };
 
     it("should throw BadRequestException if enrollment is not active", async () => {
-      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr1", status: "withdrawn" } as any);
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr1", status: "withdrawn" });
 
       await expect(service.transferEnrollment("enr1", { targetOfferingId: "off1", skippedSessionIds: [] }, mockStaffUser)).rejects.toThrow(BadRequestException);
     });
 
     it("should throw NotFoundException if target offering does not exist", async () => {
-      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr1", status: "active" } as any);
+      prismaMock.enrollment.findUnique.mockResolvedValue({ id: "enr1", status: "active" });
       prismaMock.classOffering.findUnique.mockResolvedValue(null);
 
       await expect(service.transferEnrollment("enr1", { targetOfferingId: "off1", skippedSessionIds: [] }, mockStaffUser)).rejects.toThrow(NotFoundException);
@@ -108,12 +108,12 @@ describe("EnrollmentsService", () => {
         classRatio: "3:1",
         offering: { termId: "term1" },
         student: { firstName: "Jane", lastName: "Doe" },
-      } as any);
+      });
 
       prismaMock.classOffering.findUnique.mockResolvedValue({
         id: "off2",
         termId: "term1",
-      } as any);
+      });
 
       prismaMock.enrollment.findFirst
         .mockResolvedValueOnce(null) // no existing active
@@ -122,9 +122,9 @@ describe("EnrollmentsService", () => {
       prismaMock.classSession.findMany.mockResolvedValue([]);
       prismaMock.attendance.findMany.mockResolvedValue([]);
       prismaMock.enrollmentSkip.findMany.mockResolvedValue([]);
-      prismaMock.enrollment.create.mockResolvedValue({ id: "enr2" } as any);
-      prismaMock.enrollment.update.mockResolvedValue({ id: "enr1" } as any);
-      prismaMock.auditLog.create.mockResolvedValue({} as any);
+      prismaMock.enrollment.create.mockResolvedValue({ id: "enr2" });
+      prismaMock.enrollment.update.mockResolvedValue({ id: "enr1" });
+      prismaMock.auditLog.create.mockResolvedValue({});
 
       const result = await service.transferEnrollment(
         "enr1",
@@ -165,20 +165,20 @@ describe("EnrollmentsService", () => {
         classRatio: "3:1",
         offering: { termId: "term1" },
         student: { firstName: "Jane", lastName: "Doe" },
-      } as any);
+      });
 
       prismaMock.classOffering.findUnique.mockResolvedValue({
         id: "off2",
         termId: "term1",
-      } as any);
+      });
 
       prismaMock.enrollment.findFirst.mockResolvedValue(null);
       prismaMock.classSession.findMany.mockResolvedValue([]);
       prismaMock.attendance.findMany.mockResolvedValue([]);
       prismaMock.enrollmentSkip.findMany.mockResolvedValue([]);
-      prismaMock.enrollment.create.mockResolvedValue({ id: "enr-new" } as any);
-      prismaMock.enrollment.update.mockResolvedValue({ id: "enr1" } as any);
-      prismaMock.auditLog.create.mockResolvedValue({} as any);
+      prismaMock.enrollment.create.mockResolvedValue({ id: "enr-new" });
+      prismaMock.enrollment.update.mockResolvedValue({ id: "enr1" });
+      prismaMock.auditLog.create.mockResolvedValue({});
 
       const result = await service.bulkTransfer(
         [

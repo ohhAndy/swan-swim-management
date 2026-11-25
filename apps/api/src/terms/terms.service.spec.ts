@@ -53,7 +53,7 @@ describe("TermsService", () => {
         slug: "winter-2024",
       };
 
-      prismaMock.term.create.mockResolvedValue(mockCreatedTerm as any);
+      prismaMock.term.create.mockResolvedValue(mockCreatedTerm);
       // Echo the created offering back, as Prisma does, so it keeps its weekday
       prismaMock.classOffering.create.mockImplementation(
         async ({ data }: { data: Record<string, unknown> }) => ({
@@ -108,7 +108,7 @@ describe("TermsService", () => {
     it("should return terms list with string IDs", async () => {
       prismaMock.term.findMany.mockResolvedValue([
         { id: BigInt(1), name: "Fall 2026", locationId: BigInt(10) },
-      ] as any);
+      ]);
 
       const result = await service.getAllTerms("10");
       expect(result).toEqual([
@@ -122,7 +122,7 @@ describe("TermsService", () => {
       prismaMock.classOffering.findMany.mockResolvedValue([
         { startTime: "16:00", endTime: "16:30" },
         { startTime: "16:30", endTime: "17:00" },
-      ] as any);
+      ]);
 
       const result = await service.getSlotsForWeekday("term1", 1);
       expect(result).toEqual(["16:00-16:30", "16:30-17:00"]);

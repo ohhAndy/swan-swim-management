@@ -113,8 +113,8 @@ describe("InvoicesService", () => {
       prismaMock.invoice.findUnique.mockResolvedValue({
         id: "inv1",
         status: "partial",
-      } as any);
-      prismaMock.invoice.delete.mockResolvedValue({ id: "inv1" } as any);
+      });
+      prismaMock.invoice.delete.mockResolvedValue({ id: "inv1" });
 
       await service.remove("inv1", mockStaffUser);
 

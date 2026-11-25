@@ -50,7 +50,7 @@ describe("TrialBookingsService", () => {
     });
 
     it("should throw BadRequestException if flexible course", async () => {
-      prismaMock.classSession.findUnique.mockResolvedValue({ id: "sess1", offering: { type: "flexible" } } as any);
+      prismaMock.classSession.findUnique.mockResolvedValue({ id: "sess1", offering: { type: "flexible" } });
 
       await expect(
         service.createTrialBooking(

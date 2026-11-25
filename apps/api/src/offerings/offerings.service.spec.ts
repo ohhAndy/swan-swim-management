@@ -53,10 +53,10 @@ describe("OfferingsService", () => {
     });
 
     it("should correctly update offering title", async () => {
-      prismaMock.classOffering.findUnique.mockResolvedValue({ id: "off1", title: "Old Title" } as any);
+      prismaMock.classOffering.findUnique.mockResolvedValue({ id: "off1", title: "Old Title" });
       
       const mockUpdated = { id: "off1", title: "New Title" };
-      prismaMock.classOffering.update.mockResolvedValue(mockUpdated as any);
+      prismaMock.classOffering.update.mockResolvedValue(mockUpdated);
 
       const result = await service.updateOfferingInfo("off1", { title: "New Title" }, mockStaffUser);
       expect(result).toEqual({ success: true });

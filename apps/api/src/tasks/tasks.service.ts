@@ -1,11 +1,32 @@
-import { Injectable } from "@nestjs/common";
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Prisma } from "@prisma/client";
+import { Prisma, Task } from "@prisma/client";
 import { CreateTaskDto } from "./dto/create-task.dto";
 import { UpdateTaskDto } from "./dto/update-task.dto";
 import { RequestStaffUser } from "../auth/auth.types";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
+
+const TASK_INCLUDE = {
+  assignedTo: { select: { id: true, fullName: true } },
+  createdBy: { select: { id: true, fullName: true } },
+} satisfies Prisma.TaskInclude;
+
+const ROLES_WITH_ALL_TASKS = ["super_admin", "admin", "manager"];
+
+function canAccessAllTasks(staffUser: RequestStaffUser) {
+  return ROLES_WITH_ALL_TASKS.includes(staffUser.role);
+}
+
+function isOwnTask(task: Task, staffUser: RequestStaffUser) {
+  return (
+    task.assignedToId === staffUser.id || task.createdById === staffUser.id
+  );
+}
 
 @Injectable()
 export class TasksService {
@@ -15,7 +36,6 @@ export class TasksService {
   ) {}
 
   async create(createTaskDto: CreateTaskDto, staffUser: RequestStaffUser) {
-
     return this.prisma.$transaction(async (tx) => {
       const task = await tx.task.create({
         data: {
@@ -28,10 +48,7 @@ export class TasksService {
           assignedToId: createTaskDto.assignedToId,
           createdById: staffUser.id,
         },
-        include: {
-          assignedTo: true,
-          createdBy: true,
-        },
+        include: TASK_INCLUDE,
       });
 
       await this.auditLogsService.create(
@@ -54,22 +71,13 @@ export class TasksService {
   }
 
   async findAll(staffUser: RequestStaffUser) {
-
-    const whereClause: Prisma.TaskWhereInput = {};
-
-    if (staffUser.role !== "admin" && staffUser.role !== "manager") {
-      whereClause.OR = [
-        { assignedToId: staffUser.id },
-        { createdById: staffUser.id },
-      ];
-    }
+    const where: Prisma.TaskWhereInput = canAccessAllTasks(staffUser)
+      ? {}
+      : { OR: [{ assignedToId: staffUser.id }, { createdById: staffUser.id }] };
 
     return this.prisma.task.findMany({
-      where: whereClause,
-      include: {
-        assignedTo: true,
-        createdBy: true,
-      },
+      where,
+      include: TASK_INCLUDE,
       orderBy: {
         createdAt: "desc",
       },
@@ -77,46 +85,24 @@ export class TasksService {
   }
 
   async findOne(id: string, staffUser: RequestStaffUser) {
-
     const task = await this.prisma.task.findUnique({
       where: { id },
-      include: {
-        assignedTo: true,
-        createdBy: true,
-      },
+      include: TASK_INCLUDE,
     });
 
-    if (!task) return null;
-
-    // Access control
-    if (staffUser.role !== "admin" && staffUser.role !== "manager") {
-      if (
-        task.assignedToId !== staffUser.id &&
-        task.createdById !== staffUser.id
-      ) {
-        // Return null or throw ForbiddenException?
-        // Returning null mimics "not found" which is safer for security.
-        return null;
-      }
+    if (!task || (!canAccessAllTasks(staffUser) && !isOwnTask(task, staffUser))) {
+      throw new NotFoundException("Task not found");
     }
 
     return task;
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto, staffUser: RequestStaffUser) {
-
-    // Check existing task for permission
     const existingTask = await this.prisma.task.findUnique({ where: { id } });
-    if (!existingTask) return; // or throw
+    if (!existingTask) throw new NotFoundException("Task not found");
 
-    if (staffUser.role !== "admin" && staffUser.role !== "manager") {
-      if (
-        existingTask.assignedToId !== staffUser.id &&
-        existingTask.createdById !== staffUser.id
-      ) {
-        // User not allowed to update this task
-        throw new Error("Unauthorized to update this task");
-      }
+    if (!canAccessAllTasks(staffUser) && !isOwnTask(existingTask, staffUser)) {
+      throw new ForbiddenException("You can only update tasks assigned to or created by you");
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -128,10 +114,7 @@ export class TasksService {
             ? new Date(updateTaskDto.dueDate)
             : undefined,
         },
-        include: {
-          assignedTo: true,
-          createdBy: true,
-        },
+        include: TASK_INCLUDE,
       });
 
       await this.auditLogsService.create(
@@ -153,9 +136,8 @@ export class TasksService {
   }
 
   async remove(id: string, staffUser: RequestStaffUser) {
-
     const task = await this.prisma.task.findUnique({ where: { id } });
-    if (!task) return; // Or throw
+    if (!task) throw new NotFoundException("Task not found");
 
     return this.prisma.$transaction(async (tx) => {
       await this.auditLogsService.create(

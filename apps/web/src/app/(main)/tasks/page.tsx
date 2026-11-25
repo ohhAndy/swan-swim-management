@@ -9,6 +9,7 @@ import {
   updateTask,
 } from "@/lib/api/client/tasks";
 import { getStaffUsers } from "@/lib/api/client/users";
+import { hasMinRole } from "@/lib/auth/permissions";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -49,7 +50,7 @@ export default function TasksPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
-  const canCreate = user?.role === "admin" || user?.role === "manager";
+  const canCreate = hasMinRole(user?.role, "manager");
   const canEdit = canCreate; // Simplify for now
 
   const filteredTasks = tasks.filter((task) => {

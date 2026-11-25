@@ -70,8 +70,8 @@ describe("ReportCardsService", () => {
         status: ReportCardStatus.draft,
       };
 
-      prismaMock.reportCard.create.mockResolvedValue(mockReportCard as any);
-      prismaMock.enrollment.update.mockResolvedValue({ id: "enr1" } as any);
+      prismaMock.reportCard.create.mockResolvedValue(mockReportCard);
+      prismaMock.enrollment.update.mockResolvedValue({ id: "enr1" });
 
       // Prisma transaction mock bypasses wrapper, so we stub directly
       prismaMock.$transaction.mockImplementation(async (callback) => callback(prismaMock));
@@ -318,8 +318,8 @@ describe("ReportCardsService", () => {
         status: ReportCardStatus.draft,
       };
 
-      prismaMock.reportCard.findUnique.mockResolvedValue(mockReportCard as any);
-      prismaMock.reportCard.delete.mockResolvedValue(mockReportCard as any);
+      prismaMock.reportCard.findUnique.mockResolvedValue(mockReportCard);
+      prismaMock.reportCard.delete.mockResolvedValue(mockReportCard);
       prismaMock.$transaction.mockImplementation(async (callback) => callback(prismaMock));
 
       const result = await service.remove("rc1", mockStaffUser);

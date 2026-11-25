@@ -41,11 +41,11 @@ describe("TermScheduleService", () => {
         name: "Term 1",
         startDate: new Date("2026-01-01"),
         locationId: "loc1",
-      } as any);
+      });
 
       prismaMock.classOffering.findMany.mockResolvedValue([
         { id: "off1", capacity: 4, title: "Mon 4pm", termId: "term1", weekday: 1 },
-      ] as any);
+      ]);
 
       prismaMock.classSession.findMany.mockResolvedValue([
         {
@@ -57,7 +57,7 @@ describe("TermScheduleService", () => {
           status: "scheduled",
           offering: { instructors: [] },
         },
-      ] as any);
+      ]);
 
       prismaMock.enrollment.findMany.mockResolvedValue([
         {
@@ -67,7 +67,7 @@ describe("TermScheduleService", () => {
           status: "active",
           student: { id: "stud1", firstName: "Jane", lastName: "Doe" },
         },
-      ] as any);
+      ]);
 
       prismaMock.attendance.findMany.mockResolvedValue([]);
       prismaMock.makeUpBooking.findMany.mockResolvedValue([]);
@@ -76,7 +76,7 @@ describe("TermScheduleService", () => {
 
       prismaMock.term.findMany.mockResolvedValue([
         { id: "term2", startDate: new Date("2026-04-01") },
-      ] as any);
+      ]);
 
       await service.slotByWeekdayAndTime(1, "term1", "16:00", "16:45");
 

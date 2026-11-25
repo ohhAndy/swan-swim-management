@@ -63,7 +63,7 @@ describe("SkipsController (e2e)", () => {
         .send({ classSessionId: testSessionId })
         .expect(201);
       
-      const skip = await prisma.enrollmentSkip.findUnique({
+      await prisma.enrollmentSkip.findUniqueOrThrow({
         where: {
           enrollmentId_classSessionId: {
             enrollmentId: testEnrollmentId,
@@ -71,8 +71,6 @@ describe("SkipsController (e2e)", () => {
           }
         }
       });
-      expect(skip).toBeDefined();
-      expect(skip?.enrollmentId).toBe(testEnrollmentId);
     });
   });
 
@@ -98,6 +96,22 @@ describe("SkipsController (e2e)", () => {
         }
       });
       expect(skip).toBeNull();
+
+      const auditLogs = await prisma.auditLog.findMany({
+        where: { action: "remove_skip", entityId: testEnrollmentId },
+      });
+      expect(auditLogs).toHaveLength(1);
+    });
+
+    it("succeeds without an audit entry when the skip does not exist", async () => {
+      await request(app.getHttpServer())
+        .delete(`/enrollments/${testEnrollmentId}/skips/${testSessionId}`)
+        .expect(200);
+
+      const auditLogs = await prisma.auditLog.findMany({
+        where: { action: "remove_skip", entityId: testEnrollmentId },
+      });
+      expect(auditLogs).toHaveLength(0);
     });
   });
 });

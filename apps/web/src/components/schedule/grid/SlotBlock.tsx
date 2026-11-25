@@ -98,70 +98,45 @@ export function SlotBlock({
     sessionId: string,
     status: string,
   ) => {
-    try {
-      await upsertAttendance(
-        enrollmentId,
-        sessionId,
-        status as "present" | "absent" | "excused" | "",
-      );
-    } catch (error) {
-      console.error("Failed to upsert attendance:", error);
-      throw error;
-    }
+    await upsertAttendance(
+      enrollmentId,
+      sessionId,
+      status as "present" | "absent" | "excused" | "",
+    );
   };
 
   const handleMakeUpUpdate = async (makeUpId: string, status: string) => {
-    try {
-      await updateMakeupStatus(
-        makeUpId,
-        status as "scheduled" | "attended" | "cancelled" | "requested" | "",
-      );
-    } catch (error) {
-      console.error("Failed to update makeup status:", error);
-      throw error;
-    }
+    await updateMakeupStatus(
+      makeUpId,
+      status as "scheduled" | "attended" | "cancelled" | "requested" | "",
+    );
   };
 
   const handleTrialUpdate = async (trialId: string, status: string) => {
-    try {
-      await updateTrialStatus(
-        trialId,
-        status as
-          | "scheduled"
-          | "attended"
-          | "noshow"
-          | "converted"
-          | "cancelled"
-          | "",
-      );
-    } catch (error) {
-      console.error("Failed to update trial status:", error);
-      throw error;
-    }
+    await updateTrialStatus(
+      trialId,
+      status as
+        | "scheduled"
+        | "attended"
+        | "noshow"
+        | "converted"
+        | "cancelled"
+        | "",
+    );
   };
 
   const handleRemarksUpdate = async (studentId: string, notes: string) => {
-    try {
-      await updateStudentNotes(studentId, notes);
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to update student notes:", error);
-      throw error; // Re-throw so the dialog can show error state
-    }
+    await updateStudentNotes(studentId, notes);
+    startTransition(() => {
+      router.refresh();
+    });
   };
 
   const handleOfferingUpdate = async (title: string) => {
-    try {
-      await updateOfferingInfo(fallbackOfferingId, title);
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to update remarks:", error);
-      throw error; // Re-throw so the dialog can show error state
-    }
+    await updateOfferingInfo(fallbackOfferingId, title);
+    startTransition(() => {
+      router.refresh();
+    });
   };
 
 

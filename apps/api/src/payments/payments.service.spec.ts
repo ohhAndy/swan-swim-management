@@ -58,7 +58,7 @@ describe("PaymentsService", () => {
         id: "inv1",
         status: "void",
         payments: [],
-      } as any);
+      });
 
       await expect(
         service.create({ invoiceId: "inv1", amount: 100, paymentDate: "2024-01-01", paymentMethod: PaymentMethod.visa, notes: "" }, mockStaffUser),
@@ -73,9 +73,9 @@ describe("PaymentsService", () => {
         payments: [{ amount: 100 }], // 100 already paid
       };
       
-      prismaMock.invoice.findUnique.mockResolvedValue(mockInvoice as any);
-      prismaMock.payment.create.mockResolvedValue({ id: "pay1", amount: 100 } as any);
-      prismaMock.invoice.update.mockResolvedValue({ ...mockInvoice, status: "paid" } as any);
+      prismaMock.invoice.findUnique.mockResolvedValue(mockInvoice);
+      prismaMock.payment.create.mockResolvedValue({ id: "pay1", amount: 100 });
+      prismaMock.invoice.update.mockResolvedValue({ ...mockInvoice, status: "paid" });
 
       const result = await service.create(
         { invoiceId: "inv1", amount: 100, paymentDate: "2024-01-01", paymentMethod: PaymentMethod.visa, notes: "Final payment" },
@@ -128,8 +128,8 @@ describe("PaymentsService", () => {
         }
       };
 
-      prismaMock.payment.findUnique.mockResolvedValue(mockPayment as any);
-      prismaMock.payment.delete.mockResolvedValue(mockPayment as any);
+      prismaMock.payment.findUnique.mockResolvedValue(mockPayment);
+      prismaMock.payment.delete.mockResolvedValue(mockPayment);
 
       await service.remove("pay1", mockStaffUser);
 

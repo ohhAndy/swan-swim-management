@@ -84,15 +84,14 @@ describe("MakeupsController (e2e)", () => {
       expect(res.body.isOverride).toBe(true);
       expect(res.body.tokenId).toBeNull();
 
-      const makeup = await prisma.makeUpBooking.findFirst({
+      const makeup = await prisma.makeUpBooking.findFirstOrThrow({
         where: {
           studentId: testStudentId,
           classSessionId: sessionId,
         },
       });
-      expect(makeup).toBeDefined();
-      expect(makeup?.isOverride).toBe(true);
-      expect(makeup?.notes).toBe("override booking");
+      expect(makeup.isOverride).toBe(true);
+      expect(makeup.notes).toBe("override booking");
     });
 
     it("should consume an available token when student is enrolled with tokens", async () => {
@@ -126,11 +125,11 @@ describe("MakeupsController (e2e)", () => {
       expect(res.body.isOverride).toBe(false);
       expect(res.body.tokenId).toBe(token1.id);
 
-      const consumedToken = await prisma.makeUpToken.findUnique({
+      const consumedToken = await prisma.makeUpToken.findUniqueOrThrow({
         where: { id: token1.id },
       });
-      expect(consumedToken?.status).toBe("consumed");
-      expect(consumedToken?.consumedAt).toBeDefined();
+      expect(consumedToken.status).toBe("consumed");
+      expect(consumedToken.consumedAt).toBeInstanceOf(Date);
     });
   });
 

@@ -282,11 +282,6 @@ export function StudentGrid({
 
     try {
       await onRemarksUpdate(enrollmentId, remarks);
-    } catch (error) {
-      console.error("Failed to update remarks:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update remarks",
-      );
     } finally {
       setUpdating(null);
     }

@@ -71,12 +71,17 @@ describe("TrialBookingsController (e2e)", () => {
         })
         .expect(201);
       
-      const trial = await prisma.trialBooking.findFirst({
+      const trial = await prisma.trialBooking.findFirstOrThrow({
         where: {
           childName: "New Child"
         }
       });
-      expect(trial).toBeDefined();
+      expect(trial).toMatchObject({
+        classSessionId: testSessionId,
+        childAge: 6,
+        parentPhone: "0987654321",
+        status: "scheduled",
+      });
     });
   });
 

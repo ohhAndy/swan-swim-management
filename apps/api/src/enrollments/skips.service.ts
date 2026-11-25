@@ -136,23 +136,24 @@ export class SkipsService {
       );
     }
 
-    try {
-      await this.prisma.enrollmentSkip.delete({
-        where: {
-          enrollmentId_classSessionId: { enrollmentId, classSessionId },
-        },
+    await this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.enrollmentSkip.deleteMany({
+        where: { enrollmentId, classSessionId },
       });
+      if (count === 0) return;
 
-      await this.auditLogsService.create({
-        staffId: staffUser.id,
-        action: "remove_skip",
-        entityType: "enrollment",
-        entityId: enrollmentId,
-        metadata: { classSessionId },
-      });
-    } catch {
-      // ignore
-    }
+      await this.auditLogsService.create(
+        {
+          staffId: staffUser.id,
+          action: "remove_skip",
+          entityType: "enrollment",
+          entityId: enrollmentId,
+          metadata: { classSessionId },
+        },
+        tx,
+      );
+    });
+
     return { ok: true };
   }
 }

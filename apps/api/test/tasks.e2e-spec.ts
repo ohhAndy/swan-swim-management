@@ -2,7 +2,7 @@ import { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { PrismaService } from "../src/prisma/prisma.service";
 import { createTestApp } from "./utils/test-setup";
-import { seedAdmin, seedGuardian, seedTerm, seedClassOffering } from "./utils/seeds";
+import { seedAdmin, seedSuperAdmin, seedGuardian, seedTerm, seedClassOffering } from "./utils/seeds";
 import { getBusinessTodayUtcMidnight } from "../src/tasks/cron-tasks.service";
 
 describe("TasksController (e2e)", () => {
@@ -147,6 +147,83 @@ describe("TasksController (e2e)", () => {
       
       const dbTask = await prisma.task.findUnique({ where: { id: testTaskId } });
       expect(dbTask).toBeNull();
+    });
+
+    it("returns 404 for a missing task", () => {
+      return request(app.getHttpServer())
+        .delete("/tasks/does-not-exist")
+        .expect(404);
+    });
+  });
+
+  describe("access control", () => {
+    it("lets a super_admin see and update tasks created by others", async () => {
+      await seedSuperAdmin(prisma);
+
+      const list = await request(app.getHttpServer())
+        .get("/tasks")
+        .set("x-mock-auth-id", "test-superadmin")
+        .expect(200);
+      expect(list.body.map((t: { id: string }) => t.id)).toContain(testTaskId);
+
+      await request(app.getHttpServer())
+        .get(`/tasks/${testTaskId}`)
+        .set("x-mock-auth-id", "test-superadmin")
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .patch(`/tasks/${testTaskId}`)
+        .set("x-mock-auth-id", "test-superadmin")
+        .send({ title: "Edited by super admin" })
+        .expect(200);
+    });
+
+    it("hides other people's tasks from a supervisor", async () => {
+      await prisma.staffUser.create({
+        data: {
+          authId: "test-supervisor",
+          email: "supervisor@test.com",
+          role: "supervisor",
+          fullName: "Test Supervisor",
+          active: true,
+        },
+      });
+
+      const list = await request(app.getHttpServer())
+        .get("/tasks")
+        .set("x-mock-auth-id", "test-supervisor")
+        .expect(200);
+      expect(list.body).toEqual([]);
+
+      await request(app.getHttpServer())
+        .get(`/tasks/${testTaskId}`)
+        .set("x-mock-auth-id", "test-supervisor")
+        .expect(404);
+
+      await request(app.getHttpServer())
+        .patch(`/tasks/${testTaskId}`)
+        .set("x-mock-auth-id", "test-supervisor")
+        .send({ title: "Not allowed" })
+        .expect(403);
+
+      const dbTask = await prisma.task.findUniqueOrThrow({ where: { id: testTaskId } });
+      expect(dbTask.title).toBe("Test Task");
+    });
+
+    it("returns 404 when updating a missing task", () => {
+      return request(app.getHttpServer())
+        .patch("/tasks/does-not-exist")
+        .send({ title: "x" })
+        .expect(404);
+    });
+
+    it("only exposes id and fullName of the assigned and creating staff", async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/tasks/${testTaskId}`)
+        .expect(200);
+
+      expect(response.body.assignedTo).toEqual({ id: adminUserId, fullName: "Test Admin" });
+      expect(response.body.createdBy).toEqual({ id: adminUserId, fullName: "Test Admin" });
     });
   });
 });

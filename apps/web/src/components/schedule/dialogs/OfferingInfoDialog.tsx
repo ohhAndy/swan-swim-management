@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +38,9 @@ export default function OfferingDialog({
       await onSave(title);
       setOpen(false);
     } catch (error) {
-      console.error("Failed to save remarks:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save class title",
+      );
     } finally {
       setIsSaving(false);
     }

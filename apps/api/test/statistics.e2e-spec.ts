@@ -2,7 +2,7 @@ import { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { PrismaService } from "../src/prisma/prisma.service";
 import { createTestApp } from "./utils/test-setup";
-import { seedAdmin, seedTerm } from "./utils/seeds";
+import { seedAdmin, seedClassOffering, seedGuardian, seedTerm } from "./utils/seeds";
 
 describe("StatisticsController (e2e)", () => {
   let app: INestApplication;
@@ -19,6 +19,27 @@ describe("StatisticsController (e2e)", () => {
     await seedAdmin(prisma);
     const term = await seedTerm(prisma);
     testTermId = term.id;
+
+    const guardian = await seedGuardian(prisma);
+    const offering = await seedClassOffering(prisma, term.id);
+
+    const createStudent = (firstName: string, level: string | null) =>
+      prisma.student.create({
+        data: { firstName, lastName: "Student", guardianId: guardian.id, level },
+      });
+    const [active, inactive, transferred] = await Promise.all([
+      createStudent("Active", "Level 3"),
+      createStudent("Inactive", null),
+      createStudent("Transferred", "Level 5"),
+    ]);
+
+    await prisma.enrollment.createMany({
+      data: [
+        { studentId: active.id, offeringId: offering.id, status: "active", classRatio: "3:1" },
+        { studentId: inactive.id, offeringId: offering.id, status: "inactive", classRatio: "1:1" },
+        { studentId: transferred.id, offeringId: offering.id, status: "transferred", classRatio: "3:1" },
+      ],
+    });
   });
 
   afterAll(async () => {
@@ -27,16 +48,18 @@ describe("StatisticsController (e2e)", () => {
   });
 
   describe("GET /statistics/dashboard", () => {
-    it("should return dashboard stats", async () => {
+    it("returns weighted capacity and counts that exclude transferred enrollments", async () => {
       const response = await request(app.getHttpServer())
         .get(`/statistics/dashboard?termId=${testTermId}`)
         .expect(200);
-      
-      expect(response.body.studentCount).toBeDefined();
-      expect(response.body.capacity).toBeDefined();
-      expect(Array.isArray(response.body.studentsPerDay)).toBe(true);
-      expect(response.body.levels).toBeDefined();
-      expect(response.body.actionItems).toBeDefined();
+
+      expect(response.body).toEqual({
+        studentCount: 2,
+        capacity: { total: 10, filled: 4, percentage: 40 },
+        studentsPerDay: [0, 2, 0, 0, 0, 0, 0],
+        levels: { "Level 3": 1, Unknown: 1 },
+        actionItems: { pendingMakeups: 0, upcomingTrials: 0 },
+      });
     });
   });
 });

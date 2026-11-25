@@ -180,7 +180,7 @@ describe("AttendanceService", () => {
         enrollmentId: "enr1",
         classSessionId: "sess1",
         status: AttendanceStatus.absent,
-      } as any);
+      });
 
       // Pass "" as status to trigger deletion logic
       const result = await service.upsert(
