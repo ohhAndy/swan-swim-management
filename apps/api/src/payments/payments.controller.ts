@@ -6,7 +6,6 @@ import {
   Body,
   Param,
   Delete,
-  UseGuards,
   Query,
   DefaultValuePipe,
   ParseIntPipe,
@@ -14,14 +13,11 @@ import {
 import { PaymentsService } from "./payments.service";
 import { CreatePaymentDto } from "./dto/create-payment.dto";
 import { UpdatePaymentDto } from "./dto/update-payment.dto";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("payments")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 

@@ -5,7 +5,6 @@ import {
   ParseIntPipe,
   Body,
   Post,
-  UseGuards,
   Query,
   NotFoundException,
 } from "@nestjs/common";
@@ -14,15 +13,12 @@ import { TermScheduleService } from "./term-schedule.service";
 import { TermAvailabilityService } from "./term-availability.service";
 import type { SlotPage, Term } from "@school/shared-types";
 import { CreateTermSchema } from "./dto/create-term.dto";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("terms")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class TermsController {
   constructor(
     private readonly termsService: TermsService,

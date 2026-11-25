@@ -5,13 +5,10 @@ import {
   Patch,
   Param,
   Body,
-  UseGuards,
   Post,
   Delete,
 } from "@nestjs/common";
 import { OfferingsService } from "./offerings.service";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
@@ -22,7 +19,6 @@ import {
 } from "./dto/create-offering.dto";
 
 @Controller("offerings")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class OfferingsController {
   constructor(private readonly offeringsService: OfferingsService) {}
 

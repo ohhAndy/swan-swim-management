@@ -6,22 +6,18 @@ import {
   Param,
   Patch,
   Post,
-  UseGuards,
 } from "@nestjs/common";
 import { TasksService } from "./tasks.service";
 import { CreateTaskDto } from "./dto/create-task.dto";
 import { UpdateTaskDto } from "./dto/update-task.dto";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
 
 
 import { CronTasksService } from "./cron-tasks.service";
 
 @Controller("tasks")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class TasksController {
   constructor(
     private readonly tasksService: TasksService,

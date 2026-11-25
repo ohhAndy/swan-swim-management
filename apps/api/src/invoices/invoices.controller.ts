@@ -8,7 +8,6 @@ import {
   Delete,
   Put,
   Query,
-  UseGuards,
 } from "@nestjs/common";
 import { ZodValidationPipe } from "nestjs-zod";
 import { InvoicesService } from "./invoices.service";
@@ -21,15 +20,12 @@ import {
 import { UpdateInvoiceDto } from "./dto/update-invoice.dto";
 import { InvoiceQueryDto } from "./dto/invoice-query.dto";
 import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-query.dto";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("invoices")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}
 

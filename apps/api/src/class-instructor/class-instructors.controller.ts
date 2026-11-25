@@ -5,17 +5,13 @@ import {
   Get,
   Param,
   Body,
-  UseGuards,
 } from "@nestjs/common";
 import { ClassInstructorsService } from "./class-instructors.service";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("class-instructors")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class ClassInstructorsController {
   constructor(private readonly service: ClassInstructorsService) {}
 

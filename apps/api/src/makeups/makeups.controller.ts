@@ -1,15 +1,12 @@
-import { Body, Controller, Post, Res, UseGuards } from "@nestjs/common";
+import { Body, Controller, Post, Res } from "@nestjs/common";
 import { Response } from "express";
 import { MakeupsService } from "./makeups.service";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 import { ScheduleMakeUpInput, ScheduleMakeUpSchema } from "./dto/schedule-makeup.dto";
 
 @Controller("makeups")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class MakeupsController {
   constructor(private readonly makeupsService: MakeupsService) {}
 

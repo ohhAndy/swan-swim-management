@@ -3,15 +3,11 @@ import { ZodValidationPipe } from "nestjs-zod";
 import { SkipsService } from "./skips.service";
 import { AddSkipInput, addSkipSchema } from "./dto/skips.dto";
 
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
-import { UseGuards } from "@nestjs/common";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("enrollments/:enrollmentId/skips")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class SkipsController {
   constructor(private readonly skipsService: SkipsService) {}
 

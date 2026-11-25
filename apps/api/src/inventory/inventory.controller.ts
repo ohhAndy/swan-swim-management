@@ -6,19 +6,15 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
   Query,
 } from "@nestjs/common";
 import { InventoryService } from "./inventory.service";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { Prisma } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("inventory")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 

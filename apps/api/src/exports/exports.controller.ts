@@ -1,12 +1,9 @@
-import { Controller, Get, Query, Res, UseGuards } from "@nestjs/common";
+import { Controller, Get, Query, Res } from "@nestjs/common";
 import { ExportsService } from "./exports.service";
 import { Response } from "express";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 
 @Controller("exports")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class ExportsController {
   constructor(private readonly exportsService: ExportsService) {}
 

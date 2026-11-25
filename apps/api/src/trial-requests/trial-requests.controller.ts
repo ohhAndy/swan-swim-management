@@ -7,11 +7,8 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
 } from "@nestjs/common";
 import { TrialRequestsService } from "./trial-requests.service";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
@@ -23,7 +20,6 @@ import {
 import { BookTrialRequestDto } from "./dto/book-trial-request.dto";
 
 @Controller("trial-requests")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 // TODO: Expand access to 'manager' role in a future release when branch managers coordinate trials
 @Roles("super_admin", "admin")
 export class TrialRequestsController {

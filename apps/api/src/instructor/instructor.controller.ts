@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
   Query,
   UsePipes,
 } from "@nestjs/common";
@@ -14,14 +13,11 @@ import { ZodValidationPipe } from "nestjs-zod";
 import { InstructorsService } from "./instructor.service";
 import { CreateInstructorDto } from "./dto/create-instructor.dto";
 import { UpdateInstructorDto } from "./dto/update-instructor.dto";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("instructors")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 @UsePipes(ZodValidationPipe)
 export class InstructorsController {
   constructor(private readonly instructorsService: InstructorsService) {}

@@ -6,11 +6,8 @@ import {
   Param,
   Post,
   Query,
-  UseGuards,
 } from "@nestjs/common";
 import { TokensService } from "./tokens.service";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
@@ -19,7 +16,6 @@ import { VoidTokenInput, VoidTokenSchema } from "./dto/void-token.dto";
 import { TokenBalanceQueryInput, TokenBalanceQuerySchema } from "./dto/token-balance-query.dto";
 
 @Controller("tokens")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class TokensController {
   constructor(private readonly tokensService: TokensService) {}
 

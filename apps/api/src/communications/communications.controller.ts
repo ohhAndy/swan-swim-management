@@ -8,7 +8,6 @@ import {
   Query,
   RawBodyRequest,
   Req,
-  UseGuards,
 } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
 import { Request } from "express";
@@ -18,14 +17,12 @@ import {
   SendEmailDto,
   GetCommunicationHistoryDto,
 } from "./dto/communications.dto";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { Public } from "../auth/public.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("communications")
-@UseGuards(RolesGuard)
 export class CommunicationsController {
   constructor(private readonly service: CommunicationsService) {}
 

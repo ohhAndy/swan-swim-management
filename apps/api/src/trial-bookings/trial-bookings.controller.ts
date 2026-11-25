@@ -5,19 +5,15 @@ import {
   Delete,
   Body,
   Param,
-  UseGuards,
   Get,
 } from "@nestjs/common";
 import { TrialBookingsService } from "./trial-bookings.service";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { TrialStatus } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("trial-bookings")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class TrialBookingsController {
   constructor(private readonly service: TrialBookingsService) {}
 

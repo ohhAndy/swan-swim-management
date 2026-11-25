@@ -7,7 +7,6 @@ import {
   Body,
   Patch,
   Delete,
-  UseGuards,
 } from "@nestjs/common";
 import { GuardiansService } from "./guardians.service";
 import { ZodValidationPipe } from "nestjs-zod";
@@ -19,14 +18,11 @@ import {
   CreateGuardianDto,
   UpdateGuardianDto,
 } from "./dto/schemas.dto";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("guardians")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class GuardiansController {
   constructor(private readonly guardiansService: GuardiansService) {}
 

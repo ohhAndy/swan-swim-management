@@ -7,11 +7,8 @@ import {
   Post,
   Put,
   Query,
-  UseGuards,
 } from "@nestjs/common";
 import { ZodValidationPipe } from "nestjs-zod";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
@@ -33,7 +30,6 @@ import {
 } from "../terms/dto/create-term.dto";
 
 @Controller("swim-team")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class SwimTeamController {
   constructor(private readonly swimTeamService: SwimTeamService) {}
 

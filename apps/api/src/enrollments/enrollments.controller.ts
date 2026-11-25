@@ -4,7 +4,6 @@ import {
   Post,
   Param,
   Put,
-  UseGuards,
   Delete,
   Get,
   Query,
@@ -21,15 +20,12 @@ import {
   transferEnrollmentSchema,
 } from "./dto/transfer.dto";
 import { BulkTransferDto, bulkTransferSchema } from "./dto/bulk-transfer.dto";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("enrollments")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class EnrollmentsController {
   constructor(private readonly enrollmentsService: EnrollmentsService) {}
 

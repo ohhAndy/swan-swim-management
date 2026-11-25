@@ -1,4 +1,4 @@
-import { Body, Controller, Put, Patch, UseGuards } from "@nestjs/common";
+import { Body, Controller, Put, Patch } from "@nestjs/common";
 import { AttendanceService } from "./attendance.service";
 import { ZodValidationPipe } from "nestjs-zod";
 import {
@@ -9,13 +9,10 @@ import {
 } from "./dto/attendance.dto";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
-import { SupabaseAuthGuard } from "../auth/supabase-auth.guard";
-import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
 
 
 @Controller("attendance")
-@UseGuards(SupabaseAuthGuard, RolesGuard)
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
