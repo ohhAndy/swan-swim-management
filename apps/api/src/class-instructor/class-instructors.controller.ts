@@ -12,7 +12,7 @@ import {
   AssignInstructorDto,
   AssignInstructorSchema,
 } from "./dto/assign-instructor.dto";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
@@ -21,7 +21,7 @@ export class ClassInstructorsController {
   constructor(private readonly service: ClassInstructorsService) {}
 
   @Post()
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async assignInstructor(
     @Body(new ZodValidationPipe(AssignInstructorSchema))
     body: AssignInstructorDto,
@@ -35,7 +35,7 @@ export class ClassInstructorsController {
   }
 
   @Delete(":id")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async removeInstructor(
     @Param("id") id: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,
@@ -44,7 +44,7 @@ export class ClassInstructorsController {
   }
 
   @Get("class/:classOfferingId")
-  @Roles("super_admin", "admin", "manager", "supervisor", "viewer")
+  @MinRole("supervisor")
   async getActiveInstructors(
     @Param("classOfferingId") classOfferingId: string,
   ) {

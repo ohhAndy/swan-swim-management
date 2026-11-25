@@ -9,6 +9,7 @@ import { TransferEnrollmentDto } from "./dto/transfer.dto";
 import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-query.dto";
 import { Prisma } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
+import { hasMinRole } from "../auth/roles";
 import { assertCanEditSkips } from "../common/helpers/enrollment-skips.helper";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { calculateEnrollmentTuition } from "../common/billing";
@@ -591,7 +592,7 @@ export class EnrollmentsService {
 
     const includeAllLocations = query?.includeAllLocations === "true";
     const isAdmin =
-      staffUser && ["admin", "super_admin"].includes(staffUser.role);
+      hasMinRole(staffUser?.role, "admin");
 
     if (isAdmin) {
       // For Admins/Super Admins:

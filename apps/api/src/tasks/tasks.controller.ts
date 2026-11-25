@@ -13,7 +13,7 @@ import { CronTasksService } from "./cron-tasks.service";
 import { CreateTaskDto, CreateTaskSchema } from "./dto/create-task.dto";
 import { UpdateTaskDto, UpdateTaskSchema } from "./dto/update-task.dto";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("tasks")
@@ -24,13 +24,13 @@ export class TasksController {
   ) {}
 
   @Post("cron/deactivate-expired")
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   triggerDeactivateExpired() {
     return this.cronTasksService.deactivateExpiredEnrollments();
   }
 
   @Post()
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   create(
     @Body(new ZodValidationPipe(CreateTaskSchema)) createTaskDto: CreateTaskDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
@@ -39,19 +39,19 @@ export class TasksController {
   }
 
   @Get()
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   findAll(@CurrentStaffUser() staffUser: RequestStaffUser) {
     return this.tasksService.findAll(staffUser);
   }
 
   @Get(":id")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   findOne(@Param("id") id: string, @CurrentStaffUser() staffUser: RequestStaffUser) {
     return this.tasksService.findOne(id, staffUser);
   }
 
   @Patch(":id")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateTaskSchema)) updateTaskDto: UpdateTaskDto,
@@ -61,7 +61,7 @@ export class TasksController {
   }
 
   @Delete(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   remove(@Param("id") id: string, @CurrentStaffUser() staffUser: RequestStaffUser) {
     return this.tasksService.remove(id, staffUser);
   }

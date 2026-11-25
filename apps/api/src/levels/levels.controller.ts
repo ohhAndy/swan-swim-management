@@ -8,7 +8,7 @@ import {
   Delete,
 } from "@nestjs/common";
 import { LevelsService } from "./levels.service";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CreateLevelDto } from "./dto/create-level.dto";
 import { UpdateLevelDto } from "./dto/update-level.dto";
 
@@ -17,7 +17,7 @@ export class LevelsController {
   constructor(private readonly levelsService: LevelsService) {}
 
   @Post()
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   create(@Body() createLevelDto: CreateLevelDto) {
     return this.levelsService.create(createLevelDto);
   }
@@ -33,13 +33,13 @@ export class LevelsController {
   }
 
   @Patch(":id")
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   update(@Param("id") id: string, @Body() updateLevelDto: UpdateLevelDto) {
     return this.levelsService.update(id, updateLevelDto);
   }
 
   @Delete(":id")
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   remove(@Param("id") id: string) {
     return this.levelsService.remove(id);
   }

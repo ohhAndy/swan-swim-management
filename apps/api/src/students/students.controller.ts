@@ -21,7 +21,7 @@ import {
   updateStudentNotesSchema,
   UpdateStudentNotesDto,
 } from "./dto/schemas.dto";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser, StaffUserWithLocations } from "../auth/auth.types";
 
@@ -46,7 +46,7 @@ export class StudentsController {
   }
 
   @Post()
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async create(
     @Body(new ZodValidationPipe(createStudentSchema)) body: CreateStudentDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
@@ -55,7 +55,7 @@ export class StudentsController {
   }
 
   @Patch(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(updateStudentSchema)) body: UpdateStudentDto,
@@ -65,7 +65,7 @@ export class StudentsController {
   }
 
   @Put(":id/notes")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async updateNotes(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(updateStudentNotesSchema))
@@ -76,7 +76,7 @@ export class StudentsController {
   }
 
   @Delete(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async delete(
     @Param("id") id: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,

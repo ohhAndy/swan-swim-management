@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import type { EnrollmentStatus } from "@prisma/client";
 import { RequestStaffUser } from "../../auth/auth.types";
+import { hasMinRole } from "../../auth/roles";
 
 export function assertCanEditSkips(
   enrollmentStatus: EnrollmentStatus,
@@ -12,7 +13,7 @@ export function assertCanEditSkips(
     );
   }
 
-  const isAdmin = staffUser.role === "admin" || staffUser.role === "super_admin";
+  const isAdmin = hasMinRole(staffUser.role, "admin");
   if (enrollmentStatus === "inactive" && !isAdmin) {
     throw new ForbiddenException(
       "Only admins can modify skips for inactive enrollments",

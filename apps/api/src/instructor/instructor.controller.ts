@@ -13,7 +13,7 @@ import { ZodValidationPipe } from "nestjs-zod";
 import { InstructorsService } from "./instructor.service";
 import { CreateInstructorDto } from "./dto/create-instructor.dto";
 import { UpdateInstructorDto } from "./dto/update-instructor.dto";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
@@ -23,7 +23,7 @@ export class InstructorsController {
   constructor(private readonly instructorsService: InstructorsService) {}
 
   @Post()
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   create(
     @Body() createInstructorDto: CreateInstructorDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
@@ -32,19 +32,19 @@ export class InstructorsController {
   }
 
   @Get()
-  @Roles("super_admin", "admin", "manager", "supervisor", "viewer")
+  @MinRole("supervisor")
   findAll(@Query("active") active?: string) {
     return this.instructorsService.findAll(active === "true");
   }
 
   @Get(":id")
-  @Roles("super_admin", "admin", "manager", "supervisor", "viewer")
+  @MinRole("supervisor")
   findOne(@Param("id") id: string) {
     return this.instructorsService.findOne(id);
   }
 
   @Patch(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   update(
     @Param("id") id: string,
     @Body() updateInstructorDto: UpdateInstructorDto,
@@ -54,7 +54,7 @@ export class InstructorsController {
   }
 
   @Delete(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   remove(@Param("id") id: string, @CurrentStaffUser() staffUser: RequestStaffUser) {
     return this.instructorsService.remove(id, staffUser);
   }

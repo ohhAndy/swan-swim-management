@@ -43,20 +43,20 @@ describe("StaffUsersController (e2e)", () => {
     });
 
     it("should reject users without admin/super_admin role", async () => {
-      // Create a viewer user
+      // Create a supervisor user
       await prisma.staffUser.create({
         data: {
-          authId: "test-viewer",
-          email: "viewer@test.com",
-          role: "viewer",
-          fullName: "Test Viewer",
+          authId: "test-supervisor",
+          email: "supervisor@test.com",
+          role: "supervisor",
+          fullName: "Test Supervisor",
           active: true,
         },
       });
 
       return request(app.getHttpServer())
         .get("/staff-users")
-        .set("x-mock-auth-id", "test-viewer")
+        .set("x-mock-auth-id", "test-supervisor")
         .expect(403);
     });
   });

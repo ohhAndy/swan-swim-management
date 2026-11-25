@@ -13,7 +13,7 @@ import { PaymentsService } from "./payments.service";
 import { CreatePaymentDto, CreatePaymentSchema } from "./dto/create-payment.dto";
 import { UpdatePaymentDto, UpdatePaymentSchema } from "./dto/update-payment.dto";
 import { PaymentQueryDto, PaymentQuerySchema } from "./dto/payment-query.dto";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
@@ -22,7 +22,7 @@ export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Get()
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   findAll(
     @Query(new ZodValidationPipe(PaymentQuerySchema)) q: PaymentQueryDto,
   ) {
@@ -38,7 +38,7 @@ export class PaymentsController {
 
   // Record payment - Admin & Manager only
   @Post()
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   create(
     @Body(new ZodValidationPipe(CreatePaymentSchema))
     createPaymentDto: CreatePaymentDto,
@@ -49,25 +49,25 @@ export class PaymentsController {
 
   // Get all payments for an invoice - Admin & Manager only
   @Get("invoice/:invoiceId")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   findByInvoice(@Param("invoiceId") invoiceId: string) {
     return this.paymentsService.findByInvoice(invoiceId);
   }
 
   @Get(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   findOne(@Param("id") id: string) {
     return this.paymentsService.findOne(id);
   }
 
   @Delete(":id")
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   remove(@Param("id") id: string, @CurrentStaffUser() staffUser: RequestStaffUser) {
     return this.paymentsService.remove(id, staffUser);
   }
 
   @Patch(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdatePaymentSchema))

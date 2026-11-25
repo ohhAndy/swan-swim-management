@@ -8,6 +8,7 @@ import { Prisma, Task } from "@prisma/client";
 import { CreateTaskDto } from "./dto/create-task.dto";
 import { UpdateTaskDto } from "./dto/update-task.dto";
 import { RequestStaffUser } from "../auth/auth.types";
+import { hasMinRole } from "../auth/roles";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 
@@ -16,10 +17,8 @@ const TASK_INCLUDE = {
   createdBy: { select: { id: true, fullName: true } },
 } satisfies Prisma.TaskInclude;
 
-const ROLES_WITH_ALL_TASKS = ["super_admin", "admin", "manager"];
-
 function canAccessAllTasks(staffUser: RequestStaffUser) {
-  return ROLES_WITH_ALL_TASKS.includes(staffUser.role);
+  return hasMinRole(staffUser.role, "manager");
 }
 
 function isOwnTask(task: Task, staffUser: RequestStaffUser) {

@@ -1,6 +1,6 @@
 import { Controller, Get } from "@nestjs/common";
 import { StaffUsersService } from "./staff-users.service";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
@@ -9,7 +9,7 @@ export class StaffUsersController {
   constructor(private readonly staffUsersService: StaffUsersService) {}
 
   @Get()
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   async findAll() {
     return this.staffUsersService.findAll();
   }

@@ -23,7 +23,7 @@ import {
   UnInvoicedEnrollmentsQueryDto,
   UnInvoicedEnrollmentsQuerySchema,
 } from "./dto/uninvoiced-enrollments-query.dto";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
@@ -33,7 +33,7 @@ export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}
 
   @Post()
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async create(
     @Body(new ZodValidationPipe(CreateInvoiceSchema))
     createInvoiceDto: CreateInvoiceDto,
@@ -45,7 +45,7 @@ export class InvoicesController {
 
   // List invoices with filters - Admin & Manager only
   @Get()
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async findAll(
     @Query(new ZodValidationPipe(InvoiceQuerySchema)) query: InvoiceQueryDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
@@ -56,7 +56,7 @@ export class InvoicesController {
 
   // Get un-invoiced enrollments - Admin & Manager only
   @Get("un-invoiced-enrollments")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async getUnInvoicedEnrollments(
     @Query(new ZodValidationPipe(UnInvoicedEnrollmentsQuerySchema))
     query: UnInvoicedEnrollmentsQueryDto,
@@ -71,13 +71,13 @@ export class InvoicesController {
   }
 
   @Get(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async findOne(@Param("id") id: string) {
     return this.invoicesService.findOne(id);
   }
 
   @Patch(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateInvoiceSchema))
@@ -89,7 +89,7 @@ export class InvoicesController {
 
   // Replace the installment plan - Admin & Manager only
   @Put(":id/installments")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async updateInstallments(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateInstallmentsSchema))
@@ -100,7 +100,7 @@ export class InvoicesController {
   }
 
   @Delete(":id")
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   async remove(
     @Param("id") id: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,

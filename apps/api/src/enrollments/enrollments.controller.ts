@@ -29,7 +29,7 @@ import {
   UpdateSkipsDto,
   UpdateSkipsSchema,
 } from "./dto/enrollment-updates.dto";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
@@ -39,7 +39,7 @@ export class EnrollmentsController {
   constructor(private readonly enrollmentsService: EnrollmentsService) {}
 
   @Get("uninvoiced")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async findUninvoiced(
     @Query(new ZodValidationPipe(UnInvoicedEnrollmentsQuerySchema))
     query: UnInvoicedEnrollmentsQueryDto,
@@ -50,7 +50,7 @@ export class EnrollmentsController {
   }
 
   @Post("with-skip")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async enrollWithSkips(
     @Body(new ZodValidationPipe(EnrollWithSkipSchema))
     body: EnrollWithSkipInput,
@@ -60,7 +60,7 @@ export class EnrollmentsController {
   }
 
   @Post(":id/transfer")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async transferEnrollment(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(transferEnrollmentSchema))
@@ -71,7 +71,7 @@ export class EnrollmentsController {
   }
 
   @Post("bulk-transfer")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async bulkTransferEnrollments(
     @Body(new ZodValidationPipe(bulkTransferSchema)) body: BulkTransferDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
@@ -80,7 +80,7 @@ export class EnrollmentsController {
   }
 
   @Put(":id/remarks")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async updateRemarks(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateRemarksSchema)) body: UpdateRemarksDto,
@@ -90,7 +90,7 @@ export class EnrollmentsController {
   }
 
   @Put(":id/skips")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async updateSkips(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateSkipsSchema)) body: UpdateSkipsDto,
@@ -104,7 +104,7 @@ export class EnrollmentsController {
   }
 
   @Delete(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async deleteEnrollment(
     @Param("id") id: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,

@@ -18,7 +18,7 @@ import {
   UpdateInventoryItemDto,
   UpdateInventoryItemSchema,
 } from "./dto/inventory.dto";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { Prisma } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
@@ -28,7 +28,7 @@ export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
   @Post()
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   create(
     @Body(new ZodValidationPipe(CreateInventoryItemSchema))
     data: CreateInventoryItemDto,
@@ -38,7 +38,7 @@ export class InventoryController {
   }
 
   @Get()
-  @Roles("super_admin", "admin", "manager", "viewer")
+  @MinRole("manager")
   findAll(
     @Query(new ZodValidationPipe(InventoryQuerySchema)) q: InventoryQueryDto,
   ) {
@@ -62,13 +62,13 @@ export class InventoryController {
   }
 
   @Get(":id")
-  @Roles("super_admin", "admin", "manager", "viewer")
+  @MinRole("manager")
   findOne(@Param("id") id: string) {
     return this.inventoryService.findOne(id);
   }
 
   @Patch(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateInventoryItemSchema))
@@ -79,7 +79,7 @@ export class InventoryController {
   }
 
   @Delete(":id")
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   remove(@Param("id") id: string, @CurrentStaffUser() staffUser: RequestStaffUser) {
     return this.inventoryService.delete(id, staffUser);
   }

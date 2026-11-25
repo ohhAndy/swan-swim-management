@@ -18,7 +18,7 @@ import {
   AvailabilityQueryDto,
   AvailabilityQuerySchema,
 } from "./dto/availability-query.dto";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
@@ -32,7 +32,7 @@ export class TermsController {
   ) {}
 
   @Post()
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   async create(
     @Body(new ZodValidationPipe(CreateTermSchema)) input: CreateTermInput,
     @CurrentStaffUser() staffUser: RequestStaffUser,

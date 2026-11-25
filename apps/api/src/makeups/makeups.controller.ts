@@ -2,7 +2,7 @@ import { Body, Controller, Post, Res } from "@nestjs/common";
 import { Response } from "express";
 import { ZodValidationPipe } from "nestjs-zod";
 import { MakeupsService } from "./makeups.service";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 import { ScheduleMakeUpInput, ScheduleMakeUpSchema } from "./dto/schedule-makeup.dto";
@@ -12,7 +12,7 @@ export class MakeupsController {
   constructor(private readonly makeupsService: MakeupsService) {}
 
   @Post()
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async create(
     @Body(new ZodValidationPipe(ScheduleMakeUpSchema)) body: ScheduleMakeUpInput,
     @Res({ passthrough: true }) res: Response,

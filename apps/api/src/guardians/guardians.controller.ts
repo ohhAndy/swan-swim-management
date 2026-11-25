@@ -18,7 +18,7 @@ import {
   CreateGuardianDto,
   UpdateGuardianDto,
 } from "./dto/schemas.dto";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
@@ -40,7 +40,7 @@ export class GuardiansController {
   }
 
   @Post()
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async create(
     @Body(new ZodValidationPipe(createGuardianSchema)) body: CreateGuardianDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
@@ -49,7 +49,7 @@ export class GuardiansController {
   }
 
   @Patch(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(updateGuardianSchema)) body: UpdateGuardianDto,
@@ -59,7 +59,7 @@ export class GuardiansController {
   }
 
   @Delete(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async delete(
     @Param("id") id: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,

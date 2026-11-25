@@ -9,7 +9,7 @@ import {
   Delete,
 } from "@nestjs/common";
 import { OfferingsService } from "./offerings.service";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 import { ZodValidationPipe } from "nestjs-zod";
@@ -41,7 +41,7 @@ export class OfferingsController {
   }
 
   @Patch(":offeringId")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async updateOfferingInfo(
     @Param("offeringId") offeringId: string,
     @Body(new ZodValidationPipe(UpdateOfferingInfoSchema))
@@ -52,7 +52,7 @@ export class OfferingsController {
   }
 
   @Post()
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async createOffering(
     @Body(new ZodValidationPipe(CreateOfferingSchema))
     body: CreateOfferingInput,
@@ -62,7 +62,7 @@ export class OfferingsController {
   }
 
   @Delete(":offeringId")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async deleteOffering(
     @Param("offeringId") offeringId: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,

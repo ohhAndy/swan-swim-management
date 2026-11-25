@@ -102,6 +102,40 @@ describe("TermsService", () => {
         }),
       );
     });
+
+    it("lets a super_admin create a term at any location", async () => {
+      const superAdmin: RequestStaffUser = {
+        id: "staff2",
+        authId: "user2",
+        email: "owner@test.com",
+        fullName: "Owner",
+        role: "super_admin",
+        active: true,
+        accessSchedule: null,
+        accessibleLocations: [],
+      };
+
+      prismaMock.term.findUnique.mockResolvedValue(null);
+      prismaMock.term.create.mockResolvedValue({ id: "term2" });
+
+      await service.createTermWithSchedule(
+        {
+          name: "Spring 2024",
+          startDate: new Date("2024-04-01"),
+          endDate: new Date("2024-06-30"),
+          weeks: 8,
+          templates: [],
+        },
+        superAdmin,
+        "loc2",
+      );
+
+      expect(prismaMock.term.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ locationId: "loc2" }),
+        }),
+      );
+    });
   });
 
   describe("getAllTerms", () => {

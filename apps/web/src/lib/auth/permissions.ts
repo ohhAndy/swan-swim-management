@@ -2,12 +2,10 @@ import type { StaffRole } from "@prisma/client";
 export type { StaffRole };
 
 const ROLE_HIERARCHY: Record<StaffRole, number> = {
-  viewer: 1,
-  instructor: 2,
-  supervisor: 3,
-  manager: 4,
-  admin: 5,
-  super_admin: 6,
+  supervisor: 1,
+  manager: 2,
+  admin: 3,
+  super_admin: 4,
 };
 
 export function hasMinRole(

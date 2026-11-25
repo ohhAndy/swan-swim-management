@@ -8,7 +8,7 @@ import {
   Delete,
 } from "@nestjs/common";
 import { SkillsService } from "./skills.service";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CreateSkillDto } from "./dto/create-skill.dto";
 import { UpdateSkillDto } from "./dto/update-skill.dto";
 
@@ -17,7 +17,7 @@ export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}
 
   @Post()
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   create(@Body() createSkillDto: CreateSkillDto) {
     return this.skillsService.create(createSkillDto);
   }
@@ -33,13 +33,13 @@ export class SkillsController {
   }
 
   @Patch(":id")
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   update(@Param("id") id: string, @Body() updateSkillDto: UpdateSkillDto) {
     return this.skillsService.update(id, updateSkillDto);
   }
 
   @Delete(":id")
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   remove(@Param("id") id: string) {
     return this.skillsService.remove(id);
   }

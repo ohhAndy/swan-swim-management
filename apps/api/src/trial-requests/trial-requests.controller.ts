@@ -9,7 +9,7 @@ import {
   Query,
 } from "@nestjs/common";
 import { TrialRequestsService } from "./trial-requests.service";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 import { TrialRequestQueryDto } from "./dto/trial-request-query.dto";
@@ -21,7 +21,7 @@ import { BookTrialRequestDto } from "./dto/book-trial-request.dto";
 
 @Controller("trial-requests")
 // TODO: Expand access to 'manager' role in a future release when branch managers coordinate trials
-@Roles("super_admin", "admin")
+@MinRole("admin")
 export class TrialRequestsController {
   constructor(private readonly service: TrialRequestsService) {}
 

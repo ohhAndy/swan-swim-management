@@ -7,6 +7,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { calculateClassUsage } from "../common/capacity";
 import { RequestStaffUser } from "../auth/auth.types";
+import { hasMinRole } from "../auth/roles";
 import { CreateOfferingInput } from "./dto/create-offering.dto";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
@@ -109,8 +110,7 @@ export class OfferingsService {
 
     if (
       data.type === "flexible" &&
-      staffUser.role !== "super_admin" &&
-      staffUser.role !== "admin"
+      !hasMinRole(staffUser.role, "admin")
     ) {
       throw new ForbiddenException(
         "Only admins can create flexible short courses",

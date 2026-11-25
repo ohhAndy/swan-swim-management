@@ -4,6 +4,7 @@ import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import type { Term } from "@school/shared-types";
 import { CreateTermInput } from "./dto/create-term.dto";
 import { RequestStaffUser } from "../auth/auth.types";
+import { hasMinRole } from "../auth/roles";
 import { computeEnd, weeklyDates } from "./terms.helpers";
 import { calculateClassUsage } from "../common/capacity";
 import {
@@ -51,7 +52,7 @@ export class TermsService {
     // Validate Location Access
     let assignedLocationId: string | null = null;
 
-    if (staffUser.role === "admin") {
+    if (hasMinRole(staffUser.role, "admin")) {
       assignedLocationId = locationId ?? null;
     } else {
       if (!locationId) {

@@ -71,15 +71,15 @@ describe("LocationsController (e2e)", () => {
         },
       });
 
-      // Create instructor staff user and grant access only to testLocationId
-      const instructorAuthId = "test-instructor";
-      const instructorEmail = "instructor@test.com";
+      // Create supervisor staff user and grant access only to testLocationId
+      const staffAuthId = "test-supervisor";
+      const staffEmail = "supervisor@test.com";
       await prisma.staffUser.create({
         data: {
-          authId: instructorAuthId,
-          email: instructorEmail,
-          role: "instructor",
-          fullName: "Test Instructor",
+          authId: staffAuthId,
+          email: staffEmail,
+          role: "supervisor",
+          fullName: "Test Supervisor",
           active: true,
           accessibleLocations: {
             connect: { id: testLocationId },
@@ -89,8 +89,8 @@ describe("LocationsController (e2e)", () => {
 
       const response = await request(app.getHttpServer())
         .get("/locations")
-        .set("x-mock-auth-id", instructorAuthId)
-        .set("x-mock-email", instructorEmail)
+        .set("x-mock-auth-id", staffAuthId)
+        .set("x-mock-email", staffEmail)
         .expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);

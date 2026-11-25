@@ -564,8 +564,6 @@ enum StaffRole {
   admin
   manager
   supervisor
-  viewer
-  instructor
   super_admin
 }
 

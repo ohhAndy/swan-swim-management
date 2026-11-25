@@ -22,6 +22,7 @@ import {
 } from "./dto/create-invoice.dto";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { RequestStaffUser } from "../auth/auth.types";
+import { hasMinRole } from "../auth/roles";
 import { EnrollmentsService } from "../enrollments/enrollments.service";
 
 export interface EnrollmentForCalculation {
@@ -282,7 +283,7 @@ export class InvoicesService {
       where.locationId = validatedLocationId;
     } else if (
       includeAllLocations &&
-      !["admin", "super_admin"].includes(staffUser.role)
+      !hasMinRole(staffUser.role, "admin")
     ) {
       const accessibleLocationIds = staffUser.accessibleLocations.map(
         (l: { id: string }) => l.id,

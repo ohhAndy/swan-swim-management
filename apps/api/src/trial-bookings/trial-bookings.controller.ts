@@ -9,7 +9,7 @@ import {
 } from "@nestjs/common";
 import { ZodValidationPipe } from "nestjs-zod";
 import { TrialBookingsService } from "./trial-bookings.service";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 import {
@@ -28,25 +28,25 @@ export class TrialBookingsController {
   constructor(private readonly service: TrialBookingsService) {}
 
   @Get("upcoming")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async getUpcoming() {
     return this.service.findUpcoming();
   }
 
   @Get("past")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async getPast() {
     return this.service.findPast();
   }
 
   @Get("stats")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async getStats() {
     return this.service.getStats();
   }
 
   @Post()
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async createTrialBooking(
     @Body(new ZodValidationPipe(CreateTrialBookingSchema))
     body: CreateTrialBookingDto,
@@ -64,7 +64,7 @@ export class TrialBookingsController {
   }
 
   @Patch(":id/status")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async updateStatus(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateTrialStatusSchema))
@@ -75,7 +75,7 @@ export class TrialBookingsController {
   }
 
   @Patch(":id/notes")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async updateNotes(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateTrialNotesSchema))
@@ -86,7 +86,7 @@ export class TrialBookingsController {
   }
 
   @Patch(":id/convert")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async convertToStudent(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(ConvertTrialSchema)) body: ConvertTrialDto,
@@ -96,7 +96,7 @@ export class TrialBookingsController {
   }
 
   @Delete(":id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async deleteTrialBooking(
     @Param("id") id: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,

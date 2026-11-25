@@ -3,7 +3,7 @@ import { ZodValidationPipe } from "nestjs-zod";
 import { SkipsService } from "./skips.service";
 import { AddSkipInput, addSkipSchema } from "./dto/skips.dto";
 
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
@@ -12,7 +12,7 @@ export class SkipsController {
   constructor(private readonly skipsService: SkipsService) {}
 
   @Post()
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async add(
     @Param("enrollmentId") enrollmentId: string,
     @Body(new ZodValidationPipe(addSkipSchema)) body: AddSkipInput,
@@ -22,7 +22,7 @@ export class SkipsController {
   }
 
   @Delete(":classSessionId")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async delete(
     @Param("enrollmentId") enrollmentId: string,
     @Param("classSessionId") classSessionId: string,

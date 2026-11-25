@@ -17,7 +17,7 @@ import {
   SendEmailDto,
   GetCommunicationHistoryDto,
 } from "./dto/communications.dto";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { Public } from "../auth/public.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
@@ -27,13 +27,13 @@ export class CommunicationsController {
   constructor(private readonly service: CommunicationsService) {}
 
   @Post("recipients")
-  @Roles("admin", "super_admin", "manager")
+  @MinRole("manager")
   async getRecipients(@Body() filters: RecipientFilterDto) {
     return this.service.getRecipients(filters);
   }
 
   @Post("send")
-  @Roles("admin", "super_admin", "manager")
+  @MinRole("manager")
   async sendEmail(
     @Body() dto: SendEmailDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
@@ -42,13 +42,13 @@ export class CommunicationsController {
   }
 
   @Get("history")
-  @Roles("admin", "super_admin", "manager")
+  @MinRole("manager")
   async getHistory(@Query() query: GetCommunicationHistoryDto) {
     return this.service.getHistory(query);
   }
 
   @Get("history/:id")
-  @Roles("admin", "super_admin", "manager")
+  @MinRole("manager")
   async getHistoryById(@Param("id") id: string) {
     return this.service.getHistoryById(id);
   }

@@ -5,7 +5,8 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { ROLES_KEY } from "./roles.decorator";
+import { MIN_ROLE_KEY } from "./roles.decorator";
+import { hasMinRole } from "./roles";
 import type { StaffRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -33,12 +34,12 @@ export class RolesGuard implements CanActivate {
 
     // If user is not authenticated...
     if (!user || !user.authId) {
-      const requiredRoles = this.reflector.getAllAndOverride<StaffRole[]>(
-        ROLES_KEY,
+      const minRole = this.reflector.getAllAndOverride<StaffRole>(
+        MIN_ROLE_KEY,
         [context.getHandler(), context.getClass()],
       );
 
-      if (requiredRoles) {
+      if (minRole) {
         throw new ForbiddenException("User not authenticated");
       }
       // If no roles required and no user, allow (optional auth route)
@@ -109,15 +110,15 @@ export class RolesGuard implements CanActivate {
 
     request.staffUser = staffUser;
 
-    // Finally, check Roles if they were required
-    const requiredRoles = this.reflector.getAllAndOverride<StaffRole[]>(
-      ROLES_KEY,
+    // Finally, check the minimum role if one was set
+    const minRole = this.reflector.getAllAndOverride<StaffRole>(
+      MIN_ROLE_KEY,
       [context.getHandler(), context.getClass()],
     );
 
-    if (requiredRoles && !requiredRoles.includes(staffUser.role as StaffRole)) {
+    if (minRole && !hasMinRole(staffUser.role, minRole)) {
       throw new ForbiddenException(
-        `Insufficient permissions. Required: ${requiredRoles.join(" or ")}`,
+        `Insufficient permissions. Requires ${minRole} or higher.`,
       );
     }
 

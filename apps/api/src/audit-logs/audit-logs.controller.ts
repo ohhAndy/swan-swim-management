@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { AuditLogsService } from "./audit-logs.service";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { Prisma } from "@prisma/client";
 import { ZodValidationPipe } from "nestjs-zod";
 import { AuditLogQueryDto, AuditLogQuerySchema } from "./dto/audit-log-query.dto";
@@ -11,7 +11,7 @@ export class AuditLogsController {
   constructor(private readonly auditLogsService: AuditLogsService) {}
 
   @Get()
-  @Roles("super_admin")
+  @MinRole("super_admin")
   async findAll(
     @Query(new ZodValidationPipe(AuditLogQuerySchema))
     { skip, take, action, entityType, staffId, startDate, endDate }: AuditLogQueryDto,

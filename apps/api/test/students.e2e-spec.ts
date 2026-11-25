@@ -84,17 +84,17 @@ describe("StudentsController (e2e)", () => {
     it("should reject users without required role", async () => {
       await prisma.staffUser.create({
         data: {
-          authId: "test-viewer",
-          email: "viewer@test.com",
-          role: "viewer",
-          fullName: "Test Viewer",
+          authId: "test-supervisor",
+          email: "supervisor@test.com",
+          role: "supervisor",
+          fullName: "Test Supervisor",
           active: true,
         },
       });
 
       return request(app.getHttpServer())
         .post("/students")
-        .set("x-mock-auth-id", "test-viewer")
+        .set("x-mock-auth-id", "test-supervisor")
         .send({
           firstName: "New",
           lastName: "Kid",

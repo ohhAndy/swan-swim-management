@@ -1,12 +1,13 @@
 import { ForbiddenException, BadRequestException } from "@nestjs/common";
 import { StaffUserWithLocations } from "../../auth/auth.types";
+import { hasMinRole } from "../../auth/roles";
 
 export function validateLocationAccess(
   staffUser: StaffUserWithLocations,
   locationId?: string,
 ): string | null {
   // 1. Admin Bypass
-  if (staffUser.role === "admin" || staffUser.role === "super_admin") {
+  if (hasMinRole(staffUser.role, "admin")) {
     return locationId ?? null;
   }
 

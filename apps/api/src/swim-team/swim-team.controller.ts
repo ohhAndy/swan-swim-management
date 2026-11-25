@@ -9,7 +9,7 @@ import {
   Query,
 } from "@nestjs/common";
 import { ZodValidationPipe } from "nestjs-zod";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { CurrentLocationId } from "../auth/current-location.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
@@ -36,13 +36,13 @@ export class SwimTeamController {
   constructor(private readonly swimTeamService: SwimTeamService) {}
 
   @Get("seasons")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async getSeasons(@CurrentLocationId() locationId?: string) {
     return this.swimTeamService.getSeasons(locationId ?? null);
   }
 
   @Get("seasons/:termId/fee-preview")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async previewFees(
     @Param("termId") termId: string,
     @Query(new ZodValidationPipe(FeePreviewQuerySchema)) query: FeePreviewQuery,
@@ -51,13 +51,13 @@ export class SwimTeamController {
   }
 
   @Get("seasons/:termId/fees")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async getFees(@Param("termId") termId: string) {
     return this.swimTeamService.getFeeTiers(termId);
   }
 
   @Put("seasons/:termId/fees")
-  @Roles("super_admin", "admin")
+  @MinRole("admin")
   async updateFees(
     @Param("termId") termId: string,
     @Body(new ZodValidationPipe(UpdateSwimTeamFeesSchema))
@@ -68,7 +68,7 @@ export class SwimTeamController {
   }
 
   @Get("registrations/uninvoiced")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async findUninvoiced(
     @Query(new ZodValidationPipe(UninvoicedRegistrationQuerySchema))
     query: UninvoicedRegistrationQuery,
@@ -77,7 +77,7 @@ export class SwimTeamController {
   }
 
   @Get("registrations")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async findAll(
     @Query(new ZodValidationPipe(RegistrationQuerySchema))
     query: RegistrationQuery,
@@ -86,7 +86,7 @@ export class SwimTeamController {
   }
 
   @Post("registrations")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async create(
     @Body(new ZodValidationPipe(CreateRegistrationSchema))
     body: CreateRegistrationInput,
@@ -96,7 +96,7 @@ export class SwimTeamController {
   }
 
   @Patch("registrations/:id")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateRegistrationSchema))
@@ -107,7 +107,7 @@ export class SwimTeamController {
   }
 
   @Post("registrations/:id/withdraw")
-  @Roles("super_admin", "admin", "manager")
+  @MinRole("manager")
   async withdraw(
     @Param("id") id: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,

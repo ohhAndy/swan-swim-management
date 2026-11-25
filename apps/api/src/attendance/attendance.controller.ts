@@ -9,7 +9,7 @@ import {
 } from "./dto/attendance.dto";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 
 
 @Controller("attendance")
@@ -17,7 +17,7 @@ export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
   @Put()
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async upsert(
     @Body(new ZodValidationPipe(UpsertAttendanceSchema))
     body: UpsertAttendanceInput,
@@ -27,7 +27,7 @@ export class AttendanceController {
   }
 
   @Patch("makeup")
-  @Roles("super_admin", "admin", "manager", "supervisor")
+  @MinRole("supervisor")
   async updateMakeUp(
     @Body(new ZodValidationPipe(UpdateMakeupAttendanceSchema))
     body: UpdateMakeupAttendanceInput,

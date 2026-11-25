@@ -11,12 +11,12 @@ import { ReportCardsService } from "./report-cards.service";
 import { CreateReportCardDto } from "./dto/create-report-card.dto";
 import { UpdateReportCardDto } from "./dto/update-report-card.dto";
 import { EmailReportCardDto } from "./dto/email-report-card.dto";
-import { Roles } from "../auth/roles.decorator";
+import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("report-cards")
-@Roles("super_admin", "admin", "manager", "supervisor")
+@MinRole("supervisor")
 export class ReportCardsController {
   constructor(private readonly reportCardsService: ReportCardsService) {}
 
