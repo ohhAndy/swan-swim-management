@@ -14,7 +14,7 @@ import { CreateInvoiceLineItemDto } from "./dto/create-invoice.dto";
 import {
   calculateEnrollmentTuition,
   calculateInstallmentStanding,
-} from "@school/shared-types";
+} from "../common/billing";
 import { getTorontoDateString } from "../common/date.utils";
 import {
   InvoiceInstallmentDto,

@@ -8,7 +8,7 @@ import { computeEnd, weeklyDates } from "./terms.helpers";
 import {
   DEFAULT_SWIM_TEAM_MEET_FEES,
   SWIM_TEAM_FREQUENCIES,
-} from "@school/shared-types";
+} from "../common/billing";
 
 /** Offering types that repeat weekly and appear on the weekday schedule grid */
 const WEEKLY_OFFERING_TYPES = ["regular", "swim_team"] as const;

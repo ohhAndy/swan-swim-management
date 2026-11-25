@@ -17,6 +17,8 @@ import { SwimTeamService } from "./swim-team.service";
 import {
   CreateRegistrationInput,
   CreateRegistrationSchema,
+  FeePreviewQuery,
+  FeePreviewQuerySchema,
   RegistrationQuery,
   RegistrationQuerySchema,
   UninvoicedRegistrationQuery,
@@ -37,6 +39,15 @@ export class SwimTeamController {
   @Roles("super_admin", "admin", "manager", "supervisor")
   async getSeasons(@CurrentLocationId() locationId?: string) {
     return this.swimTeamService.getSeasons(locationId ?? null);
+  }
+
+  @Get("seasons/:termId/fee-preview")
+  @Roles("super_admin", "admin", "manager", "supervisor")
+  async previewFees(
+    @Param("termId") termId: string,
+    @Query(new ZodValidationPipe(FeePreviewQuerySchema)) query: FeePreviewQuery,
+  ) {
+    return this.swimTeamService.previewFees(termId, query);
   }
 
   @Get("seasons/:termId/fees")

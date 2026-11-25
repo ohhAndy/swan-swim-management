@@ -24,11 +24,12 @@ import {
 import { cn } from "@/lib/utils";
 import { FULL_DAY_LABELS, formatTimeRange } from "@/lib/schedule/slots";
 import { getTorontoDateString } from "@/lib/date";
-import { calculateSwimTeamFees } from "@school/shared-types";
 import {
   createSwimTeamRegistration,
   getSwimTeamSeasons,
+  previewSwimTeamFees,
   updateSwimTeamRegistration,
+  type SwimTeamFeePreview,
   type SwimTeamFeeSuggestion,
   type SwimTeamRegistration,
   type SwimTeamSeason,
@@ -108,16 +109,32 @@ export function RegisterSwimTeamDialog({
     [registration],
   );
 
-  const fees = useMemo(() => {
-    if (!season || !tier) return null;
-    return calculateSwimTeamFees(
-      tier,
-      competing,
-      season.startDate,
-      season.endDate,
-      registration?.startDate ?? getTorontoDateString(),
-    );
-  }, [season, tier, competing, registration]);
+  const [fees, setFees] = useState<SwimTeamFeePreview | null>(null);
+  const [feesError, setFeesError] = useState(false);
+  const seasonKey = season?.id;
+  const hasTier = !!tier;
+  const joinDate = registration?.startDate;
+  useEffect(() => {
+    if (!seasonKey || !hasTier) {
+      setFees(null);
+      return;
+    }
+    let cancelled = false;
+    previewSwimTeamFees(seasonKey, { frequency, competing, joinDate })
+      .then((result) => {
+        if (cancelled) return;
+        setFees(result);
+        setFeesError(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setFees(null);
+        setFeesError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [seasonKey, hasTier, frequency, competing, joinDate]);
 
   const slotsByDay = useMemo(() => {
     const groups = new Map<number, SwimTeamSeason["slots"]>();
@@ -368,6 +385,11 @@ export function RegisterSwimTeamDialog({
               </span>
             </label>
 
+            {feesError && (
+              <p className="text-sm text-muted-foreground">
+                Could not load the fee estimate.
+              </p>
+            )}
             {fees && (
               <div className="rounded-md bg-muted/50 p-3 text-sm">
                 <div className="flex justify-between">

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { calculateClassUsage } from "@school/shared-types";
+import { calculateClassUsage } from "../common/capacity";
 
 @Injectable()
 export class SessionsService {

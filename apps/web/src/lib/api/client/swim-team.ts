@@ -1,10 +1,11 @@
 import { clientFetch } from "../_fetch/client";
 import type {
+  SwimTeamFeeSuggestion as SwimTeamFeePreview,
   SwimTeamFeeTier,
   SwimTeamSlotSummary,
 } from "@school/shared-types";
 
-export type { SwimTeamFeeTier, SwimTeamSlotSummary };
+export type { SwimTeamFeePreview, SwimTeamFeeTier, SwimTeamSlotSummary };
 
 export interface SwimTeamSeasonSlot {
   offeringId: string;
@@ -70,6 +71,22 @@ export interface SwimTeamFeeSuggestion {
 
 export async function getSwimTeamSeasons(): Promise<SwimTeamSeason[]> {
   const res = await clientFetch(`/swim-team/seasons`, { cache: "no-store" });
+  return res.json();
+}
+
+export async function previewSwimTeamFees(
+  termId: string,
+  params: { frequency: number; competing: boolean; joinDate?: string },
+): Promise<SwimTeamFeePreview> {
+  const query = new URLSearchParams({
+    frequency: String(params.frequency),
+    competing: String(params.competing),
+  });
+  if (params.joinDate) query.set("joinDate", params.joinDate);
+  const res = await clientFetch(
+    `/swim-team/seasons/${termId}/fee-preview?${query.toString()}`,
+    { cache: "no-store" },
+  );
   return res.json();
 }
 

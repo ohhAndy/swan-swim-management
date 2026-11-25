@@ -144,58 +144,13 @@ export interface InstructorInfo {
   staffName: string;
 }
 
-/**
- * Standard ratio to capacity weights mapping
- */
-export const CLASS_RATIO_WEIGHTS: Record<string, number>;
-
-/**
- * Helper to get the numeric seat weight for a class ratio
- */
-export function getRatioWeight(ratio?: string | null): number;
-
-/**
- * Standard calculation for class capacity, filled seats, and open seats
- */
-export function calculateClassUsage(
-  enrollments: { classRatio: string | null }[],
-  instructorCount: number,
-  baseCapacity: number
-): { filled: number; effectiveCapacity: number; openSeats: number };
-
-/**
- * Standard ratio to tuition pricing rates mapping
- */
-export const CLASS_RATIO_RATES: Record<string, number>;
-
-/**
- * Helper to get the tuition rate per session for a class ratio
- */
-export function getRatioRate(ratio?: string | null): number;
-
-/**
- * Calculate suggested tuition for an enrollment given ratio, total sessions, and skips
- */
-export function calculateEnrollmentTuition(
-  ratio: string | null | undefined,
-  totalSessions: number,
-  skippedSessions?: number
-): number;
-
-
-
-// ---------------------------------------------------------------------------
-// Swim team: tiers, season fees and installment plans
+// Swim team: tiers, season fees and installment plans.
 // All dates are UTC calendar dates in "YYYY-MM-DD" form.
-// ---------------------------------------------------------------------------
 
 export type OfferingType = "regular" | "flexible" | "swim_team";
 export type TermType = "regular" | "swim_team_season";
 export type SwimTeamFrequency = 1 | 2 | 3 | 4;
 export type LineItemFeeType = "swim_team_practice" | "swim_team_meet";
-
-export const SWIM_TEAM_FREQUENCIES: SwimTeamFrequency[];
-export const DEFAULT_SWIM_TEAM_MEET_FEES: Record<SwimTeamFrequency, number>;
 
 export interface SwimTeamFeeTier {
   frequency: number;
@@ -256,39 +211,3 @@ export interface SwimTeamSlotSummary {
   startTime: string | null;
   endTime: string | null;
 }
-
-/** Inclusive number of calendar months a season spans */
-export function countSeasonMonths(
-  seasonStart: string | Date,
-  seasonEnd: string | Date
-): number;
-
-/**
- * Suggested season fees for a swimmer. The practice fee is prorated by the
- * calendar months remaining from the join date; the meet fee never is.
- */
-export function calculateSwimTeamFees(
-  tier: { practiceFee: number | string; meetFee: number | string },
-  competing: boolean,
-  seasonStart: string | Date,
-  seasonEnd: string | Date,
-  joinDate?: string | Date | null
-): SwimTeamFeeSuggestion;
-
-/** Equal monthly installments; the cent remainder lands on the last one */
-export function buildInstallmentPlan(
-  total: number,
-  count: number,
-  firstDueDate: string
-): PlannedInstallment[];
-
-/**
- * Whether enough has been paid as of `today`. With no installments the full
- * invoice total is due immediately.
- */
-export function calculateInstallmentStanding(
-  installments: InstallmentInput[] | null | undefined,
-  totalPaid: number,
-  today: string | Date,
-  invoiceTotal: number
-): PaymentStanding;

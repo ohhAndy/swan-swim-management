@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { getRatioWeight } from "@school/shared-types";
+import { getRatioWeight } from "../common/capacity";
 
 @Injectable()
 export class TermAvailabilityService {

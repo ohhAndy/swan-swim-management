@@ -1,9 +1,8 @@
 import {
-  buildInstallmentPlan,
   calculateInstallmentStanding,
   calculateSwimTeamFees,
   countSeasonMonths,
-} from "@school/shared-types";
+} from "../common/billing";
 
 describe("swim team fee helpers", () => {
   const tier = { practiceFee: 1800, meetFee: 100 };
@@ -45,26 +44,13 @@ describe("swim team fee helpers", () => {
     });
   });
 
-  describe("buildInstallmentPlan", () => {
-    it("splits evenly and puts the cent remainder on the last installment", () => {
-      const plan = buildInstallmentPlan(1000, 3, "2026-10-01");
-      expect(plan.map((p) => p.amount)).toEqual([333.33, 333.33, 333.34]);
-      expect(plan.map((p) => p.dueDate)).toEqual([
-        "2026-10-01",
-        "2026-11-01",
-        "2026-12-01",
-      ]);
-    });
-
-    it("clamps month-end due dates and rolls over the year", () => {
-      expect(
-        buildInstallmentPlan(300, 3, "2026-12-31").map((p) => p.dueDate),
-      ).toEqual(["2026-12-31", "2027-01-31", "2027-02-28"]);
-    });
-  });
-
   describe("calculateInstallmentStanding", () => {
-    const plan = buildInstallmentPlan(1000, 4, "2026-10-01");
+    const plan = [
+      { dueDate: "2026-10-01", amount: 250 },
+      { dueDate: "2026-11-01", amount: 250 },
+      { dueDate: "2026-12-01", amount: 250 },
+      { dueDate: "2027-01-01", amount: 250 },
+    ];
 
     it("is behind when less than the installments due so far is paid", () => {
       expect(

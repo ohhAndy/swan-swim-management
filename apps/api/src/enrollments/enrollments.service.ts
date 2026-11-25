@@ -11,7 +11,7 @@ import { Prisma } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
 import { assertCanEditSkips } from "../common/helpers/enrollment-skips.helper";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
-import { calculateEnrollmentTuition } from "@school/shared-types";
+import { calculateEnrollmentTuition } from "../common/billing";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { TokensService } from "../tokens/tokens.service";
 

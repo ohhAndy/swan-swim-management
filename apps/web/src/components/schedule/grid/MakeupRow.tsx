@@ -1,6 +1,6 @@
 "use client";
 
-import { MakeupLite } from "@school/shared-types";
+import type { MakeupLite } from "@school/shared-types";
 import { LEVEL_MAP } from "@/lib/constants/levels";
 import Link from "next/link";
 import {

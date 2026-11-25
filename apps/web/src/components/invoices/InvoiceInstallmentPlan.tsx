@@ -17,12 +17,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  buildInstallmentPlan,
-  type PlannedInstallment,
-} from "@school/shared-types";
+import type { PlannedInstallment } from "@school/shared-types";
 
 const toCents = (amount: number) => Math.round(amount * 100);
+
+/** The same day `months` later, clamped to the end of shorter months */
+function addMonthsClamped(ymd: string, months: number): string {
+  const year = Number(ymd.slice(0, 4));
+  const month = Number(ymd.slice(5, 7)) - 1 + months;
+  const day = Number(ymd.slice(8, 10));
+  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(year, month, Math.min(day, lastDay)))
+    .toISOString()
+    .slice(0, 10);
+}
+
+/** Equal monthly installments; the cent remainder lands on the last one */
+function buildInstallmentPlan(
+  total: number,
+  count: number,
+  firstDueDate: string,
+): PlannedInstallment[] {
+  const totalCents = toCents(total);
+  const base = Math.floor(totalCents / count);
+  return Array.from({ length: count }, (_, i) => ({
+    dueDate: addMonthsClamped(firstDueDate, i),
+    amount: (i === count - 1 ? totalCents - base * (count - 1) : base) / 100,
+  }));
+}
 
 /** Plans are pay in full or exactly this many monthly installments */
 export const INSTALLMENT_COUNT = 4;

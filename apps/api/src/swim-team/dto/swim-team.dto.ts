@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { booleanParam } from "../../common/dto/query-params";
 
 const DateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
 
@@ -44,6 +45,13 @@ export const UninvoicedRegistrationQuerySchema = z.object({
   guardianId: z.string().min(1).optional(),
 });
 
+export const FeePreviewQuerySchema = z.object({
+  frequency: z.coerce.number().int().min(1).max(4),
+  competing: booleanParam.default(false),
+  joinDate: DateString.optional(),
+});
+
+export type FeePreviewQuery = z.infer<typeof FeePreviewQuerySchema>;
 export type CreateRegistrationInput = z.infer<typeof CreateRegistrationSchema>;
 export type UpdateRegistrationInput = z.infer<typeof UpdateRegistrationSchema>;
 export type RegistrationQuery = z.infer<typeof RegistrationQuerySchema>;

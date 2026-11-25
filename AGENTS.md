@@ -35,7 +35,7 @@ swan-swim-management/
 │   │   └── prisma/
 │   │       ├── schema.prisma
 │   │       └── seed.ts        # Database seed data script
-│   └── shared-types/          # Cross-workspace TypeScript interfaces & enums
+│   └── shared-types/          # Types only: API response shapes shared by api and web
 ├── turbo.json                 # Turborepo task pipeline configuration
 └── package.json               # Monorepo root configuration (NPM workspaces)
 ```
@@ -53,7 +53,7 @@ swan-swim-management/
 ### B. Capacity & Enrollment Calculations
 * **Ratio-Weighted Capacity**:
   * Class offerings support different instructor-to-student ratios (e.g., 1:1 private, 2:1 semi-private, 3:1 group).
-  * Weighted capacity differs from raw headcount. Always use standard calculation helpers when computing capacity percentages on the dashboard or schedule grid.
+  * Weighted capacity differs from raw headcount. Always use the helpers in `apps/api/src/common/capacity.ts` when computing capacity on the dashboard or schedule grid.
 
 ### C. Database Primary & Foreign Keys
 * All database IDs must use `cuid()` strings (`@default(cuid())` in Prisma).
@@ -154,7 +154,7 @@ npm run lint             # Lint all workspaces via Turborepo
 ## 5. Coding Conventions & Anti-Patterns to Avoid
 
 ### Do's:
-1. **Co-locate Types**: Put shared models and DTOs in `packages/shared-types` or infer them directly from Zod schemas.
+1. **Co-locate Types**: Put shared response types in `packages/shared-types` or infer them directly from Zod schemas. `shared-types` must stay types-only (no functions or constants) so it needs no build step. Business logic such as capacity, tuition, swim-team fees and installment standing lives in the API (`apps/api/src/common/capacity.ts` and `billing.ts`), and the web app gets computed values from API endpoints.
 2. **Explicit Client Directives**: Add `'use client'` only to components requiring browser events, React state, or hooks. Keep wrapper layouts and static components as Server Components.
 3. **Optimistic & Resilient UI**: Always provide loading skeletons or spinners and handle network failures with recoverable UI states.
 

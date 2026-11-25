@@ -1,9 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import {
-  calculateInstallmentStanding,
-  type SwimTeamStanding,
-} from "@school/shared-types";
+import type { SwimTeamStanding } from "@school/shared-types";
+import { calculateInstallmentStanding } from "../common/billing";
 import { getTorontoDateString } from "../common/date.utils";
 
 export interface RegistrationStanding extends SwimTeamStanding {

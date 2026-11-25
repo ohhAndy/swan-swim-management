@@ -77,6 +77,31 @@ describe("Swim team (e2e)", () => {
     request(app.getHttpServer()).post("/swim-team/registrations").send(body);
 
   describe("season setup", () => {
+    it("previews the fee a new registration would be offered", async () => {
+      const seasons = await request(app.getHttpServer())
+        .get("/swim-team/seasons")
+        .expect(200);
+      const season = seasons.body.find((s: { id: string }) => s.id === seasonId);
+
+      const fromStart = await request(app.getHttpServer())
+        .get(`/swim-team/seasons/${seasonId}/fee-preview`)
+        .query({ frequency: 2, competing: "true", joinDate: season.startDate })
+        .expect(200);
+      expect(fromStart.body).toMatchObject({ practiceFee: 1600, meetFee: 100 });
+      expect(fromStart.body.monthsRemaining).toBe(fromStart.body.seasonMonths);
+
+      const notCompeting = await request(app.getHttpServer())
+        .get(`/swim-team/seasons/${seasonId}/fee-preview`)
+        .query({ frequency: 2, competing: "false", joinDate: season.startDate })
+        .expect(200);
+      expect(notCompeting.body.meetFee).toBe(0);
+
+      await request(app.getHttpServer())
+        .get(`/swim-team/seasons/${seasonId}/fee-preview`)
+        .query({ frequency: 5 })
+        .expect(400);
+    });
+
     it("stores the fee tiers and lets an admin edit them", async () => {
       const fees = await request(app.getHttpServer())
         .get(`/swim-team/seasons/${seasonId}/fees`)

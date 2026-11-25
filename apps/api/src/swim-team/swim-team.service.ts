@@ -8,14 +8,18 @@ import { PrismaService } from "../prisma/prisma.service";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { RequestStaffUser } from "../auth/auth.types";
 import { getTorontoDateString } from "../common/date.utils";
+import type {
+  SwimTeamFeeSuggestion,
+  SwimTeamFeeTier,
+} from "@school/shared-types";
 import {
   calculateSwimTeamFees,
   SWIM_TEAM_FREQUENCIES,
   DEFAULT_SWIM_TEAM_MEET_FEES,
-  type SwimTeamFeeTier,
-} from "@school/shared-types";
+} from "../common/billing";
 import {
   CreateRegistrationInput,
+  FeePreviewQuery,
   RegistrationQuery,
   UninvoicedRegistrationQuery,
   UpdateRegistrationInput,
@@ -120,6 +124,25 @@ export class SwimTeamService {
       where: { termId },
     });
     return this.serializeTiers(tiers);
+  }
+
+  /** The season fee a new registration would be offered, for the registration form */
+  async previewFees(
+    termId: string,
+    { frequency, competing, joinDate }: FeePreviewQuery,
+  ): Promise<SwimTeamFeeSuggestion> {
+    const season = await this.getSeasonOrThrow(termId);
+    const tiers = this.serializeTiers(
+      await this.prisma.swimTeamFeeTier.findMany({ where: { termId } }),
+    );
+    const tier = tiers.find((t) => t.frequency === frequency);
+    return calculateSwimTeamFees(
+      tier,
+      competing,
+      season.startDate,
+      season.endDate,
+      joinDate ?? getTorontoDateString(),
+    );
   }
 
   async updateFeeTiers(

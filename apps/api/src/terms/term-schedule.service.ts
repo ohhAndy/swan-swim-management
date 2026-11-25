@@ -14,7 +14,7 @@ import type {
 } from "@school/shared-types";
 import { SwimTeamStandingService } from "../swim-team/swim-team-standing.service";
 import { getTorontoDateString } from "../common/date.utils";
-import { getRatioWeight } from "@school/shared-types";
+import { getRatioWeight } from "../common/capacity";
 import { formatTime } from "./terms.helpers";
 
 @Injectable()

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { TrialLite } from "@school/shared-types";
+import type { TrialLite } from "@school/shared-types";
 import {
   DropdownMenu,
   DropdownMenuContent,

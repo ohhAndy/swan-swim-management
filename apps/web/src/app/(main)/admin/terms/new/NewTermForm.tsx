@@ -16,7 +16,6 @@ import QuickAdd from "./QuickAdd";
 import OfferingList from "./OfferingList";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { DEFAULT_SWIM_TEAM_MEET_FEES } from "@school/shared-types";
 
 const TERM_TYPES = [
   {
@@ -31,10 +30,12 @@ const TERM_TYPES = [
   },
 ] as const;
 
+const DEFAULT_MEET_FEES = { 1: 0, 2: 100, 3: 425, 4: 425 } as const;
+
 const DEFAULT_FEE_TIERS = ([1, 2, 3, 4] as const).map((frequency) => ({
   frequency,
   practiceFee: 0,
-  meetFee: DEFAULT_SWIM_TEAM_MEET_FEES[frequency],
+  meetFee: DEFAULT_MEET_FEES[frequency],
 }));
 
 export default function NewTermForm() {
