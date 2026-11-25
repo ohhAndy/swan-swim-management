@@ -114,4 +114,43 @@ describe("SkillsController (e2e)", () => {
       expect(dbSkill).toBeNull();
     });
   });
+
+  describe("access control", () => {
+    beforeEach(async () => {
+      await prisma.staffUser.create({
+        data: {
+          authId: "test-manager",
+          email: "manager@test.com",
+          role: "manager",
+          fullName: "Test Manager",
+          active: true,
+        },
+      });
+    });
+
+    it("lets managers read skills", () => {
+      return request(app.getHttpServer())
+        .get("/skills")
+        .set("x-mock-auth-id", "test-manager")
+        .expect(200);
+    });
+
+    it("blocks managers from changing skills", async () => {
+      const server = app.getHttpServer();
+      await request(server)
+        .post("/skills")
+        .set("x-mock-auth-id", "test-manager")
+        .send({ description: "New Skill", levelId: testLevelId })
+        .expect(403);
+      await request(server)
+        .patch(`/skills/${testSkillId}`)
+        .set("x-mock-auth-id", "test-manager")
+        .send({ description: "Changed" })
+        .expect(403);
+      await request(server)
+        .delete(`/skills/${testSkillId}`)
+        .set("x-mock-auth-id", "test-manager")
+        .expect(403);
+    });
+  });
 });

@@ -116,4 +116,43 @@ describe("LevelsController (e2e)", () => {
       expect(dbLevel).toBeNull();
     });
   });
+
+  describe("access control", () => {
+    beforeEach(async () => {
+      await prisma.staffUser.create({
+        data: {
+          authId: "test-manager",
+          email: "manager@test.com",
+          role: "manager",
+          fullName: "Test Manager",
+          active: true,
+        },
+      });
+    });
+
+    it("lets managers read levels", () => {
+      return request(app.getHttpServer())
+        .get("/levels")
+        .set("x-mock-auth-id", "test-manager")
+        .expect(200);
+    });
+
+    it("blocks managers from changing levels", async () => {
+      const server = app.getHttpServer();
+      await request(server)
+        .post("/levels")
+        .set("x-mock-auth-id", "test-manager")
+        .send({ name: "New Level" })
+        .expect(403);
+      await request(server)
+        .patch(`/levels/${testLevelId}`)
+        .set("x-mock-auth-id", "test-manager")
+        .send({ name: "Changed" })
+        .expect(403);
+      await request(server)
+        .delete(`/levels/${testLevelId}`)
+        .set("x-mock-auth-id", "test-manager")
+        .expect(403);
+    });
+  });
 });
