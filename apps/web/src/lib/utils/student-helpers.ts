@@ -1,17 +1,7 @@
+import { ageToday } from "@/lib/date";
+
 export function calcAge(birthdateString: string): number {
-  const birthdate = new Date(birthdateString);
-  const today = new Date();
-
-  let age = today.getFullYear() - birthdate.getFullYear();
-
-  const hadBirthdayThisYear =
-    today.getMonth() > birthdate.getMonth() ||
-    (today.getMonth() === birthdate.getMonth() &&
-      today.getDate() >= birthdate.getDate());
-
-  if (!hadBirthdayThisYear) age--;
-
-  return age;
+  return ageToday(birthdateString).years;
 }
 
 export function markClass(status: string | undefined) {

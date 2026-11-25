@@ -26,6 +26,34 @@ export function todayInToronto(): string {
 }
 
 /**
+ * The "YYYY-MM-DD" of a calendar date the API stores as UTC midnight
+ * (term start/end, session date, birthdate). Never read these with local-time
+ * methods like getDate() or setHours(): in Toronto they land on the day before.
+ */
+export function calendarYmd(value: string | Date): string {
+  return typeof value === "string"
+    ? value.slice(0, 10)
+    : value.toISOString().slice(0, 10);
+}
+
+/** True when today in Toronto falls within [start, end], both calendar dates. */
+export function isTodayWithin(start: string | Date, end: string | Date): boolean {
+  const today = todayInToronto();
+  return calendarYmd(start) <= today && today <= calendarYmd(end);
+}
+
+/** Whole years and leftover months from a birthdate to today in Toronto. */
+export function ageToday(birthdate: string | Date): {
+  years: number;
+  months: number;
+} {
+  const [by, bm, bd] = calendarYmd(birthdate).split("-").map(Number);
+  const [ty, tm, td] = todayInToronto().split("-").map(Number);
+  const totalMonths = (ty - by) * 12 + (tm - bm) - (td < bd ? 1 : 0);
+  return { years: Math.floor(totalMonths / 12), months: totalMonths % 12 };
+}
+
+/**
  * Safely formats a "YYYY-MM-DD" date string for UI display without timezone shifting.
  */
 export function formatCalendarDate(

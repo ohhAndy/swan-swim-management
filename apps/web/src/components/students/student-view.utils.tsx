@@ -4,32 +4,14 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, AlertCircle, CheckCircle, RotateCcw } from "lucide-react";
 import type { Enrollment } from "@/lib/types/models";
+import { ageToday } from "@/lib/date";
 
 /**
- * Calculates human-readable age string in UTC (years and months) from birthdate.
+ * Human-readable age (years and months) from birthdate, as of today in Toronto.
  */
 export function calculateAge(birthdate?: string | null): string {
   if (!birthdate) return "Not provided";
-
-  const birth = new Date(birthdate);
-  const today = new Date();
-
-  let years = today.getUTCFullYear() - birth.getUTCFullYear();
-  let months = today.getUTCMonth() - birth.getUTCMonth();
-
-  if (months < 0) {
-    years--;
-    months += 12;
-  }
-
-  if (today.getUTCDate() < birth.getUTCDate()) {
-    months--;
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-  }
-
+  const { years, months } = ageToday(birthdate);
   return `${years} years, ${months} months`;
 }
 

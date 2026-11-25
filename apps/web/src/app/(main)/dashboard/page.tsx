@@ -9,7 +9,7 @@ import Link from "next/link";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
-import { todayInToronto } from "@/lib/date";
+import { calendarYmd, isTodayWithin, todayInToronto } from "@/lib/date";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrialRequestsQueue } from "@/components/dashboard/TrialRequestsQueue";
 import { TrialRequestsBadge } from "@/components/layout/TrialRequestsBadge";
@@ -34,7 +34,6 @@ export default async function DashboardPage({ searchParams }: Props) {
   const resolvedSearchParams = await searchParams;
   const requestedTermId = resolvedSearchParams?.termId as string | undefined;
 
-  const now = new Date();
 
   // Sort terms by startDate descending (newest first)
   const sortedTerms = [...terms].sort((a, b) => {
@@ -52,19 +51,13 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (!termToUse) {
     const currentTerm = sortedTerms.find((t) => {
       if (!t.startDate || !t.endDate) return false;
-      const start = new Date(t.startDate);
-      const end = new Date(t.endDate);
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
-      return now >= start && now <= end;
+      return isTodayWithin(t.startDate, t.endDate);
     });
 
     // If currently in a break between terms, pick the most recent term that has started
     const mostRecentActiveOrPastTerm = sortedTerms.find((t) => {
       if (!t.startDate) return false;
-      const start = new Date(t.startDate);
-      start.setHours(0, 0, 0, 0);
-      return now >= start;
+      return calendarYmd(t.startDate) <= todayInToronto();
     });
 
     termToUse = currentTerm || mostRecentActiveOrPastTerm || sortedTerms[0];

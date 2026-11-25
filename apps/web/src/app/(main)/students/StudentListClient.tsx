@@ -26,6 +26,7 @@ import { getLevels, Level } from "@/lib/api/client/curriculum";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { hasMinRole } from "@/lib/auth/permissions";
 import { CurrentUser } from "@/lib/auth/user";
+import { calcAge } from "@/lib/utils/student-helpers";
 
 // Types based on your API response
 interface Student {
@@ -127,19 +128,7 @@ export default function StudentsListClient({
 
   const calculateAge = (birthdate: string | null) => {
     if (!birthdate) return "—";
-
-    const birth = new Date(birthdate);
-    const today = new Date();
-    const years = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birth.getDate())
-    ) {
-      return `${years - 1}y`;
-    }
-    return `${years}y`;
+    return `${calcAge(birthdate)}y`;
   };
 
   // Update URL and let useEffect handle fetching data

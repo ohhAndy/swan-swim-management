@@ -2,6 +2,7 @@ import {
   BUSINESS_TIMEZONE,
   getTorontoDateString,
   getTorontoStartOfDay,
+  getTorontoCalendarDate,
   formatCalendarDate,
   torontoDayRange,
   calendarDateRange,
@@ -81,6 +82,27 @@ describe("date.utils (apps/api)", () => {
         gte: new Date("2026-11-01T00:00:00Z"),
         lt: new Date("2026-12-01T00:00:00Z"),
       });
+    });
+  });
+
+  describe("getTorontoCalendarDate", () => {
+    // 11:30 PM EDT on Sep 7 is already Sep 8 in UTC
+    const lateEvening = new Date("2026-09-08T03:30:00Z");
+
+    it("uses the Toronto calendar day, not the UTC one", () => {
+      expect(getTorontoCalendarDate(0, lateEvening).toISOString()).toBe(
+        "2026-09-07T00:00:00.000Z",
+      );
+      expect(getTorontoCalendarDate(1, lateEvening).toISOString()).toBe(
+        "2026-09-08T00:00:00.000Z",
+      );
+    });
+
+    it("rolls over month ends", () => {
+      const lastOfMonth = new Date("2026-09-30T16:00:00Z");
+      expect(getTorontoCalendarDate(1, lastOfMonth).toISOString()).toBe(
+        "2026-10-01T00:00:00.000Z",
+      );
     });
   });
 });

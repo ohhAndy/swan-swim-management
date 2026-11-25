@@ -223,8 +223,10 @@ export class AnalyticsService {
       if (invoiceTotal === 0 || !invoice.lineItems.length) continue;
 
       // Get weekday name (e.g., "Monday")
+      // paymentDate is a calendar date stored as UTC midnight
       const dayName = payment.paymentDate.toLocaleDateString("en-US", {
         weekday: "long",
+        timeZone: "UTC",
       });
 
       // Distribute payment amount to line items

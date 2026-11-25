@@ -14,6 +14,7 @@ import { Prisma } from "@prisma/client";
 import { RequestStaffUser, StaffUserWithLocations } from "../auth/auth.types";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
+import { getTorontoDateString } from "../common/date.utils";
 
 @Injectable()
 export class StudentsService {
@@ -377,13 +378,13 @@ export class StudentsService {
     });
     if (!student) throw new NotFoundException("Student not found");
 
+    const today = getTorontoDateString();
     const isEnrollmentActive = (e: NonNullable<typeof student>["enrollments"][number]) => {
       if (e.status !== "active") return false;
       if (!e.offering?.term?.endDate) return true;
-      const now = new Date();
-      const end = new Date(e.offering.term.endDate);
-      end.setHours(23, 59, 59, 999);
-      return now <= end;
+      // endDate is a calendar date stored as UTC midnight
+      const termEnd = e.offering.term.endDate.toISOString().slice(0, 10);
+      return today <= termEnd;
     };
 
     if (staffUser?.role === "supervisor") {

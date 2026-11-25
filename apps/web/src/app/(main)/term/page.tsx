@@ -1,6 +1,7 @@
 import { hasMinRole } from "@/lib/auth/permissions";
 import { getAllTerms } from "@/lib/api/server/schedule";
 import type { Term } from "@/lib/types/models";
+import { calendarYmd } from "@/lib/date";
 import { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
@@ -28,7 +29,7 @@ export default async function TermPage() {
     (acc, term) => {
       let year = "Other";
       if (term.startDate) {
-        year = new Date(term.startDate).getFullYear().toString();
+        year = calendarYmd(term.startDate).slice(0, 4);
       } else {
         // Fallback to name parsing if startDate is missing
         const match = term.name.match(/\d{4}/);

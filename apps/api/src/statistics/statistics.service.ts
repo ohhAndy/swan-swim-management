@@ -7,7 +7,10 @@ import {
   calculateClassUsage,
   calculateSessionUsage,
 } from "../common/capacity";
-import { getTorontoDateString } from "../common/date.utils";
+import {
+  getTorontoCalendarDate,
+  getTorontoDateString,
+} from "../common/date.utils";
 
 function percent(part: number, whole: number): number {
   return whole > 0 ? Math.round((part / whole) * 100) : 0;
@@ -107,16 +110,14 @@ export class StatisticsService {
       });
 
       // Upcoming trials (next 7 days)
-      const sevenDaysFromNow = new Date();
-      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
       const upcomingTrials = await this.prisma.trialBooking.count({
         where: {
           status: "scheduled",
           classSession: {
             date: {
-              gte: new Date(),
-              lte: sevenDaysFromNow,
+              gte: getTorontoCalendarDate(1),
+              lte: getTorontoCalendarDate(7),
             },
             ...(validatedLocationId
               ? { offering: { term: { locationId: validatedLocationId } } }

@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { randomUUID } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
+import { getTorontoCalendarDate } from "../common/date.utils";
 
 @Injectable()
 export class PublicService {
@@ -25,9 +26,6 @@ export class PublicService {
       );
     }
 
-    const now = new Date();
-    const thirtyDaysOut = new Date();
-    thirtyDaysOut.setDate(thirtyDaysOut.getDate() + 30);
 
     // Resolve location ID
     let resolvedLocationId = query.locationId?.trim();
@@ -48,8 +46,8 @@ export class PublicService {
     const sessions = await this.prisma.classSession.findMany({
       where: {
         date: {
-          gte: now,
-          lte: thirtyDaysOut,
+          gte: getTorontoCalendarDate(1),
+          lte: getTorontoCalendarDate(30),
         },
         status: "scheduled",
         offering: {

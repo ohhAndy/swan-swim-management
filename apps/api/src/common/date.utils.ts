@@ -19,6 +19,20 @@ export function getTorontoDateString(date: Date = new Date()): string {
 }
 
 /**
+ * Toronto's calendar date `daysFromToday` away, in the form @db.Date columns
+ * store it (UTC midnight). Compare calendar-date columns (session date, term
+ * end) against this, never against `new Date()`: after 8pm in Toronto the UTC
+ * clock is already on tomorrow.
+ */
+export function getTorontoCalendarDate(
+  daysFromToday = 0,
+  now: Date = new Date(),
+): Date {
+  const [y, m, d] = getTorontoDateString(now).split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + daysFromToday));
+}
+
+/**
  * Returns a UTC Date object representing 00:00:00.000 (midnight start of day)
  * in America/Toronto.
  *

@@ -1047,13 +1047,12 @@ export class TermScheduleService {
     }
 
     // Helper for age
+    // Compare calendar days: birthdate is stored as UTC midnight
+    const today = getTorontoDateString();
     const getAge = (birthdate: Date) => {
-      const today = new Date();
-      let age = today.getFullYear() - birthdate.getFullYear();
-      const m = today.getMonth() - birthdate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
-        age--;
-      }
+      const born = birthdate.toISOString().slice(0, 10);
+      let age = Number(today.slice(0, 4)) - Number(born.slice(0, 4));
+      if (today.slice(5) < born.slice(5)) age--;
       return age;
     };
 

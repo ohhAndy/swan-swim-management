@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Term } from "@/lib/types/models";
+import { isTodayWithin } from "@/lib/date";
 import Link from "next/link";
 
 export default function TermSlot({
@@ -12,15 +13,9 @@ export default function TermSlot({
   termOptions: Term[];
   year: string;
 }) {
-  const now = new Date();
-
   const isCurrent = (t: Term) => {
     if (!t.startDate || !t.endDate) return false;
-    const start = new Date(t.startDate);
-    const end = new Date(t.endDate);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    return now >= start && now <= end;
+    return isTodayWithin(t.startDate, t.endDate);
   };
 
   const getDisplayName = (name: string) => {
