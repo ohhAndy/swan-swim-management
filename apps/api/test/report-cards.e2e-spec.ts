@@ -206,6 +206,18 @@ describe("ReportCardsController (e2e)", () => {
         data: { status: "completed" },
       });
 
+      // The card stores the log id, so the failed send needs a real log row.
+      const failedLog = await prisma.communicationLog.create({
+        data: {
+          subject: "Progress Report",
+          body: "body",
+          status: "failed",
+          recipientCount: 1,
+          failureCount: 1,
+          completedAt: new Date(),
+        },
+      });
+
       const sendSpy = jest
         .spyOn(CommunicationsService.prototype, "sendEmail")
         .mockResolvedValueOnce({
@@ -214,7 +226,7 @@ describe("ReportCardsController (e2e)", () => {
           successCount: 0,
           failureCount: 1,
           status: "failed",
-          logId: "log-failed",
+          logId: failedLog.id,
           mock: false,
           results: [
             {

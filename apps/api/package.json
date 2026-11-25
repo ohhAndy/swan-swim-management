@@ -11,7 +11,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "dotenv -e .env.test -- jest --config ./test/jest-e2e.json --forceExit",
+    "test:e2e": "dotenv -e .env.test -- jest --config ./test/jest-e2e.json --runInBand --forceExit",
     "db:test:start": "docker compose -f ../../docker-compose.test.yml up -d",
     "db:test:push": "cd ../../packages/db && dotenv -e ../../apps/api/.env.test -- npx prisma db push --accept-data-loss",
     "check-types": "tsc --noEmit"

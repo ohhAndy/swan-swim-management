@@ -62,7 +62,10 @@ describe("EnrollmentsController (e2e)", () => {
         })
         .expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.pagination.total).toBe(1);
+      expect(response.body.data.map((e: { id: string }) => e.id)).toEqual([
+        testEnrollmentId,
+      ]);
     });
   });
 

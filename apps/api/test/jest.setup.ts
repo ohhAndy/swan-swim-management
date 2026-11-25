@@ -7,7 +7,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await prisma.$disconnect();
+  await prisma.onModuleDestroy();
 });
 
 afterEach(async () => {
