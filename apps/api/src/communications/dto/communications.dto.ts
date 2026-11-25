@@ -15,7 +15,7 @@ export const RecipientFilterSchema = z.object({
 export class RecipientFilterDto extends createZodDto(RecipientFilterSchema) {}
 
 export const SendEmailSchema = z.object({
-  recipients: z.array(z.string().email()),
+  recipients: z.array(z.string().email()).min(1),
   subject: z.string().min(1),
   body: z.string().min(1),
   attachments: z
@@ -44,7 +44,9 @@ export const GetCommunicationHistorySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
   search: z.string().optional(),
-  status: z.enum(["all", "sent", "partial", "failed", "delivered"]).optional(),
+  status: z
+    .enum(["all", "queued", "sending", "sent", "partial", "failed", "delivered"])
+    .optional(),
 });
 
 export class GetCommunicationHistoryDto extends createZodDto(

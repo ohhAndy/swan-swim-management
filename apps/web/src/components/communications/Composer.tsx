@@ -1,11 +1,15 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { toast } from "sonner";
 import {
   SendEmailRequest,
   SendEmailResponse,
+  isSendInProgress,
 } from "@/lib/api/client/communications";
+import { useCommunicationDetails } from "@/hooks/useCommunicationDetails";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +28,7 @@ import {
   XCircle,
   RefreshCw,
   History,
+  Loader2,
 } from "lucide-react";
 
 interface ComposerProps {
@@ -50,8 +55,26 @@ export function Composer({
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sendResult, setSendResult] = useState<SendEmailResponse | null>(null);
+  const [queued, setQueued] = useState<SendEmailResponse | null>(null);
   const [files, setFiles] = useState<File[]>([]);
+
+  const { data: log, error: progressError } = useCommunicationDetails(
+    queued?.logId,
+  );
+  const inProgress = Boolean(queued) && (!log || isSendInProgress(log.status));
+  const sendResult: SendEmailResponse | null =
+    queued && log && !inProgress
+      ? {
+          success: log.failureCount === 0,
+          total: log.recipientCount,
+          successCount: log.successCount,
+          failureCount: log.failureCount,
+          status: log.status,
+          logId: log.id,
+          mock: queued.mock,
+          results: log.recipients,
+        }
+      : null;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -104,17 +127,17 @@ export function Composer({
         attachments,
       });
 
-      setSendResult(result);
+      setQueued(result);
     } catch (e) {
       console.error(e);
-      alert("Failed to send email");
+      toast.error("Failed to queue the email. Nothing was sent; please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleResetForNew = () => {
-    setSendResult(null);
+    setQueued(null);
     setSubject("");
     setBody("");
     setFiles([]);
@@ -129,8 +152,78 @@ export function Composer({
     if (onRetryFailed) {
       onRetryFailed(failedEmails);
     }
-    setSendResult(null);
+    setQueued(null);
   };
+
+  if (queued && inProgress) {
+    const total = log?.recipientCount ?? queued.total;
+    const processed =
+      log?.recipients.filter((r) => r.status !== "queued").length ?? 0;
+    const failed =
+      log?.recipients.filter((r) => r.status === "failed").length ?? 0;
+    const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
+
+    return (
+      <Card className="w-full border shadow-sm">
+        <CardHeader className="pb-3 border-b bg-slate-50/50">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">
+                {log?.status === "sending"
+                  ? `Sending… ${processed} of ${total}`
+                  : `Queued for ${total} recipient${total === 1 ? "" : "s"}`}
+              </CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Subject: &quot;{subject}&quot;
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4 space-y-3">
+          <Progress value={percent} aria-label="Send progress" />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>{percent}% processed</span>
+            {failed > 0 && (
+              <span className="text-red-600 font-medium">{failed} failed so far</span>
+            )}
+          </div>
+          {progressError ? (
+            <p className="text-sm text-amber-700">
+              Couldn&apos;t load progress right now. The send is still running;
+              check Sent History for its status.
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Emails go out at a steady pace to stay within the email provider&apos;s
+              limits, so large sends take a minute or two. You can leave this
+              page; sending continues in the background.
+            </p>
+          )}
+        </CardContent>
+        <CardFooter className="flex flex-wrap items-center justify-between gap-2 border-t pt-4 bg-slate-50/30">
+          {onViewHistory ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onViewHistory}
+              className="gap-1.5 text-slate-600 hover:text-slate-900"
+            >
+              <History className="h-4 w-4" />
+              View in Sent History
+            </Button>
+          ) : (
+            <span />
+          )}
+          <Button onClick={handleResetForNew} size="sm" variant="outline">
+            Compose Another Email
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
 
   // Render Send Status Report
   if (sendResult) {
@@ -370,7 +463,14 @@ export function Composer({
           onClick={handleSubmit}
           disabled={loading || recipientCount === 0 || !subject || !body}
         >
-          {loading ? "Sending..." : "Send Email"}
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Queueing...
+            </>
+          ) : (
+            "Send Email"
+          )}
         </Button>
       </CardFooter>
     </Card>

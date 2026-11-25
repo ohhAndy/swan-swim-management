@@ -25,23 +25,43 @@ export interface SendEmailRequest {
   attachments?: { filename: string; content: string }[];
 }
 
+export type RecipientStatus =
+  | "queued"
+  | "sent"
+  | "failed"
+  | "delivered"
+  | "bounced";
+
+export type CommunicationStatus =
+  | "queued"
+  | "sending"
+  | "sent"
+  | "partial"
+  | "failed"
+  | "delivered";
+
 export interface RecipientSendResult {
   email: string;
-  status: "sent" | "failed" | "delivered" | "bounced";
+  status: RecipientStatus;
   resendId?: string;
   error?: string;
   updatedAt: string;
 }
 
+// Returned while still queued; poll getCommunicationDetails(logId) for results.
 export interface SendEmailResponse {
   success: boolean;
   total: number;
   successCount: number;
   failureCount: number;
-  status: "sent" | "partial" | "failed" | "delivered";
-  logId?: string;
+  status: CommunicationStatus;
+  logId: string;
   mock?: boolean;
   results: RecipientSendResult[];
+}
+
+export function isSendInProgress(status: CommunicationStatus): boolean {
+  return status === "queued" || status === "sending";
 }
 
 export interface CommunicationLogItem {
@@ -49,12 +69,12 @@ export interface CommunicationLogItem {
   staffId?: string | null;
   subject: string;
   body: string;
-  status: "sent" | "partial" | "failed" | "delivered";
+  status: CommunicationStatus;
   recipientCount: number;
   successCount: number;
   failureCount: number;
   attachmentCount: number;
-  recipients: RecipientSendResult[];
+  completedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   staff?: {
@@ -62,6 +82,10 @@ export interface CommunicationLogItem {
     fullName: string;
     email: string;
   } | null;
+}
+
+export interface CommunicationLogDetails extends CommunicationLogItem {
+  recipients: RecipientSendResult[];
 }
 
 export interface CommunicationHistoryResponse {
@@ -115,7 +139,7 @@ export async function getCommunicationHistory(params: {
 
 export async function getCommunicationDetails(
   id: string,
-): Promise<CommunicationLogItem> {
+): Promise<CommunicationLogDetails> {
   const res = await clientFetch(`/communications/history/${id}`, {
     method: "GET",
   });

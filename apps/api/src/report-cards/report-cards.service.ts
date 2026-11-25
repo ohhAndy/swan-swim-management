@@ -449,6 +449,7 @@ export class ReportCardsService {
           ],
         },
         staffUser,
+        { waitForCompletion: true },
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import {
   CommunicationLogItem,
   getCommunicationHistory,
+  isSendInProgress,
 } from "@/lib/api/client/communications";
 import {
   Card,
@@ -85,6 +86,25 @@ export function CommunicationHistory() {
     fetchHistory();
   }, [fetchHistory]);
 
+  const anyInProgress = items.some((log) => isSendInProgress(log.status));
+  useEffect(() => {
+    if (!anyInProgress) return;
+    const id = setInterval(() => {
+      getCommunicationHistory({
+        page,
+        pageSize,
+        search: debouncedSearch,
+        status: statusFilter,
+      })
+        .then((res) => {
+          setItems(res.items);
+          setTotal(res.total);
+        })
+        .catch((err) => console.error("Failed to refresh communication history", err));
+    }, 3000);
+    return () => clearInterval(id);
+  }, [anyInProgress, page, pageSize, debouncedSearch, statusFilter]);
+
   const handleOpenDetails = (log: CommunicationLogItem) => {
     setSelectedLog(log);
     setDetailsOpen(true);
@@ -117,6 +137,19 @@ export function CommunicationHistory() {
         return (
           <Badge variant="secondary" className="text-amber-700 bg-amber-50 border-amber-200 capitalize">
             Partial
+          </Badge>
+        );
+      case "queued":
+        return (
+          <Badge variant="outline" className="text-slate-600 bg-slate-50 border-slate-200">
+            Queued
+          </Badge>
+        );
+      case "sending":
+        return (
+          <Badge variant="outline" className="text-blue-700 bg-blue-50 border-blue-200 gap-1">
+            <RefreshCw className="h-3 w-3 animate-spin" />
+            Sending
           </Badge>
         );
       default:
@@ -181,6 +214,8 @@ export function CommunicationHistory() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="queued">Queued</SelectItem>
+                  <SelectItem value="sending">Sending</SelectItem>
                   <SelectItem value="sent">Sent</SelectItem>
                   <SelectItem value="delivered">Delivered</SelectItem>
                   <SelectItem value="partial">Partial</SelectItem>
@@ -256,6 +291,7 @@ export function CommunicationHistory() {
                             {log.recipientCount} total
                           </div>
                           <div className="text-[11px] text-slate-500">
+                            {isSendInProgress(log.status) && "so far: "}
                             {log.successCount} sent
                             {log.failureCount > 0 && (
                               <span className="text-red-600 font-semibold ml-1">

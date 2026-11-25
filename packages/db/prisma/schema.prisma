@@ -734,28 +734,70 @@ enum CommunicationStatus {
   partial
   failed
   delivered
+  queued // Accepted by the API, waiting for the background sender
+  sending // Background sender is working through the recipients
+}
+
+enum CommunicationRecipientStatus {
+  queued
+  sent
+  failed
+  delivered
+  bounced
 }
 
 model CommunicationLog {
-  id              String              @id @default(cuid())
+  id              String                    @id @default(cuid())
   staffId         String?
   subject         String
-  body            String              @db.Text
-  status          CommunicationStatus @default(sent)
-  recipientCount  Int                 @default(0)
-  successCount    Int                 @default(0)
-  failureCount    Int                 @default(0)
-  attachmentCount Int                 @default(0)
-  recipients      Json
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  staff           StaffUser?          @relation("CommunicationSentBy", fields: [staffId], references: [id])
+  body            String                    @db.Text
+  status          CommunicationStatus       @default(sent)
+  recipientCount  Int                       @default(0)
+  successCount    Int                       @default(0)
+  failureCount    Int                       @default(0)
+  attachmentCount Int                       @default(0)
+  lockedUntil     DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+  staff           StaffUser?                @relation("CommunicationSentBy", fields: [staffId], references: [id])
   reportCards     ReportCard[]
+  recipients      CommunicationRecipient[]
+  attachments     CommunicationAttachment[]
 
   @@index([staffId])
   @@index([status])
   @@index([createdAt])
   @@map("communication_logs")
+}
+
+model CommunicationRecipient {
+  id                 String                       @id @default(cuid())
+  communicationLogId String
+  email              String
+  status             CommunicationRecipientStatus @default(queued)
+  resendId           String?
+  error              String?                      @db.Text
+  attempts           Int                          @default(0)
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  communicationLog   CommunicationLog             @relation(fields: [communicationLogId], references: [id], onDelete: Cascade)
+
+  @@index([communicationLogId, status])
+  @@index([resendId])
+  @@map("communication_recipients")
+}
+
+model CommunicationAttachment {
+  id                 String           @id @default(cuid())
+  communicationLogId String
+  filename           String
+  content            Bytes
+  createdAt          DateTime         @default(now())
+  communicationLog   CommunicationLog @relation(fields: [communicationLogId], references: [id], onDelete: Cascade)
+
+  @@index([communicationLogId])
+  @@map("communication_attachments")
 }
 
 model SwimTeamFeeTier {

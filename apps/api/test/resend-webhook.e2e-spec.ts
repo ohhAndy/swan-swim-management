@@ -2,6 +2,7 @@ import { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { createHmac, randomBytes } from "crypto";
 import { PrismaService } from "../src/prisma/prisma.service";
+import { CommunicationsService } from "../src/communications/communications.service";
 import { createTestApp } from "./utils/test-setup";
 import { seedAdmin, seedGuardian, seedTerm, seedClassOffering } from "./utils/seeds";
 
@@ -26,6 +27,7 @@ describe("Resend webhook (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let reportCardId: string;
+  let logId: string;
   const resendId = "re_test_123";
 
   beforeAll(async () => {
@@ -60,16 +62,13 @@ describe("Resend webhook (e2e)", () => {
         status: "sent",
         recipientCount: 1,
         successCount: 1,
-        recipients: [
-          {
-            email: guardian.email,
-            status: "sent",
-            resendId,
-            updatedAt: new Date().toISOString(),
-          },
-        ],
+        completedAt: new Date(),
+        recipients: {
+          create: [{ email: guardian.email, status: "sent", resendId }],
+        },
       },
     });
+    logId = log.id;
 
     const card = await prisma.reportCard.create({
       data: {
@@ -132,6 +131,58 @@ describe("Resend webhook (e2e)", () => {
 
     const card = await prisma.reportCard.findUnique({ where: { id: reportCardId } });
     expect(card?.lastSendStatus).toBe("delivered");
+  });
+
+  it("updates the recipient row and the send's overall status", async () => {
+    const body = event("email.bounced");
+    await post(body, signedHeaders(body)).expect(201);
+
+    const recipient = await prisma.communicationRecipient.findFirst({
+      where: { resendId },
+    });
+    expect(recipient?.status).toBe("bounced");
+    const log = await prisma.communicationLog.findUnique({ where: { id: logId } });
+    expect(log?.status).toBe("partial");
+  });
+
+  it("keeps every status when many webhooks for one send arrive at once", async () => {
+    const ids = Array.from({ length: 40 }, (_, i) => `re_bulk_${i}`);
+    const bulk = await prisma.communicationLog.create({
+      data: {
+        subject: "Bulk",
+        body: "body",
+        status: "sent",
+        recipientCount: ids.length,
+        successCount: ids.length,
+        completedAt: new Date(),
+        recipients: {
+          create: ids.map((id, i) => ({
+            email: `bulk${i}@example.com`,
+            status: "sent" as const,
+            resendId: id,
+          })),
+        },
+      },
+    });
+
+    // Direct calls: 40 parallel supertest connections get reset.
+    const service = app.get(CommunicationsService);
+    await Promise.all(
+      ids.map((id) =>
+        service.handleWebhook({
+          type: "email.delivered",
+          created_at: new Date().toISOString(),
+          data: { email_id: id },
+        }),
+      ),
+    );
+
+    const delivered = await prisma.communicationRecipient.count({
+      where: { communicationLogId: bulk.id, status: "delivered" },
+    });
+    expect(delivered).toBe(ids.length);
+    const log = await prisma.communicationLog.findUnique({ where: { id: bulk.id } });
+    expect(log?.status).toBe("delivered");
   });
 
   it("does not overwrite a bounce with a late delivered event", async () => {

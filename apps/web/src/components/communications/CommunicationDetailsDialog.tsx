@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CommunicationLogItem } from "@/lib/api/client/communications";
+import {
+  CommunicationLogItem,
+  isSendInProgress,
+} from "@/lib/api/client/communications";
+import { useCommunicationDetails } from "@/hooks/useCommunicationDetails";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Mail, User, Calendar, Paperclip } from "lucide-react";
+import { Search, Mail, User, Calendar, Paperclip, RefreshCw } from "lucide-react";
 
 interface CommunicationDetailsDialogProps {
   log: CommunicationLogItem | null;
@@ -20,23 +24,30 @@ interface CommunicationDetailsDialogProps {
 }
 
 export function CommunicationDetailsDialog({
-  log,
+  log: summary,
   open,
   onOpenChange,
 }: CommunicationDetailsDialogProps) {
   const [recipientSearch, setRecipientSearch] = useState("");
 
+  const {
+    data: details,
+    isLoading: detailsLoading,
+    error: detailsError,
+  } = useCommunicationDetails(open ? summary?.id : null);
+  const log = details ?? summary;
+  const recipients = useMemo(() => details?.recipients ?? [], [details]);
+
   const filteredRecipients = useMemo(() => {
-    if (!log || !log.recipients) return [];
-    if (!recipientSearch.trim()) return log.recipients;
+    if (!recipientSearch.trim()) return recipients;
     const q = recipientSearch.toLowerCase().trim();
-    return log.recipients.filter(
+    return recipients.filter(
       (r) =>
         r.email.toLowerCase().includes(q) ||
         (r.error && r.error.toLowerCase().includes(q)) ||
         (r.resendId && r.resendId.toLowerCase().includes(q)),
     );
-  }, [log, recipientSearch]);
+  }, [recipients, recipientSearch]);
 
   if (!log) return null;
 
@@ -74,6 +85,19 @@ export function CommunicationDetailsDialog({
         return (
           <Badge variant="secondary" className="text-amber-700 bg-amber-50 border-amber-200 capitalize">
             Partial
+          </Badge>
+        );
+      case "queued":
+        return (
+          <Badge variant="outline" className="text-slate-600 bg-slate-50 border-slate-200">
+            Queued
+          </Badge>
+        );
+      case "sending":
+        return (
+          <Badge variant="outline" className="text-blue-700 bg-blue-50 border-blue-200 gap-1">
+            <RefreshCw className="h-3 w-3 animate-spin" />
+            Sending
           </Badge>
         );
       default:
@@ -130,10 +154,11 @@ export function CommunicationDetailsDialog({
           <div className="space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Recipient Delivery Status ({log.recipientCount} total, {log.successCount} sent, {log.failureCount} failed)
+                Recipient Delivery Status ({log.recipientCount} total, {log.successCount} sent, {log.failureCount} failed
+                {isSendInProgress(log.status) && ", still sending"})
               </h4>
 
-              {log.recipients && log.recipients.length > 5 && (
+              {recipients.length > 5 && (
                 <div className="relative w-48 sm:w-56">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                   <Input
@@ -147,7 +172,15 @@ export function CommunicationDetailsDialog({
             </div>
 
             <div className="border rounded-md divide-y overflow-hidden max-h-64 overflow-y-auto">
-              {filteredRecipients.length === 0 ? (
+              {detailsLoading && !details ? (
+                <div className="p-4 text-center text-xs text-muted-foreground">
+                  Loading recipients...
+                </div>
+              ) : detailsError && !details ? (
+                <div className="p-4 text-center text-xs text-red-600">
+                  Couldn&apos;t load recipient statuses. Close and reopen to try again.
+                </div>
+              ) : filteredRecipients.length === 0 ? (
                 <div className="p-4 text-center text-xs text-muted-foreground">
                   No recipients found.
                 </div>
