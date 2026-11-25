@@ -72,41 +72,34 @@ describe("StaffUsersController (e2e)", () => {
     });
   });
 
-  describe("POST /staff-users", () => {
-    it("should create a new staff user", async () => {
-      const response = await request(app.getHttpServer())
+  // Staff accounts are managed in the database directly; the API must not
+  // offer a way to create staff users or change their roles.
+  describe("write endpoints", () => {
+    it("does not expose POST /staff-users", async () => {
+      await request(app.getHttpServer())
         .post("/staff-users")
         .send({
           authId: "new-user",
           email: "new@test.com",
           fullName: "New User",
-          role: "manager",
+          role: "super_admin",
         })
-        .expect(201);
-      
-      expect(response.body.id).toBeDefined();
-      expect(response.body.authId).toBe("new-user");
-      expect(response.body.role).toBe("manager");
+        .expect(404);
 
       const dbUser = await prisma.staffUser.findUnique({ where: { authId: "new-user" } });
-      expect(dbUser).toBeDefined();
-      expect(dbUser?.fullName).toBe("New User");
+      expect(dbUser).toBeNull();
     });
-  });
 
-  describe("PATCH /staff-users/:id", () => {
-    it("should update an existing staff user", async () => {
-      const dbUser = await prisma.staffUser.findUnique({ where: { authId: "test-admin" } });
-      expect(dbUser).toBeDefined();
+    it("does not expose PATCH /staff-users/:id", async () => {
+      const dbUser = await prisma.staffUser.findUniqueOrThrow({ where: { authId: "test-admin" } });
 
-      const response = await request(app.getHttpServer())
-        .patch(`/staff-users/${dbUser!.id}`)
-        .send({
-          fullName: "Updated Admin Name",
-        })
-        .expect(200);
-      
-      expect(response.body.fullName).toBe("Updated Admin Name");
+      await request(app.getHttpServer())
+        .patch(`/staff-users/${dbUser.id}`)
+        .send({ role: "super_admin" })
+        .expect(404);
+
+      const after = await prisma.staffUser.findUniqueOrThrow({ where: { id: dbUser.id } });
+      expect(after.role).toBe(dbUser.role);
     });
   });
 });

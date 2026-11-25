@@ -1,16 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-
-import { AuditLogsService } from "../audit-logs/audit-logs.service";
-import { RequestStaffUser } from "../auth/auth.types";
 
 @Injectable()
 export class StaffUsersService {
-  constructor(
-    private prisma: PrismaService,
-    private auditLogsService: AuditLogsService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async findAll() {
     return this.prisma.staffUser.findMany({
@@ -39,76 +32,5 @@ export class StaffUsersService {
         active: true,
       },
     });
-  }
-
-  async findByEmail(email: string) {
-    return this.prisma.staffUser.findUnique({
-      where: { email },
-    });
-  }
-
-  async createStaffUser(
-    data: {
-      authId: string;
-      email: string;
-      fullName: string;
-      role?: "admin" | "manager" | "supervisor" | "viewer";
-      accessSchedule?: Record<string, { start: string; end: string }[]>;
-    },
-    adminUser: RequestStaffUser,
-  ) {
-    const newUser = await this.prisma.staffUser.create({
-      data: {
-        authId: data.authId,
-        email: data.email,
-        fullName: data.fullName,
-        role: data.role || "viewer",
-        active: true,
-        accessSchedule: data.accessSchedule as Prisma.InputJsonValue,
-      },
-    });
-
-    await this.auditLogsService.create({
-      staffId: adminUser.id,
-      action: "create",
-      entityType: "staff_user",
-      entityId: newUser.id,
-      changes: {
-        email: newUser.email,
-        role: newUser.role,
-        fullName: newUser.fullName,
-      },
-    });
-
-    return newUser;
-  }
-
-  async updateStaffUser(
-    id: string,
-    data: {
-      fullName?: string;
-      role?: "admin" | "manager" | "supervisor" | "viewer";
-      active?: boolean;
-      accessSchedule?: Record<string, { start: string; end: string }[]>;
-    },
-    adminUser: RequestStaffUser,
-  ) {
-    const updatedUser = await this.prisma.staffUser.update({
-      where: { id },
-      data: {
-        ...data,
-        accessSchedule: data.accessSchedule as Prisma.InputJsonValue,
-      },
-    });
-
-    await this.auditLogsService.create({
-      staffId: adminUser.id,
-      action: "update",
-      entityType: "staff_user",
-      entityId: id,
-      changes: data as Prisma.InputJsonValue,
-    });
-
-    return updatedUser;
   }
 }
