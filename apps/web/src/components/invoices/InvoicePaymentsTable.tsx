@@ -48,7 +48,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { formatCurrency } from "./invoice-detail.utils";
-import { formatCalendarDate } from "@/lib/date";
+import { formatCalendarDate, getTorontoDateString } from "@/lib/date";
 import EditPaymentDialog from "@/components/payments/EditPaymentDialog";
 import { createPayment, deletePayment, type Invoice } from "@/lib/api/client/invoice";
 import { Payment } from "@/lib/api/client/payments";
@@ -67,9 +67,7 @@ export function InvoicePaymentsTable({
 }: InvoicePaymentsTableProps) {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentDate, setPaymentDate] = useState(
-    new Date().toISOString().split("T")[0],
-  );
+  const [paymentDate, setPaymentDate] = useState(getTorontoDateString);
   const [paymentMethod, setPaymentMethod] = useState<
     "cash" | "debit" | "visa" | "mastercard" | "etransfer" | "website" | "other"
   >("cash");
@@ -147,7 +145,7 @@ export function InvoicePaymentsTable({
                   onClick={() => {
                     setPaymentAmount(invoice.balance.toString());
                     setPaymentDate(
-                      new Date(invoice.createdAt).toISOString().split("T")[0],
+                      getTorontoDateString(new Date(invoice.createdAt)),
                     );
                     setShowPaymentDialog(true);
                   }}

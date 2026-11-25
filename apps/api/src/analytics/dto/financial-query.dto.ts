@@ -1,9 +1,8 @@
 import { z } from "zod";
-import { dateParam } from "../../common/dto/query-params";
 
 export const DateRangeQuerySchema = z.object({
-  startDate: dateParam.optional(),
-  endDate: dateParam.optional(),
+  startDate: z.iso.date().optional(),
+  endDate: z.iso.date().optional(),
 });
 
 export type DateRangeQueryDto = z.infer<typeof DateRangeQuerySchema>;

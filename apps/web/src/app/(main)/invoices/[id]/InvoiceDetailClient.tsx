@@ -34,6 +34,7 @@ import { InvoiceLineItemsTable } from "@/components/invoices/InvoiceLineItemsTab
 import { InvoicePaymentsTable } from "@/components/invoices/InvoicePaymentsTable";
 import { InvoiceInstallmentsCard } from "@/components/invoices/InvoiceInstallmentsCard";
 import { toast } from "sonner";
+import { getTorontoDateString, moveToTorontoDay } from "@/lib/date";
 
 interface Props {
   invoiceId: string;
@@ -68,7 +69,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
       setEditInvoiceNumber(data.invoiceNumber || "");
       setEditNotes(data.notes || "");
       setEditStatus(data.status);
-      setEditDate(new Date(data.createdAt).toISOString().split("T")[0]);
+      setEditDate(getTorontoDateString(new Date(data.createdAt)));
       setEditLineItems(
         data.lineItems.map((item) => ({
           ...item,
@@ -93,8 +94,9 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
         notes: editNotes || undefined,
         status: editStatus,
         createdAt:
-          editDate && invoice
-            ? `${editDate}T${new Date(invoice.createdAt).toISOString().split("T")[1] || "00:00:00.000Z"}`
+          editDate &&
+          editDate !== getTorontoDateString(new Date(invoice.createdAt))
+            ? moveToTorontoDay(invoice.createdAt, editDate)
             : undefined,
         lineItems: editLineItems.map((item) => ({
           id: item.id.startsWith("temp-") ? undefined : item.id,

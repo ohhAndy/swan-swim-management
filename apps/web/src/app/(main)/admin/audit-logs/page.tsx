@@ -62,12 +62,8 @@ export default function AuditLogsPage() {
     try {
       const filters: Record<string, string> = {};
       if (selectedStaffId !== "all") filters.staffId = selectedStaffId;
-      if (startDate) {
-        filters.startDate = new Date(`${startDate}T00:00:00`).toISOString();
-      }
-      if (endDate) {
-        filters.endDate = new Date(`${endDate}T23:59:59.999`).toISOString();
-      }
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
 
       const { data, total } = await getAuditLogs(
         page,

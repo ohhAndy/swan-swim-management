@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { PaymentMethod } from "@prisma/client";
-import { dateParam, intParam } from "../../common/dto/query-params";
+import { intParam } from "../../common/dto/query-params";
 
 export const PaymentFilterSchema = z.object({
-  startDate: dateParam.optional(),
-  endDate: dateParam.optional(),
+  startDate: z.iso.date().optional(),
+  endDate: z.iso.date().optional(),
   method: z.union([z.enum(PaymentMethod), z.literal("all")]).optional(),
   query: z.string().optional(),
 });

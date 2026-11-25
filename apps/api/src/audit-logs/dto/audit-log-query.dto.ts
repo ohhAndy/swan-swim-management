@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { dateParam, intParam } from "../../common/dto/query-params";
+import { intParam } from "../../common/dto/query-params";
 
 export const AuditLogQuerySchema = z.object({
   skip: intParam.default(0),
@@ -7,8 +7,8 @@ export const AuditLogQuerySchema = z.object({
   action: z.string().optional(),
   entityType: z.string().optional(),
   staffId: z.string().optional(),
-  startDate: dateParam.optional(),
-  endDate: dateParam.optional(),
+  startDate: z.iso.date().optional(),
+  endDate: z.iso.date().optional(),
 });
 
 export type AuditLogQueryDto = z.infer<typeof AuditLogQuerySchema>;

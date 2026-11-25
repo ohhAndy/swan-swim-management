@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import * as ExcelJS from "exceljs";
 import { Prisma, PaymentMethod, InvoiceStatus } from "@prisma/client";
+import { calendarDateRange, torontoDayRange } from "../common/date.utils";
 
 const MAX_EXPORT_LIMIT = 10000;
 
@@ -17,20 +18,8 @@ export class ExportsService {
   ) {
     const where: Prisma.PaymentWhereInput = {};
 
-    if (startDate && endDate) {
-      where.paymentDate = {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
-      };
-    } else if (startDate) {
-      where.paymentDate = {
-        gte: new Date(startDate),
-      };
-    } else if (endDate) {
-      where.paymentDate = {
-        lte: new Date(endDate),
-      };
-    }
+    const paymentDate = calendarDateRange(startDate, endDate);
+    if (paymentDate) where.paymentDate = paymentDate;
 
     if (method && method !== "all") {
       where.paymentMethod = method as PaymentMethod;
@@ -98,20 +87,8 @@ export class ExportsService {
   ) {
     const where: Prisma.InvoiceWhereInput = {};
 
-    if (startDate && endDate) {
-      where.createdAt = {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
-      };
-    } else if (startDate) {
-      where.createdAt = {
-        gte: new Date(startDate),
-      };
-    } else if (endDate) {
-      where.createdAt = {
-        lte: new Date(endDate),
-      };
-    }
+    const createdAt = torontoDayRange(startDate, endDate);
+    if (createdAt) where.createdAt = createdAt;
 
     if (status && status !== "all") {
       where.status = status as InvoiceStatus;

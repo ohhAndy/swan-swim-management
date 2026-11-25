@@ -3,6 +3,8 @@ import {
   getTorontoDateString,
   getTorontoStartOfDay,
   formatCalendarDate,
+  torontoDayRange,
+  calendarDateRange,
 } from "./date.utils";
 
 describe("date.utils (apps/api)", () => {
@@ -47,6 +49,38 @@ describe("date.utils (apps/api)", () => {
     it("should format calendar date strings identically regardless of time", () => {
       expect(formatCalendarDate("2026-09-15")).toBe("Sep 15, 2026");
       expect(formatCalendarDate("2026-09-15T00:00:00.000Z")).toBe("Sep 15, 2026");
+    });
+  });
+
+  describe("torontoDayRange", () => {
+    it("covers whole Toronto days in winter (EST)", () => {
+      expect(torontoDayRange("2026-11-24", "2026-11-24")).toEqual({
+        gte: new Date("2026-11-24T05:00:00Z"),
+        lt: new Date("2026-11-25T05:00:00Z"),
+      });
+    });
+
+    it("covers whole Toronto days in summer (EDT)", () => {
+      expect(torontoDayRange("2026-07-01", "2026-07-31")).toEqual({
+        gte: new Date("2026-07-01T04:00:00Z"),
+        lt: new Date("2026-08-01T04:00:00Z"),
+      });
+    });
+
+    it("supports open-ended ranges", () => {
+      expect(torontoDayRange(undefined, "2026-12-31")).toEqual({
+        lt: new Date("2027-01-01T05:00:00Z"),
+      });
+      expect(torontoDayRange()).toBeUndefined();
+    });
+  });
+
+  describe("calendarDateRange", () => {
+    it("includes the whole end date for dates stored at UTC midnight", () => {
+      expect(calendarDateRange("2026-11-01", "2026-11-30")).toEqual({
+        gte: new Date("2026-11-01T00:00:00Z"),
+        lt: new Date("2026-12-01T00:00:00Z"),
+      });
     });
   });
 });

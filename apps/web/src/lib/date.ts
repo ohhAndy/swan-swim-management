@@ -44,3 +44,23 @@ export function formatCalendarDate(
   const utcDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
   return utcDate.toLocaleDateString("en-US", { ...options, timeZone: "UTC" });
 }
+
+/**
+ * Formats a timestamp (e.g. an invoice's createdAt) as its calendar day in
+ * Toronto. Use formatCalendarDate for values that are already calendar dates.
+ */
+export function formatTorontoDate(
+  timestamp: string | Date,
+  options?: Intl.DateTimeFormatOptions,
+): string {
+  if (!timestamp) return "";
+  return formatCalendarDate(getTorontoDateString(new Date(timestamp)), options);
+}
+
+/** The same moment moved to another Toronto calendar day ("YYYY-MM-DD"), as an ISO string */
+export function moveToTorontoDay(timestamp: string | Date, ymd: string): string {
+  const moment = new Date(timestamp);
+  const days =
+    (Date.parse(ymd) - Date.parse(getTorontoDateString(moment))) / 86_400_000;
+  return new Date(moment.getTime() + days * 86_400_000).toISOString();
+}

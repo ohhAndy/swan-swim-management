@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { getTorontoDateString } from "@/lib/date";
 
 interface CartItem extends InventoryItem {
   quantity: number;
@@ -100,7 +101,7 @@ export default function QuickSaleClient() {
         await createPayment({
           invoiceId: invoice.id,
           amount: totalAmount,
-          paymentDate: new Date().toISOString(),
+          paymentDate: getTorontoDateString(),
           paymentMethod: paymentMethod,
           notes: "POS Transaction",
         });

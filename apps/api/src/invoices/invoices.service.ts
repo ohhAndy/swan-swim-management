@@ -15,7 +15,7 @@ import {
   calculateEnrollmentTuition,
   calculateInstallmentStanding,
 } from "../common/billing";
-import { getTorontoDateString } from "../common/date.utils";
+import { getTorontoDateString, torontoDayRange } from "../common/date.utils";
 import {
   InvoiceInstallmentDto,
   UpdateInstallmentsDto,
@@ -321,15 +321,8 @@ export class InvoicesService {
       where.guardianId = query.guardianId;
     }
 
-    if (query.startDate || query.endDate) {
-      where.createdAt = {};
-      if (query.startDate) {
-        where.createdAt.gte = new Date(query.startDate);
-      }
-      if (query.endDate) {
-        where.createdAt.lte = new Date(query.endDate);
-      }
-    }
+    const createdAt = torontoDayRange(query.startDate, query.endDate);
+    if (createdAt) where.createdAt = createdAt;
 
     // Filter by needsRecovery
     if (query.needsRecovery === "true") {

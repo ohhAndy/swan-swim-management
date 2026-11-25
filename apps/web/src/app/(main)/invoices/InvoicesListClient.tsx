@@ -1,6 +1,6 @@
 "use client";
 
-import { formatCalendarDate } from "@/lib/date";
+import { formatTorontoDate } from "@/lib/date";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -378,7 +378,7 @@ export default function InvoicesListClient() {
                       </TableCell>
                       <TableCell className="p-0">
                         <Link href={`/invoices/${invoice.id}`} className="flex items-center w-full h-full p-4" onClick={(e) => e.stopPropagation()}>
-                          {formatCalendarDate(invoice.createdAt)}
+                          {formatTorontoDate(invoice.createdAt)}
                         </Link>
                       </TableCell>
                       <TableCell className="p-0">

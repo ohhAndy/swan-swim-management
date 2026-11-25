@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { calendarDateRange } from "../common/date.utils";
 
 @Injectable()
 export class AnalyticsService {
@@ -165,18 +166,8 @@ export class AnalyticsService {
 
     this.logger.log(`getTermFinancialDetails termId=${termId} startDate=${startDate} endDate=${endDate}`);
 
-    if (startDate) {
-      whereClause.paymentDate = {
-        ...(whereClause.paymentDate as object),
-        gte: new Date(startDate),
-      };
-    }
-    if (endDate) {
-      whereClause.paymentDate = {
-        ...(whereClause.paymentDate as object),
-        lte: new Date(endDate),
-      };
-    }
+    const paymentDate = calendarDateRange(startDate, endDate);
+    if (paymentDate) whereClause.paymentDate = paymentDate;
 
     // 1. Fetch payments for this term
     // Since payments are linked to invoices, we need to find payments for invoices that have line items for this term.

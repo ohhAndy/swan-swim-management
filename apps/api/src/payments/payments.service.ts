@@ -10,6 +10,7 @@ import { UpdatePaymentDto } from "./dto/update-payment.dto";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { RequestStaffUser } from "../auth/auth.types";
+import { calendarDateRange } from "../common/date.utils";
 
 @Injectable()
 export class PaymentsService {
@@ -31,20 +32,8 @@ export class PaymentsService {
 
     const where: Prisma.PaymentWhereInput = {};
 
-    if (startDate && endDate) {
-      where.paymentDate = {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
-      };
-    } else if (startDate) {
-      where.paymentDate = {
-        gte: new Date(startDate),
-      };
-    } else if (endDate) {
-      where.paymentDate = {
-        lte: new Date(endDate),
-      };
-    }
+    const paymentDate = calendarDateRange(startDate, endDate);
+    if (paymentDate) where.paymentDate = paymentDate;
 
     if (method && method !== "all") {
       where.paymentMethod = method as PaymentMethod;

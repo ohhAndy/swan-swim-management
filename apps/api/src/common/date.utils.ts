@@ -61,3 +61,41 @@ export function formatCalendarDate(
   const utcDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
   return utcDate.toLocaleDateString("en-US", { ...options, timeZone: "UTC" });
 }
+
+function nextDay(ymd: string): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+}
+
+const torontoDayStart = (ymd: string) =>
+  getTorontoStartOfDay(new Date(`${ymd}T12:00:00Z`));
+
+/**
+ * Prisma filter for timestamps (e.g. createdAt) whose Toronto calendar day is
+ * between `from` and `to`, both "YYYY-MM-DD" and inclusive.
+ */
+export function torontoDayRange(
+  from?: string,
+  to?: string,
+): { gte?: Date; lt?: Date } | undefined {
+  if (!from && !to) return undefined;
+  return {
+    ...(from && { gte: torontoDayStart(from) }),
+    ...(to && { lt: torontoDayStart(nextDay(to)) }),
+  };
+}
+
+/**
+ * Prisma filter for calendar dates stored as UTC midnight (e.g. paymentDate)
+ * between `from` and `to`, both "YYYY-MM-DD" and inclusive.
+ */
+export function calendarDateRange(
+  from?: string,
+  to?: string,
+): { gte?: Date; lt?: Date } | undefined {
+  if (!from && !to) return undefined;
+  return {
+    ...(from && { gte: new Date(`${from}T00:00:00Z`) }),
+    ...(to && { lt: new Date(`${nextDay(to)}T00:00:00Z`) }),
+  };
+}

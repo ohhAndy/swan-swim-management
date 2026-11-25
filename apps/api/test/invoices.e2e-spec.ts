@@ -95,4 +95,31 @@ describe("InvoicesController (e2e)", () => {
       expect(dbInvoice).toBeNull();
     });
   });
+
+  describe("date filters", () => {
+    it("filters by the Toronto calendar day, including evenings", async () => {
+      // 9:30 pm Toronto on Nov 24 is already Nov 25 in UTC
+      await prisma.invoice.update({
+        where: { id: testInvoiceId },
+        data: { createdAt: new Date("2026-11-25T02:30:00Z") },
+      });
+      const ids = async (query: Record<string, string>) =>
+        (
+          await request(app.getHttpServer())
+            .get("/invoices")
+            .query({ includeAllLocations: "true", ...query })
+            .expect(200)
+        ).body.data.map((i: { id: string }) => i.id);
+
+      expect(await ids({ startDate: "2026-11-24", endDate: "2026-11-24" })).toContain(testInvoiceId);
+      expect(await ids({ startDate: "2026-11-25" })).not.toContain(testInvoiceId);
+    });
+
+    it("rejects a date that is not YYYY-MM-DD", () => {
+      return request(app.getHttpServer())
+        .get("/invoices")
+        .query({ startDate: "yesterday" })
+        .expect(400);
+    });
+  });
 });

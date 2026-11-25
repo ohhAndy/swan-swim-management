@@ -4,6 +4,7 @@ import { Roles } from "../auth/roles.decorator";
 import { Prisma } from "@prisma/client";
 import { ZodValidationPipe } from "nestjs-zod";
 import { AuditLogQueryDto, AuditLogQuerySchema } from "./dto/audit-log-query.dto";
+import { torontoDayRange } from "../common/date.utils";
 
 @Controller("audit-logs")
 export class AuditLogsController {
@@ -20,11 +21,8 @@ export class AuditLogsController {
     if (entityType)
       where.entityType = { contains: entityType, mode: "insensitive" };
     if (staffId) where.staffId = staffId;
-    if (startDate || endDate) {
-      where.createdAt = {};
-      if (startDate) where.createdAt.gte = new Date(startDate);
-      if (endDate) where.createdAt.lte = new Date(endDate);
-    }
+    const createdAt = torontoDayRange(startDate, endDate);
+    if (createdAt) where.createdAt = createdAt;
 
     const [data, total] = await Promise.all([
       this.auditLogsService.findAll({

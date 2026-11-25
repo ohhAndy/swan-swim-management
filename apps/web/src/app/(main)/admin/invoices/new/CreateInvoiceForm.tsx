@@ -45,7 +45,7 @@ import {
   type UninvoicedSwimTeamRegistration,
 } from "@/lib/api/client/swim-team";
 import type { PlannedInstallment } from "@school/shared-types";
-import { getTorontoDateString } from "@/lib/date";
+import { getTorontoDateString, moveToTorontoDay } from "@/lib/date";
 
 export default function CreateInvoiceForm() {
   const router = useRouter();
@@ -79,9 +79,7 @@ export default function CreateInvoiceForm() {
 
   const [customLineItems, setCustomLineItems] = useState<CustomLineItem[]>([]);
   const [invoiceNumber, setInvoiceNumber] = useState("");
-  const [invoiceDate, setInvoiceDate] = useState(
-    new Date().toISOString().split("T")[0],
-  );
+  const [invoiceDate, setInvoiceDate] = useState(getTorontoDateString);
   const [notes, setNotes] = useState("");
   const [enrollmentAmounts, setEnrollmentAmounts] = useState<
     Record<string, string>
@@ -363,13 +361,7 @@ export default function CreateInvoiceForm() {
 
       let finalCreatedAt: string | undefined;
       if (invoiceDate) {
-        const todayStr = new Date().toISOString().split("T")[0];
-        if (invoiceDate === todayStr) {
-          finalCreatedAt = new Date().toISOString();
-        } else {
-          const now = new Date();
-          finalCreatedAt = `${invoiceDate}T${now.toISOString().split("T")[1]}`;
-        }
+        finalCreatedAt = moveToTorontoDay(new Date(), invoiceDate);
       }
 
       const invoice = await createInvoice({
