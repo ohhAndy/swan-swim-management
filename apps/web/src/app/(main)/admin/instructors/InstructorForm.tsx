@@ -93,10 +93,6 @@ export default function InstructorForm({ instructor }: InstructorFormProps) {
 
   async function onSubmit(values: FormValues) {
     setLoading(true);
-    // Transform certificates to simpler format if needed, but saving as objects {name: "..."} is fine for Json type.
-    // Or we could map to strings: values.certificates?.map(c => c.name)
-    // Let's stick to the object structure from the form which provides more flexibility for future fields (like date, expiry).
-
     try {
       if (instructor) {
         await updateInstructor(instructor.id, values);

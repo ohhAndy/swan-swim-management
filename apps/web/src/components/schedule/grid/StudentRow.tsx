@@ -32,7 +32,6 @@ import { ReportCardForm } from "@/components/report-cards/ReportCardForm";
 import { useState } from "react";
 import { StaffRole, hasMinRole } from "@/lib/auth/permissions";
 
-// Duplicate of getPaymentStatus for now, can be extracted if needed
 function getPaymentStatus(
   status: string | null,
   invoiceNumber: string | null,

@@ -479,7 +479,6 @@ export class ReportCardsService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      // Update status, sentAt, and sentById
       await tx.reportCard.update({
         where: { id },
         data: {

@@ -51,7 +51,7 @@ export default function TasksPage() {
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
   const canCreate = hasMinRole(user?.role, "manager");
-  const canEdit = canCreate; // Simplify for now
+  const canEdit = canCreate;
 
   const filteredTasks = tasks.filter((task) => {
     if (filter === "my_tasks") return task.assignedToId === user?.staffUserId;
@@ -62,7 +62,6 @@ export default function TasksPage() {
 
   const handleSave = async (data: CreateTaskInput) => {
     if (editingTask) {
-      // Update
       await updateTask(editingTask.id, data);
     } else {
       // Create

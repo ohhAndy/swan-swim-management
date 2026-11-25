@@ -210,7 +210,6 @@ export class PublicService {
       );
     }
 
-    // Prepare location tag for notes
     const locationTag = resolvedLocationName
       ? `[Location: ${resolvedLocationName}]`
       : "";
@@ -237,7 +236,6 @@ export class PublicService {
     // Ensure every request session has a persistent tracking cookieId in DB
     const trackingCookieId = data.cookieId?.trim() || `trk_${randomUUID()}`;
 
-    // Create records within a transaction
     await this.prisma.$transaction(
       swimmers.map((swimmer, idx) => {
         const notesParts: string[] = [];

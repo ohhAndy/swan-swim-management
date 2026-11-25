@@ -79,7 +79,6 @@ function TrialFormInner() {
   const [hasExistingRequest, setHasExistingRequest] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  // Check for existing submission cookie
   useEffect(() => {
     const cookie = getCookie(COOKIE_NAME);
     if (cookie) {
@@ -87,7 +86,6 @@ function TrialFormInner() {
     }
   }, []);
 
-  // Fetch dynamic locations from Supabase via API
   useEffect(() => {
     async function loadLocations() {
       try {

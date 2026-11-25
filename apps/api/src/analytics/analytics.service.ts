@@ -9,7 +9,6 @@ export class AnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getRevenueByLocation() {
-    // Fetch all payments with invoice location
     const payments = await this.prisma.payment.findMany({
       select: {
         amount: true,
@@ -36,7 +35,6 @@ export class AnalyticsService {
         (revenueByLocation[locationId] || 0) + amount;
     }
 
-    // Fetch location names
     const locations = await this.prisma.location.findMany({
       select: { id: true, name: true },
     });

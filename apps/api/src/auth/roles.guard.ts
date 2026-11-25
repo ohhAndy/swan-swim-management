@@ -33,7 +33,6 @@ export class RolesGuard implements CanActivate {
 
     // If user is not authenticated...
     if (!user || !user.authId) {
-      // Check if roles were strictly required
       const requiredRoles = this.reflector.getAllAndOverride<StaffRole[]>(
         ROLES_KEY,
         [context.getHandler(), context.getClass()],
@@ -48,7 +47,6 @@ export class RolesGuard implements CanActivate {
 
     // --- User is Authenticated ---
 
-    // Fetch staff user from database
     const staffUser = await this.prisma.staffUser.findUnique({
       where: { authId: user.authId },
       select: {
@@ -69,7 +67,6 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException("User not found or inactive");
     }
 
-    // Check allowed login times
     if (staffUser.accessSchedule) {
       const schedule = staffUser.accessSchedule as Record<
         string,
@@ -81,7 +78,6 @@ export class RolesGuard implements CanActivate {
         weekday: "long",
         timeZone: "America/Toronto",
       });
-      // Get current time in HH:mm format
       const timeString = now.toLocaleTimeString("en-US", {
         hour12: false,
         hour: "2-digit",
@@ -111,7 +107,6 @@ export class RolesGuard implements CanActivate {
       }
     }
 
-    // Attach full staff user info to request
     request.staffUser = staffUser;
 
     // Finally, check Roles if they were required

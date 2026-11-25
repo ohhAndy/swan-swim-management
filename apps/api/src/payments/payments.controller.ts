@@ -58,21 +58,18 @@ export class PaymentsController {
     return this.paymentsService.findByInvoice(invoiceId);
   }
 
-  // Get single payment - Admin & Manager only
   @Get(":id")
   @Roles("super_admin", "admin", "manager")
   findOne(@Param("id") id: string) {
     return this.paymentsService.findOne(id);
   }
 
-  // Delete payment - Admin only
   @Delete(":id")
   @Roles("super_admin", "admin")
   remove(@Param("id") id: string, @CurrentStaffUser() staffUser: RequestStaffUser) {
     return this.paymentsService.remove(id, staffUser);
   }
 
-  // Update payment - Admin & Manager only
   @Patch(":id")
   @Roles("super_admin", "admin", "manager")
   update(

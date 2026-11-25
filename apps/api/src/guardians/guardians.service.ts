@@ -302,7 +302,6 @@ export class GuardiansService {
         },
       });
 
-      // Create audit log for guardian creation
       await this.auditLogsService.create(
         {
           staffId: staffUser.id,
@@ -333,7 +332,6 @@ export class GuardiansService {
   async update(id: string, dto: UpdateGuardianDto, staffUser: RequestStaffUser) {
     await this.ensureExists(id);
 
-    // Get existing guardian data to track changes
     const existing = await this.prisma.guardian.findUnique({
       where: { id },
       select: {
@@ -444,7 +442,6 @@ export class GuardiansService {
     if (c > 0)
       throw new BadRequestException("Guardian has associated students!");
 
-    // Get guardian data before deletion
     const guardian = await this.prisma.guardian.findUnique({
       where: { id },
       select: {
@@ -460,7 +457,6 @@ export class GuardiansService {
 
     if (guardian) {
       return await this.prisma.$transaction(async (tx) => {
-        // Create audit log before deletion
         await this.auditLogsService.create(
           {
             staffId: staffUser.id,

@@ -235,7 +235,6 @@ export class OfferingsService {
   }
 
   async deleteOffering(offeringId: string, staffUser: RequestStaffUser) {
-    // Check for enrollments
     const enrollments = await this.prisma.enrollment.count({
       where: { offeringId, status: "active" },
     });

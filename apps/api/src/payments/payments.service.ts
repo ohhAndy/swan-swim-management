@@ -93,7 +93,6 @@ export class PaymentsService {
 
   // Record a payment
   async create(createPaymentDto: CreatePaymentDto, staffUser: RequestStaffUser) {
-    // Check if invoice exists
     const invoice = await this.prisma.invoice.findUnique({
       where: { id: createPaymentDto.invoiceId },
       include: { payments: true, location: true },
@@ -105,12 +104,10 @@ export class PaymentsService {
       );
     }
 
-    // Check if invoice is voided
     if (invoice.status === "void") {
       throw new BadRequestException("Cannot add payment to a voided invoice");
     }
 
-    // Calculate current amount paid
     const currentAmountPaid = invoice.payments.reduce(
       (sum, payment) => sum + Number(payment.amount),
       0,
@@ -118,7 +115,6 @@ export class PaymentsService {
 
     // Removed strict limits to allow overpayments and free refunds as requested
 
-    // Create payment
     const payment = await this.prisma.payment.create({
       data: {
         invoiceId: createPaymentDto.invoiceId,
@@ -161,7 +157,6 @@ export class PaymentsService {
     return payment;
   }
 
-  // Get all payments for an invoice
   async findByInvoice(invoiceId: string) {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id: invoiceId },
@@ -184,7 +179,6 @@ export class PaymentsService {
     return payments;
   }
 
-  // Get payment by ID
   async findOne(id: string) {
     const payment = await this.prisma.payment.findUnique({
       where: { id },
@@ -219,7 +213,6 @@ export class PaymentsService {
       throw new NotFoundException(`Payment with ID ${id} not found`);
     }
 
-    // Delete payment
     await this.prisma.payment.delete({
       where: { id },
     });
@@ -268,7 +261,6 @@ export class PaymentsService {
     return { message: "Payment deleted successfully" };
   }
 
-  // Update payment
   async update(id: string, updatePaymentDto: UpdatePaymentDto, staffUser: RequestStaffUser) {
     const payment = await this.prisma.payment.findUnique({
       where: { id },
@@ -279,7 +271,6 @@ export class PaymentsService {
       throw new NotFoundException(`Payment with ID ${id} not found`);
     }
 
-    // Check if invoice is void
     if (payment.invoice.status === "void") {
       throw new BadRequestException(
         "Cannot update payment of a voided invoice",
@@ -291,15 +282,11 @@ export class PaymentsService {
       .filter((p) => p.id !== id)
       .reduce((sum, p) => sum + Number(p.amount), 0);
 
-    // New amount?
     const newAmount =
       updatePaymentDto.amount !== undefined
         ? updatePaymentDto.amount
         : Number(payment.amount);
 
-    // Validate if new amount exceeds invoice total or drops below 0
-    // NOTE: If the user explicitly wants to overpay, we might need a flag.
-    // For now, sticking to the rule: cannot exceed total.
     if (otherPaymentsTotal + newAmount > Number(payment.invoice.totalAmount)) {
       throw new BadRequestException(
         `Payment update would exceed invoice total. Maximum allowed: $${
@@ -313,7 +300,6 @@ export class PaymentsService {
       );
     }
 
-    // Update the payment
     const updatedPayment = await this.prisma.payment.update({
       where: { id },
       data: {

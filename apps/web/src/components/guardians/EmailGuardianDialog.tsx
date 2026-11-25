@@ -18,12 +18,6 @@ export function EmailGuardianDialog({
   open,
   onOpenChange,
 }: EmailGuardianDialogProps) {
-  // Wrapper to handle closing on success if we want, or just let Composer handle success state
-  // Composer has its own success state ("Email Queued Successfully"), so we can just let it handle it.
-  // But if we want to close the dialog after a delay or reset when reopening, we might need a wrapper.
-  // For now, let's just render the Composer. When the dialog closes and re-opens, we want a fresh state.
-  // We can force re-render with a key or just let the Composer handle its internal state.
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl p-0">

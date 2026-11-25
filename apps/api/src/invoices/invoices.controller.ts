@@ -29,7 +29,6 @@ import { RequestStaffUser } from "../auth/auth.types";
 export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}
 
-  // Create invoice - Admin & Manager only
   @Post()
   @Roles("super_admin", "admin", "manager")
   async create(
@@ -67,14 +66,12 @@ export class InvoicesController {
     );
   }
 
-  // Get single invoice - Admin & Manager only
   @Get(":id")
   @Roles("super_admin", "admin", "manager")
   async findOne(@Param("id") id: string) {
     return this.invoicesService.findOne(id);
   }
 
-  // Update invoice - Admin & Manager only
   @Patch(":id")
   @Roles("super_admin", "admin", "manager")
   async update(
@@ -97,7 +94,6 @@ export class InvoicesController {
     return this.invoicesService.updateInstallments(id, body, staffUser);
   }
 
-  // Delete invoice - Admin only
   @Delete(":id")
   @Roles("super_admin", "admin")
   async remove(

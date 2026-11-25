@@ -233,7 +233,6 @@ export function ReorganizeBoard({
     const sourceOffering = findOwnerOffering(enrollmentId);
     if (!sourceOffering || sourceOffering.offeringId === targetOfferingId) return;
 
-    // Verify target is a valid offering column
     const targetOffering = offerings.find((o) => o.offeringId === targetOfferingId);
     if (!targetOffering) return;
 

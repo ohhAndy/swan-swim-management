@@ -112,7 +112,6 @@ export function ReportCardForm({
         setStatus(existing.status);
         setComments(existing.comments || "");
 
-        // Map existing skills
         const grades: Record<
           string,
           "not_started" | "developing" | "mastered"

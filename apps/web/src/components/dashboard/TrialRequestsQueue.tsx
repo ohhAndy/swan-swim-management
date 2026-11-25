@@ -352,7 +352,6 @@ export function TrialRequestsQueue() {
           {data.items.map((req) => {
             const { tags, parentNote, staffNote } = parseNotes(req.notes);
 
-            // Check if part of sibling group
             const isSibling = tags.some((t) =>
               t.toLowerCase().includes("sibling trial"),
             );

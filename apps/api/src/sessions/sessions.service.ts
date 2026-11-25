@@ -150,7 +150,6 @@ export class SessionsService {
           }))
         : [];
 
-      // Calculate Weighted Usage
       const { effectiveCapacity, openSeats } = calculateClassUsage(
         [
           ...regs.map((r) => ({ classRatio: r.ratio })),

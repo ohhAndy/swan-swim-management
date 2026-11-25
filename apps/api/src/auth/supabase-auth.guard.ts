@@ -39,7 +39,6 @@ export class SupabaseAuthGuard implements CanActivate {
     const token = authHeader.substring(7);
 
     try {
-      // Verify JWT token with Supabase
       const {
         data: { user },
         error,
@@ -49,7 +48,6 @@ export class SupabaseAuthGuard implements CanActivate {
         throw new UnauthorizedException("Invalid token");
       }
 
-      // Attach user to request
       request.user = { authId: user.id, email: user.email };
       return true;
     } catch {

@@ -40,7 +40,6 @@ const addressFormSchema = z
     // 2. Logic: Check if the "Required" fields are actually empty strings
     const { streetNumber, streetName, city, postalCode } = data;
 
-    // Check if ANY main field has text
     const hasData =
       streetNumber !== "" ||
       streetName !== "" ||

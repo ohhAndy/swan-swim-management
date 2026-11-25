@@ -8,10 +8,6 @@ import {
 } from "@react-pdf/renderer";
 import { Level } from "@/lib/api/client/curriculum";
 
-// Register fonts (optional, using standard Helvetica for now to keep it simple,
-// or could register Inter if we had the font files locally/url)
-// Font.register({ family: 'Inter', src: '...' });
-
 const styles = StyleSheet.create({
   page: {
     flexDirection: "column",

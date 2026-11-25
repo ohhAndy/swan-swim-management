@@ -98,7 +98,6 @@ export class TermAvailabilityService {
         if (sess.status === "canceled") continue;
         if (sess.date.toISOString().split("T")[0] < cutoffDate) continue;
 
-        // Calculate Usage
         let filled = 0;
 
         // Enrollments (exclude skips/excused)
@@ -141,7 +140,7 @@ export class TermAvailabilityService {
           offeringId: off.id,
           title: off.title,
           time: `${off.startTime}-${off.endTime}`,
-          capacity: effectiveCapacity, // Return effective capacity
+          capacity: effectiveCapacity,
           sessions: availableSessions,
           instructors: off.instructors
             .map((i) =>

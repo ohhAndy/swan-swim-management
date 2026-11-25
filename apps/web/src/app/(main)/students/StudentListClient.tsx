@@ -125,7 +125,6 @@ export default function StudentsListClient({
     fetch();
   }, [searchParams, reloadKey]);
 
-  // Calculate age helper
   const calculateAge = (birthdate: string | null) => {
     if (!birthdate) return "—";
 

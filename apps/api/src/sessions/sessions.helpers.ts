@@ -11,7 +11,6 @@ export async function countUsedSeatsForSession(
     select: { id: true },
   });
 
-  // Get Offering details for dynamic capacity
   const offering = await tx.classOffering.findUnique({
     where: { id: offeringId },
     select: { capacity: true, instructors: { where: { removedAt: null } } },

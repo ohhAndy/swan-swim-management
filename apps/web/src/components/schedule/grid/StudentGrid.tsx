@@ -152,7 +152,6 @@ export function StudentGrid({
         day: "numeric",
       });
 
-      // Find session for this date
       const dateKey = iso.split("T")[0]; // YYYY-MM-DD
       const roster = rosters.find((r) => r.session.date.startsWith(dateKey));
 

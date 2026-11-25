@@ -59,7 +59,6 @@ export default async function SlotPageView({
   const { weekday, termId, range } = resolvedParams;
   const { start, end } = parseRange(range);
 
-  // Calculate duration
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
   const duration = eh * 60 + em - (sh * 60 + sm);

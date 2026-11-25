@@ -124,7 +124,6 @@ export class TermsService {
           tx,
         );
 
-        // Create Offerings (Day and Time Slot)
         const offerings = await Promise.all(
           templates.map((tpl) => {
             const computedEndTime = computeEnd(tpl.startTime, tpl.duration);

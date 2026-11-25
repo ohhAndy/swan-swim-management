@@ -23,7 +23,6 @@ export class StatisticsService {
       const validatedLocationId = validateLocationAccess(staffUser, locationId);
 
       // 1. Enrollment Capacity
-      // Fetch all offerings for the term
       const offerings = await this.prisma.classOffering.findMany({
         where: { termId },
         include: {

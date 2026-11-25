@@ -26,7 +26,6 @@ export class TrialBookingsService {
     staffUser: RequestStaffUser,
   ) {
 
-    // Verify session exists
     const session = await this.prisma.classSession.findUnique({
       where: { id: classSessionId },
       include: {
@@ -49,7 +48,6 @@ export class TrialBookingsService {
       throw new BadRequestException("Invalid age");
     }
 
-    // Create trial booking with audit log
     return this.prisma.$transaction(async (tx) => {
       const trial = await tx.trialBooking.create({
         data: {
@@ -82,7 +80,6 @@ export class TrialBookingsService {
         },
       });
 
-      // Create audit log
       await this.auditLogsService.create(
         {
           staffId: staffUser.id,
@@ -177,7 +174,6 @@ export class TrialBookingsService {
         },
       });
 
-      // Create audit log
       await this.auditLogsService.create(
         {
           staffId: staffUser.id,
@@ -241,7 +237,6 @@ export class TrialBookingsService {
         },
       });
 
-      // Create audit log
       await this.auditLogsService.create(
         {
           staffId: staffUser.id,
@@ -280,7 +275,6 @@ export class TrialBookingsService {
       throw new BadRequestException("Trial already converted");
     }
 
-    // Verify student exists
     const student = await this.prisma.student.findUnique({
       where: { id: studentId },
     });
@@ -313,7 +307,6 @@ export class TrialBookingsService {
         },
       });
 
-      // Create audit log
       await this.auditLogsService.create(
         {
           staffId: staffUser.id,

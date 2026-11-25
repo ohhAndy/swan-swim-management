@@ -146,7 +146,6 @@ export function SlotBlock({
   };
 
   const handleTrialClick = (date: string) => {
-    // Find the session ID for this date
     const ymd = date.slice(0, 10);
     const sessionId = byDate[ymd]?.sessionId || null;
     dialogs.trial.open(date, sessionId);

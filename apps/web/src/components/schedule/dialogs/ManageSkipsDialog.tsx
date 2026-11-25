@@ -95,9 +95,6 @@ export function ManageSkipsDialog({
   // Map attendance by session ID for easy lookup
   const attendanceMap = new Map<string, string>();
   enrollment.attendedSessions.forEach((a) => {
-    // If we have access to sessionId directly, great. Otherwise we might need to match by date if sessionId isn't passed in attendedSessions properly.
-    // In GuardianView/StudentView we mapped it.
-    // Note: The types in `GuardianViewClient` mapped `id` to `classSession.id`.
     attendanceMap.set(a.id, a.status);
   });
 

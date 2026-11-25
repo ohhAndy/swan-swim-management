@@ -448,7 +448,6 @@ export class TermScheduleService {
       })(),
     ]);
 
-    // Fetch Next Term Enrollments
     const nextTermIds = nextTerm.map((t: { id: string }) => t.id);
 
     const studentIds = enrollments
@@ -819,7 +818,6 @@ export class TermScheduleService {
 
     const offeringIds = offerings.map((o) => o.id);
 
-    // Get exact sessions for this day
     const sessions = await this.prisma.classSession.findMany({
       where: {
         offeringId: { in: offeringIds },
@@ -842,7 +840,6 @@ export class TermScheduleService {
     const sessionIds = sessions.map((s) => s.id);
     const sessionMap = new Map(sessions.map((s) => [s.offeringId, s]));
 
-    // Get Enrollments (Students)
     const enrollments = await this.prisma.enrollment.findMany({
       where: {
         offeringId: { in: offeringIds },

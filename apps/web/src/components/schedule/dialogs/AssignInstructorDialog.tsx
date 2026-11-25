@@ -61,7 +61,6 @@ export function AssignInstructorDialog({
     try {
       setLoadingInstructors(true);
       setError(null);
-      // Get all active instructors
       const instructors = await getInstructors(true);
       setAvailableInstructors(instructors);
     } catch (error) {

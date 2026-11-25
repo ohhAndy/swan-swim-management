@@ -21,7 +21,6 @@ export class ClassInstructorsService {
     user: RequestStaffUser,
   ) {
 
-    // Verify class offering exists
     const classOffering = await this.prisma.classOffering.findUnique({
       where: { id: classOfferingId },
     });
@@ -29,7 +28,6 @@ export class ClassInstructorsService {
       throw new NotFoundException("Class offering not found");
     }
 
-    // Verify instructor exists
     const instructor = await this.prisma.instructor.findUnique({
       where: { id: instructorId },
     });
@@ -39,7 +37,6 @@ export class ClassInstructorsService {
 
     // Perform check and create atomically
     return this.prisma.$transaction(async (tx) => {
-      // Check if already assigned (active assignment)
       const existing = await tx.classInstructor.findFirst({
         where: {
           classOfferingId,
@@ -71,7 +68,6 @@ export class ClassInstructorsService {
         },
       });
 
-      // Create audit log
       await this.auditLogsService.create(
         {
           staffId: user.id,
@@ -134,7 +130,6 @@ export class ClassInstructorsService {
         },
       });
 
-      // Create audit log
       await this.auditLogsService.create(
         {
           staffId: user.id,

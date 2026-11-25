@@ -182,7 +182,6 @@ export class EnrollmentsService {
         where: { enrollmentId: existingInactive.id },
       });
     } else {
-      // Create a brand-new enrollment
       newEnrollment = await tx.enrollment.create({
         data: {
           studentId: currEnrollment.studentId,
@@ -244,7 +243,6 @@ export class EnrollmentsService {
       }
     });
 
-    // Create transferred attendance records
     if (attendanceToCreate.length > 0) {
       await tx.attendance.createMany({
         data: attendanceToCreate,
@@ -293,7 +291,6 @@ export class EnrollmentsService {
       }
     }
 
-    // Create audit log for transfer
     await this.auditLogsService.create(
       {
         staffId: staffUser.id,
@@ -320,7 +317,6 @@ export class EnrollmentsService {
       tx,
     );
 
-    // Create audit log for new enrollment creation
     await this.auditLogsService.create(
       {
         staffId: staffUser.id,
@@ -380,7 +376,6 @@ export class EnrollmentsService {
       throw new BadRequestException("Student already enrolled");
 
     return await this.prisma.$transaction(async (tx) => {
-      // Create enrollment
       const enrollment = await tx.enrollment.create({
         data: {
           studentId,
@@ -395,7 +390,6 @@ export class EnrollmentsService {
       // Auto-grant makeup tokens for the enrollment
       await this.tokensService.autoGrantTokens(enrollment.id, tx);
 
-      // Create skips if any
       let sessionIds: string[] = [];
       if (skippedDates.length > 0) {
         const sessions = await tx.classSession.findMany({
@@ -424,7 +418,6 @@ export class EnrollmentsService {
         });
       }
 
-      // Create audit log for enrollment
       await this.auditLogsService.create(
         {
           staffId: staffUser.id,
@@ -570,8 +563,6 @@ export class EnrollmentsService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      // Delete enrollment (cascade should handle skips/attendance if configured,
-      // but let's assume we might need to be careful. For now, standard delete)
       await tx.enrollment.delete({
         where: { id },
       });

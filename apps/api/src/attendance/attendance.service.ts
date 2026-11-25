@@ -64,7 +64,6 @@ export class AttendanceService {
 
   async upsert(data: UpsertAttendanceInput, staffUser: RequestStaffUser) {
 
-    // Get existing attendance record if it exists
     const existing = await this.prisma.attendance.findUnique({
       where: {
         enrollmentId_classSessionId: {

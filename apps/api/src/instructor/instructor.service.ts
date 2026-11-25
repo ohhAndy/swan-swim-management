@@ -93,9 +93,6 @@ export class InstructorsService {
   }
 
   async remove(id: string, removedBy: RequestStaffUser) {
-    // Soft delete by setting isActive to false, or hard delete?
-    // User asked to verify separate lifecycle. Usually soft delete is better, but allow hard delete if no relations?
-    // Plan said "Delete (soft)".
     return this.update(id, { isActive: false }, removedBy);
   }
 }

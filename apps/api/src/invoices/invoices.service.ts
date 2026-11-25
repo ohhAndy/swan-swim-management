@@ -55,7 +55,6 @@ export class InvoicesService {
     );
   }
 
-  // Create invoice with line items
   async create(
     createInvoiceDto: CreateInvoiceDto,
     staffUser: RequestStaffUser,
@@ -107,12 +106,9 @@ export class InvoicesService {
       finalInvoiceNumber = `POS-${yymmdd}-${hhmmss}`;
     }
 
-    // Prepare Invoice Data
     const invoice = await this.prisma.$transaction(async (tx) => {
-      // Decrement Stock for Inventory Items
       for (const item of lineItems) {
         if (item.inventoryItemId) {
-          // Check stock
           const inventoryItem = await tx.inventoryItem.findUnique({
             where: { id: item.inventoryItemId },
           });
@@ -126,7 +122,6 @@ export class InvoicesService {
               `Item ${inventoryItem.name} is out of stock`,
             );
 
-          // Decrement
           await tx.inventoryItem.update({
             where: { id: item.inventoryItemId },
             data: { stock: { decrement: 1 } },
@@ -213,7 +208,6 @@ export class InvoicesService {
     return this.enrichInvoice(invoice);
   }
 
-  // Get invoice by ID
   async findOne(id: string) {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id },
@@ -379,7 +373,6 @@ export class InvoicesService {
     };
   }
 
-  // Update invoice
   async update(
     id: string,
     updateInvoiceDto: UpdateInvoiceDto,
@@ -405,14 +398,12 @@ export class InvoicesService {
 
       // 2. Handle line items if provided
       if (lineItems) {
-        // Get existing items to know what to delete
         const existingItems = await prisma.invoiceLineItem.findMany({
           where: { invoiceId: id },
         });
         const existingIds = new Set(existingItems.map((i) => i.id));
         const newIds = new Set(lineItems.filter((i) => i.id).map((i) => i.id));
 
-        // Delete items that are no longer present
         const toDelete = [...existingIds].filter((id) => !newIds.has(id));
         if (toDelete.length > 0) {
           await prisma.invoiceLineItem.deleteMany({
@@ -423,7 +414,6 @@ export class InvoicesService {
         // Upsert items (Create or Update)
         for (const item of lineItems) {
           if (item.id && existingIds.has(item.id)) {
-            // Update existing
             await prisma.invoiceLineItem.update({
               where: { id: item.id },
               data: {
@@ -433,7 +423,6 @@ export class InvoicesService {
               },
             });
           } else {
-            // Create new
             await prisma.invoiceLineItem.create({
               data: {
                 invoiceId: id,
@@ -455,7 +444,6 @@ export class InvoicesService {
           _sum: { amount: true },
         });
 
-        // Update the invoice total
         await prisma.invoice.update({
           where: { id },
           data: { totalAmount: agg._sum.amount || 0 },
@@ -527,10 +515,6 @@ export class InvoicesService {
 
   // Delete invoice (admin only, cascades to line items and payments)
   async remove(id: string, staffUser: RequestStaffUser) {
-    // We need user context for audit logs.
-    // If not provided (legacy calls?), we might skip or fail?
-    // Assuming controller will be updated to pass it.
-
     // First get the invoice to know who we are deleting
     const invoice = await this.prisma.invoice.findUnique({
       where: { id },

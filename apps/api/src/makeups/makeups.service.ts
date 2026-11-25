@@ -22,7 +22,6 @@ export class MakeupsService {
   ) {
     const { studentId, classSessionId, notes, overrideAcknowledged } = input;
 
-    // Check student existence
     const student = await this.prisma.student.findUnique({
       where: { id: studentId },
       select: {

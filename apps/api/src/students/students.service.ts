@@ -443,7 +443,6 @@ export class StudentsService {
         },
       });
 
-      // Create audit log for student creation
       await this.auditLogsService.create(
         {
           staffId: staffUser.id,
@@ -473,7 +472,6 @@ export class StudentsService {
   async update(id: string, dto: UpdateStudentDto, staffUser: RequestStaffUser) {
     await this.ensureExists(id);
 
-    // Get existing student data to track changes
     const existing = await this.prisma.student.findUnique({
       where: { id },
       select: {
@@ -634,7 +632,6 @@ export class StudentsService {
     const c = await this.prisma.enrollment.count({ where: { studentId: id } });
     if (c > 0) throw new BadRequestException("Student is currently enrolled!");
 
-    // Get student data before deletion
     const student = await this.prisma.student.findUnique({
       where: { id },
       select: {
@@ -649,7 +646,6 @@ export class StudentsService {
 
     if (student) {
       return await this.prisma.$transaction(async (tx) => {
-        // Create audit log before deletion
         await this.auditLogsService.create(
           {
             staffId: staffUser.id,
