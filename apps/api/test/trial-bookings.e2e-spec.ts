@@ -116,6 +116,21 @@ describe("TrialBookingsController (e2e)", () => {
         .expect(400);
     });
 
+    it("books trials for adult swimmers", async () => {
+      const response = await request(app.getHttpServer())
+        .post("/trial-bookings")
+        .send({ classSessionId: testSessionId, childName: "Adult Swimmer", childAge: 35, parentPhone: "555" })
+        .expect(201);
+      expect(response.body.childAge).toBe(35);
+    });
+
+    it("rejects an age above 120", () => {
+      return request(app.getHttpServer())
+        .post("/trial-bookings")
+        .send({ classSessionId: testSessionId, childName: "Too Old", childAge: 121, parentPhone: "555" })
+        .expect(400);
+    });
+
     it("rejects a booking without a child name", () => {
       return request(app.getHttpServer())
         .post("/trial-bookings")

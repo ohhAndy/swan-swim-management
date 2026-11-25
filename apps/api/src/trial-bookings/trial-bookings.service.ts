@@ -44,10 +44,6 @@ export class TrialBookingsService {
       );
     }
 
-    if (childAge < 0 || childAge > 18) {
-      throw new BadRequestException("Invalid age");
-    }
-
     return this.prisma.$transaction(async (tx) => {
       const trial = await tx.trialBooking.create({
         data: {
