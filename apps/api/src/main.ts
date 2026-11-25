@@ -23,6 +23,9 @@ async function bootstrap() {
   app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
   app.useGlobalPipes(new ZodValidationPipe());
 
+  // Run onModuleDestroy on SIGTERM so deploys close DB pools and pause email sends cleanly.
+  app.enableShutdownHooks();
+
   app.use(helmet());
   app.use(compression());
   app.enableCors({

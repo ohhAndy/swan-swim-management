@@ -3,7 +3,6 @@ import { TermsService } from "./terms.service";
 import { TermScheduleService } from "./term-schedule.service";
 import { TermAvailabilityService } from "./term-availability.service";
 import { TermsController } from "./terms.controller";
-import { PrismaService } from "../prisma/prisma.service";
 import { AuditLogsModule } from "../audit-logs/audit-logs.module";
 import { SwimTeamModule } from "../swim-team/swim-team.module";
 
@@ -14,7 +13,6 @@ import { SwimTeamModule } from "../swim-team/swim-team.module";
     TermsService,
     TermScheduleService,
     TermAvailabilityService,
-    PrismaService,
   ],
   exports: [TermsService, TermScheduleService, TermAvailabilityService],
 })
