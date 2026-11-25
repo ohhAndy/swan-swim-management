@@ -25,6 +25,7 @@ import {
 } from "@/components/swim-team/SwimTeamBadges";
 import { useOverdueCheckIn } from "@/components/swim-team/useOverdueCheckIn";
 import type { RosterItem } from "./DailyClassRosterTypes";
+import { useConfirm } from "@/hooks/useConfirm";
 
 type Mark = "present" | "absent" | "excused" | "";
 
@@ -59,6 +60,7 @@ export function PracticeCheckInList({
   canRemoveTrials: boolean;
   onChanged: () => void;
 }) {
+  const { confirm, confirmDialog } = useConfirm();
   const { markAttendance, dialog } = useOverdueCheckIn();
   const [saving, setSaving] = useState<string | null>(null);
 
@@ -122,7 +124,13 @@ export function PracticeCheckInList({
   };
 
   const handleTrialRemove = async (trialId: string, name: string) => {
-    if (!confirm(`Remove the trial for ${name}?`)) return;
+    const ok = await confirm({
+      title: "Remove trial?",
+      description: `The trial booking for ${name} will be deleted.`,
+      confirmLabel: "Remove",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await deleteTrialBooking(trialId);
       onChanged();
@@ -293,6 +301,7 @@ export function PracticeCheckInList({
       )}
 
       {dialog}
+      {confirmDialog}
     </div>
   );
 }

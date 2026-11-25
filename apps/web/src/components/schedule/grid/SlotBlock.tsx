@@ -33,6 +33,7 @@ import { Trash2 } from "lucide-react";
 import { deleteOffering } from "@/lib/api/client/schedule";
 import { useSlotDialogs } from "./useSlotDialogs";
 import { toast } from "sonner";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export function SlotBlock({
   title,
@@ -48,6 +49,7 @@ export function SlotBlock({
   gridHeaderTop?: string | number;
   termName: string;
 }) {
+  const { confirm, confirmDialog } = useConfirm();
   const router = useRouter();
   const searchParams = useSearchParams();
   const highlightId = searchParams.get("highlight");
@@ -239,25 +241,25 @@ export function SlotBlock({
                       variant="ghost"
                       size="sm"
                       className="text-red-500 hover:text-red-700 p-2 h-auto"
-                      onClick={() => {
-                        if (
-                          confirm(
-                            "Are you sure you want to delete this class? This action cannot be undone and will fail if there are active enrollments.",
-                          )
-                        ) {
-                          deleteOffering(fallbackOfferingId!)
-                            .then(() => {
-                              startTransition(() => {
-                                router.refresh();
-                              });
-                            })
-                            .catch((e) => {
-                              console.error(e);
-                              toast.error(
-                                e.message || "Failed to delete class",
-                              );
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: "Delete this class?",
+                          description:
+                            "This cannot be undone, and it will fail if the class has active enrollments.",
+                          confirmLabel: "Delete class",
+                          destructive: true,
+                        });
+                        if (!ok) return;
+                        deleteOffering(fallbackOfferingId!)
+                          .then(() => {
+                            startTransition(() => {
+                              router.refresh();
                             });
-                        }
+                          })
+                          .catch((e) => {
+                            console.error(e);
+                            toast.error(e.message || "Failed to delete class");
+                          });
                       }}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -342,6 +344,7 @@ export function SlotBlock({
           </div>
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }

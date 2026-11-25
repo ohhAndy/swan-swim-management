@@ -36,8 +36,10 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { LoadError } from "@/components/ui/load-error";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export function CurriculumManager() {
+  const { confirm, confirmDialog } = useConfirm();
   const queryClient = useQueryClient();
   const {
     data: levelsData,
@@ -123,12 +125,13 @@ export function CurriculumManager() {
 
   const handleDeleteLevel = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (
-      !confirm(
-        "Are you sure you want to delete this level? All associated skills will also be removed.",
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: "Delete this level?",
+      description: "All of its skills will be removed too.",
+      confirmLabel: "Delete level",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await deleteLevel(id);
       queryClient.invalidateQueries({ queryKey: ["levels"] });
@@ -175,7 +178,12 @@ export function CurriculumManager() {
   };
 
   const handleDeleteSkill = async (id: string) => {
-    if (!confirm("Delete this skill?")) return;
+    const ok = await confirm({
+      title: "Delete this skill?",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await deleteSkill(id);
       queryClient.invalidateQueries({ queryKey: ["levels"] });
@@ -475,6 +483,7 @@ export function CurriculumManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {confirmDialog}
     </div>
   );
 }

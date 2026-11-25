@@ -15,6 +15,7 @@ import { CurrentUser } from "@/lib/auth/user";
 import { hasMinRole } from "@/lib/auth/permissions";
 
 import { Row } from "./grid-types";
+import { useConfirm } from "@/hooks/useConfirm";
 
 function buildRow(rosters: RosterResponse[]): Row[] {
   const map = new Map<string, Row>();
@@ -126,6 +127,7 @@ export function StudentGrid({
   termName: string;
   instructorName: string;
 }) {
+  const { confirm, confirmDialog } = useConfirm();
   const [updating, setUpdating] = useState<string | null>(null);
 
   // Local optimistic overrides
@@ -273,7 +275,13 @@ export function StudentGrid({
 
   const handleTrialRemove = async (trialId: string, childName: string) => {
     if (!onTrialRemove) return;
-    if (!confirm(`Remove the trial for ${childName}?`)) return;
+    const ok = await confirm({
+      title: "Remove trial?",
+      description: `The trial booking for ${childName} will be deleted.`,
+      confirmLabel: "Remove",
+      destructive: true,
+    });
+    if (!ok) return;
 
     setTrialOverrides((prev) => ({ ...prev, [trialId]: "__removed__" }));
     setUpdating(`trial-${trialId}`);
@@ -458,6 +466,7 @@ export function StudentGrid({
 
         <div className="px-2 py-1 bg-gray-50" />
       </div>
+      {confirmDialog}
     </div>
   );
 }

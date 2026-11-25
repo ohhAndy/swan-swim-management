@@ -25,8 +25,10 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export default function TasksPage() {
+  const { confirm, confirmDialog } = useConfirm();
   const { user } = useGetCurrentUser();
   const queryClient = useQueryClient();
 
@@ -71,7 +73,12 @@ export default function TasksPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this task?")) return;
+    const ok = await confirm({
+      title: "Delete this task?",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     await deleteTask(id);
     queryClient.invalidateQueries({ queryKey: ["tasks"] });
   };
@@ -161,6 +168,7 @@ export default function TasksPage() {
         staffUsers={staffUsers}
         onSuccess={handleSave}
       />
+      {confirmDialog}
     </div>
   );
 }

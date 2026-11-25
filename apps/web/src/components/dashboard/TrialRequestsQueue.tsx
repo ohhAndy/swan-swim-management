@@ -42,8 +42,10 @@ import {
 import { toast } from "sonner";
 import { AssignSessionDialog } from "./AssignSessionDialog";
 import { EditRequestNotesDialog } from "./EditRequestNotesDialog";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export function TrialRequestsQueue() {
+  const { confirm, confirmDialog } = useConfirm();
   const [data, setData] = useState<TrialRequestsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [statusTab, setStatusTab] = useState<string>("pending");
@@ -97,13 +99,13 @@ export function TrialRequestsQueue() {
   };
 
   const handleDelete = async (id: string, childName: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete the trial request for ${childName}? This cannot be undone.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Delete trial request?",
+      description: `The trial request for ${childName} will be deleted. This cannot be undone.`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
 
     try {
       await deleteTrialRequest(id);
@@ -739,6 +741,7 @@ export function TrialRequestsQueue() {
         request={selectedRequestForNotes}
         onSuccess={loadData}
       />
+      {confirmDialog}
     </div>
   );
 }

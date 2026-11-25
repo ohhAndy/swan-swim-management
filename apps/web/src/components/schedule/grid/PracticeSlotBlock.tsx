@@ -32,6 +32,7 @@ import {
   formatPracticeSlot,
 } from "@/components/swim-team/SwimTeamBadges";
 import { useOverdueCheckIn } from "@/components/swim-team/useOverdueCheckIn";
+import { useConfirm } from "@/hooks/useConfirm";
 
 type Mark = "present" | "absent" | "excused" | "";
 
@@ -79,6 +80,7 @@ export function PracticeSlotBlock({
   /** Business "today" as YYYY-MM-DD, used to highlight the current practice */
   today: string;
 }) {
+  const { confirm, confirmDialog } = useConfirm();
   const router = useRouter();
   const [isRefreshing, startTransition] = useTransition();
   const { markAttendance, dialog: overdueDialog } = useOverdueCheckIn();
@@ -188,7 +190,13 @@ export function PracticeSlotBlock({
 
   const canRemoveTrials = hasMinRole(user.role, "manager");
   const handleTrialRemove = async (trialId: string, childName: string) => {
-    if (!confirm(`Remove the trial for ${childName}?`)) return;
+    const ok = await confirm({
+      title: "Remove trial?",
+      description: `The trial booking for ${childName} will be deleted.`,
+      confirmLabel: "Remove",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
       await deleteTrialBooking(trialId);
       refresh();
@@ -470,6 +478,7 @@ export function PracticeSlotBlock({
       />
 
       {overdueDialog}
+      {confirmDialog}
     </div>
   );
 }

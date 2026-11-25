@@ -31,8 +31,10 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export default function InventoryListClient() {
+  const { confirm, confirmDialog } = useConfirm();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
@@ -342,11 +344,16 @@ export default function InventoryListClient() {
                   type="button"
                   variant="destructive"
                   size="sm"
-                  onClick={() => {
-                    if (confirm("Are you sure you want to delete this item?")) {
-                      deleteMutation.mutate(editingItem.id);
-                      setEditingItem(null);
-                    }
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: "Delete this item?",
+                      description: `${editingItem.name} will be marked inactive.`,
+                      confirmLabel: "Delete",
+                      destructive: true,
+                    });
+                    if (!ok) return;
+                    deleteMutation.mutate(editingItem.id);
+                    setEditingItem(null);
                   }}
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -366,6 +373,7 @@ export default function InventoryListClient() {
           )}
         </DialogContent>
       </Dialog>
+      {confirmDialog}
     </div>
   );
 }

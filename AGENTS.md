@@ -97,6 +97,7 @@ swan-swim-management/
   * Build on shadcn/ui primitives (`@radix-ui/*`) located in `apps/web/src/components/ui/`.
   * Use the `cn(...)` utility (`clsx` + `tailwind-merge`) for dynamic Tailwind classes.
   * Use Sonner toasts (`toast.success(...)`, `toast.error(...)`) for operational feedback.
+  * Ask for confirmation with `useConfirm()` from `@/hooks/useConfirm` (or an `AlertDialog` for a dialog tied to one button). Never use `window.confirm`; it is unstyled and inconsistent with the rest of the UI.
 * **Role-Based Views**:
   * Ensure clear permission boundaries between `MANAGER`, `SUPERVISOR`, `INSTRUCTOR`, and `GUARDIAN`.
 
