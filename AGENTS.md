@@ -61,7 +61,9 @@ swan-swim-management/
 
 ### D. Financial & Invoicing Rules
 * Multi-item invoice generation (tuition, registration fees, sibling discounts) must always be wrapped in Prisma transactions (`prisma.$transaction`).
-* Invoice numbers must be deterministic or sequence-generated without gaps.
+* Invoices are issued on paper outside the system. Staff enter the paper invoice's number when recording it, so the system does not generate or sequence invoice numbers, and gaps are expected. The only rule is that `invoiceNumber` is unique (enforced by the database).
+* The new-invoice form pre-fills a guessed next number for convenience. Staff are expected to replace it with the paper number.
+* POS sales without a paper invoice get a system number in the form `POS-yymmdd-hhmmss`.
 
 ---
 
