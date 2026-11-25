@@ -120,6 +120,20 @@ describe("GuardiansController (e2e)", () => {
       
       expect(response.body.fullName).toBe("Updated Name");
     });
+
+    it("keeps a signed waiver when the update leaves waiverSigned out", async () => {
+      await prisma.guardian.update({
+        where: { id: testGuardianId },
+        data: { waiverSigned: true },
+      });
+
+      const response = await request(app.getHttpServer())
+        .patch(`/guardians/${testGuardianId}`)
+        .send({ fullName: "Updated Name", email: "guardian@test.com", phone: "555-123-4567" })
+        .expect(200);
+
+      expect(response.body.waiverSigned).toBe(true);
+    });
   });
 
   describe("DELETE /guardians/:id", () => {

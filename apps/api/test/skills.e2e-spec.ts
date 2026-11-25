@@ -94,6 +94,14 @@ describe("SkillsController (e2e)", () => {
         .expect(200);
       expect(response.body.description).toBe("Updated Skill Description");
     });
+
+    it("keeps the existing order when the update leaves it out", async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/skills/${testSkillId}`)
+        .send({ description: "Updated Skill Description" })
+        .expect(200);
+      expect(response.body.order).toBe(1);
+    });
   });
 
   describe("DELETE /skills/:id", () => {

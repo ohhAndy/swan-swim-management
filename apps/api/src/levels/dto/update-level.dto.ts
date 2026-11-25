@@ -1,4 +1,4 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateLevelDto } from './create-level.dto';
+import { createZodDto } from "nestjs-zod";
+import { LevelFieldsSchema } from "./create-level.dto";
 
-export class UpdateLevelDto extends PartialType(CreateLevelDto) {}
+export class UpdateLevelDto extends createZodDto(LevelFieldsSchema.partial()) {}

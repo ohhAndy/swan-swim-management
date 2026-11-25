@@ -88,6 +88,22 @@ describe("LevelsController (e2e)", () => {
       
       expect(response.body.name).toBe("Updated Level Name");
     });
+
+    it("keeps the existing color and order when the update leaves them out", async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/levels/${testLevelId}`)
+        .send({ name: "Updated Level Name" })
+        .expect(200);
+      expect(response.body.color).toBe("#000000");
+      expect(response.body.order).toBe(1);
+    });
+
+    it("rejects an invalid color", () => {
+      return request(app.getHttpServer())
+        .patch(`/levels/${testLevelId}`)
+        .send({ color: "blue" })
+        .expect(400);
+    });
   });
 
   describe("DELETE /levels/:id", () => {

@@ -14,7 +14,9 @@ export const createGuardianSchema = z.object({
 
 export type CreateGuardianDto = z.infer<typeof createGuardianSchema>;
 
-export const updateGuardianSchema = createGuardianSchema.partial();
+export const updateGuardianSchema = createGuardianSchema.partial().extend({
+  waiverSigned: z.boolean().optional(),
+});
 export type UpdateGuardianDto = z.infer<typeof updateGuardianSchema>;
 
 export const searchGuardianSchema = z.object({
