@@ -12,7 +12,7 @@ import { DailyClassRoster } from "@/components/schedule/roster";
 import { PracticeCheckInList } from "@/components/schedule/roster/PracticeCheckInList";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { StaffRole } from "@/lib/auth/permissions";
+import { StaffRole, hasMinRole } from "@/lib/auth/permissions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   Calendar,
@@ -63,7 +63,7 @@ export default function DailyScheduleClient({
 }: {
   data: DailyScheduleResponse;
   date: string;
-  userRole: string;
+  userRole: StaffRole;
 }) {
   const router = useRouter();
 
@@ -72,14 +72,9 @@ export default function DailyScheduleClient({
   const [titleInput, setTitleInput] = useState("");
 
   const canEditLevel =
-    userRole === "admin" ||
-    userRole === "manager" ||
-    userRole === "super_admin";
+    hasMinRole(userRole, "manager");
   const canEditTitle =
-    userRole === "admin" ||
-    userRole === "manager" ||
-    userRole === "supervisor" ||
-    userRole === "super_admin";
+    hasMinRole(userRole, "supervisor");
   // Same roles the attendance API accepts
   const canMarkAttendance = canEditTitle;
 
@@ -420,7 +415,7 @@ export default function DailyScheduleClient({
                                 );
                                 router.refresh();
                               }}
-                              userRole={userRole as StaffRole}
+                              userRole={userRole}
                             />
                             )}
                           </CardContent>

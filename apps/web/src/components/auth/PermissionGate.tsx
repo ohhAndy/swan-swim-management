@@ -1,22 +1,22 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { StaffRole } from '@/lib/auth/permissions'
+import { hasMinRole, StaffRole } from '@/lib/auth/permissions'
 
 interface PermissionGateProps {
   children: ReactNode
-  allowedRoles: StaffRole[]
+  minRole: StaffRole
   currentRole: StaffRole
   fallback?: ReactNode
 }
 
 export function PermissionGate({
   children,
-  allowedRoles,
+  minRole,
   currentRole,
   fallback = null,
 }: PermissionGateProps) {
-  if (!allowedRoles.includes(currentRole)) {
+  if (!hasMinRole(currentRole, minRole)) {
     return <>{fallback}</>
   }
 

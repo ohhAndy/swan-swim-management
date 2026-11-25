@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import { getDailySchedule } from "@/lib/api/server/schedule";
 
 import DailyScheduleClient from "./DailyScheduleClient";
@@ -18,7 +19,7 @@ export default async function DailySchedulePage({
   const user = await getCurrentUser();
   if (
     !user ||
-    !["super_admin", "admin", "manager", "supervisor"].includes(user.role)
+    !hasMinRole(user.role, "supervisor")
   ) {
     redirect("/");
   }

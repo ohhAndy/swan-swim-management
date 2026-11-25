@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import { getAllTerms } from "@/lib/api/server/schedule";
 import type { Term } from "@school/shared-types";
 import { Metadata } from "next";
@@ -16,11 +17,7 @@ export default async function TermPage() {
     redirect("/login");
   }
 
-  if (
-    user.role !== "super_admin" &&
-    user.role !== "admin" &&
-    user.role !== "manager"
-  ) {
+  if (!hasMinRole(user.role, "manager")) {
     redirect("/");
   }
 

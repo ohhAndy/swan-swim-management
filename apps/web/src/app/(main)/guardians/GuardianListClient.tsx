@@ -166,7 +166,7 @@ export default function GuardianListClient({
           </p>
         </div>
         <PermissionGate
-          allowedRoles={["super_admin", "admin", "manager"]}
+          minRole="manager"
           currentRole={user.role}
         >
           <Button onClick={() => setIsCreateOpen(true)}>

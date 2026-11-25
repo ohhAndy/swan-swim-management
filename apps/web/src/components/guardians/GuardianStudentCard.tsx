@@ -134,7 +134,7 @@ export function GuardianStudentCard({
 
                     <div className="flex items-center gap-2">
                       <PermissionGate
-                        allowedRoles={["super_admin", "admin", "manager"]}
+                        minRole="manager"
                         currentRole={userRole}
                       >
                         <Button

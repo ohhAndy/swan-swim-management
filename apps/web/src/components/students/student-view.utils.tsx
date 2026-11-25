@@ -1,3 +1,4 @@
+import { hasMinRole, type StaffRole } from "@/lib/auth/permissions";
 import React from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -37,10 +38,10 @@ export function calculateAge(birthdate?: string | null): string {
  */
 export function canViewReportCard(
   rc: NonNullable<Enrollment["reportCards"]>[number],
-  userRole?: string,
+  userRole?: StaffRole,
   staffUserId?: string,
 ): boolean {
-  if (userRole === "super_admin" || userRole === "admin" || userRole === "manager") {
+  if (hasMinRole(userRole, "manager")) {
     return true;
   }
   if (userRole === "supervisor") {
@@ -54,9 +55,9 @@ export function canViewReportCard(
  */
 export function getInvoiceStatusBadge(
   enrollment: Enrollment,
-  userRole: string,
+  userRole: StaffRole,
 ): React.ReactNode {
-  if (userRole === "supervisor") {
+  if (!hasMinRole(userRole, "manager")) {
     return null;
   }
 
@@ -74,7 +75,7 @@ export function getInvoiceStatusBadge(
     return null;
   }
 
-  const isAdminOrSuperAdmin = userRole === "super_admin" || userRole === "admin";
+  const isAdminOrSuperAdmin = hasMinRole(userRole, "admin");
   let badgeContent: React.ReactNode = null;
 
   if (invoice.status === "paid") {

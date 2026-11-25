@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import CreateInvoiceForm from "./CreateInvoiceForm";
@@ -16,11 +17,7 @@ export default async function NewInvoicePage() {
     redirect("/login");
   }
 
-  if (
-    user.role !== "super_admin" &&
-    user.role !== "admin" &&
-    user.role !== "manager"
-  ) {
+  if (!hasMinRole(user.role, "manager")) {
     redirect("/invoices");
   }
 

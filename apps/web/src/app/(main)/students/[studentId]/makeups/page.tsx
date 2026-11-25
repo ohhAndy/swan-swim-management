@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import { notFound, redirect } from "next/navigation";
 import { getStudentById } from "@/lib/api/server/students";
 import { getAllTermsUnfiltered } from "@/lib/api/server/schedule";
@@ -28,12 +29,7 @@ export default async function StudentMakeupsPage({
     redirect("/login");
   }
 
-  if (
-    user.role !== "super_admin" &&
-    user.role !== "admin" &&
-    user.role !== "manager" &&
-    user.role !== "supervisor"
-  ) {
+  if (!hasMinRole(user.role, "supervisor")) {
     redirect("/");
   }
 

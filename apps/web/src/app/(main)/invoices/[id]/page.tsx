@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import InvoiceDetailClient from "./InvoiceDetailClient";
@@ -18,11 +19,7 @@ export default async function InvoiceDetailPage({
     redirect("/login");
   }
 
-  if (
-    user.role !== "super_admin" &&
-    user.role !== "admin" &&
-    user.role !== "manager"
-  ) {
+  if (!hasMinRole(user.role, "manager")) {
     redirect("/invoices");
   }
 

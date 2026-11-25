@@ -84,7 +84,7 @@ export function StudentGuardianCard({
 
   return (
     <PermissionGate
-      allowedRoles={["super_admin", "admin", "manager"]}
+      minRole="manager"
       currentRole={userRole}
     >
       <div>

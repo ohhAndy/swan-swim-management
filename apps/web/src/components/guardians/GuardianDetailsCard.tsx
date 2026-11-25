@@ -105,7 +105,7 @@ export function GuardianDetailsCard({
           </CardTitle>
           {!isEditing ? (
             <PermissionGate
-              allowedRoles={["super_admin", "admin", "manager"]}
+              minRole="manager"
               currentRole={userRole}
             >
               <div className="flex items-center gap-1">

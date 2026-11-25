@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -10,6 +9,7 @@ import { TransferEnrollmentDto } from "./dto/transfer.dto";
 import { UnInvoicedEnrollmentsQueryDto } from "./dto/uninvoiced-enrollments-query.dto";
 import { Prisma } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
+import { assertCanEditSkips } from "../common/helpers/enrollment-skips.helper";
 import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { calculateEnrollmentTuition } from "@school/shared-types";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
@@ -502,18 +502,7 @@ export class EnrollmentsService {
     });
 
     if (!enrollment) throw new NotFoundException("Enrollment not found");
-    if (enrollment.status !== "active" && enrollment.status !== "inactive")
-      throw new BadRequestException("Enrollment is not active or inactive");
-
-    if (
-      enrollment.status === "inactive" &&
-      staffUser.role !== "admin" &&
-      staffUser.role !== "super_admin"
-    ) {
-      throw new ForbiddenException(
-        "Only admins can modify skips for inactive enrollments",
-      );
-    }
+    assertCanEditSkips(enrollment.status, staffUser);
 
     // Verify all skippedSessionIds belong to the offering
     const offeringSessionIds = new Set(

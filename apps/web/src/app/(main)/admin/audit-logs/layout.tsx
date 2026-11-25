@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth/user";
 import { redirect } from "next/navigation";
@@ -18,7 +19,7 @@ export default async function AuditLogsLayout({
     redirect("/login");
   }
 
-  if (user.role !== "super_admin") {
+  if (!hasMinRole(user.role, "super_admin")) {
     redirect("/forbidden");
   }
 

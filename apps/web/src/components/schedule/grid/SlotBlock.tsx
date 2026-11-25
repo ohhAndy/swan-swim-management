@@ -1,5 +1,6 @@
 "use client";
 
+import { hasMinRole } from "@/lib/auth/permissions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { StudentGrid } from "./StudentGrid";
@@ -209,7 +210,7 @@ export function SlotBlock({
               </div>
 
               <PermissionGate
-                allowedRoles={["super_admin", "admin", "manager"]}
+                minRole="manager"
                 currentRole={user.role}
               >
                 <Button
@@ -225,7 +226,7 @@ export function SlotBlock({
             <Separator className="bg-black" />
             <div className="flex items-center gap-5 w-full">
               <PermissionGate
-                allowedRoles={["super_admin", "admin", "manager", "supervisor"]}
+                minRole="supervisor"
                 currentRole={user.role}
               >
                 <div className="flex items-center gap-2">
@@ -240,9 +241,7 @@ export function SlotBlock({
                     {instructorNames || "No Instructor Assigned"}
                   </Button>
 
-                  {(user.role === "super_admin" ||
-                    user.role === "admin" ||
-                    user.role === "manager") && (
+                  {hasMinRole(user.role, "manager") && (
                     <Button
                       variant="ghost"
                       size="sm"

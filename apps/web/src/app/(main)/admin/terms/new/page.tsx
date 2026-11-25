@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/user";
 import NewTermForm from "./NewTermForm";
-import { hasPermission } from "@/lib/auth/permissions";
+import { hasMinRole } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
 
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function NewTermPage() {
   const user = await getCurrentUser();
 
-  if (!user || !hasPermission(user.role, "manageTerms")) {
+  if (!user || !hasMinRole(user.role, "admin")) {
     redirect("/forbidden");
   }
 

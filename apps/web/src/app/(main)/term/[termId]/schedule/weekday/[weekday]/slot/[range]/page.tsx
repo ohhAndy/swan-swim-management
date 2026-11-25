@@ -105,7 +105,7 @@ export default async function SlotPageView({
           currentSlot={decodeURIComponent(range)}
         />
         <PermissionGate
-          allowedRoles={["super_admin", "admin", "manager"]}
+          minRole="manager"
           currentRole={user.role}
         >
           <AddClassDialog

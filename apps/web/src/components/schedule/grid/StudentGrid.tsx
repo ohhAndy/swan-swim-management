@@ -12,7 +12,7 @@ import { MakeupRow } from "./MakeupRow";
 import { TrialRow } from "./TrialRow";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { CurrentUser } from "@/lib/auth/user";
-import { hasPermission } from "@/lib/auth/permissions";
+import { hasMinRole } from "@/lib/auth/permissions";
 
 import { Row } from "./grid-types";
 
@@ -288,7 +288,7 @@ export function StudentGrid({
   };
 
 
-  const canEdit: boolean = hasPermission(user.role, "markAttendance");
+  const canEdit: boolean = hasMinRole(user.role, "supervisor");
 
   return (
     <div
@@ -402,7 +402,7 @@ export function StudentGrid({
               className="px-2 py-1 text-center bg-gray-50 group-hover:bg-gray-100 transition-colors"
             >
               <PermissionGate
-                allowedRoles={["super_admin", "admin", "manager"]}
+                minRole="manager"
                 currentRole={user.role}
               >
                 <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

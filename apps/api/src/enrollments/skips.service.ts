@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -9,6 +8,7 @@ import type { AddSkipInput } from "./dto/skips.dto";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { RequestStaffUser } from "../auth/auth.types";
+import { assertCanEditSkips } from "../common/helpers/enrollment-skips.helper";
 
 @Injectable()
 export class SkipsService {
@@ -49,22 +49,7 @@ export class SkipsService {
         "Session and Enrollment's offeringId do not match",
       );
 
-    if (enrollment.status !== "active" && enrollment.status !== "inactive")
-      throw new BadRequestException(
-        "Only active or inactive enrollments can be skipped",
-      );
-
-
-
-    if (
-      enrollment.status === "inactive" &&
-      staffUser.role !== "admin" &&
-      staffUser.role !== "super_admin"
-    ) {
-      throw new ForbiddenException(
-        "Only admins can modify skips for inactive enrollments",
-      );
-    }
+    assertCanEditSkips(enrollment.status, staffUser);
 
     if (session.status === "canceled")
       throw new BadRequestException("Cannot skip a cancelled session");
@@ -118,23 +103,7 @@ export class SkipsService {
     });
     if (!enrollment) throw new NotFoundException("Enrollment not found");
 
-    if (enrollment.status !== "active" && enrollment.status !== "inactive") {
-      throw new BadRequestException(
-        "Only active or inactive enrollments can be modified",
-      );
-    }
-
-
-
-    if (
-      enrollment.status === "inactive" &&
-      staffUser.role !== "admin" &&
-      staffUser.role !== "super_admin"
-    ) {
-      throw new ForbiddenException(
-        "Only admins can modify skips for inactive enrollments",
-      );
-    }
+    assertCanEditSkips(enrollment.status, staffUser);
 
     await this.prisma.$transaction(async (tx) => {
       const { count } = await tx.enrollmentSkip.deleteMany({

@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import { Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
@@ -79,7 +80,7 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   const today = todayInToronto();
   // TODO: Include 'manager' role when trial request review workflow is rolled out to branch managers
-  const isAdmin = ["super_admin", "admin"].includes(user?.role || "");
+  const isAdmin = hasMinRole(user?.role, "admin");
   const requestedTab = resolvedSearchParams?.tab as string | undefined;
   const initialTab = isAdmin && requestedTab === "requests" ? "requests" : "stats";
 
@@ -88,7 +89,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       <p className="text-center">Here’s your dashboard overview.</p>
 
       {termToUse &&
-        ["super_admin", "admin", "manager"].includes(user?.role || "") && (
+        hasMinRole(user?.role, "manager") && (
           <StatsOverview
             termId={termToUse.id}
             termName={termToUse.name}
@@ -109,7 +110,7 @@ export default async function DashboardPage({ searchParams }: Props) {
             </Link>
           </Button>
           <PermissionGate
-            allowedRoles={["super_admin", "admin", "manager"]}
+            minRole="manager"
             currentRole={user.role}
           >
             <Button
@@ -124,7 +125,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           </PermissionGate>
 
           <PermissionGate
-            allowedRoles={["super_admin", "admin", "manager", "supervisor"]}
+            minRole="supervisor"
             currentRole={user.role}
           >
             <Button

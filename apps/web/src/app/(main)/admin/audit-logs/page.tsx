@@ -1,5 +1,6 @@
 "use client";
 
+import { hasMinRole } from "@/lib/auth/permissions";
 import { useEffect, useState, useCallback } from "react";
 import { getAuditLogs, AuditLog } from "@/lib/api/client/audit-logs";
 import { getCurrentUserClient } from "@/lib/auth/user-client";
@@ -79,7 +80,7 @@ export default function AuditLogsPage() {
   useEffect(() => {
     async function checkAccess() {
       const user = await getCurrentUserClient();
-      if (!user || user.role !== "super_admin") {
+      if (!user || !hasMinRole(user.role, "super_admin")) {
         router.replace("/forbidden");
       } else {
         fetchLogs();

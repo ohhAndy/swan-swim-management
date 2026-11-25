@@ -24,6 +24,7 @@ import { getLevels, Level } from "@/lib/api/client/curriculum";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { CurrentUser } from "@/lib/auth/user";
 
+import { hasMinRole } from "@/lib/auth/permissions";
 // Types based on your API response
 interface Student {
   id: string;
@@ -199,7 +200,7 @@ export default function StudentsListClient({
           </p>
         </div>
         <PermissionGate
-          allowedRoles={["super_admin", "admin", "manager"]}
+          minRole="manager"
           currentRole={user.role}
         >
           <Button onClick={() => router.push("/admin/students/new")}>
@@ -318,7 +319,7 @@ export default function StudentsListClient({
                       <th className="text-left p-4 font-medium text-gray-900">
                         Level
                       </th>
-                      {user.role !== "supervisor" && (
+                      {hasMinRole(user.role, "manager") && (
                         <th className="text-left p-4 font-medium text-gray-900">
                           Guardian
                         </th>
@@ -361,7 +362,7 @@ export default function StudentsListClient({
                             )}
                           </Link>
                         </td>
-                        {user.role !== "supervisor" && (
+                        {hasMinRole(user.role, "manager") && (
                           <td className="p-4">
                             <div className="text-gray-900 font-medium hover:text-blue-600 hover:underline">
                               <Link
@@ -372,7 +373,7 @@ export default function StudentsListClient({
                               </Link>
                             </div>
                             <PermissionGate
-                              allowedRoles={["super_admin", "admin", "manager"]}
+                              minRole="manager"
                               currentRole={user.role}
                             >
                               <div className="text-sm text-gray-500 hover:text-blue-600 hover:underline">
@@ -385,7 +386,7 @@ export default function StudentsListClient({
                               </div>
                             </PermissionGate>
                             <PermissionGate
-                              allowedRoles={["super_admin", "admin", "manager"]}
+                              minRole="manager"
                               currentRole={user.role}
                             >
                               <div className="text-sm text-gray-500 hover:text-blue-600 hover:underline">
@@ -433,7 +434,7 @@ export default function StudentsListClient({
                     <div className="space-y-1 text-sm text-gray-600">
                       <div>Code: {student.shortCode || "—"}</div>
                       <div>Age: {calculateAge(student.birthdate)}</div>
-                      {user.role !== "supervisor" && (
+                      {hasMinRole(user.role, "manager") && (
                         <div>
                           Guardian:{" "}
                           <Link

@@ -1,5 +1,6 @@
 "use client";
 
+import { hasMinRole } from "@/lib/auth/permissions";
 import { useState, useMemo } from "react";
 import { SlotBlock } from "./SlotBlock";
 import { ReorganizeBoard, buildReorganizeState } from "./ReorganizeBoard";
@@ -18,7 +19,7 @@ interface SlotBlockGridProps {
 export function SlotBlockGrid({ blocks, isoDates, user, termName }: SlotBlockGridProps) {
   const [reorganizeMode, setReorganizeMode] = useState(false);
 
-  const canReorganize = ["admin", "super_admin", "manager"].includes(user.role);
+  const canReorganize = hasMinRole(user.role, "manager");
 
   const reorganizeOfferings = useMemo(
     () => buildReorganizeState(blocks),

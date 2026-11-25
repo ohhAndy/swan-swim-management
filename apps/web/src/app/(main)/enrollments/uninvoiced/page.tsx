@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import UninvoicedList from "./UninvoicedList";
@@ -17,11 +18,7 @@ export default async function UninvoicedPage() {
   }
 
   // Only admin and manager can access
-  if (
-    user.role !== "super_admin" &&
-    user.role !== "admin" &&
-    user.role !== "manager"
-  ) {
+  if (!hasMinRole(user.role, "manager")) {
     redirect("/");
   }
 

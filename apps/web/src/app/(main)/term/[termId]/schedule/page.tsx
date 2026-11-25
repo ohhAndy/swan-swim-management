@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import {
   getDetailedTimeSlotsByWeekday,
   getTermTitle,
@@ -50,7 +51,7 @@ export default async function TimeSlotsPage({
   if (!user) redirect("/login");
 
   // Only admin and manager can see the full weekly schedule grid
-  if (!["super_admin", "admin", "manager"].includes(user.role)) {
+  if (!hasMinRole(user.role, "manager")) {
     // Other roles shouldn't see full grid, just redirect to today's schedule
     const today = new Date().toISOString().split("T")[0];
     redirect(`/schedule/date/${today}`);
@@ -96,7 +97,7 @@ export default async function TimeSlotsPage({
         <div className="flex gap-4 text-sm items-center">
           {isSeason && (
             <PermissionGate
-              allowedRoles={["super_admin", "admin"]}
+              minRole="admin"
               currentRole={user.role}
             >
               <SeasonFeesDialog termId={termId} />
@@ -104,7 +105,7 @@ export default async function TimeSlotsPage({
           )}
           {!isSeason && (
             <PermissionGate
-              allowedRoles={["super_admin", "admin"]}
+              minRole="admin"
               currentRole={user.role}
             >
               <AddFlexibleClassDialog termId={termId} />

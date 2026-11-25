@@ -1,5 +1,6 @@
 "use client";
 
+import { hasMinRole, type StaffRole } from "@/lib/auth/permissions";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
@@ -36,7 +37,7 @@ import { toast } from "sonner";
 
 interface Props {
   invoiceId: string;
-  userRole: string;
+  userRole: StaffRole;
 }
 
 export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
@@ -171,7 +172,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
               Edit
             </Button>
           )}
-          {(userRole === "admin" || userRole === "super_admin") && (
+          {hasMinRole(userRole, "admin") && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm">
@@ -228,7 +229,7 @@ export default function InvoiceDetailClient({ invoiceId, userRole }: Props) {
       {!editMode && (
         <InvoiceInstallmentsCard
           invoice={invoice}
-          canEdit={["super_admin", "admin", "manager"].includes(userRole)}
+          canEdit={hasMinRole(userRole, "manager")}
           onSaved={loadInvoice}
         />
       )}

@@ -200,7 +200,7 @@ export function PracticeSlotBlock({
               </Badge>
               <CardTitle className="text-base">{title}</CardTitle>
               <PermissionGate
-                allowedRoles={["super_admin", "admin", "manager", "supervisor"]}
+                minRole="supervisor"
                 currentRole={user.role}
               >
                 <Button
@@ -402,7 +402,7 @@ export function PracticeSlotBlock({
                           </DropdownMenu>
                         ))}
                         <PermissionGate
-                          allowedRoles={["super_admin", "admin", "manager"]}
+                          minRole="manager"
                           currentRole={user.role}
                         >
                           <Button

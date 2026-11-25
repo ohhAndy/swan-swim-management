@@ -1,5 +1,6 @@
 "use client";
 
+import { hasMinRole, type StaffRole } from "@/lib/auth/permissions";
 import { useState } from "react";
 import TimeSlots from "./TimeSlotClient";
 import { DetailedTimeSlot } from "@/lib/api/server/schedule";
@@ -14,11 +15,11 @@ export default function ScheduleGrid({
 }: {
   timeSlotsByDay: Record<number, DetailedTimeSlot[]>;
   termId: string;
-  userRole: string;
+  userRole: StaffRole;
   swimTeam?: boolean;
 }) {
   const [showDetails, setShowDetails] = useState(false);
-  const canSeeDetails = ["admin", "super_admin"].includes(userRole);
+  const canSeeDetails = hasMinRole(userRole, "admin");
 
   return (
     <div className="flex flex-col gap-3">

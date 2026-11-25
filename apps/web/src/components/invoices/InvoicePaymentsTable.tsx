@@ -1,5 +1,6 @@
 "use client";
 
+import { hasMinRole, type StaffRole } from "@/lib/auth/permissions";
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,7 @@ import { toast } from "sonner";
 
 interface InvoicePaymentsTableProps {
   invoice: Invoice;
-  userRole: string;
+  userRole: StaffRole;
   onRefresh: () => void;
 }
 
@@ -255,7 +256,7 @@ export function InvoicePaymentsTable({
                   <TableHead>Amount</TableHead>
                   <TableHead>Method</TableHead>
                   <TableHead>Notes</TableHead>
-                  {(userRole === "admin" || userRole === "super_admin") && (
+                  {hasMinRole(userRole, "admin") && (
                     <TableHead></TableHead>
                   )}
                 </TableRow>
@@ -271,13 +272,9 @@ export function InvoicePaymentsTable({
                       {payment.paymentMethod}
                     </TableCell>
                     <TableCell>{payment.notes || "-"}</TableCell>
-                    {(userRole === "admin" ||
-                      userRole === "super_admin" ||
-                      userRole === "manager") && (
+                    {hasMinRole(userRole, "manager") && (
                       <TableCell className="flex justify-end gap-2">
-                        {(userRole === "admin" ||
-                          userRole === "super_admin" ||
-                          userRole === "manager") && (
+                        {hasMinRole(userRole, "manager") && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -288,8 +285,7 @@ export function InvoicePaymentsTable({
                             <Pencil className="w-4 h-4" />
                           </Button>
                         )}
-                        {(userRole === "admin" ||
-                          userRole === "super_admin") && (
+                        {hasMinRole(userRole, "admin") && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="ghost" size="sm">

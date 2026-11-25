@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import { searchStudents } from "@/lib/api/server/students";
 import StudentsListClient from "./StudentListClient";
 import { getCurrentUser } from "@/lib/auth/user";
@@ -26,12 +27,7 @@ export default async function StudentsPage({
     redirect("/login");
   }
 
-  if (
-    user.role !== "super_admin" &&
-    user.role !== "admin" &&
-    user.role !== "manager" &&
-    user.role !== "supervisor"
-  ) {
+  if (!hasMinRole(user.role, "supervisor")) {
     redirect("/");
   }
 

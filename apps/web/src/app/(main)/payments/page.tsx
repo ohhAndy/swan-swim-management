@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/user";
 import PaymentHistoryClient from "./PaymentHistoryClient";
@@ -13,11 +14,7 @@ export default async function PaymentsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  if (
-    user.role !== "super_admin" &&
-    user.role !== "admin" &&
-    user.role !== "manager"
-  ) {
+  if (!hasMinRole(user.role, "manager")) {
     redirect("/");
   }
 

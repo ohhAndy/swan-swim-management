@@ -30,7 +30,7 @@ import { calcAge, markClass, getReportCardStatusConfig } from "@/lib/utils/stude
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ReportCardForm } from "@/components/report-cards/ReportCardForm";
 import { useState } from "react";
-import { StaffRole } from "@/lib/auth/permissions";
+import { StaffRole, hasMinRole } from "@/lib/auth/permissions";
 
 // Duplicate of getPaymentStatus for now, can be extracted if needed
 function getPaymentStatus(
@@ -179,7 +179,7 @@ export function StudentRow({
     <div className="contents">
       <div className="px-2 py-1 flex items-center justify-center gap-1 bg-white">
         {getPaymentStatus(row.paymentStatus, row.invoiceNumber, row.balance)}
-        {userRole !== "supervisor" && row.nextTermStatus === "paid" && (
+        {hasMinRole(userRole, "manager") && row.nextTermStatus === "paid" && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -193,7 +193,7 @@ export function StudentRow({
             </Tooltip>
           </TooltipProvider>
         )}
-        {userRole !== "supervisor" && row.nextTermStatus === "enrolled" && (
+        {hasMinRole(userRole, "manager") && row.nextTermStatus === "enrolled" && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -207,7 +207,7 @@ export function StudentRow({
             </Tooltip>
           </TooltipProvider>
         )}
-        {userRole !== "supervisor" &&
+        {hasMinRole(userRole, "manager") &&
           (!row.nextTermStatus || row.nextTermStatus === "not_registered") && (
             <TooltipProvider>
               <Tooltip>
@@ -324,15 +324,15 @@ export function StudentRow({
                 className={`content-center relative px-2 py-1 text-center font-semibold rounded transition-all hover:bg-gray-200 ${markClass(
                   mark,
                 )} ${
-                  isUpdating || !canEdit || (row.enrollmentStatus !== "active" && userRole !== "admin" && userRole !== "super_admin")
+                  isUpdating || !canEdit || (row.enrollmentStatus !== "active" && !hasMinRole(userRole, "admin"))
                     ? "opacity-50 cursor-not-allowed"
                     : "cursor-pointer"
-                } ${(!canEdit || (row.enrollmentStatus !== "active" && userRole !== "admin" && userRole !== "super_admin")) ? "pointer-events-none opacity-70" : ""} ${
+                } ${(!canEdit || (row.enrollmentStatus !== "active" && !hasMinRole(userRole, "admin"))) ? "pointer-events-none opacity-70" : ""} ${
                   isTransferred
                     ? "border border-transparent"
                     : "border border-transparent"
                 }`}
-                disabled={isUpdating || !canEdit || (row.enrollmentStatus !== "active" && userRole !== "admin" && userRole !== "super_admin")}
+                disabled={isUpdating || !canEdit || (row.enrollmentStatus !== "active" && !hasMinRole(userRole, "admin"))}
                 title={
                   canEdit
                     ? `${row.name} - ${h.label}${

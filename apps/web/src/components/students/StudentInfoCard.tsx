@@ -174,7 +174,7 @@ export function StudentInfoCard({ student, userRole }: StudentInfoCardProps) {
           </CardTitle>
           {!isEditing ? (
             <PermissionGate
-              allowedRoles={["super_admin", "admin", "manager"]}
+              minRole="manager"
               currentRole={userRole}
             >
               <div className="flex gap-2">

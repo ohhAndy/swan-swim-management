@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import Image from "next/image";
 import Link from "next/link";
 import { UserMenu } from "../auth/UserMenu";
@@ -35,7 +36,7 @@ export async function AppHeader() {
         {/* spacer */}
         <nav className="ml-auto flex items-center gap-3">
           <PermissionGate
-            allowedRoles={["super_admin", "admin", "manager", "supervisor"]}
+            minRole="supervisor"
             currentRole={user.role}
           >
             <DropdownMenu>
@@ -47,7 +48,7 @@ export async function AppHeader() {
                   <Link href="/students">Students</Link>
                 </DropdownMenuItem>
                 <PermissionGate
-                  allowedRoles={["super_admin", "admin", "manager"]}
+                  minRole="manager"
                   currentRole={user.role}
                 >
                   <DropdownMenuItem asChild>
@@ -55,7 +56,7 @@ export async function AppHeader() {
                   </DropdownMenuItem>
                 </PermissionGate>
                 <PermissionGate
-                  allowedRoles={["super_admin", "admin", "manager"]}
+                  minRole="manager"
                   currentRole={user.role}
                 >
                   <DropdownMenuItem asChild>
@@ -66,7 +67,7 @@ export async function AppHeader() {
             </DropdownMenu>
           </PermissionGate>
           <PermissionGate
-            allowedRoles={["super_admin", "admin", "manager"]}
+            minRole="manager"
             currentRole={user.role}
           >
             <DropdownMenu>
@@ -75,7 +76,7 @@ export async function AppHeader() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <PermissionGate
-                  allowedRoles={["super_admin", "admin"]}
+                  minRole="admin"
                   currentRole={user.role}
                 >
                   <DropdownMenuItem asChild>
@@ -101,7 +102,7 @@ export async function AppHeader() {
             </DropdownMenu>
           </PermissionGate>
           <PermissionGate
-            allowedRoles={["super_admin", "admin", "manager"]}
+            minRole="manager"
             currentRole={user.role}
           >
             <Link
@@ -112,20 +113,20 @@ export async function AppHeader() {
             </Link>
           </PermissionGate>
           <PermissionGate
-            allowedRoles={["super_admin", "admin", "manager"]}
+            minRole="manager"
             currentRole={user.role}
           >
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center text-sm font-medium hover:text-blue-600 outline-none gap-0.5">
                 <span>Admin</span>
-                {["super_admin", "admin"].includes(user.role) && (
+                {hasMinRole(user.role, "admin") && (
                   <TrialRequestsBadge />
                 )}
                 <ChevronDown className="ml-1 h-3 w-3 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
                 <PermissionGate
-                  allowedRoles={["super_admin", "admin"]}
+                  minRole="admin"
                   currentRole={user.role}
                 >
                   <DropdownMenuItem asChild>

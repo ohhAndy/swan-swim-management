@@ -114,4 +114,45 @@ describe("SkipsController (e2e)", () => {
       expect(auditLogs).toHaveLength(0);
     });
   });
+
+  describe("enrollment status rules", () => {
+    it("rejects skips on transferred enrollments", async () => {
+      await prisma.enrollment.update({
+        where: { id: testEnrollmentId },
+        data: { status: "transferred" },
+      });
+
+      await request(app.getHttpServer())
+        .post(`/enrollments/${testEnrollmentId}/skips`)
+        .send({ classSessionId: testSessionId })
+        .expect(400);
+    });
+
+    it("only lets admins change skips on inactive enrollments", async () => {
+      await prisma.enrollment.update({
+        where: { id: testEnrollmentId },
+        data: { status: "inactive" },
+      });
+      await prisma.staffUser.create({
+        data: {
+          authId: "test-manager",
+          email: "manager@test.com",
+          role: "manager",
+          fullName: "Test Manager",
+          active: true,
+        },
+      });
+
+      await request(app.getHttpServer())
+        .post(`/enrollments/${testEnrollmentId}/skips`)
+        .set("x-mock-auth-id", "test-manager")
+        .send({ classSessionId: testSessionId })
+        .expect(403);
+
+      await request(app.getHttpServer())
+        .post(`/enrollments/${testEnrollmentId}/skips`)
+        .send({ classSessionId: testSessionId })
+        .expect(201);
+    });
+  });
 });

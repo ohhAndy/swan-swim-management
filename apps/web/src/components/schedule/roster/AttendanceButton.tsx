@@ -21,7 +21,7 @@ export function AttendanceButton({
   item: RosterItem;
   loading: boolean;
   onUpdate: (s: string) => void;
-  userRole?: string;
+  userRole?: StaffRole;
 }) {
 
   // Determine current status label/color
@@ -131,7 +131,7 @@ export function AttendanceButton({
           item.status === "converted" ||
           (item.type === "student" &&
             item.enrollmentStatus !== "active" &&
-            !hasMinRole(userRole as StaffRole, "admin"))
+            !hasMinRole(userRole, "admin"))
         }
       >
         <Button

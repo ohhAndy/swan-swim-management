@@ -1,5 +1,6 @@
 "use client";
 
+import { hasMinRole } from "@/lib/auth/permissions";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -219,7 +220,7 @@ export default function StudentMakeupsClient({
     termName: string;
   } | null>(null);
 
-  const isAdminOrAbove = user.role === "admin" || user.role === "super_admin";
+  const isAdminOrAbove = hasMinRole(user.role, "admin");
 
   const fetchSummaries = useCallback(() => {
     getStudentTokenSummaries(student.id)

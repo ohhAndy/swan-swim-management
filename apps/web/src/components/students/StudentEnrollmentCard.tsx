@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { FULL_DAY_LABELS } from "@/lib/schedule/slots";
-import { StaffRole } from "@/lib/auth/permissions";
+import { StaffRole, hasMinRole } from "@/lib/auth/permissions";
 import { getInvoiceStatusBadge, canViewReportCard } from "./student-view.utils";
 import type { Enrollment, Student } from "@/lib/types/models";
 
@@ -46,12 +46,7 @@ export function StudentEnrollmentCard({
     .join(", ");
 
   const badge = getInvoiceStatusBadge(enrollment, userRole);
-  const isSupervisorOrAbove = [
-    "super_admin",
-    "admin",
-    "manager",
-    "supervisor",
-  ].includes(userRole);
+  const isSupervisorOrAbove = hasMinRole(userRole, "supervisor");
 
   const termMakeups = (student.makeUps || []).filter(
     (m) => m.classSession.offering.termId === enrollment.offering.termId,
@@ -238,12 +233,12 @@ export function StudentEnrollmentCard({
           <div className="flex flex-col gap-2 mt-4 lg:mt-0 lg:ml-4 min-w-[120px]">
             {badge}
             <PermissionGate
-              allowedRoles={["super_admin", "admin", "manager"]}
+              minRole="manager"
               currentRole={userRole}
             >
               <div className="flex flex-col gap-2">
                 <PermissionGate
-                  allowedRoles={["super_admin", "admin"]}
+                  minRole="admin"
                   currentRole={userRole}
                 >
                   <Button
@@ -388,7 +383,7 @@ export function StudentEnrollmentCard({
         <div className="flex flex-col gap-2 items-end">
           {badge}
           <PermissionGate
-            allowedRoles={["super_admin", "admin"]}
+            minRole="admin"
             currentRole={userRole}
           >
             <Button

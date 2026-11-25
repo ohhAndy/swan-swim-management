@@ -1,3 +1,4 @@
+import { hasMinRole } from "@/lib/auth/permissions";
 import { notFound, redirect } from "next/navigation";
 import { getGuardianById } from "@/lib/api/server/guardians";
 import GuardianViewClient from "./GuardianViewClient";
@@ -20,11 +21,7 @@ export default async function GuardianPage({
     redirect("/login");
   }
 
-  if (
-    user.role !== "super_admin" &&
-    user.role !== "admin" &&
-    user.role !== "manager"
-  ) {
+  if (!hasMinRole(user.role, "manager")) {
     redirect("/");
   }
 

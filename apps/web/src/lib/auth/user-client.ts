@@ -1,8 +1,10 @@
+import type { StaffRole } from "@prisma/client";
+
 export interface CurrentUser {
   authId: string;
   email: string;
   fullName: string;
-  role: "super_admin" | "admin" | "manager" | "supervisor" | "viewer";
+  role: StaffRole;
   active: boolean;
   staffUserId: string;
 }
