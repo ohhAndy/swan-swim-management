@@ -36,6 +36,7 @@ import { updateStudent, deleteStudent } from "@/lib/api/client/students";
 import { getLevels, Level } from "@/lib/api/client/curriculum";
 import { calculateAge } from "./student-view.utils";
 import type { Student } from "@/lib/types/models";
+import { getTorontoDateString } from "@/lib/date";
 
 const EditStudentSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -331,7 +332,7 @@ export function StudentInfoCard({ student, userRole }: StudentInfoCardProps) {
                   type="date"
                   {...register("birthdate")}
                   disabled={loading}
-                  max={new Date().toISOString().split("T")[0]}
+                  max={getTorontoDateString()}
                   min="1900-01-01"
                 />
                 {errors.birthdate && (

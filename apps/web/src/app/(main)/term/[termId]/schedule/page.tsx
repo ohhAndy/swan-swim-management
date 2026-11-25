@@ -16,6 +16,7 @@ import { PermissionGate } from "@/components/auth/PermissionGate";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { Metadata } from "next";
+import { getTorontoDateString } from "@/lib/date";
 
 export const metadata: Metadata = {
   title: "Schedule | Swan Swim Management",
@@ -53,8 +54,7 @@ export default async function TimeSlotsPage({
   // Only admin and manager can see the full weekly schedule grid
   if (!hasMinRole(user.role, "manager")) {
     // Other roles shouldn't see full grid, just redirect to today's schedule
-    const today = new Date().toISOString().split("T")[0];
-    redirect(`/schedule/date/${today}`);
+    redirect(`/schedule/date/${getTorontoDateString()}`);
   }
 
   const weekdayPromises = Array.from({ length: 7 }).map((_, weekday) =>

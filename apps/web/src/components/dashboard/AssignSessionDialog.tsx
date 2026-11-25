@@ -35,6 +35,7 @@ import { clientFetch } from "@/lib/api/_fetch/client";
 import { bookTrialRequestSession } from "@/lib/api/client/trial-requests";
 import type { TrialRequestItem } from "@/lib/api/client/trial-requests";
 import { formatTimeRange } from "@/lib/schedule/slots";
+import { getTorontoDateString } from "@/lib/date";
 
 export interface RosterStudent {
   id: string;
@@ -134,7 +135,7 @@ export function AssignSessionDialog({
       const initialDate =
         request.preferredDates && request.preferredDates.length > 0
           ? request.preferredDates[0]
-          : new Date().toISOString().split("T")[0];
+          : getTorontoDateString();
 
       setSelectedDate(initialDate);
       setSelectedSessionId("");
