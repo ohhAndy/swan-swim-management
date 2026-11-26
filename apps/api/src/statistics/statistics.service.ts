@@ -1,8 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import type { EnrollmentStatus, OfferingType } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { validateLocationAccess } from "../common/helpers/location-access.helper";
-import { RequestStaffUser } from "../auth/auth.types";
+import { LocationScope, scopeFilter } from "../auth/location-scope";
 import {
   calculateClassUsage,
   calculateSessionUsage,
@@ -24,11 +23,10 @@ export class StatisticsService {
 
   async getDashboardStats(
     termId: string,
-    staffUser: RequestStaffUser,
-    locationId?: string,
+    scope: LocationScope,
   ) {
     try {
-      const validatedLocationId = validateLocationAccess(staffUser, locationId);
+      const inScope = { offering: { term: { locationId: scopeFilter(scope) } } };
 
       const offerings = await this.prisma.classOffering.findMany({
         where: { termId },
@@ -101,11 +99,7 @@ export class StatisticsService {
       const pendingMakeups = await this.prisma.makeUpBooking.count({
         where: {
           status: "requested",
-          classSession: validatedLocationId
-            ? {
-                offering: { term: { locationId: validatedLocationId } },
-              }
-            : undefined,
+          classSession: inScope,
         },
       });
 
@@ -119,9 +113,7 @@ export class StatisticsService {
               gte: getTorontoCalendarDate(1),
               lte: getTorontoCalendarDate(7),
             },
-            ...(validatedLocationId
-              ? { offering: { term: { locationId: validatedLocationId } } }
-              : {}),
+            ...inScope,
           },
         },
       });

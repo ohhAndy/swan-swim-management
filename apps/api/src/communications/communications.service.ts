@@ -23,6 +23,11 @@ import {
 import { RequestStaffUser } from "../auth/auth.types";
 import { Resend } from "resend";
 import { EmailDispatchService } from "./email-dispatch.service";
+import {
+  accessibleFilter,
+  assertCanAccessLocation,
+  LocationScope,
+} from "../auth/location-scope";
 
 export interface RecipientSendResult {
   email: string;
@@ -87,7 +92,7 @@ export class CommunicationsService {
     );
   }
 
-  async getRecipients(filters: RecipientFilterDto) {
+  async getRecipients(filters: RecipientFilterDto, scope: LocationScope) {
     const {
       locationId,
       termId,
@@ -118,35 +123,28 @@ export class CommunicationsService {
       student: studentWhere,
     };
 
+    if (locationId) assertCanAccessLocation(scope, locationId);
+
     // Filter by Location/Term via Offering
-    if (
-      locationId ||
-      termId ||
-      dayOfWeek ||
-      startTime ||
-      endTime ||
-      instructorId
-    ) {
-      where.offering = {
-        ...(dayOfWeek !== undefined ? { weekday: dayOfWeek } : {}),
-        ...(startTime ? { startTime: { gte: startTime } } : {}),
-        ...(endTime ? { endTime: { lte: endTime } } : {}),
-        term: {
-          ...(termId ? { id: termId } : {}),
-          ...(locationId ? { locationId } : {}),
-        },
-        ...(instructorId
-          ? {
-              instructors: {
-                some: {
-                  instructorId,
-                  removedAt: null,
-                },
+    where.offering = {
+      ...(dayOfWeek !== undefined ? { weekday: dayOfWeek } : {}),
+      ...(startTime ? { startTime: { gte: startTime } } : {}),
+      ...(endTime ? { endTime: { lte: endTime } } : {}),
+      term: {
+        ...(termId ? { id: termId } : {}),
+        locationId: locationId ?? accessibleFilter(scope),
+      },
+      ...(instructorId
+        ? {
+            instructors: {
+              some: {
+                instructorId,
+                removedAt: null,
               },
-            }
-          : {}),
-      };
-    }
+            },
+          }
+        : {}),
+    };
 
     const enrollments = await this.prisma.enrollment.findMany({
       where,

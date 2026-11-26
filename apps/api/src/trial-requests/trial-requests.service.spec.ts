@@ -24,7 +24,7 @@ describe("TrialRequestsService", () => {
     role: "admin",
     active: true,
     accessSchedule: {},
-    accessibleLocations: [{ id: "loc1" }],
+    accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
   };
 
   beforeEach(async () => {

@@ -36,7 +36,7 @@ describe("TrialBookingsService", () => {
       role: "admin",
       active: true,
       accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
+      accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
     };
 
     it("should throw NotFoundException if session does not exist", async () => {

@@ -26,6 +26,11 @@ import {
 } from "./dto/swim-team.dto";
 import { SwimTeamStandingService } from "./swim-team-standing.service";
 import { SwimTeamFeeTierInput } from "../terms/dto/create-term.dto";
+import {
+  accessibleFilter,
+  LocationScope,
+  scopeFilter,
+} from "../auth/location-scope";
 
 const registrationInclude = {
   student: {
@@ -190,13 +195,11 @@ export class SwimTeamService {
   }
 
   /** Seasons with their tiers and practice slots, for the registration form */
-  async getSeasons(locationId?: string | null) {
+  async getSeasons(scope: LocationScope) {
     const terms = await this.prisma.term.findMany({
       where: {
         type: "swim_team_season",
-        ...(locationId
-          ? { OR: [{ locationId }, { locationId: null }] }
-          : {}),
+        locationId: scopeFilter(scope),
       },
       orderBy: { startDate: "desc" },
       select: {
@@ -494,7 +497,7 @@ export class SwimTeamService {
     return serialized;
   }
 
-  async findAll(query: RegistrationQuery) {
+  async findAll(query: RegistrationQuery, scope: LocationScope) {
     if (!query.studentId && !query.termId) {
       throw new BadRequestException("Provide a studentId or a termId");
     }
@@ -502,6 +505,7 @@ export class SwimTeamService {
       where: {
         ...(query.studentId ? { studentId: query.studentId } : {}),
         ...(query.termId ? { termId: query.termId } : {}),
+        term: { locationId: accessibleFilter(scope) },
       },
       include: registrationInclude,
       orderBy: { createdAt: "desc" },
@@ -710,10 +714,14 @@ export class SwimTeamService {
   }
 
   /** Registrations with no season invoice yet, with suggested fee lines */
-  async findUninvoiced(query: UninvoicedRegistrationQuery) {
+  async findUninvoiced(
+    query: UninvoicedRegistrationQuery,
+    scope: LocationScope,
+  ) {
     const registrations = await this.prisma.swimTeamRegistration.findMany({
       where: {
         status: "active",
+        term: { locationId: scopeFilter(scope) },
         lineItems: { none: { invoice: { status: { not: "void" } } } },
         ...(query.guardianId
           ? { student: { guardianId: query.guardianId } }

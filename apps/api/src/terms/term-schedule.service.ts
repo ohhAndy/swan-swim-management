@@ -16,6 +16,7 @@ import { SwimTeamStandingService } from "../swim-team/swim-team-standing.service
 import { getTorontoDateString } from "../common/date.utils";
 import { calculateSessionUsage } from "../common/capacity";
 import { formatTime } from "./terms.helpers";
+import { LocationScope, scopeFilter } from "../auth/location-scope";
 
 @Injectable()
 export class TermScheduleService {
@@ -412,14 +413,11 @@ export class TermScheduleService {
 
         if (!currentTerm) return [];
 
-        // Find all future terms containing regular offerings (Local OR Global)
+        // Find all future terms at the same location containing regular offerings
         const futureTerms = await this.prisma.term.findMany({
           where: {
             startDate: { gt: currentTerm.startDate },
-            OR: [
-              { locationId: currentTerm.locationId },
-              { locationId: null }, // Include global terms
-            ],
+            locationId: currentTerm.locationId,
             offerings: {
               some: {
                 type: "regular",
@@ -738,7 +736,7 @@ export class TermScheduleService {
   }
 
   async getDailySchedule(
-    locationId: string | null,
+    scope: LocationScope,
     dateString: string,
     role?: string,
   ) {
@@ -749,11 +747,7 @@ export class TermScheduleService {
 
     const offerings = await this.prisma.classOffering.findMany({
       where: {
-        term: locationId
-          ? {
-              OR: [{ locationId }, { locationId: null }],
-            }
-          : undefined,
+        term: { locationId: scopeFilter(scope) },
         sessions: { some: { date: targetDate } },
       },
       select: {

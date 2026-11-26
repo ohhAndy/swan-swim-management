@@ -11,7 +11,13 @@ import {
 import { ZodValidationPipe } from "nestjs-zod";
 import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
-import { CurrentLocationId } from "../auth/current-location.decorator";
+import {
+  CurrentLocationScope,
+  fromBody,
+  fromParam,
+  LocationScope,
+  ScopedTo,
+} from "../auth/location-scope";
 import { RequestStaffUser } from "../auth/auth.types";
 import { SwimTeamService } from "./swim-team.service";
 import {
@@ -32,13 +38,14 @@ import {
 } from "../terms/dto/create-term.dto";
 
 @Controller("swim-team")
+@ScopedTo(fromParam("term", "termId"))
 export class SwimTeamController {
   constructor(private readonly swimTeamService: SwimTeamService) {}
 
   @Get("seasons")
   @MinRole("supervisor")
-  async getSeasons(@CurrentLocationId() locationId?: string) {
-    return this.swimTeamService.getSeasons(locationId ?? null);
+  async getSeasons(@CurrentLocationScope() scope: LocationScope) {
+    return this.swimTeamService.getSeasons(scope);
   }
 
   @Get("seasons/:termId/fee-preview")
@@ -72,8 +79,9 @@ export class SwimTeamController {
   async findUninvoiced(
     @Query(new ZodValidationPipe(UninvoicedRegistrationQuerySchema))
     query: UninvoicedRegistrationQuery,
+    @CurrentLocationScope() scope: LocationScope,
   ) {
-    return this.swimTeamService.findUninvoiced(query);
+    return this.swimTeamService.findUninvoiced(query, scope);
   }
 
   @Get("registrations")
@@ -81,12 +89,14 @@ export class SwimTeamController {
   async findAll(
     @Query(new ZodValidationPipe(RegistrationQuerySchema))
     query: RegistrationQuery,
+    @CurrentLocationScope() scope: LocationScope,
   ) {
-    return this.swimTeamService.findAll(query);
+    return this.swimTeamService.findAll(query, scope);
   }
 
   @Post("registrations")
   @MinRole("manager")
+  @ScopedTo(fromBody("term", "termId"))
   async create(
     @Body(new ZodValidationPipe(CreateRegistrationSchema))
     body: CreateRegistrationInput,
@@ -97,6 +107,7 @@ export class SwimTeamController {
 
   @Patch("registrations/:id")
   @MinRole("manager")
+  @ScopedTo(fromParam("swimTeamRegistration", "id"))
   async update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateRegistrationSchema))
@@ -108,6 +119,7 @@ export class SwimTeamController {
 
   @Post("registrations/:id/withdraw")
   @MinRole("manager")
+  @ScopedTo(fromParam("swimTeamRegistration", "id"))
   async withdraw(
     @Param("id") id: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,

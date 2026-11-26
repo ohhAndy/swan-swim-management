@@ -2,7 +2,6 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
-import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { loadSessionUsage, overCapacityWarning } from "../common/session-usage";
 import { RequestStaffUser } from "../auth/auth.types";
 import { TokensService } from "../tokens/tokens.service";
@@ -54,12 +53,6 @@ export class MakeupsService {
         "Makeups are not available for swim team practices",
       );
     }
-
-    // Validate Location Access
-    validateLocationAccess(
-      staffUser,
-      session.offering.term.locationId ?? undefined,
-    );
 
     const dup = await this.prisma.makeUpBooking.findUnique({
       where: { studentId_classSessionId: { studentId, classSessionId } },

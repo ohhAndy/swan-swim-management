@@ -5,8 +5,6 @@ export const UnInvoicedEnrollmentsQuerySchema = z.object({
   termId: z.string().optional(),
   page: z.string().optional(),
   limit: z.string().optional(),
-  includeAllLocations: z.string().optional(),
-  locationId: z.string().optional(),
 });
 
 export type UnInvoicedEnrollmentsQueryDto = z.infer<

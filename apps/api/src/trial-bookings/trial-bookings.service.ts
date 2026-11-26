@@ -9,6 +9,7 @@ import { RequestStaffUser } from "../auth/auth.types";
 
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { loadSessionUsage, overCapacityWarning } from "../common/session-usage";
+import { accessibleFilter, LocationScope } from "../auth/location-scope";
 
 @Injectable()
 export class TrialBookingsService {
@@ -336,10 +337,15 @@ export class TrialBookingsService {
       });
     });
   }
-  async findUpcoming() {
+  private inScope(scope: LocationScope) {
+    return { offering: { term: { locationId: accessibleFilter(scope) } } };
+  }
+
+  async findUpcoming(scope: LocationScope) {
     return this.prisma.trialBooking.findMany({
       where: {
         classSession: {
+          ...this.inScope(scope),
           date: {
             gte: new Date(),
           },
@@ -371,9 +377,10 @@ export class TrialBookingsService {
     });
   }
 
-  async findPast() {
+  async findPast(scope: LocationScope) {
     return this.prisma.trialBooking.findMany({
       where: {
+        classSession: this.inScope(scope),
         OR: [
           {
             classSession: {
@@ -414,22 +421,23 @@ export class TrialBookingsService {
     });
   }
 
-  async getStats() {
-    const total = await this.prisma.trialBooking.count();
+  async getStats(scope: LocationScope) {
+    const inScope = { classSession: this.inScope(scope) };
+    const total = await this.prisma.trialBooking.count({ where: inScope });
     const converted = await this.prisma.trialBooking.count({
-      where: { status: "converted" },
+      where: { ...inScope, status: "converted" },
     });
     const scheduled = await this.prisma.trialBooking.count({
-      where: { status: "scheduled" },
+      where: { ...inScope, status: "scheduled" },
     });
     const attended = await this.prisma.trialBooking.count({
-      where: { status: "attended" },
+      where: { ...inScope, status: "attended" },
     });
     const noshow = await this.prisma.trialBooking.count({
-      where: { status: "noshow" },
+      where: { ...inScope, status: "noshow" },
     });
     const cancelled = await this.prisma.trialBooking.count({
-      where: { status: "cancelled" },
+      where: { ...inScope, status: "cancelled" },
     });
 
     const notConverted = attended + noshow + cancelled;

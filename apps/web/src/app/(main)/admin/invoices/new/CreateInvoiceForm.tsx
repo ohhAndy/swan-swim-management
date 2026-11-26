@@ -120,7 +120,7 @@ export default function CreateInvoiceForm() {
           limit: 50,
           sortBy: "createdAt",
           sortOrder: "desc",
-          includeAllLocations: true,
+          allLocations: true,
         });
 
         if (result.data && result.data.length > 0) {
@@ -165,7 +165,6 @@ export default function CreateInvoiceForm() {
         const result = await getUnInvoicedEnrollments({
           guardianId: selectedGuardian.id,
           limit: 100,
-          includeAllLocations: true,
         });
         setEnrollments(result.data || []);
       } catch (error) {

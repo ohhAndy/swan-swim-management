@@ -11,6 +11,7 @@ import {
   PaymentFilterDto,
   PaymentFilterSchema,
 } from "../payments/dto/payment-query.dto";
+import { CurrentLocationScope, LocationScope } from "../auth/location-scope";
 
 @Controller("exports")
 export class ExportsController {
@@ -22,12 +23,14 @@ export class ExportsController {
     @Query(new ZodValidationPipe(PaymentFilterSchema))
     q: PaymentFilterDto,
     @Res() res: Response,
+    @CurrentLocationScope() scope: LocationScope,
   ) {
     const workbook = await this.exportsService.generatePaymentsSheet(
       q.startDate,
       q.endDate,
       q.method,
       q.query,
+      scope,
     );
 
     res.setHeader(
@@ -49,12 +52,14 @@ export class ExportsController {
     @Query(new ZodValidationPipe(InvoiceExportQuerySchema))
     q: InvoiceExportQueryDto,
     @Res() res: Response,
+    @CurrentLocationScope() scope: LocationScope,
   ) {
     const workbook = await this.exportsService.generateInvoicesSheet(
       q.startDate,
       q.endDate,
       q.status,
       q.query,
+      scope,
     );
 
     res.setHeader(

@@ -62,6 +62,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
             // Default to first accessible location
             setCurrentLocationId(data[0].id);
             document.cookie = `swan_location_id=${data[0].id}; path=/; max-age=31536000`;
+            // Server components rendered without a valid location
+            router.refresh();
           }
         }
       } catch (error) {
@@ -91,7 +93,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, router]);
 
   const handleSetLocation = (id: string) => {
     setCurrentLocationId(id);

@@ -23,12 +23,19 @@ import {
   UpdateOfferingInfoDto,
   UpdateOfferingInfoSchema,
 } from "./dto/offering-updates.dto";
+import {
+  fromBody,
+  fromParam,
+  fromQuery,
+  ScopedTo,
+} from "../auth/location-scope";
 
 @Controller("offerings")
 export class OfferingsController {
   constructor(private readonly offeringsService: OfferingsService) {}
 
   @Get("available-for-transfer")
+  @ScopedTo(fromQuery("term", "termId"))
   async getAvailableForTransfer(
     @Query(new ZodValidationPipe(TransferOptionsQuerySchema))
     q: TransferOptionsQueryDto,
@@ -42,6 +49,7 @@ export class OfferingsController {
 
   @Patch(":offeringId")
   @MinRole("supervisor")
+  @ScopedTo(fromParam("offering", "offeringId"))
   async updateOfferingInfo(
     @Param("offeringId") offeringId: string,
     @Body(new ZodValidationPipe(UpdateOfferingInfoSchema))
@@ -53,6 +61,7 @@ export class OfferingsController {
 
   @Post()
   @MinRole("manager")
+  @ScopedTo(fromBody("term", "termId"))
   async createOffering(
     @Body(new ZodValidationPipe(CreateOfferingSchema))
     body: CreateOfferingInput,
@@ -63,6 +72,7 @@ export class OfferingsController {
 
   @Delete(":offeringId")
   @MinRole("manager")
+  @ScopedTo(fromParam("offering", "offeringId"))
   async deleteOffering(
     @Param("offeringId") offeringId: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,

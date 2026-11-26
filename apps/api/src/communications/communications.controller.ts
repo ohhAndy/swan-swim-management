@@ -21,6 +21,7 @@ import { MinRole } from "../auth/roles.decorator";
 import { Public } from "../auth/public.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
+import { CurrentLocationScope, LocationScope } from "../auth/location-scope";
 
 @Controller("communications")
 export class CommunicationsController {
@@ -28,8 +29,11 @@ export class CommunicationsController {
 
   @Post("recipients")
   @MinRole("manager")
-  async getRecipients(@Body() filters: RecipientFilterDto) {
-    return this.service.getRecipients(filters);
+  async getRecipients(
+    @Body() filters: RecipientFilterDto,
+    @CurrentLocationScope() scope: LocationScope,
+  ) {
+    return this.service.getRecipients(filters, scope);
   }
 
   @Post("send")

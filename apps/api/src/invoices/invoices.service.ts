@@ -3,7 +3,6 @@ import {
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
-import { validateLocationAccess } from "../common/helpers/location-access.helper";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateInvoiceDto } from "./dto/create-invoice.dto";
 import { UpdateInvoiceDto } from "./dto/update-invoice.dto";
@@ -22,7 +21,12 @@ import {
 } from "./dto/create-invoice.dto";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { RequestStaffUser } from "../auth/auth.types";
-import { hasMinRole } from "../auth/roles";
+import {
+  assertCanAccessLocation,
+  LocationScope,
+  requireSingleLocation,
+  scopeFilter,
+} from "../auth/location-scope";
 import { EnrollmentsService } from "../enrollments/enrollments.service";
 
 export interface EnrollmentForCalculation {
@@ -59,14 +63,15 @@ export class InvoicesService {
   async create(
     createInvoiceDto: CreateInvoiceDto,
     staffUser: RequestStaffUser,
-    locationId?: string,
+    scope: LocationScope,
   ) {
-
-    // Validate Location Access
-    const assignedLocationId =
-      validateLocationAccess(staffUser, locationId) ?? undefined;
-
     const lineItems: CreateInvoiceLineItemDto[] = createInvoiceDto.lineItems;
+
+    // Admins may leave it unset, as before; other staff need one location
+    const assignedLocationId =
+      scope.accessibleIds === null
+        ? (scope.locationId ?? undefined)
+        : requireSingleLocation(scope);
 
     // Enrollments Validation
     const enrollmentIds: string[] = lineItems
@@ -266,29 +271,17 @@ export class InvoicesService {
   // List invoices with filters
   async findAll(
     query: InvoiceQueryDto,
-    staffUser: RequestStaffUser,
-    locationId?: string,
+    scope: LocationScope,
   ) {
-
-    const validatedLocationId = validateLocationAccess(staffUser, locationId);
     const page = parseInt(query.page ?? "") || 1;
     const limit = parseInt(query.limit ?? "") || 20;
     const skip = (page - 1) * limit;
 
     const where: Prisma.InvoiceWhereInput = {};
 
-    const includeAllLocations = query.includeAllLocations === "true";
-
-    if (validatedLocationId && !includeAllLocations) {
-      where.locationId = validatedLocationId;
-    } else if (
-      includeAllLocations &&
-      !hasMinRole(staffUser.role, "admin")
-    ) {
-      const accessibleLocationIds = staffUser.accessibleLocations.map(
-        (l: { id: string }) => l.id,
-      );
-      where.locationId = { in: accessibleLocationIds };
+    const locationFilter = scopeFilter(scope);
+    if (locationFilter) {
+      where.locationId = locationFilter;
     }
 
     // Search by invoice number
@@ -371,9 +364,12 @@ export class InvoicesService {
     id: string,
     updateInvoiceDto: UpdateInvoiceDto,
     staffUser: RequestStaffUser,
+    scope: LocationScope,
   ) {
-
     const { lineItems, ...updateData } = updateInvoiceDto;
+    if (updateData.locationId) {
+      assertCanAccessLocation(scope, updateData.locationId);
+    }
 
     // Start a transaction to ensure integrity
     const invoice = await this.prisma.$transaction(async (prisma) => {
@@ -382,7 +378,6 @@ export class InvoicesService {
         where: { id },
         data: {
           ...updateData,
-          locationId: updateData.locationId,
           createdAt: updateData.createdAt
             ? new Date(updateData.createdAt)
             : undefined,
@@ -497,14 +492,9 @@ export class InvoicesService {
   // Get un-invoiced enrollments (delegated to EnrollmentsService domain owner)
   async getUnInvoicedEnrollments(
     query: UnInvoicedEnrollmentsQueryDto,
-    staffUser: RequestStaffUser,
-    locationId?: string,
+    scope: LocationScope,
   ) {
-    return this.enrollmentsService.getUnInvoicedEnrollments(
-      query,
-      staffUser,
-      locationId,
-    );
+    return this.enrollmentsService.getUnInvoicedEnrollments(query, scope);
   }
 
   // Delete invoice (admin only, cascades to line items and payments)

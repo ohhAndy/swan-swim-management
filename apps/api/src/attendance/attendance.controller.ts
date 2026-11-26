@@ -10,6 +10,7 @@ import {
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 import { MinRole } from "../auth/roles.decorator";
+import { fromBody, ScopedTo } from "../auth/location-scope";
 
 
 @Controller("attendance")
@@ -18,6 +19,10 @@ export class AttendanceController {
 
   @Put()
   @MinRole("supervisor")
+  @ScopedTo(
+    fromBody("session", "classSessionId"),
+    fromBody("enrollment", "enrollmentId"),
+  )
   async upsert(
     @Body(new ZodValidationPipe(UpsertAttendanceSchema))
     body: UpsertAttendanceInput,
@@ -28,6 +33,7 @@ export class AttendanceController {
 
   @Patch("makeup")
   @MinRole("supervisor")
+  @ScopedTo(fromBody("makeUp", "makeUpId"))
   async updateMakeUp(
     @Body(new ZodValidationPipe(UpdateMakeupAttendanceSchema))
     body: UpdateMakeupAttendanceInput,

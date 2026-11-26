@@ -20,10 +20,16 @@ import {
 } from "./dto/availability-query.dto";
 import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
-import { CurrentLocationId } from "../auth/current-location.decorator";
+import {
+  CurrentLocationScope,
+  fromParam,
+  LocationScope,
+  ScopedTo,
+} from "../auth/location-scope";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("terms")
+@ScopedTo(fromParam("term", "termId"))
 export class TermsController {
   constructor(
     private readonly termsService: TermsService,
@@ -36,18 +42,20 @@ export class TermsController {
   async create(
     @Body(new ZodValidationPipe(CreateTermSchema)) input: CreateTermInput,
     @CurrentStaffUser() staffUser: RequestStaffUser,
-    @CurrentLocationId() locationId?: string,
+    @CurrentLocationScope() scope: LocationScope,
   ) {
     return await this.termsService.createTermWithSchedule(
       input,
       staffUser,
-      locationId,
+      scope,
     );
   }
 
   @Get("all")
-  async getAllTerms(@CurrentLocationId() locationId?: string): Promise<Term[]> {
-    return this.termsService.getAllTerms(locationId);
+  async getAllTerms(
+    @CurrentLocationScope() scope: LocationScope,
+  ): Promise<Term[]> {
+    return this.termsService.getAllTerms(scope);
   }
 
   @Get(":termId")
@@ -107,11 +115,10 @@ export class TermsController {
   async getDailySchedule(
     @Param("date") date: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,
-    @Query("locationId") queryLocationId?: string,
-    @CurrentLocationId() locationId?: string,
+    @CurrentLocationScope() scope: LocationScope,
   ) {
     return this.termScheduleService.getDailySchedule(
-      queryLocationId || locationId || null,
+      scope,
       date,
       staffUser?.role,
     );

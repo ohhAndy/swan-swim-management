@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import * as ExcelJS from "exceljs";
 import { Prisma, PaymentMethod, InvoiceStatus } from "@prisma/client";
 import { calendarDateRange, torontoDayRange } from "../common/date.utils";
+import { accessibleFilter, LocationScope } from "../auth/location-scope";
 
 const MAX_EXPORT_LIMIT = 10000;
 
@@ -15,8 +16,12 @@ export class ExportsService {
     endDate?: string,
     method?: string,
     query?: string,
+    scope?: LocationScope,
   ) {
-    const where: Prisma.PaymentWhereInput = {};
+    const invoiceWhere: Prisma.InvoiceWhereInput = {
+      locationId: scope ? accessibleFilter(scope) : undefined,
+    };
+    const where: Prisma.PaymentWhereInput = { invoice: invoiceWhere };
 
     const paymentDate = calendarDateRange(startDate, endDate);
     if (paymentDate) where.paymentDate = paymentDate;
@@ -26,11 +31,9 @@ export class ExportsService {
     }
 
     if (query) {
-      where.invoice = {
-        invoiceNumber: {
-          contains: query,
-          mode: "insensitive",
-        },
+      invoiceWhere.invoiceNumber = {
+        contains: query,
+        mode: "insensitive",
       };
     }
 
@@ -84,8 +87,11 @@ export class ExportsService {
     endDate?: string,
     status?: string,
     query?: string,
+    scope?: LocationScope,
   ) {
-    const where: Prisma.InvoiceWhereInput = {};
+    const where: Prisma.InvoiceWhereInput = {
+      locationId: scope ? accessibleFilter(scope) : undefined,
+    };
 
     const createdAt = torontoDayRange(startDate, endDate);
     if (createdAt) where.createdAt = createdAt;

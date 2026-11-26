@@ -18,13 +18,6 @@ async function main() {
   console.log({ mainLocation });
 
   // Backfill logic
-  // Update all terms without locationId
-  const updatedTerms = await prisma.term.updateMany({
-    where: { locationId: null },
-    data: { locationId: mainLocation.id },
-  });
-  console.log(`Updated ${updatedTerms.count} terms`);
-
   // Update all invoices without locationId
   const updatedInvoices = await prisma.invoice.updateMany({
     where: { locationId: null },

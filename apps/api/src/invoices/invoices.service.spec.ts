@@ -72,24 +72,14 @@ describe("InvoicesService", () => {
 
   describe("getUnInvoicedEnrollments", () => {
     it("should delegate to EnrollmentsService", async () => {
-      const mockStaffUser: RequestStaffUser = {
-        id: "staff1",
-        authId: "user1",
-        email: "test@test.com",
-        fullName: "Test Staff",
-        role: "admin",
-        active: true,
-        accessSchedule: {},
-        accessibleLocations: [{ id: "loc1" }],
-      };
-
       (enrollmentsService.getUnInvoicedEnrollments as jest.Mock).mockResolvedValue({
         data: [],
         pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
       });
 
-      const result = await service.getUnInvoicedEnrollments({}, mockStaffUser, "loc1");
-      expect(enrollmentsService.getUnInvoicedEnrollments).toHaveBeenCalledWith({}, mockStaffUser, "loc1");
+      const scope = { locationId: "loc1", accessibleIds: null };
+      const result = await service.getUnInvoicedEnrollments({}, scope);
+      expect(enrollmentsService.getUnInvoicedEnrollments).toHaveBeenCalledWith({}, scope);
       expect(result).toEqual({
         data: [],
         pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
@@ -106,7 +96,7 @@ describe("InvoicesService", () => {
       role: "admin",
       active: true,
       accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
+      accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
     };
 
     it("should successfully remove an invoice and log it", async () => {

@@ -53,7 +53,7 @@ describe("AttendanceService", () => {
       role: "admin",
       active: true,
       accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
+      accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
     };
 
     describe("swim team members behind on payments", () => {
@@ -213,7 +213,7 @@ describe("AttendanceService", () => {
       role: "admin",
       active: true,
       accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
+      accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
     };
 
     it("should trigger reconcileTokenOnCancellation when cancelling makeup with a token", async () => {

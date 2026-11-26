@@ -120,12 +120,12 @@ model Term {
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   createdBy             String?
-  locationId            String?
+  locationId            String
   offerings             ClassOffering[]
   swimTeamFeeTiers      SwimTeamFeeTier[]
   swimTeamRegistrations SwimTeamRegistration[]
   createdByStaff        StaffUser?             @relation("TermCreatedBy", fields: [createdBy], references: [id])
-  location              Location?              @relation(fields: [locationId], references: [id])
+  location              Location               @relation(fields: [locationId], references: [id])
 
   @@index([locationId])
 }

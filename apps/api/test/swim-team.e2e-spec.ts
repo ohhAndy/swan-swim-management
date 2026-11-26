@@ -2,7 +2,12 @@ import { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { PrismaService } from "../src/prisma/prisma.service";
 import { createTestApp } from "./utils/test-setup";
-import { seedAdmin, seedGuardian } from "./utils/seeds";
+import {
+  seedAdmin,
+  seedGuardian,
+  seedLocation,
+  seedTerm,
+} from "./utils/seeds";
 
 const DAY = 86400000;
 const ymd = (d: Date) => d.toISOString().slice(0, 10);
@@ -38,8 +43,10 @@ describe("Swim team (e2e)", () => {
     // A season that started last month and runs most of a year
     const start = new Date(Date.now() - 30 * DAY);
     const end = new Date(Date.now() + 270 * DAY);
+    const location = await seedLocation(prisma);
     const season = await request(app.getHttpServer())
       .post("/terms")
+      .set("x-location-id", location.id)
       .send({
         name: "Swim Team Season",
         type: "swim_team_season",
@@ -141,13 +148,12 @@ describe("Swim team (e2e)", () => {
         })
         .expect(400);
 
-      const lessonTerm = await prisma.term.create({
-        data: {
-          name: "Fall",
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 60 * DAY),
-        },
-      });
+      const lessonTerm = await seedTerm(
+        prisma,
+        "Fall",
+        new Date(),
+        new Date(Date.now() + 60 * DAY),
+      );
       await request(app.getHttpServer())
         .post("/offerings")
         .send({

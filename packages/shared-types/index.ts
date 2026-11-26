@@ -38,7 +38,7 @@ export type Term = {
   name: string;
   startDate: string | Date;
   endDate: string | Date;
-  locationId: string | null;
+  locationId: string;
   type: "regular" | "swim_team_season";
   location?: { name: string } | null;
 };

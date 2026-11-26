@@ -1,3 +1,4 @@
+import { BadRequestException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
 import { TermsService } from "./terms.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -41,7 +42,7 @@ describe("TermsService", () => {
         role: "admin",
         active: true,
         accessSchedule: {},
-        accessibleLocations: [{ id: "loc1" }],
+        accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
       };
 
       // Mock slug uniqueness check
@@ -80,7 +81,7 @@ describe("TermsService", () => {
           ],
         },
         mockStaffUser,
-        "loc1",
+        { locationId: "loc1", accessibleIds: null },
       );
 
       expect(result).toEqual(mockCreatedTerm);
@@ -127,7 +128,7 @@ describe("TermsService", () => {
           templates: [],
         },
         superAdmin,
-        "loc2",
+        { locationId: "loc2", accessibleIds: null },
       );
 
       expect(prismaMock.term.create).toHaveBeenCalledWith(
@@ -136,18 +137,98 @@ describe("TermsService", () => {
         }),
       );
     });
+
+    it("refuses to create a term with no location selected", async () => {
+      const admin: RequestStaffUser = {
+        id: "staff2",
+        authId: "user2",
+        email: "owner@test.com",
+        fullName: "Owner",
+        role: "admin",
+        active: true,
+        accessSchedule: null,
+        accessibleLocations: [],
+      };
+
+      await expect(
+        service.createTermWithSchedule(
+          {
+            name: "Spring 2024",
+            startDate: new Date("2024-04-01"),
+            endDate: new Date("2024-06-30"),
+            weeks: 8,
+            templates: [],
+          },
+          admin,
+          { locationId: null, accessibleIds: null },
+        ),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaMock.term.create).not.toHaveBeenCalled();
+    });
+
+    it("uses a manager's only location when none is selected", async () => {
+      prismaMock.term.findUnique.mockResolvedValue(null);
+      prismaMock.term.create.mockResolvedValue({ id: "term3" });
+
+      await service.createTermWithSchedule(
+        {
+          name: "Summer 2024",
+          startDate: new Date("2024-07-01"),
+          endDate: new Date("2024-08-31"),
+          weeks: 8,
+          templates: [],
+        },
+        {
+          id: "staff3",
+          authId: "user3",
+          email: "manager@test.com",
+          fullName: "Manager",
+          role: "manager",
+          active: true,
+          accessSchedule: null,
+          accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
+        },
+        { locationId: null, accessibleIds: ["loc1"] },
+      );
+
+      expect(prismaMock.term.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ locationId: "loc1" }),
+        }),
+      );
+    });
   });
 
   describe("getAllTerms", () => {
-    it("should return terms list with string IDs", async () => {
+    it("lists the selected location's terms", async () => {
       prismaMock.term.findMany.mockResolvedValue([
-        { id: BigInt(1), name: "Fall 2026", locationId: BigInt(10) },
+        { id: "t1", name: "Fall 2026", locationId: "loc1" },
       ]);
 
-      const result = await service.getAllTerms("10");
+      const result = await service.getAllTerms({
+        locationId: "loc1",
+        accessibleIds: ["loc1", "loc2"],
+      });
       expect(result).toEqual([
-        { id: "1", name: "Fall 2026", locationId: "10" },
+        { id: "t1", name: "Fall 2026", locationId: "loc1" },
       ]);
+      expect(prismaMock.term.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { locationId: "loc1" } }),
+      );
+    });
+
+    it("lists every accessible location's terms when none is selected", async () => {
+      prismaMock.term.findMany.mockResolvedValue([]);
+
+      await service.getAllTerms({
+        locationId: null,
+        accessibleIds: ["loc1", "loc2"],
+      });
+      expect(prismaMock.term.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { locationId: { in: ["loc1", "loc2"] } },
+        }),
+      );
     });
   });
 

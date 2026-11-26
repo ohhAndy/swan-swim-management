@@ -6,8 +6,10 @@ import { AddSkipInput, addSkipSchema } from "./dto/skips.dto";
 import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
+import { fromParam, ScopedTo } from "../auth/location-scope";
 
 @Controller("enrollments/:enrollmentId/skips")
+@ScopedTo(fromParam("enrollment", "enrollmentId"))
 export class SkipsController {
   constructor(private readonly skipsService: SkipsService) {}
 

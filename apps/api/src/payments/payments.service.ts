@@ -11,6 +11,7 @@ import { UpdatePaymentDto } from "./dto/update-payment.dto";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { RequestStaffUser } from "../auth/auth.types";
 import { calendarDateRange } from "../common/date.utils";
+import { accessibleFilter, LocationScope } from "../auth/location-scope";
 
 @Injectable()
 export class PaymentsService {
@@ -27,10 +28,14 @@ export class PaymentsService {
     endDate?: string,
     method?: string,
     query?: string,
+    scope?: LocationScope,
   ) {
     const skip = (page - 1) * limit;
 
-    const where: Prisma.PaymentWhereInput = {};
+    const invoiceWhere: Prisma.InvoiceWhereInput = {
+      locationId: scope ? accessibleFilter(scope) : undefined,
+    };
+    const where: Prisma.PaymentWhereInput = { invoice: invoiceWhere };
 
     const paymentDate = calendarDateRange(startDate, endDate);
     if (paymentDate) where.paymentDate = paymentDate;
@@ -40,11 +45,9 @@ export class PaymentsService {
     }
 
     if (query) {
-      where.invoice = {
-        invoiceNumber: {
-          contains: query,
-          mode: "insensitive",
-        },
+      invoiceWhere.invoiceNumber = {
+        contains: query,
+        mode: "insensitive",
       };
     }
 

@@ -58,11 +58,16 @@ swan-swim-management/
 * **Capacity**: the offering's capacity, raised to at least 5 for lessons with 2+ instructors (a rough rule; practices are plain headcount).
 * **Capacity never blocks**: seat limits are staff discretion. Booking past capacity succeeds and the API returns a `capacityWarning` for the UI to show.
 
-### C. Database Primary & Foreign Keys
+### C. Locations
+* **What belongs to a location**: every term belongs to exactly one location (there are no "global" terms), and offerings, sessions, enrollments, makeups, trials and swim-team registrations take theirs from the term. Invoices store their own location. Students, guardians, instructors and inventory are shared across locations.
+* **Request scope**: `LocationScopeGuard` turns the `x-location-id` header (a location id or slug, or `all`) into a `LocationScope` and refuses locations the user may not access. Read it with `@CurrentLocationScope()` and filter with `scopeFilter(scope)` (the selected location) or `accessibleFilter(scope)` (every location the user may access). Never read the header directly.
+* **Routes that take an id**: add `@ScopedTo(fromParam(...))` (or `fromBody` / `fromQuery` / `fromBodyList`) for any record that belongs to a location, so staff can't reach another location's records by id.
+
+### D. Database Primary & Foreign Keys
 * All database IDs must use `cuid()` strings (`@default(cuid())` in Prisma).
 * Do not use `uuid()` or `BigInt` for primary keys to ensure chronologically sortable string IDs across the monorepo.
 
-### D. Financial & Invoicing Rules
+### E. Financial & Invoicing Rules
 * Multi-item invoice generation (tuition, registration fees, sibling discounts) must always be wrapped in Prisma transactions (`prisma.$transaction`).
 * Invoices are issued on paper outside the system. Staff enter the paper invoice's number when recording it, so the system does not generate or sequence invoice numbers, and gaps are expected. The only rule is that `invoiceNumber` is unique (enforced by the database).
 * The new-invoice form pre-fills a guessed next number for convenience. Staff are expected to replace it with the paper number.

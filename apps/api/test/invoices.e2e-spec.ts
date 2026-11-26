@@ -2,7 +2,7 @@ import { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { PrismaService } from "../src/prisma/prisma.service";
 import { createTestApp } from "./utils/test-setup";
-import { seedAdmin, seedGuardian } from "./utils/seeds";
+import { seedAdmin, seedGuardian, seedLocation } from "./utils/seeds";
 
 describe("InvoicesController (e2e)", () => {
   let app: INestApplication;
@@ -59,8 +59,10 @@ describe("InvoicesController (e2e)", () => {
 
   describe("POST /invoices", () => {
     it("should create an invoice", async () => {
+      const location = await seedLocation(prisma);
       const response = await request(app.getHttpServer())
         .post("/invoices")
+        .set("x-location-id", location.id)
         .send({
           guardianId: testGuardianId,
           totalAmount: 100,
@@ -70,6 +72,7 @@ describe("InvoicesController (e2e)", () => {
         .expect(201);
       
       expect(response.body.id).toBeDefined();
+      expect(response.body.location.id).toBe(location.id);
     });
   });
 
@@ -107,7 +110,7 @@ describe("InvoicesController (e2e)", () => {
         (
           await request(app.getHttpServer())
             .get("/invoices")
-            .query({ includeAllLocations: "true", ...query })
+            .query(query)
             .expect(200)
         ).body.data.map((i: { id: string }) => i.id);
 

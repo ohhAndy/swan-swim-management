@@ -10,7 +10,6 @@ export const InvoiceQuerySchema = z.object({
   limit: z.string().optional(),
   sortBy: z.enum(["createdAt", "invoiceNumber"]).optional(),
   sortOrder: z.enum(["asc", "desc"]).optional(),
-  includeAllLocations: z.string().optional(),
   needsRecovery: z.string().optional(),
 });
 

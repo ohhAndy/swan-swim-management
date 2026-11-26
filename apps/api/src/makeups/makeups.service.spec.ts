@@ -14,11 +14,6 @@ jest.mock("../common/session-usage", () => ({
   loadSessionUsage: jest.fn().mockResolvedValue({ filled: 1, effectiveCapacity: 4, openSeats: 3 }),
 }));
 
-// Mock validateLocationAccess
-jest.mock("../common/helpers/location-access.helper", () => ({
-  validateLocationAccess: jest.fn(),
-}));
-
 describe("MakeupsService", () => {
   let service: MakeupsService;
   let prismaMock: MockPrismaService;
@@ -60,7 +55,7 @@ describe("MakeupsService", () => {
       role: "admin",
       active: true,
       accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
+      accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
     };
     const mockDto: ScheduleMakeUpInput = {
       studentId: "student1",

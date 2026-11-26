@@ -22,7 +22,7 @@ export interface SwimTeamSeason {
   name: string;
   startDate: string;
   endDate: string;
-  locationId: string | null;
+  locationId: string;
   tiers: SwimTeamFeeTier[];
   slots: SwimTeamSeasonSlot[];
 }

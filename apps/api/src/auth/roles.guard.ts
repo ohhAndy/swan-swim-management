@@ -59,7 +59,7 @@ export class RolesGuard implements CanActivate {
         active: true,
         accessSchedule: true,
         accessibleLocations: {
-          select: { id: true },
+          select: { id: true, slug: true },
         },
       },
     });

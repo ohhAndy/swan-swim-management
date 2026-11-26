@@ -84,7 +84,7 @@ export async function getInvoices(params?: {
   limit?: number;
   sortBy?: "createdAt" | "invoiceNumber";
   sortOrder?: "asc" | "desc";
-  includeAllLocations?: boolean;
+  allLocations?: boolean;
   needsRecovery?: boolean;
 }) {
   const queryParams = new URLSearchParams();
@@ -98,11 +98,11 @@ export async function getInvoices(params?: {
   if (params?.limit) queryParams.append("limit", params.limit.toString());
   if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
   if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
-  if (params?.includeAllLocations)
-    queryParams.append("includeAllLocations", "true");
   if (params?.needsRecovery) queryParams.append("needsRecovery", "true");
 
-  const res = await clientFetch(`/invoices?${queryParams}`);
+  const res = await clientFetch(`/invoices?${queryParams}`, {
+    skipLocationHeader: params?.allLocations,
+  });
   return res.json();
 }
 
@@ -144,7 +144,6 @@ export async function getUnInvoicedEnrollments(params?: {
   termId?: string;
   page?: number;
   limit?: number;
-  includeAllLocations?: boolean;
 }) {
   const queryParams = new URLSearchParams();
 
@@ -152,8 +151,6 @@ export async function getUnInvoicedEnrollments(params?: {
   if (params?.termId) queryParams.append("termId", params.termId);
   if (params?.page) queryParams.append("page", params.page.toString());
   if (params?.limit) queryParams.append("limit", params.limit.toString());
-  if (params?.includeAllLocations)
-    queryParams.append("includeAllLocations", "true");
 
   const res = await clientFetch(
     `/invoices/un-invoiced-enrollments?${queryParams}`,

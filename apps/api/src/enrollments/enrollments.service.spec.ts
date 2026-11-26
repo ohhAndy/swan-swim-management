@@ -49,7 +49,7 @@ describe("EnrollmentsService", () => {
       role: "admin",
       active: true,
       accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
+      accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
     };
 
     it("should throw NotFoundException if enrollment does not exist", async () => {
@@ -83,7 +83,7 @@ describe("EnrollmentsService", () => {
       role: "admin",
       active: true,
       accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
+      accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
     };
 
     it("should throw BadRequestException if enrollment is not active", async () => {
@@ -148,7 +148,7 @@ describe("EnrollmentsService", () => {
       role: "admin",
       active: true,
       accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
+      accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
     };
 
     it("should return succeeded: 0 for empty transfer list", async () => {
@@ -204,68 +204,50 @@ describe("EnrollmentsService", () => {
   });
 
   describe("getUnInvoicedEnrollments", () => {
-    const mockStaffUser: RequestStaffUser = {
-      id: "staff1",
-      authId: "user1",
-      email: "test@test.com",
-      fullName: "Test Staff",
-      role: "admin",
-      active: true,
-      accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
-    };
+    const whereOf = () =>
+      (prismaMock.enrollment.findMany as jest.Mock).mock.calls[0][0].where;
 
-    it("should allow admins to see all locations by default even when locationId is passed", async () => {
+    beforeEach(() => {
       prismaMock.enrollment.findMany.mockResolvedValue([]);
       prismaMock.enrollment.count.mockResolvedValue(0);
-
-      await service.getUnInvoicedEnrollments(
-        { guardianId: "g1" },
-        mockStaffUser,
-        "loc1",
-      );
-
-      // Where clause should NOT filter by locationId since admin sees all locations by default
-      expect(prismaMock.enrollment.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            invoiceLineItem: null,
-            student: { guardianId: "g1" },
-          }),
-        }),
-      );
-      const findManyCall = (prismaMock.enrollment.findMany as jest.Mock).mock.calls[0][0];
-      expect(findManyCall.where.offering).toBeUndefined();
     });
 
-    it("should restrict managers to their validated location", async () => {
-      const mockManagerUser: RequestStaffUser = {
-        id: "staff2",
-        authId: "user2",
-        email: "manager@test.com",
-        fullName: "Test Manager",
-        role: "manager",
-        active: true,
-        accessSchedule: {},
-        accessibleLocations: [{ id: "loc1" }],
-      };
-
-      prismaMock.enrollment.findMany.mockResolvedValue([]);
-      prismaMock.enrollment.count.mockResolvedValue(0);
-
+    it("does not filter by location for an admin viewing all locations", async () => {
       await service.getUnInvoicedEnrollments(
         { guardianId: "g1" },
-        mockManagerUser,
-        "loc1",
+        { locationId: null, accessibleIds: null },
       );
 
-      expect(prismaMock.enrollment.findMany).toHaveBeenCalledWith(
+      expect(whereOf()).toEqual(
         expect.objectContaining({
-          where: expect.objectContaining({
-            offering: { term: { locationId: "loc1" } },
-          }),
+          invoiceLineItem: null,
+          student: { guardianId: "g1" },
+          offering: { term: { locationId: undefined } },
         }),
       );
+    });
+
+    it("limits to the selected location", async () => {
+      await service.getUnInvoicedEnrollments(
+        { guardianId: "g1", termId: "t1" },
+        { locationId: "loc1", accessibleIds: ["loc1", "loc2"] },
+      );
+
+      expect(whereOf().offering).toEqual({
+        termId: "t1",
+        term: { locationId: "loc1" },
+      });
+    });
+
+    it("limits to every accessible location when none is selected", async () => {
+      await service.getUnInvoicedEnrollments(
+        {},
+        { locationId: null, accessibleIds: ["loc1", "loc2"] },
+      );
+
+      expect(whereOf().offering).toEqual({
+        term: { locationId: { in: ["loc1", "loc2"] } },
+      });
     });
   });
 });

@@ -42,7 +42,7 @@ describe("PaymentsService", () => {
       role: "admin",
       active: true,
       accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
+      accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
     };
 
     it("should throw NotFoundException if invoice does not exist", async () => {
@@ -109,7 +109,7 @@ describe("PaymentsService", () => {
       role: "admin",
       active: true,
       accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
+      accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
     };
 
     it("should recalculate invoice status when a payment is deleted", async () => {

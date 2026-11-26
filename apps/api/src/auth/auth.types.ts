@@ -17,7 +17,7 @@ export interface RequestStaffUser {
   role: string;
   active: boolean;
   accessSchedule: Prisma.JsonValue;
-  accessibleLocations?: { id: string }[];
+  accessibleLocations?: { id: string; slug: string }[];
 }
 
 /**

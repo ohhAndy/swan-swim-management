@@ -1,10 +1,13 @@
 import { Controller, Get, Query } from "@nestjs/common";
 import { ZodValidationPipe } from "nestjs-zod";
 import { MinRole } from "../auth/roles.decorator";
-import { CurrentLocationId } from "../auth/current-location.decorator";
-import { CurrentStaffUser } from "../auth/current-user.decorator";
+import {
+  CurrentLocationScope,
+  fromQuery,
+  LocationScope,
+  ScopedTo,
+} from "../auth/location-scope";
 import { StatisticsService } from "./statistics.service";
-import { RequestStaffUser } from "../auth/auth.types";
 import {
   DashboardStatsQueryDto,
   DashboardStatsQuerySchema,
@@ -16,12 +19,12 @@ export class StatisticsController {
 
   @Get("dashboard")
   @MinRole("manager")
+  @ScopedTo(fromQuery("term", "termId"))
   async getDashboardStats(
     @Query(new ZodValidationPipe(DashboardStatsQuerySchema))
     { termId }: DashboardStatsQueryDto,
-    @CurrentStaffUser() staffUser: RequestStaffUser,
-    @CurrentLocationId() locationId?: string,
+    @CurrentLocationScope() scope: LocationScope,
   ) {
-    return this.statisticsService.getDashboardStats(termId, staffUser, locationId);
+    return this.statisticsService.getDashboardStats(termId, scope);
   }
 }

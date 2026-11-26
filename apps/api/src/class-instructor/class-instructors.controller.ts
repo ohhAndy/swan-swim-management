@@ -15,6 +15,7 @@ import {
 import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
+import { fromBody, fromParam, ScopedTo } from "../auth/location-scope";
 
 @Controller("class-instructors")
 export class ClassInstructorsController {
@@ -22,6 +23,7 @@ export class ClassInstructorsController {
 
   @Post()
   @MinRole("supervisor")
+  @ScopedTo(fromBody("offering", "classOfferingId"))
   async assignInstructor(
     @Body(new ZodValidationPipe(AssignInstructorSchema))
     body: AssignInstructorDto,
@@ -36,6 +38,7 @@ export class ClassInstructorsController {
 
   @Delete(":id")
   @MinRole("supervisor")
+  @ScopedTo(fromParam("classInstructor", "id"))
   async removeInstructor(
     @Param("id") id: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,
@@ -45,6 +48,7 @@ export class ClassInstructorsController {
 
   @Get("class/:classOfferingId")
   @MinRole("supervisor")
+  @ScopedTo(fromParam("offering", "classOfferingId"))
   async getActiveInstructors(
     @Param("classOfferingId") classOfferingId: string,
   ) {
@@ -52,6 +56,7 @@ export class ClassInstructorsController {
   }
 
   @Get("class/:classOfferingId/history")
+  @ScopedTo(fromParam("offering", "classOfferingId"))
   async getInstructorHistory(
     @Param("classOfferingId") classOfferingId: string,
   ) {

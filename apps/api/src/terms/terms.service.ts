@@ -4,7 +4,11 @@ import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import type { Term } from "@school/shared-types";
 import { CreateTermInput } from "./dto/create-term.dto";
 import { RequestStaffUser } from "../auth/auth.types";
-import { hasMinRole } from "../auth/roles";
+import {
+  LocationScope,
+  requireSingleLocation,
+  scopeFilter,
+} from "../auth/location-scope";
 import { computeEnd, weeklyDates } from "./terms.helpers";
 import { calculateClassUsage } from "../common/capacity";
 import {
@@ -42,39 +46,14 @@ export class TermsService {
   async createTermWithSchedule(
     input: CreateTermInput,
     staffUser: RequestStaffUser,
-    locationId?: string,
+    scope: LocationScope,
   ) {
     const { name, slug, startDate, endDate, weeks = 8, templates } = input;
     const isSeason = input.type === "swim_team_season";
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // Validate Location Access
-    let assignedLocationId: string | null = null;
-
-    if (hasMinRole(staffUser.role, "admin")) {
-      assignedLocationId = locationId ?? null;
-    } else {
-      if (!locationId) {
-        if (staffUser.accessibleLocations.length === 1) {
-          assignedLocationId = staffUser.accessibleLocations[0].id;
-        } else {
-          throw new BadRequestException(
-            "Location selection is required for managers creating terms.",
-          );
-        }
-      } else {
-        const hasAccess = staffUser.accessibleLocations.some(
-          (loc) => loc.id === locationId,
-        );
-        if (!hasAccess) {
-          throw new BadRequestException(
-            "You do not have access to create terms for this location.",
-          );
-        }
-        assignedLocationId = locationId;
-      }
-    }
+    const assignedLocationId = requireSingleLocation(scope);
 
     if (start >= end) {
       throw new BadRequestException("Start date must be before end date");
@@ -169,13 +148,9 @@ export class TermsService {
     );
   }
 
-  async getAllTerms(locationId?: string): Promise<Term[]> {
+  async getAllTerms(scope: LocationScope): Promise<Term[]> {
     const terms = await this.prisma.term.findMany({
-      where: locationId
-        ? {
-            OR: [{ locationId }, { locationId: null }],
-          }
-        : undefined,
+      where: { locationId: scopeFilter(scope) },
       include: { location: { select: { name: true } } },
       orderBy: { startDate: "desc" },
     });
@@ -185,7 +160,7 @@ export class TermsService {
       name: t.name,
       startDate: t.startDate,
       endDate: t.endDate,
-      locationId: t.locationId ? t.locationId.toString() : null,
+      locationId: t.locationId,
       location: t.location,
       type: t.type,
     }));

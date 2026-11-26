@@ -6,7 +6,7 @@ const API = process.env.NEXT_PUBLIC_API_URL!;
 /**
  * Fetch wrapper for use in Client Components only.
  * - Automatically attaches the Bearer token from the browser Supabase session.
- * - Automatically attaches x-location-id from localStorage.
+ * - Automatically attaches x-location-id from the swan_location_id cookie.
  * - Throws ApiError on non-OK responses.
  *
  * @param skipLocationHeader - Set to true to omit x-location-id (e.g. for cross-location queries)

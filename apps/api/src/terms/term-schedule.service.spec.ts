@@ -133,7 +133,10 @@ describe("TermScheduleService", () => {
   describe("getDailySchedule", () => {
     it("should throw BadRequestException on invalid date format", async () => {
       await expect(
-        service.getDailySchedule("loc1", "2026/01/01"),
+        service.getDailySchedule(
+          { locationId: "loc1", accessibleIds: null },
+          "2026/01/01",
+        ),
       ).rejects.toThrow(BadRequestException);
     });
   });

@@ -31,6 +31,7 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { SupabaseAuthGuard } from "./auth/supabase-auth.guard";
 import { RolesGuard } from "./auth/roles.guard";
+import { LocationScopeGuard } from "./auth/location-scope.guard";
 import { LevelsModule } from './levels/levels.module';
 import { SkillsModule } from './skills/skills.module';
 import { ReportCardsModule } from './report-cards/report-cards.module';
@@ -96,6 +97,10 @@ import { SwimTeamModule } from './swim-team/swim-team.module';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: LocationScopeGuard,
     },
   ],
 })

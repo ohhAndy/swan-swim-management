@@ -2,7 +2,7 @@ import { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import { PrismaService } from "../src/prisma/prisma.service";
 import { createTestApp } from "./utils/test-setup";
-import { seedAdmin, seedTerm, seedClassOffering } from "./utils/seeds";
+import { seedAdmin, seedTerm, seedClassOffering, seedLocation } from "./utils/seeds";
 
 describe("TrialBookingsController (e2e)", () => {
   let app: INestApplication;
@@ -140,7 +140,7 @@ describe("TrialBookingsController (e2e)", () => {
   });
 
   describe("who can remove a trial", () => {
-    const seedStaff = (role: "supervisor" | "manager") =>
+    const seedStaff = async (role: "supervisor" | "manager") =>
       prisma.staffUser.create({
         data: {
           authId: `test-${role}`,
@@ -148,6 +148,7 @@ describe("TrialBookingsController (e2e)", () => {
           role,
           fullName: `Test ${role}`,
           active: true,
+          accessibleLocations: { connect: [{ id: (await seedLocation(prisma)).id }] },
         },
       });
 

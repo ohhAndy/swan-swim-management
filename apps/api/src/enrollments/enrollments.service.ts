@@ -11,7 +11,7 @@ import { Prisma } from "@prisma/client";
 import { RequestStaffUser } from "../auth/auth.types";
 import { hasMinRole } from "../auth/roles";
 import { assertCanEditSkips } from "../common/helpers/enrollment-skips.helper";
-import { validateLocationAccess } from "../common/helpers/location-access.helper";
+import { LocationScope, scopeFilter } from "../auth/location-scope";
 import { calculateEnrollmentTuition } from "../common/billing";
 import { AuditLogsService } from "../audit-logs/audit-logs.service";
 import { TokensService } from "../tokens/tokens.service";
@@ -558,17 +558,12 @@ export class EnrollmentsService {
 
     return { success: true };
   }
-  // Get un-invoiced enrollments with location access, pagination, and tuition calculation
   async getUnInvoicedEnrollments(
-    query?: UnInvoicedEnrollmentsQueryDto,
-    staffUser?: RequestStaffUser,
-    locationId?: string,
+    query: UnInvoicedEnrollmentsQueryDto,
+    scope: LocationScope,
   ) {
-    const validatedLocationId = staffUser
-      ? validateLocationAccess(staffUser, locationId)
-      : locationId;
-    const page = parseInt(query?.page ?? "") || 1;
-    const limit = parseInt(query?.limit ?? "") || 50;
+    const page = parseInt(query.page ?? "") || 1;
+    const limit = parseInt(query.limit ?? "") || 50;
     const skip = (page - 1) * limit;
 
     const where: Prisma.EnrollmentWhereInput = {
@@ -576,53 +571,16 @@ export class EnrollmentsService {
       // Swim team slots are billed through their season registration
       swimTeamRegistrationId: null,
       status: { in: ["active", "inactive"] },
+      offering: {
+        ...(query.termId ? { termId: query.termId } : {}),
+        term: { locationId: scopeFilter(scope) },
+      },
     };
 
-    if (query?.guardianId) {
+    if (query.guardianId) {
       where.student = {
         guardianId: query.guardianId,
       };
-    }
-
-    if (query?.termId) {
-      where.offering = {
-        termId: query.termId,
-      };
-    }
-
-    const includeAllLocations = query?.includeAllLocations === "true";
-    const isAdmin =
-      hasMinRole(staffUser?.role, "admin");
-
-    if (isAdmin) {
-      // For Admins/Super Admins:
-      // They see all locations by default (e.g. creating invoice workflow).
-      // Only filter by location if an explicit locationId query param is provided.
-      if (query?.locationId && query.locationId !== "all") {
-        const locationFilter = { term: { locationId: query.locationId } };
-        where.offering = where.offering
-          ? { AND: [where.offering, locationFilter] }
-          : locationFilter;
-      }
-    } else {
-      // For Managers / Non-Admins:
-      // Always location-specific.
-      if (validatedLocationId && !includeAllLocations) {
-        const locationFilter = { term: { locationId: validatedLocationId } };
-        where.offering = where.offering
-          ? { AND: [where.offering, locationFilter] }
-          : locationFilter;
-      } else if (staffUser) {
-        const accessibleLocationIds = staffUser.accessibleLocations.map(
-          (l: { id: string }) => l.id,
-        );
-        const locationFilter = {
-          term: { locationId: { in: accessibleLocationIds } },
-        };
-        where.offering = where.offering
-          ? { AND: [where.offering, locationFilter] }
-          : locationFilter;
-      }
     }
 
     const [enrollments, total] = await Promise.all([
@@ -682,11 +640,10 @@ export class EnrollmentsService {
   }
 
   async findUninvoiced(
-    query?: UnInvoicedEnrollmentsQueryDto,
-    staffUser?: RequestStaffUser,
-    locationId?: string,
+    query: UnInvoicedEnrollmentsQueryDto,
+    scope: LocationScope,
   ) {
-    return this.getUnInvoicedEnrollments(query, staffUser, locationId);
+    return this.getUnInvoicedEnrollments(query, scope);
   }
 
   async bulkTransfer(

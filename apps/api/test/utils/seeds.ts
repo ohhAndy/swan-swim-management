@@ -24,12 +24,27 @@ export async function seedSuperAdmin(prisma: PrismaService, authId = "test-super
   });
 }
 
-export async function seedTerm(prisma: PrismaService, name = "Test Term", startDate = new Date(), endDate = new Date(Date.now() + 86400000 * 30)) {
+export async function seedLocation(prisma: PrismaService, slug = "seed-location", name = "Seed Location") {
+  return prisma.location.upsert({
+    where: { slug },
+    update: {},
+    create: { name, slug },
+  });
+}
+
+export async function seedTerm(
+  prisma: PrismaService,
+  name = "Test Term",
+  startDate = new Date(),
+  endDate = new Date(Date.now() + 86400000 * 30),
+  locationId?: string,
+) {
   return prisma.term.create({
     data: {
       name,
       startDate,
       endDate,
+      locationId: locationId ?? (await seedLocation(prisma)).id,
     },
   });
 }

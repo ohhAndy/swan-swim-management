@@ -3,8 +3,8 @@ import type { Location } from "@prisma/client";
 export type { Location };
 
 export async function getLocations(): Promise<Location[]> {
-  const res = await clientFetch(`/locations`, {
-  });
+  // A stale location header would block the lookup that replaces it
+  const res = await clientFetch(`/locations`, { skipLocationHeader: true });
 
   return res.json();
 }

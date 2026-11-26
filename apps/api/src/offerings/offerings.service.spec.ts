@@ -41,7 +41,7 @@ describe("OfferingsService", () => {
       role: "admin",
       active: true,
       accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
+      accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
     };
 
     it("should throw NotFoundException if offering does not exist", async () => {

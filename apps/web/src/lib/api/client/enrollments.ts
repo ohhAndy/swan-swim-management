@@ -37,11 +37,9 @@ export interface PaginatedResponse<T> {
 
 export async function getUninvoicedEnrollments(params?: {
   termId?: string;
-  locationId?: string;
 }): Promise<PaginatedResponse<UninvoicedEnrollment> | UninvoicedEnrollment[]> {
   const queryParams = new URLSearchParams();
   if (params?.termId) queryParams.append("termId", params.termId);
-  if (params?.locationId) queryParams.append("locationId", params.locationId);
 
   const res = await clientFetch(
     `/enrollments/uninvoiced?${queryParams.toString()}`,

@@ -34,7 +34,7 @@ describe("StatisticsService", () => {
       role: "admin",
       active: true,
       accessSchedule: {},
-      accessibleLocations: [{ id: "loc1" }],
+      accessibleLocations: [{ id: "loc1", slug: "loc-1" }],
     };
 
     it("should calculate weighted capacity and filled seats using class ratios", async () => {
@@ -94,7 +94,10 @@ describe("StatisticsService", () => {
       prismaMock.makeUpBooking.count.mockResolvedValue(2);
       prismaMock.trialBooking.count.mockResolvedValue(1);
 
-      const stats = await service.getDashboardStats("term-123", mockStaffUser);
+      const stats = await service.getDashboardStats("term-123", {
+        locationId: null,
+        accessibleIds: ["loc1"],
+      });
 
       expect(stats.capacity.total).toBe(9);
       expect(stats.capacity.filled).toBe(6.5);

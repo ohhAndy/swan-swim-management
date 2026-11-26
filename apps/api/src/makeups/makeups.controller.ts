@@ -6,6 +6,7 @@ import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
 import { ScheduleMakeUpInput, ScheduleMakeUpSchema } from "./dto/schedule-makeup.dto";
+import { fromBody, ScopedTo } from "../auth/location-scope";
 
 @Controller("makeups")
 export class MakeupsController {
@@ -13,6 +14,7 @@ export class MakeupsController {
 
   @Post()
   @MinRole("manager")
+  @ScopedTo(fromBody("session", "classSessionId"))
   async create(
     @Body(new ZodValidationPipe(ScheduleMakeUpSchema)) body: ScheduleMakeUpInput,
     @Res({ passthrough: true }) res: Response,

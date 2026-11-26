@@ -126,7 +126,7 @@ export default function InvoicesListClient() {
         limit: 20,
         sortBy,
         sortOrder,
-        includeAllLocations: true,
+        allLocations: true,
       });
       setInvoices(result.data);
       setTotalPages(result.pagination.totalPages);

@@ -31,7 +31,14 @@ import {
 } from "./dto/enrollment-updates.dto";
 import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
-import { CurrentLocationId } from "../auth/current-location.decorator";
+import {
+  CurrentLocationScope,
+  fromBody,
+  fromBodyList,
+  fromParam,
+  LocationScope,
+  ScopedTo,
+} from "../auth/location-scope";
 import { RequestStaffUser } from "../auth/auth.types";
 
 @Controller("enrollments")
@@ -43,14 +50,14 @@ export class EnrollmentsController {
   async findUninvoiced(
     @Query(new ZodValidationPipe(UnInvoicedEnrollmentsQuerySchema))
     query: UnInvoicedEnrollmentsQueryDto,
-    @CurrentStaffUser() staffUser: RequestStaffUser,
-    @CurrentLocationId() locationId?: string,
+    @CurrentLocationScope() scope: LocationScope,
   ) {
-    return this.enrollmentsService.findUninvoiced(query, staffUser, locationId);
+    return this.enrollmentsService.findUninvoiced(query, scope);
   }
 
   @Post("with-skip")
   @MinRole("manager")
+  @ScopedTo(fromBody("offering", "offeringId"))
   async enrollWithSkips(
     @Body(new ZodValidationPipe(EnrollWithSkipSchema))
     body: EnrollWithSkipInput,
@@ -61,6 +68,10 @@ export class EnrollmentsController {
 
   @Post(":id/transfer")
   @MinRole("manager")
+  @ScopedTo(
+    fromParam("enrollment", "id"),
+    fromBody("offering", "targetOfferingId"),
+  )
   async transferEnrollment(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(transferEnrollmentSchema))
@@ -72,6 +83,10 @@ export class EnrollmentsController {
 
   @Post("bulk-transfer")
   @MinRole("manager")
+  @ScopedTo(
+    fromBodyList("enrollment", "transfers", "enrollmentId"),
+    fromBodyList("offering", "transfers", "targetOfferingId"),
+  )
   async bulkTransferEnrollments(
     @Body(new ZodValidationPipe(bulkTransferSchema)) body: BulkTransferDto,
     @CurrentStaffUser() staffUser: RequestStaffUser,
@@ -81,6 +96,7 @@ export class EnrollmentsController {
 
   @Put(":id/remarks")
   @MinRole("supervisor")
+  @ScopedTo(fromParam("enrollment", "id"))
   async updateRemarks(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateRemarksSchema)) body: UpdateRemarksDto,
@@ -91,6 +107,7 @@ export class EnrollmentsController {
 
   @Put(":id/skips")
   @MinRole("manager")
+  @ScopedTo(fromParam("enrollment", "id"))
   async updateSkips(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateSkipsSchema)) body: UpdateSkipsDto,
@@ -105,6 +122,7 @@ export class EnrollmentsController {
 
   @Delete(":id")
   @MinRole("manager")
+  @ScopedTo(fromParam("enrollment", "id"))
   async deleteEnrollment(
     @Param("id") id: string,
     @CurrentStaffUser() staffUser: RequestStaffUser,

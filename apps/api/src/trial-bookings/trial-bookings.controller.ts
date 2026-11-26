@@ -22,31 +22,40 @@ import {
   UpdateTrialStatusDto,
   UpdateTrialStatusSchema,
 } from "./dto/trial-booking.dto";
+import {
+  CurrentLocationScope,
+  fromBody,
+  fromParam,
+  LocationScope,
+  ScopedTo,
+} from "../auth/location-scope";
 
 @Controller("trial-bookings")
+@ScopedTo(fromParam("trialBooking", "id"))
 export class TrialBookingsController {
   constructor(private readonly service: TrialBookingsService) {}
 
   @Get("upcoming")
   @MinRole("supervisor")
-  async getUpcoming() {
-    return this.service.findUpcoming();
+  async getUpcoming(@CurrentLocationScope() scope: LocationScope) {
+    return this.service.findUpcoming(scope);
   }
 
   @Get("past")
   @MinRole("supervisor")
-  async getPast() {
-    return this.service.findPast();
+  async getPast(@CurrentLocationScope() scope: LocationScope) {
+    return this.service.findPast(scope);
   }
 
   @Get("stats")
   @MinRole("manager")
-  async getStats() {
-    return this.service.getStats();
+  async getStats(@CurrentLocationScope() scope: LocationScope) {
+    return this.service.getStats(scope);
   }
 
   @Post()
   @MinRole("manager")
+  @ScopedTo(fromBody("session", "classSessionId"))
   async createTrialBooking(
     @Body(new ZodValidationPipe(CreateTrialBookingSchema))
     body: CreateTrialBookingDto,
