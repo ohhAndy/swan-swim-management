@@ -46,6 +46,7 @@ export function SwimTeamCard({
   onChanged?: () => void;
 }) {
   const canManage = hasMinRole(userRole, "manager");
+  const canBill = hasMinRole(userRole, "admin");
   const [registrations, setRegistrations] = useState<
     SwimTeamRegistration[] | null
   >(null);
@@ -192,7 +193,7 @@ export function SwimTeamCard({
 
                 <p className="mt-2 text-xs text-muted-foreground">
                   {r.standing.state === "not_invoiced" ? (
-                    canManage ? (
+                    canBill ? (
                       <Link
                         href="/admin/invoices/new"
                         className="text-green-700 underline"
@@ -208,7 +209,7 @@ export function SwimTeamCard({
                         `${formatSwimTeamMoney(r.standing.behindAmount)} past due. `}
                       {r.standing.nextDueDate &&
                         `Next installment due ${formatCalendarDay(r.standing.nextDueDate, { month: "long", day: "numeric" })}. `}
-                      {canManage &&
+                      {canBill &&
                         r.standing.invoiceIds.map((id, i) => (
                           <Link
                             key={id}
@@ -243,7 +244,7 @@ export function SwimTeamCard({
                   Months already swum stay at the old tier.
                 </p>
                 <div className="mt-2 flex gap-3">
-                  {suggestion.invoiceIds.map((id) => (
+                  {canBill && suggestion.invoiceIds.map((id) => (
                     <Link
                       key={id}
                       href={`/invoices/${id}`}

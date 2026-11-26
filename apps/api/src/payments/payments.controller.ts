@@ -16,20 +16,14 @@ import { PaymentQueryDto, PaymentQuerySchema } from "./dto/payment-query.dto";
 import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import { RequestStaffUser } from "../auth/auth.types";
-import {
-  CurrentLocationScope,
-  fromBody,
-  fromParam,
-  LocationScope,
-  ScopedTo,
-} from "../auth/location-scope";
+import { CurrentLocationScope, LocationScope } from "../auth/location-scope";
 
 @Controller("payments")
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Get()
-  @MinRole("manager")
+  @MinRole("admin")
   findAll(
     @Query(new ZodValidationPipe(PaymentQuerySchema)) q: PaymentQueryDto,
     @CurrentLocationScope() scope: LocationScope,
@@ -47,8 +41,7 @@ export class PaymentsController {
 
   // Record payment - Admin & Manager only
   @Post()
-  @MinRole("manager")
-  @ScopedTo(fromBody("invoice", "invoiceId"))
+  @MinRole("admin")
   create(
     @Body(new ZodValidationPipe(CreatePaymentSchema))
     createPaymentDto: CreatePaymentDto,
@@ -59,15 +52,13 @@ export class PaymentsController {
 
   // Get all payments for an invoice - Admin & Manager only
   @Get("invoice/:invoiceId")
-  @MinRole("manager")
-  @ScopedTo(fromParam("invoice", "invoiceId"))
+  @MinRole("admin")
   findByInvoice(@Param("invoiceId") invoiceId: string) {
     return this.paymentsService.findByInvoice(invoiceId);
   }
 
   @Get(":id")
-  @MinRole("manager")
-  @ScopedTo(fromParam("payment", "id"))
+  @MinRole("admin")
   findOne(@Param("id") id: string) {
     return this.paymentsService.findOne(id);
   }
@@ -79,8 +70,7 @@ export class PaymentsController {
   }
 
   @Patch(":id")
-  @MinRole("manager")
-  @ScopedTo(fromParam("payment", "id"))
+  @MinRole("admin")
   update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdatePaymentSchema))

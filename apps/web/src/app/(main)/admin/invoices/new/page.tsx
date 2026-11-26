@@ -17,7 +17,7 @@ export default async function NewInvoicePage() {
     redirect("/login");
   }
 
-  if (!hasMinRole(user.role, "manager")) {
+  if (!hasMinRole(user.role, "admin")) {
     redirect("/invoices");
   }
 

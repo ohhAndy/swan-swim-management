@@ -131,24 +131,24 @@ describe("LocationScopeGuard", () => {
 
   describe("@ScopedTo checks", () => {
     it("allows a record at an accessible location", async () => {
-      checks = [fromParam("invoice", "id")];
-      prisma.invoice.findMany.mockResolvedValue([{ locationId: "loc_nm" }]);
+      checks = [fromParam("term", "id")];
+      prisma.term.findMany.mockResolvedValue([{ locationId: "loc_nm" }]);
       await expect(
         run({
           headers: {},
-          params: { id: "inv1" },
+          params: { id: "t1" },
           staffUser: staff("manager", [NEWMARKET]),
         }),
       ).resolves.toBeDefined();
     });
 
     it("refuses a record at another location", async () => {
-      checks = [fromParam("invoice", "id")];
-      prisma.invoice.findMany.mockResolvedValue([{ locationId: "loc_mk" }]);
+      checks = [fromParam("term", "id")];
+      prisma.term.findMany.mockResolvedValue([{ locationId: "loc_mk" }]);
       await expect(
         run({
           headers: {},
-          params: { id: "inv1" },
+          params: { id: "t1" },
           staffUser: staff("manager", [NEWMARKET]),
         }),
       ).rejects.toThrow(ForbiddenException);
@@ -187,15 +187,15 @@ describe("LocationScopeGuard", () => {
     });
 
     it("leaves a missing id to the handler", async () => {
-      checks = [fromParam("invoice", "id")];
+      checks = [fromParam("term", "id")];
       await run({ headers: {}, params: {}, staffUser: staff("manager", [NEWMARKET]) });
-      expect(prisma.invoice.findMany).not.toHaveBeenCalled();
+      expect(prisma.term.findMany).not.toHaveBeenCalled();
     });
 
     it("skips the lookup for admins", async () => {
-      checks = [fromParam("invoice", "id")];
-      await run({ headers: {}, params: { id: "inv1" }, staffUser: staff("admin") });
-      expect(prisma.invoice.findMany).not.toHaveBeenCalled();
+      checks = [fromParam("term", "id")];
+      await run({ headers: {}, params: { id: "t1" }, staffUser: staff("admin") });
+      expect(prisma.term.findMany).not.toHaveBeenCalled();
     });
   });
 });

@@ -18,7 +18,7 @@ export class ExportsController {
   constructor(private readonly exportsService: ExportsService) {}
 
   @Get("payments")
-  @MinRole("manager")
+  @MinRole("admin")
   async exportPayments(
     @Query(new ZodValidationPipe(PaymentFilterSchema))
     q: PaymentFilterDto,
@@ -47,7 +47,7 @@ export class ExportsController {
   }
 
   @Get("invoices")
-  @MinRole("manager")
+  @MinRole("admin")
   async exportInvoices(
     @Query(new ZodValidationPipe(InvoiceExportQuerySchema))
     q: InvoiceExportQueryDto,

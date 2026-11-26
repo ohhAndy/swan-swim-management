@@ -132,8 +132,10 @@ describe("Location scope (e2e)", () => {
         .send({ remarks: "Moved lanes" })
         .expect(403);
     });
+  });
 
-    it("refuses moving an invoice to another location", async () => {
+  describe("billing is admin-only", () => {
+    it("refuses managers on invoice and payment routes", async () => {
       const invoice = await prisma.invoice.create({
         data: {
           guardianId,
@@ -143,27 +145,33 @@ describe("Location scope (e2e)", () => {
           locationId: newmarketId,
         },
       });
-      await request(app.getHttpServer())
+      const server = app.getHttpServer();
+      await request(server).get("/invoices").set(asManager()).expect(403);
+      await request(server).get(`/invoices/${invoice.id}`).set(asManager()).expect(403);
+      await request(server)
         .patch(`/invoices/${invoice.id}`)
         .set(asManager())
-        .send({ locationId: markhamId })
+        .send({ notes: "changed" })
         .expect(403);
+      await request(server)
+        .post("/invoices")
+        .set(asManager())
+        .send({ guardianId, totalAmount: 10, lineItems: [] })
+        .expect(403);
+      await request(server).get("/payments").set(asManager()).expect(403);
+      await request(server)
+        .post("/payments")
+        .set(asManager())
+        .send({ invoiceId: invoice.id, amount: 10, paymentMethod: "cash" })
+        .expect(403);
+      await request(server).get("/exports/invoices").set(asManager()).expect(403);
     });
 
-    it("refuses reading another location's invoice", async () => {
-      const invoice = await prisma.invoice.create({
-        data: {
-          guardianId,
-          totalAmount: 50,
-          status: "partial",
-          invoiceNumber: "INV-MK-1",
-          locationId: markhamId,
-        },
-      });
+    it("still lets managers see uninvoiced enrollments", async () => {
       await request(app.getHttpServer())
-        .get(`/invoices/${invoice.id}`)
+        .get("/enrollments/uninvoiced")
         .set(asManager())
-        .expect(403);
+        .expect(200);
     });
   });
 

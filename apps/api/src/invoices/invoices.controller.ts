@@ -27,9 +27,7 @@ import { MinRole } from "../auth/roles.decorator";
 import { CurrentStaffUser } from "../auth/current-user.decorator";
 import {
   CurrentLocationScope,
-  fromParam,
   LocationScope,
-  ScopedTo,
 } from "../auth/location-scope";
 import { RequestStaffUser } from "../auth/auth.types";
 
@@ -38,7 +36,7 @@ export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}
 
   @Post()
-  @MinRole("manager")
+  @MinRole("admin")
   async create(
     @Body(new ZodValidationPipe(CreateInvoiceSchema))
     createInvoiceDto: CreateInvoiceDto,
@@ -50,7 +48,7 @@ export class InvoicesController {
 
   // List invoices with filters - Admin & Manager only
   @Get()
-  @MinRole("manager")
+  @MinRole("admin")
   async findAll(
     @Query(new ZodValidationPipe(InvoiceQuerySchema)) query: InvoiceQueryDto,
     @CurrentLocationScope() scope: LocationScope,
@@ -60,7 +58,7 @@ export class InvoicesController {
 
   // Get un-invoiced enrollments - Admin & Manager only
   @Get("un-invoiced-enrollments")
-  @MinRole("manager")
+  @MinRole("admin")
   async getUnInvoicedEnrollments(
     @Query(new ZodValidationPipe(UnInvoicedEnrollmentsQuerySchema))
     query: UnInvoicedEnrollmentsQueryDto,
@@ -70,15 +68,13 @@ export class InvoicesController {
   }
 
   @Get(":id")
-  @MinRole("manager")
-  @ScopedTo(fromParam("invoice", "id"))
+  @MinRole("admin")
   async findOne(@Param("id") id: string) {
     return this.invoicesService.findOne(id);
   }
 
   @Patch(":id")
-  @MinRole("manager")
-  @ScopedTo(fromParam("invoice", "id"))
+  @MinRole("admin")
   async update(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateInvoiceSchema))
@@ -91,8 +87,7 @@ export class InvoicesController {
 
   // Replace the installment plan - Admin & Manager only
   @Put(":id/installments")
-  @MinRole("manager")
-  @ScopedTo(fromParam("invoice", "id"))
+  @MinRole("admin")
   async updateInstallments(
     @Param("id") id: string,
     @Body(new ZodValidationPipe(UpdateInstallmentsSchema))

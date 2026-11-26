@@ -52,7 +52,7 @@ export class LocationScopeGuard implements CanActivate {
         const ids = this.idsFor(check, request);
         if (ids.length === 0) continue;
         const locationIds = await this.locationsOf(check.entity, ids);
-        if (locationIds.some((id) => id !== null && !canAccessLocation(scope, id))) {
+        if (locationIds.some((id) => !canAccessLocation(scope, id))) {
           throw new ForbiddenException("You do not have access to this location.");
         }
       }
@@ -122,7 +122,7 @@ export class LocationScopeGuard implements CanActivate {
   private async locationsOf(
     entity: ScopedEntity,
     ids: string[],
-  ): Promise<(string | null)[]> {
+  ): Promise<string[]> {
     const where = { id: { in: [...new Set(ids)] } };
     const viaTerm = { select: { locationId: true } } as const;
     const viaOffering = { select: { term: viaTerm } } as const;
@@ -164,18 +164,6 @@ export class LocationScopeGuard implements CanActivate {
         return (
           await this.prisma.swimTeamRegistration.findMany({ where, select: { term: viaTerm } })
         ).map((r) => r.term.locationId);
-      // Pre-location invoices have none and stay accessible
-      case "invoice":
-        return (
-          await this.prisma.invoice.findMany({ where, select: { locationId: true } })
-        ).map((r) => r.locationId);
-      case "payment":
-        return (
-          await this.prisma.payment.findMany({
-            where,
-            select: { invoice: { select: { locationId: true } } },
-          })
-        ).map((r) => r.invoice.locationId);
     }
   }
 }

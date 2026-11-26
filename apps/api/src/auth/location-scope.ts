@@ -69,8 +69,6 @@ export type ScopedEntity =
   | "offering"
   | "session"
   | "enrollment"
-  | "invoice"
-  | "payment"
   | "trialBooking"
   | "makeUp"
   | "classInstructor"

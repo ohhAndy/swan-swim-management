@@ -18,7 +18,7 @@ export default async function InvoicesPage() {
   }
 
   // Only admin and manager can access invoices
-  if (!hasMinRole(user.role, "manager")) {
+  if (!hasMinRole(user.role, "admin")) {
     redirect("/");
   }
 
