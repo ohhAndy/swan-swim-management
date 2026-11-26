@@ -9,6 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useLocation } from "@/context/LocationContext";
+import {
   Card,
   CardContent,
   CardHeader,
@@ -84,6 +92,8 @@ export default function CreateInvoiceForm() {
   const [enrollmentAmounts, setEnrollmentAmounts] = useState<
     Record<string, string>
   >({});
+  const [chosenLocationId, setChosenLocationId] = useState("");
+  const { locations } = useLocation();
 
   // Restore last used invoice date
   useEffect(() => {
@@ -225,6 +235,25 @@ export default function CreateInvoiceForm() {
     selectedRegistrations.has(r.id),
   );
 
+  const billedLocations = [
+    ...new Map(
+      [
+        ...enrollments
+          .filter((e) => selectedEnrollments.has(e.id))
+          .map((e) => e.offering.term.location),
+        ...chosenRegistrations.map((r) => ({
+          id: r.locationId,
+          name:
+            locations.find((l) => l.id === r.locationId)?.name ?? r.termName,
+        })),
+      ].map((l) => [l.id, l]),
+    ).values(),
+  ];
+  const needsLocationChoice = billedLocations.length > 1;
+  const locationChoiceValid =
+    !needsLocationChoice ||
+    billedLocations.some((l) => l.id === chosenLocationId);
+
   function swimTeamAmountsFor(registration: UninvoicedSwimTeamRegistration) {
     const raw =
       swimTeamAmounts[registration.id] ?? defaultSwimTeamAmounts(registration);
@@ -297,6 +326,11 @@ export default function CreateInvoiceForm() {
       return;
     }
 
+    if (!locationChoiceValid) {
+      toast.error("Choose which location this invoice belongs to");
+      return;
+    }
+
     const usesPlan = chosenRegistrations.length > 0 && installments.length > 0;
     if (usesPlan && !installmentsMatchTotal(installments, calculateTotal())) {
       toast.error("Installments must add up to the invoice total");
@@ -316,11 +350,9 @@ export default function CreateInvoiceForm() {
             enrollment.student.lastName
           } - ${DAY_LABELS[enrollment.offering.weekday]} ${
             enrollment.offering.startTime
-          } ${enrollment.student.level} - ${enrollment.offering.term.name}${
-            enrollment.offering.term.location?.name
-              ? ` (${enrollment.offering.term.location.name})`
-              : ""
-          } (${enrollment.classRatio})`;
+          } ${enrollment.student.level} - ${enrollment.offering.term.name} (${
+            enrollment.offering.term.location.name
+          }) (${enrollment.classRatio})`;
           lineItems.push({
             enrollmentId: enrollment.id,
             description: desc,
@@ -367,6 +399,7 @@ export default function CreateInvoiceForm() {
         guardianId: selectedGuardian?.id,
         invoiceNumber: invoiceNumber || undefined,
         totalAmount: calculateTotal(),
+        locationId: needsLocationChoice ? chosenLocationId : undefined,
         notes: notes || undefined,
         createdAt: finalCreatedAt,
         lineItems,
@@ -472,6 +505,34 @@ export default function CreateInvoiceForm() {
               <CardTitle>4. Invoice Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {needsLocationChoice && (
+                <div className="space-y-1">
+                  <Label htmlFor="invoiceLocation">Location</Label>
+                  <p className="text-sm text-muted-foreground">
+                    These classes are at more than one location. Choose which
+                    location this invoice belongs to.
+                  </p>
+                  <Select
+                    value={locationChoiceValid ? chosenLocationId : ""}
+                    onValueChange={setChosenLocationId}
+                  >
+                    <SelectTrigger
+                      id="invoiceLocation"
+                      className="w-full sm:w-64"
+                      aria-invalid={!locationChoiceValid}
+                    >
+                      <SelectValue placeholder="Choose a location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {billedLocations.map((l) => (
+                        <SelectItem key={l.id} value={l.id}>
+                          {l.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="invoiceNumber">Invoice Number (Optional)</Label>

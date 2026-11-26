@@ -42,6 +42,7 @@ export interface SwimTeamRegistration {
   guardianId: string;
   termId: string;
   termName: string;
+  locationId: string;
   seasonStart: string;
   seasonEnd: string;
   frequency: number;

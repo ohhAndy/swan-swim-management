@@ -191,4 +191,51 @@ describe("Location scope (e2e)", () => {
       expect(res.body.message).toBe("Select a location first.");
     });
   });
+
+  describe("POST /invoices location", () => {
+    const tuition = (enrollmentId: string) => ({
+      enrollmentId,
+      description: "Tuition",
+      amount: 100,
+    });
+
+    it("takes the location of the class billed, not the header", async () => {
+      const res = await request(app.getHttpServer())
+        .post("/invoices")
+        .set("x-location-id", newmarketId)
+        .send({
+          guardianId,
+          invoiceNumber: "INV-100",
+          totalAmount: 100,
+          lineItems: [tuition(markhamEnrollmentId)],
+        })
+        .expect(201);
+      expect(res.body.location.id).toBe(markhamId);
+    });
+
+    it("asks staff to choose when classes are at two locations", async () => {
+      const res = await request(app.getHttpServer())
+        .post("/invoices")
+        .send({
+          guardianId,
+          invoiceNumber: "INV-101",
+          totalAmount: 200,
+          lineItems: [tuition(newmarketEnrollmentId), tuition(markhamEnrollmentId)],
+        })
+        .expect(400);
+      expect(res.body.message).toContain("Markham and Newmarket");
+
+      const chosen = await request(app.getHttpServer())
+        .post("/invoices")
+        .send({
+          guardianId,
+          invoiceNumber: "INV-101",
+          totalAmount: 200,
+          locationId: markhamId,
+          lineItems: [tuition(newmarketEnrollmentId), tuition(markhamEnrollmentId)],
+        })
+        .expect(201);
+      expect(chosen.body.location.id).toBe(markhamId);
+    });
+  });
 });

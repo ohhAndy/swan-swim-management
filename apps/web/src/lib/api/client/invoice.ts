@@ -27,6 +27,7 @@ export interface CreateInvoiceData {
   invoiceNumber?: string;
   guardianId?: string;
   totalAmount: number;
+  locationId?: string;
   notes?: string;
   createdAt?: string;
   lineItems: {

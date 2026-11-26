@@ -62,6 +62,7 @@ swan-swim-management/
 * **What belongs to a location**: every term belongs to exactly one location (there are no "global" terms), and offerings, sessions, enrollments, makeups, trials and swim-team registrations take theirs from the term. Invoices store their own location. Students, guardians, instructors and inventory are shared across locations.
 * **Request scope**: `LocationScopeGuard` turns the `x-location-id` header (a location id or slug, or `all`) into a `LocationScope` and refuses locations the user may not access. Read it with `@CurrentLocationScope()` and filter with `scopeFilter(scope)` (the selected location) or `accessibleFilter(scope)` (every location the user may access). Never read the header directly.
 * **Routes that take an id**: add `@ScopedTo(fromParam(...))` (or `fromBody` / `fromQuery` / `fromBodyList`) for any record that belongs to a location, so staff can't reach another location's records by id.
+* **Invoice location**: an invoice belongs to the location of the classes it bills. Staff choose only when those classes span several locations; a sale with no classes takes the current location.
 
 ### D. Database Primary & Foreign Keys
 * All database IDs must use `cuid()` strings (`@default(cuid())` in Prisma).

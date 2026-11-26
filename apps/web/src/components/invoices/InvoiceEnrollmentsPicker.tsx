@@ -29,7 +29,8 @@ export interface UnInvoicedEnrollment {
     startTime: string;
     term: {
       name: string;
-      location?: {
+      location: {
+        id: string;
         name: string;
       };
     };
@@ -110,9 +111,8 @@ export function InvoiceEnrollmentsPicker({
                       {DAY_LABELS[enrollment.offering.weekday]}{" "}
                       {enrollment.offering.startTime} •{" "}
                       {enrollment.student.level} •{" "}
-                      {enrollment.offering.term.name}
-                      {enrollment.offering.term.location?.name &&
-                        ` (${enrollment.offering.term.location.name})`}{" "}
+                      {enrollment.offering.term.name} (
+                      {enrollment.offering.term.location.name}){" "}
                       • {enrollment.classRatio} • {sessionText}
                     </p>
                     {skipCount > 0 && (

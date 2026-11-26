@@ -46,6 +46,80 @@ export class InvoicesService {
     private enrollmentsService: EnrollmentsService,
   ) {}
 
+  /**
+   * Classes at one location: that location. Several: staff must choose one.
+   * None (POS sale): requested, else fallback, else the request's location.
+   */
+  private async resolveInvoiceLocation(
+    db: Prisma.TransactionClient,
+    lines: {
+      enrollmentId?: string | null;
+      swimTeamRegistrationId?: string | null;
+    }[],
+    requested: string | null | undefined,
+    fallback: string | null,
+    scope: LocationScope,
+  ): Promise<string> {
+    const enrollmentIds = lines.flatMap((l) => l.enrollmentId ?? []);
+    const registrationIds = lines.flatMap((l) => l.swimTeamRegistrationId ?? []);
+
+    const [enrollments, registrations] = await Promise.all([
+      enrollmentIds.length
+        ? db.enrollment.findMany({
+            where: { id: { in: enrollmentIds } },
+            select: { offering: { select: { term: { select: { locationId: true } } } } },
+          })
+        : [],
+      registrationIds.length
+        ? db.swimTeamRegistration.findMany({
+            where: { id: { in: registrationIds } },
+            select: { term: { select: { locationId: true } } },
+          })
+        : [],
+    ]);
+    const billed = [
+      ...new Set([
+        ...enrollments.map((e) => e.offering.term.locationId),
+        ...registrations.map((r) => r.term.locationId),
+      ]),
+    ];
+
+    const billedNames = async () =>
+      (
+        await db.location.findMany({
+          where: { id: { in: billed } },
+          select: { name: true },
+          orderBy: { name: "asc" },
+        })
+      )
+        .map((l) => l.name)
+        .join(" and ");
+
+    let locationId: string;
+    if (billed.length === 1) {
+      if (requested && requested !== billed[0]) {
+        const name = await billedNames();
+        throw new BadRequestException(
+          `This invoice bills classes at ${name} only, so it belongs to ${name}.`,
+        );
+      }
+      locationId = billed[0];
+    } else if (billed.length > 1) {
+      const chosen = requested ?? fallback;
+      if (!chosen || !billed.includes(chosen)) {
+        throw new BadRequestException(
+          `This invoice bills classes at ${await billedNames()}. Choose which of these locations it belongs to.`,
+        );
+      }
+      locationId = chosen;
+    } else {
+      locationId = requested ?? fallback ?? requireSingleLocation(scope);
+    }
+
+    assertCanAccessLocation(scope, locationId);
+    return locationId;
+  }
+
   // Calculate suggested amount for an enrollment based on class ratio and skips
   calculateEnrollmentAmount(enrollment: EnrollmentForCalculation): number {
     const totalWeeks =
@@ -67,11 +141,13 @@ export class InvoicesService {
   ) {
     const lineItems: CreateInvoiceLineItemDto[] = createInvoiceDto.lineItems;
 
-    // Admins may leave it unset, as before; other staff need one location
-    const assignedLocationId =
-      scope.accessibleIds === null
-        ? (scope.locationId ?? undefined)
-        : requireSingleLocation(scope);
+    const assignedLocationId = await this.resolveInvoiceLocation(
+      this.prisma,
+      lineItems,
+      createInvoiceDto.locationId,
+      null,
+      scope,
+    );
 
     // Enrollments Validation
     const enrollmentIds: string[] = lineItems
@@ -366,10 +442,8 @@ export class InvoicesService {
     staffUser: RequestStaffUser,
     scope: LocationScope,
   ) {
-    const { lineItems, ...updateData } = updateInvoiceDto;
-    if (updateData.locationId) {
-      assertCanAccessLocation(scope, updateData.locationId);
-    }
+    const { lineItems, locationId: requestedLocationId, ...updateData } =
+      updateInvoiceDto;
 
     // Start a transaction to ensure integrity
     const invoice = await this.prisma.$transaction(async (prisma) => {
@@ -437,6 +511,29 @@ export class InvoicesService {
           where: { id },
           data: { totalAmount: agg._sum.amount || 0 },
         });
+      }
+
+      if (lineItems || requestedLocationId) {
+        const [current, savedLines] = await Promise.all([
+          prisma.invoice.findUniqueOrThrow({
+            where: { id },
+            select: { locationId: true },
+          }),
+          prisma.invoiceLineItem.findMany({
+            where: { invoiceId: id },
+            select: { enrollmentId: true, swimTeamRegistrationId: true },
+          }),
+        ]);
+        const locationId = await this.resolveInvoiceLocation(
+          prisma,
+          savedLines,
+          requestedLocationId,
+          current.locationId,
+          scope,
+        );
+        if (locationId !== current.locationId) {
+          await prisma.invoice.update({ where: { id }, data: { locationId } });
+        }
       }
 
       // 3. Return updated invoice with all relations

@@ -52,7 +52,12 @@ export default function EditInvoiceDialog({
     try {
       await updateInvoice(invoice.id, {
         invoiceNumber: formData.invoiceNumber || undefined,
-        locationId: formData.locationId || undefined,
+        // Only send a change; the API derives location from the classes billed
+        locationId:
+          formData.locationId &&
+          formData.locationId !== (invoice.location?.id ?? "")
+            ? formData.locationId
+            : undefined,
         notes: formData.notes || undefined,
       });
       toast.success("Invoice updated successfully");

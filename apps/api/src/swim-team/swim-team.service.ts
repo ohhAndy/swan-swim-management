@@ -261,6 +261,7 @@ export class SwimTeamService {
       guardianId: r.student.guardianId,
       termId: r.termId,
       termName: r.term.name,
+      locationId: r.term.locationId,
       seasonStart: toYmd(r.term.startDate),
       seasonEnd: toYmd(r.term.endDate),
       frequency: r.frequency,
